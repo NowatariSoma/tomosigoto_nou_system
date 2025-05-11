@@ -1,0 +1,23 @@
+{
+  "name": "cursor-project-rules",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:mdc": "tsx ./rules/build-mdc.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/glob": "^8.1.0",
+    "fs-extra": "^11.3.0",
+    "glob": "^11.0.1",
+    "path": "^0.12.7",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
