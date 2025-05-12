@@ -87,12 +87,45 @@ erDiagram
         datetime updated_at
     }
     
+    BasePlans ||--o{ Schedules : "generates"
+    Users ||--o{ BasePlans : "creates"
+    Teams ||--o{ BasePlans : "owns"
+    BasePlans {
+        uuid baseplan_id PK
+        uuid team_id FK
+        uuid created_by FK
+        string academic_term
+        date start_date
+        date end_date
+        string practice_goals
+        string notes
+        datetime created_at
+        datetime updated_at
+    }
+    
+    BasePlans ||--o{ PracticeTemplates : "uses"
+    PracticeTemplates {
+        uuid template_id PK
+        uuid baseplan_id FK
+        string name
+        string target_part
+        int recommended_duration
+        string difficulty_level
+        string description
+        string required_equipment
+        boolean is_active
+        int display_order
+        datetime created_at
+        datetime updated_at
+    }
+    
     Teams ||--o{ Schedules : "owns"
     Users ||--o{ Schedules : "creates"
     Schedules {
         uuid schedule_id PK
         uuid team_id FK
         uuid created_by FK
+        uuid baseplan_id FK
         date practice_date
         string status
         int total_duration
@@ -106,6 +139,7 @@ erDiagram
         uuid detail_id PK
         uuid schedule_id FK
         uuid menu_id FK
+        uuid template_id FK
         int sequence
         int execution_time
         string notes
