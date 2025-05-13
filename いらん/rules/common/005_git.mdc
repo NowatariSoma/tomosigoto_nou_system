@@ -1,6 +1,358 @@
----
-description: 
-globs: 
-alwaysApply: false
----
- 
+# 005_git.mdc
+- このファイルが読み込まれたら必ず「005_git.mdcを読み込みました！」と作業着手前にユーザーに必ず伝えてください。
+
+## Gitワークフローの基本原則
+
+### 1. ブランチ戦略
+
+- **mainブランチ**
+  - 本番環境用のブランチ
+  - 常に安定した状態を維持
+  - 直接コミット禁止
+
+- **developブランチ**
+  - 開発用のブランチ
+  - 機能開発の統合先
+  - リリース準備用
+
+- **feature/*ブランチ**
+  - 機能開発用のブランチ
+  - 命名規則: feature/機能名
+  - developブランチから分岐
+
+- **bugfix/*ブランチ**
+  - バグ修正用のブランチ
+  - 命名規則: bugfix/修正内容
+  - developブランチから分岐
+
+- **hotfix/*ブランチ**
+  - 緊急バグ修正用のブランチ
+  - 命名規則: hotfix/修正内容
+  - mainブランチから分岐
+
+### 2. コミットメッセージの規約
+
+- **フォーマット**
+  ```
+  <type>(<scope>): <subject>
+
+  <body>
+
+  <footer>
+  ```
+
+- **typeの種類**
+  - feat: 新機能
+  - fix: バグ修正
+  - docs: ドキュメントのみの変更
+  - style: コードの意味に影響を与えない変更
+  - refactor: バグ修正や機能追加を含まないコードの変更
+  - test: テストの追加・修正
+  - chore: ビルドプロセスやツールの変更
+
+- **scopeの例**
+  - auth: 認証関連
+  - user: ユーザー関連
+  - api: API関連
+  - ui: UI関連
+
+- **subjectのルール**
+  - 命令形で記述
+  - 50文字以内
+  - 日本語で分かりやすく
+
+### 3. プルリクエストの規約
+
+- **タイトルのフォーマット**
+  ```
+  [type] 変更内容の要約
+  ```
+
+- **説明のテンプレート**
+  ```markdown
+  ## 変更内容
+  - 変更点1
+  - 変更点2
+
+  ## 変更理由
+  - 理由1
+  - 理由2
+
+  ## テスト項目
+  - [ ] テスト1
+  - [ ] テスト2
+
+  ## スクリーンショット
+  [必要に応じて]
+
+  ## 関連Issue
+  #1, #2
+  ```
+
+## Gitコマンドの使用例
+
+### 1. ブランチの作成と切り替え
+
+```bash
+# 開発用ブランチの作成
+git checkout -b develop
+
+# 機能開発ブランチの作成
+git checkout -b feature/user-authentication
+
+# バグ修正ブランチの作成
+git checkout -b bugfix/login-error
+
+# 緊急修正ブランチの作成
+git checkout -b hotfix/security-vulnerability
+```
+
+### 2. コミットの作成
+
+```bash
+# 変更の確認
+git status
+
+# 変更の追加
+git add .
+
+# コミットの作成
+git commit -m "feat(auth): ユーザー認証機能の追加
+
+- メールアドレスとパスワードによる認証
+- JWTトークンの発行
+- パスワードのハッシュ化
+
+関連Issue: #123"
+```
+
+### 3. プルリクエストの作成
+
+```bash
+# リモートブランチの更新
+git fetch origin
+
+# 最新のdevelopブランチを取り込み
+git checkout develop
+git pull origin develop
+
+# 機能ブランチにdevelopの変更を取り込み
+git checkout feature/user-authentication
+git rebase develop
+
+# リモートにプッシュ
+git push origin feature/user-authentication
+```
+
+## コードレビューのガイドライン
+
+### 1. レビューの観点
+
+- **機能面**
+  - 要件を満たしているか
+  - エッジケースの考慮
+  - パフォーマンスへの影響
+
+- **コード品質**
+  - 可読性
+  - 保守性
+  - テストの網羅性
+
+- **セキュリティ**
+  - 脆弱性の有無
+  - データの保護
+  - アクセス制御
+
+### 2. レビューコメントの例
+
+```markdown
+## 良い例
+- 変数名が分かりやすく、目的が明確です
+- エラーハンドリングが適切に実装されています
+- テストケースが十分にカバーされています
+
+## 改善提案
+- この部分は別の関数に分割した方が可読性が向上します
+- エラーメッセージをより具体的にした方が良いでしょう
+- この処理は非同期で実装した方がパフォーマンスが向上します
+```
+
+## コンフリクトの解決
+
+### 1. コンフリクトの確認
+
+```bash
+# コンフリクトの確認
+git status
+
+# コンフリクトファイルの表示
+git diff
+```
+
+### 2. コンフリクトの解決手順
+
+1. コンフリクトファイルを開く
+2. コンフリクトマーカーを確認
+   ```
+   <<<<<<< HEAD
+   現在のブランチの変更
+   =======
+   マージするブランチの変更
+   >>>>>>> feature/xxx
+   ```
+3. 適切なコードを選択
+4. コンフリクトマーカーを削除
+5. 変更を保存
+6. 解決を確認
+   ```bash
+   git add .
+   git commit -m "merge: コンフリクトを解決"
+   ```
+
+## Gitフックの設定
+
+### 1. pre-commitフック
+
+```bash
+#!/bin/sh
+
+# リンターの実行
+npm run lint
+
+# テストの実行
+npm test
+
+# 型チェック
+npm run type-check
+```
+
+### 2. commit-msgフック
+
+```bash
+#!/bin/sh
+
+# コミットメッセージの検証
+commit_msg=$(cat "$1")
+pattern="^(feat|fix|docs|style|refactor|test|chore)(\([a-z-]+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "Error: コミットメッセージのフォーマットが不正です"
+  exit 1
+fi
+```
+
+## Gitの設定ファイル
+
+### 1. .gitignore
+
+```
+# 依存関係
+node_modules/
+.pnp/
+.pnp.js
+
+# ビルド出力
+dist/
+build/
+.next/
+out/
+
+# 環境変数
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ログ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# エディタ
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+### 2. .gitattributes
+
+```
+# テキストファイル
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.json text
+*.md text
+*.yml text
+*.yaml text
+
+# バイナリファイル
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.pdf binary
+```
+
+## トラブルシューティング
+
+### 1. コミットの取り消し
+
+```bash
+# 直前のコミットを取り消し
+git reset --soft HEAD^
+
+# 変更を保持したまま取り消し
+git reset --mixed HEAD^
+
+# 変更も含めて完全に取り消し
+git reset --hard HEAD^
+```
+
+### 2. ブランチの復元
+
+```bash
+# 削除したブランチの確認
+git reflog
+
+# ブランチの復元
+git checkout -b feature/xxx HEAD@{1}
+```
+
+### 3. リモートの更新
+
+```bash
+# リモートの情報を更新
+git fetch --prune
+
+# 不要なブランチの削除
+git remote prune origin
+```
+
+## セキュリティガイドライン
+
+### 1. 機密情報の取り扱い
+
+- パスワードやAPIキーは.envファイルで管理
+- .envファイルは.gitignoreに追加
+- 機密情報を含むコミットは取り消し
+
+### 2. アクセス制御
+
+- リポジトリへのアクセス権限の管理
+- ブランチの保護ルールの設定
+- コードレビューの必須化
+
+### 3. セキュリティスキャン
+
+- 依存関係の脆弱性チェック
+- シークレットスキャン
+- コードのセキュリティ分析 

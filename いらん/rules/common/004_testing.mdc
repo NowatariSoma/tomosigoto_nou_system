@@ -1,6 +1,565 @@
----
-description: 
-globs: 
-alwaysApply: false
----
- 
+# 004_testing.mdc
+- このファイルが読み込まれたら必ず「004_testing.mdcを読み込みました！」と作業着手前にユーザーに必ず伝えてください。
+
+## テストの基本原則
+
+### 1. テストの種類
+
+- **ユニットテスト**
+  - 個々の関数やメソッドのテスト
+  - 依存関係はモック化
+  - 高速な実行が可能
+
+- **統合テスト**
+  - 複数のコンポーネントの連携テスト
+  - 実際のデータベースや外部サービスを使用
+  - エンドツーエンドの動作確認
+
+- **E2Eテスト**
+  - 実際のユーザー操作をシミュレート
+  - ブラウザを使用したテスト
+  - システム全体の動作確認
+
+### 2. テストの構造
+
+- **AAAパターン**
+  - Arrange: テストの準備
+  - Act: テスト対象の実行
+  - Assert: 結果の検証
+
+- **テストケースの命名**
+  - テスト対象の機能を明確に
+  - 期待する結果を含める
+  - 日本語で分かりやすく
+
+### 3. テストカバレッジ
+
+- **カバレッジ目標**
+  - ステートメント: 80%以上
+  - ブランチ: 70%以上
+  - 関数: 90%以上
+
+- **カバレッジレポート**
+  - 定期的な確認
+  - 未カバーの箇所の分析
+  - 改善計画の立案
+
+## フロントエンドのテスト
+
+### 1. コンポーネントテスト
+
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('クリックイベントが正しく発火すること', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>クリック</Button>);
+    
+    fireEvent.click(screen.getByText('クリック'));
+    
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('disabled状態でクリックできないこと', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick} disabled>クリック</Button>);
+    
+    fireEvent.click(screen.getByText('クリック'));
+    
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+});
+```
+
+### 2. フックのテスト
+
+```typescript
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useCounter } from './useCounter';
+
+describe('useCounter', () => {
+  it('初期値が正しく設定されること', () => {
+    const { result } = renderHook(() => useCounter(0));
+    
+    expect(result.current.count).toBe(0);
+  });
+
+  it('incrementが正しく動作すること', () => {
+    const { result } = renderHook(() => useCounter(0));
+    
+    act(() => {
+      result.current.increment();
+    });
+    
+    expect(result.current.count).toBe(1);
+  });
+});
+```
+
+### 3. 統合テスト
+
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { LoginForm } from './LoginForm';
+import { AuthProvider } from './AuthContext';
+
+describe('LoginForm', () => {
+  it('ログインが成功すること', async () => {
+    render(
+      <AuthProvider>
+        <LoginForm />
+      </AuthProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('メールアドレス'), {
+      target: { value: 'test@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('パスワード'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByText('ログイン'));
+
+    await waitFor(() => {
+      expect(screen.getByText('ログイン成功')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+## バックエンドのテスト
+
+### 1. ユニットテスト
+
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from './user.service';
+import { UserRepository } from './user.repository';
+
+describe('UserService', () => {
+  let service: UserService;
+  let repository: UserRepository;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: UserRepository,
+          useValue: {
+            findById: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    repository = module.get<UserRepository>(UserRepository);
+  });
+
+  it('ユーザーが正しく作成されること', async () => {
+    const userData = {
+      email: 'test@example.com',
+      password: 'password123',
+      name: 'Test User',
+    };
+
+    const expectedUser = {
+      id: '1',
+      ...userData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    jest.spyOn(repository, 'create').mockResolvedValue(expectedUser);
+
+    const result = await service.create(userData);
+
+    expect(result).toEqual(expectedUser);
+    expect(repository.create).toHaveBeenCalledWith(userData);
+  });
+});
+```
+
+### 2. E2Eテスト
+
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
+
+describe('UserController (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    prisma = app.get<PrismaService>(PrismaService);
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+    await app.close();
+  });
+
+  beforeEach(async () => {
+    await prisma.user.deleteMany();
+  });
+
+  describe('/users (POST)', () => {
+    it('ユーザーが正しく作成されること', () => {
+      return request(app.getHttpServer())
+        .post('/users')
+        .send({
+          email: 'test@example.com',
+          password: 'password123',
+          name: 'Test User',
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id');
+          expect(res.body.email).toBe('test@example.com');
+          expect(res.body.name).toBe('Test User');
+          expect(res.body).not.toHaveProperty('password');
+        });
+    });
+  });
+});
+```
+
+## テストの実装例
+
+### 1. モックの作成
+
+```typescript
+// モックの定義
+const mockUserRepository = {
+  findById: jest.fn(),
+  findByEmail: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+
+// モックの使用
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    service = new UserService(mockUserRepository as any);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('ユーザーが正しく取得されること', async () => {
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+    };
+
+    mockUserRepository.findById.mockResolvedValue(mockUser);
+
+    const result = await service.findById('1');
+
+    expect(result).toEqual(mockUser);
+    expect(mockUserRepository.findById).toHaveBeenCalledWith('1');
+  });
+});
+```
+
+### 2. スナップショットテスト
+
+```typescript
+import { render } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('スナップショットが一致すること', () => {
+    const { container } = render(<Button>クリック</Button>);
+    expect(container).toMatchSnapshot();
+  });
+
+  it('disabled状態のスナップショットが一致すること', () => {
+    const { container } = render(<Button disabled>クリック</Button>);
+    expect(container).toMatchSnapshot();
+  });
+});
+```
+
+### 3. 非同期処理のテスト
+
+```typescript
+import { renderHook } from '@testing-library/react-hooks';
+import { useAsync } from './useAsync';
+
+describe('useAsync', () => {
+  it('非同期処理が正しく実行されること', async () => {
+    const mockFn = jest.fn().mockResolvedValue('success');
+    const { result, waitForNextUpdate } = renderHook(() => useAsync(mockFn));
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBe(null);
+    expect(result.current.data).toBe(null);
+
+    await waitForNextUpdate();
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(null);
+    expect(result.current.data).toBe('success');
+  });
+
+  it('エラーが正しく処理されること', async () => {
+    const mockError = new Error('test error');
+    const mockFn = jest.fn().mockRejectedValue(mockError);
+    const { result, waitForNextUpdate } = renderHook(() => useAsync(mockFn));
+
+    await waitForNextUpdate();
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(mockError);
+    expect(result.current.data).toBe(null);
+  });
+});
+```
+
+## テストのベストプラクティス
+
+### 1. テストの独立性
+
+- 各テストは独立して実行可能であること
+- テスト間で状態を共有しないこと
+- テストの実行順序に依存しないこと
+
+### 2. テストの可読性
+
+- テストの目的が明確であること
+- テストケースの名前が分かりやすいこと
+- テストコードに適切なコメントを付けること
+
+### 3. テストの保守性
+
+- テストコードの重複を避けること
+- テストヘルパー関数を適切に使用すること
+- テストデータの管理を適切に行うこと
+
+### 4. テストの実行速度
+
+- 不要なテストを実行しないこと
+- モックを適切に使用すること
+- 並列実行を活用すること
+
+## テスト環境の設定
+
+### 1. Jest設定（jest.config.js）
+
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+  },
+  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/test/**/*',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 90,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+```
+
+### 2. テストセットアップ（setup.ts）
+
+```typescript
+import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+
+// テストのタイムアウト設定
+configure({ asyncUtilTimeout: 5000 });
+
+// グローバルなモックの設定
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+};
+
+// テスト環境のクリーンアップ
+afterEach(() => {
+  jest.clearAllMocks();
+});
+```
+
+### 3. テストヘルパー（test-utils.tsx）
+
+```typescript
+import React from 'react';
+import { render as rtlRender } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import { rootReducer } from '../store';
+
+function render(
+  ui: React.ReactElement,
+  {
+    preloadedState,
+    store = configureStore({ reducer: rootReducer, preloadedState }),
+    ...renderOptions
+  } = {}
+) {
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return <Provider store={store}>{children}</Provider>;
+  }
+  return rtlRender(ui, { wrapper: Wrapper, ...renderOptions });
+}
+
+export * from '@testing-library/react';
+export { render };
+```
+
+## テストの自動化
+
+### 1. CI/CD設定（.github/workflows/test.yml）
+
+```yaml
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Upload coverage
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+```
+
+### 2. テストスクリプト（package.json）
+
+```json
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "jest --config jest.e2e.config.js",
+    "test:ci": "jest --ci --coverage --runInBand"
+  }
+}
+```
+
+## テストのドキュメント
+
+### 1. テスト計画
+
+```markdown
+# テスト計画
+
+## テストの目的
+- アプリケーションの品質確保
+- リグレッションの防止
+- 新機能の検証
+
+## テストの種類
+1. ユニットテスト
+   - コンポーネント
+   - フック
+   - ユーティリティ関数
+
+2. 統合テスト
+   - APIエンドポイント
+   - データベース操作
+   - 外部サービス連携
+
+3. E2Eテスト
+   - ユーザーフロー
+   - エラー処理
+   - パフォーマンス
+
+## テストカバレッジ目標
+- ステートメント: 80%
+- ブランチ: 70%
+- 関数: 90%
+
+## テスト環境
+- Node.js: 16.x, 18.x
+- Jest: 27.x
+- React Testing Library: 12.x
+```
+
+### 2. テストケーステンプレート
+
+```markdown
+# テストケース: [機能名]
+
+## テストの目的
+[このテストで何を検証するか]
+
+## 前提条件
+- [必要な環境やデータ]
+
+## テスト手順
+1. [手順1]
+2. [手順2]
+3. [手順3]
+
+## 期待結果
+- [期待される結果1]
+- [期待される結果2]
+
+## 実際の結果
+- [実際の結果1]
+- [実際の結果2]
+
+## 備考
+- [追加の情報や注意点]
+``` 
