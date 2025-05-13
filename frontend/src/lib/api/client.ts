@@ -5,8 +5,8 @@
  * GET, POST, PUT, DELETEなどの基本的なHTTPリクエストメソッドを提供します。
  */
 
-import { ApiResponse, ApiError } from '../../types/api';
-import { config } from '../../config';
+import { ApiResponse, ApiError } from '@/types/api';
+import { config } from '@/config';
 
 /**
  * APIクライアントクラス

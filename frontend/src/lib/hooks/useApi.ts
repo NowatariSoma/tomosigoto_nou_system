@@ -6,9 +6,9 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { ApiClient } from '../api/client';
-import { ApiResponse, PaginatedResponse } from '../../types/api';
-import { AsyncData } from '../../types/utility';
+import { ApiClient } from '@/lib/api/client';
+import { ApiResponse, PaginatedResponse } from '@/types/api';
+import { AsyncData } from '@/types/utility';
 
 /**
  * 基本的なAPI呼び出しを行うカスタムフック

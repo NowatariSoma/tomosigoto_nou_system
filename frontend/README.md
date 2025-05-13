@@ -26,6 +26,41 @@ src/
     └── utility.ts # ユーティリティ型
 ```
 
+## パスエイリアスの使用
+このプロジェクトでは、相対パスの代わりにパスエイリアスを使用しています。これにより、インポートパスの可読性と保守性が向上します。
+
+### パスエイリアスの設定
+パスエイリアスは `tsconfig.json` で設定されています：
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+### 使用方法
+```typescript
+// 推奨：パスエイリアスを使用
+import { Something } from '@/components/SomeComponent';
+import { useApi } from '@/lib/hooks/useApi';
+import { User } from '@/types/models';
+
+// 非推奨：相対パスを使用
+import { Something } from '../../components/SomeComponent';
+import { useApi } from '../hooks/useApi';
+import { User } from '../../types/models';
+```
+
+### メリット
+- ファイルを移動しても、インポートパスを更新する必要がない
+- 深くネストされたディレクトリでも、シンプルなインポートパスを維持できる
+- コードの可読性が向上する
+- エディタの自動インポート機能が正確に動作する
+
 ## 開発環境のセットアップ
 ```bash
 # 依存パッケージのインストール
