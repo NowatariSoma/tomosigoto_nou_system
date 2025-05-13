@@ -67,6 +67,55 @@
    - シーズン段階に応じた推奨変更
    - ユーザーフィードバックの反映
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class TemplateManager {
+        -template_repository: TemplateRepository
+        +get_template(template_id: int): Template
+        +save_template(template: Template): int
+        +list_templates(category: str): list[Template]
+        +get_template_version_history(template_id: int): list[TemplateVersion]
+    }
+    
+    class TemplateMatchingEngine {
+        -template_manager: TemplateManager
+        -part_analyzer: PartAnalyzer
+        +find_suitable_templates(session: Session): list[Template]
+        +rank_templates(session: Session, templates: list[Template]): list[RankedTemplate]
+        -calculate_template_score(session: Session, template: Template): float
+    }
+    
+    class TemplateCustomizer {
+        +customize_template(template: Template, session: Session): CustomizedTemplate
+        +adjust_parameters(template: Template, adjustments: dict): Template
+        -adapt_to_part_characteristics(template: Template, part: Part): Template
+        -adapt_to_venue(template: Template, venue: Venue): Template
+    }
+    
+    class ConsistencyValidator {
+        +validate_template_application(session: Session, template: Template): ValidationResult
+        +check_time_allocation(template: Template, session_duration: int): bool
+        +check_practice_balance(template: Template): bool
+        +check_goal_alignment(template: Template, part_goals: dict): bool
+    }
+    
+    class RecommendationEngine {
+        -template_manager: TemplateManager
+        -history_analyzer: HistoryAnalyzer
+        +recommend_templates(part: Part, progress_stage: str): list[Template]
+        +incorporate_feedback(template_id: int, feedback: Feedback): void
+        -analyze_success_patterns(part_id: int): list[SuccessPattern]
+    }
+    
+    TemplateMatchingEngine --> TemplateManager : uses
+    TemplateCustomizer --> TemplateManager : uses
+    ConsistencyValidator --> TemplateManager : uses
+    RecommendationEngine --> TemplateManager : uses
+```
+
 ## 実装アプローチ
 ### テンプレート適用アルゴリズム概要
 1. **前処理フェーズ**
@@ -136,10 +185,115 @@
 6. 最終スコア = 合計点数
 ```
 
-## 主要ファイル
-- `src/algorithm/scheduler/templateManager.ts` - テンプレート管理機能
-- `src/algorithm/scheduler/templateMatchingEngine.ts` - テンプレートマッチング
-- `src/algorithm/scheduler/templateCustomizer.ts` - カスタマイズ機能
-- `src/algorithm/scheduler/consistencyValidator.ts` - 整合性検証
-- `src/algorithm/scheduler/recommendationEngine.ts` - 推奨エンジン
-- `test/algorithm/templateApplication.test.ts` - テンプレート適用テスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/scheduler/template_manager.py` - テンプレート管理機能
+- `src/algorithm/scheduler/template_matching_engine.py` - テンプレートマッチング
+- `src/algorithm/scheduler/template_customizer.py` - カスタマイズ機能
+- `src/algorithm/scheduler/consistency_validator.py` - 整合性検証
+- `src/algorithm/scheduler/recommendation_engine.py` - 推奨エンジン
+- `src/algorithm/scheduler/models/template_models.py` - テンプレートモデル定義
+- `src/algorithm/scheduler/utils/template_utils.py` - テンプレート操作ユーティリティ
+- `src/algorithm/scheduler/config/template_config.py` - テンプレート設定
+- `tests/algorithm/scheduler/test_template_application.py` - テンプレート適用テスト
+- `tests/algorithm/scheduler/test_template_customizer.py` - カスタマイズ機能テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/scheduler/template_manager.py`
+**目的**: 練習テンプレートの管理と操作を行うための機能を提供する
+
+**クラス/インターフェース**:
+- `TemplateManager`: テンプレート管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `get_template(template_id: int) -> Template` - テンプレートを取得
+    - `save_template(template: Template) -> int` - テンプレートを保存
+    - `list_templates(category: str) -> list[Template]` - カテゴリ別テンプレート一覧取得
+    - `get_template_version_history(template_id: int) -> list[TemplateVersion]` - テンプレートバージョン履歴取得
+  - **依存クラス**: `TemplateRepository`
+
+### `src/algorithm/scheduler/template_matching_engine.py`
+**目的**: セッションに最適なテンプレートを選択するためのマッチング機能を提供する
+
+**クラス/インターフェース**:
+- `TemplateMatchingEngine`: テンプレートマッチングエンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `find_suitable_templates(session: Session) -> list[Template]` - 適合するテンプレートを検索
+    - `rank_templates(session: Session, templates: list[Template]) -> list[RankedTemplate]` - テンプレートをランク付け
+    - `calculate_template_score(session: Session, template: Template) -> float` - テンプレートの適合度スコアを計算
+  - **依存クラス**: `TemplateManager`, `PartAnalyzer`
+
+### `src/algorithm/scheduler/template_customizer.py`
+**目的**: 選択されたテンプレートをセッション要件に合わせてカスタマイズする
+
+**クラス/インターフェース**:
+- `TemplateCustomizer`: テンプレートカスタマイズクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `customize_template(template: Template, session: Session) -> CustomizedTemplate` - テンプレートをカスタマイズ
+    - `adjust_parameters(template: Template, adjustments: dict) -> Template` - パラメータを調整
+    - `adapt_to_part_characteristics(template: Template, part: Part) -> Template` - パート特性に適応
+    - `adapt_to_venue(template: Template, venue: Venue) -> Template` - 会場に適応
+  - **依存クラス**: なし
+
+### `src/algorithm/scheduler/consistency_validator.py`
+**目的**: テンプレート適用後の整合性を検証する
+
+**クラス/インターフェース**:
+- `ConsistencyValidator`: 整合性検証クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `validate_template_application(session: Session, template: Template) -> ValidationResult` - テンプレート適用を検証
+    - `check_time_allocation(template: Template, session_duration: int) -> bool` - 時間配分を確認
+    - `check_practice_balance(template: Template) -> bool` - 練習バランスを確認
+    - `check_goal_alignment(template: Template, part_goals: dict) -> bool` - 目標との整合性を確認
+  - **依存クラス**: `TemplateManager`
+
+### `src/algorithm/scheduler/recommendation_engine.py`
+**目的**: 過去のデータに基づいて最適なテンプレートを推奨する
+
+**クラス/インターフェース**:
+- `RecommendationEngine`: 推奨エンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `recommend_templates(part: Part, progress_stage: str) -> list[Template]` - テンプレートを推奨
+    - `incorporate_feedback(template_id: int, feedback: Feedback) -> None` - フィードバックを反映
+    - `analyze_success_patterns(part_id: int) -> list[SuccessPattern]` - 成功パターンを分析
+  - **依存クラス**: `TemplateManager`, `HistoryAnalyzer`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "template_manager.py"
+        TM[TemplateManager]
+    end
+    
+    subgraph "template_matching_engine.py"
+        TME[TemplateMatchingEngine]
+    end
+    
+    subgraph "template_customizer.py"
+        TC[TemplateCustomizer]
+    end
+    
+    subgraph "consistency_validator.py"
+        CV[ConsistencyValidator]
+    end
+    
+    subgraph "recommendation_engine.py"
+        RE[RecommendationEngine]
+    end
+    
+    TME --> TM
+    TC --> TM
+    CV --> TM
+    RE --> TM
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    
+    class TME,TC main;
+    class TM,CV,RE util;
+``` 

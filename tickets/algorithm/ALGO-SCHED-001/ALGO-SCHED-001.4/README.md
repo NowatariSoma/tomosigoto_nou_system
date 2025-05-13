@@ -1,31 +1,30 @@
 # ALGO-SCHED-001.4: スケジュール制約検証アルゴリズム実装
 
 ## 概要
-練習表自動生成システムにおける制約検証アルゴリズムを実装します。生成されたスケジュールが様々なハード制約（絶対条件）とソフト制約（望ましい条件）を満たしているかを検証し、問題箇所を特定・修正する機能を開発します。
+練習表自動生成システムにおけるスケジュール制約検証アルゴリズムを実装します。生成されたスケジュールが運用上および練習効率上の制約を満たしているかを検証し、必要に応じて調整・修正する機能を開発します。
 
 ## 詳細
-- スケジュール制約のモデル化と定義システム実装
-- ハード制約（違反不可の絶対条件）の検証ロジック
-- ソフト制約（望ましい条件）の検証と評価関数
-- 制約違反の検出と報告メカニズム
-- 制約違反の自動修正アルゴリズム開発
+- ハードコンストレイント（絶対制約）の検証機能
+- ソフトコンストレイント（望ましい条件）の検証機能
+- 各種制約ルールの定義・管理システム
+- 違反報告と自動修正機能の実装
+- パフォーマンス最適化と複数制約の同時処理
 
 ## 依存関係
 - 親タスク: ALGO-SCHED-001
 - ALGO-SCHED-001.1: 基本計画からの初期割り当てアルゴリズム実装
 - ALGO-SCHED-001.2: 会場割り当てアルゴリズム実装
 - ALGO-SCHED-001.3: 練習テンプレート適用アルゴリズム実装
+- BACK-DB-001.3: 制約条件テーブルの設計と実装
 
 ## 参照ファイル
 - [設計書/09_アルゴリズム詳細_1_スケジュール生成.md](../../../../設計書/09_アルゴリズム詳細_1_スケジュール生成.md)
-- [設計書/12_スケジュール制約条件一覧.md](../../../../設計書/12_スケジュール制約条件一覧.md)
+- [設計書/12_スケジュール制約条件.md](../../../../設計書/12_スケジュール制約条件.md)
 
 ## 成果物
-- 制約検証アルゴリズム実装コード
+- スケジュール制約検証アルゴリズム実装コード
 - アルゴリズムのテストケース
-- 制約定義システム
-- 違反報告・視覚化機能
-- 自動修正メカニズム
+- 制約ルール管理インターフェース
 - 実装ドキュメント
 - 使用方法ガイド
 
@@ -39,107 +38,269 @@
 未割り当て
 
 ## 主要機能
-1. **制約モデリング**
-   - 各種制約条件の定義と分類
+1. **制約管理**
+   - 制約条件の定義と保存
    - 制約の優先順位付け
-   - パラメータ化された制約定義
-   - カスタム制約の追加メカニズム
+   - ハードコンストレイントとソフトコンストレイントの区別
+   - カスタム制約の追加・編集機能
 
-2. **ハード制約検証**
-   - 物理的制約（同一時間の重複など）の検証
-   - リソース制約（会場や設備の重複利用）の確認
-   - 必須条件（特定の練習の順序など）の検証
-   - 参加者の利用可能性確認
+2. **ハードコンストレイント検証**
+   - 会場の重複予約の検出
+   - 指導者の同時間帯複数予約の防止
+   - 必須練習項目の未実施検出
+   - 時間的連続性確認（不可能な移動の防止）
 
-3. **ソフト制約評価**
-   - 望ましい条件の定量的評価
-   - ソフト制約違反の重み付けスコアリング
-   - 全体スケジュール品質の評価関数
-   - パラメータ調整による評価カスタマイズ
+3. **ソフトコンストレイント検証**
+   - 練習の理想的間隔の検証
+   - パート間練習量バランスの評価
+   - 曲目の練習バランス評価
+   - 会場切り替えの最適化評価
 
-4. **違反検出・報告**
-   - 制約違反の詳細特定
-   - 問題の深刻度分類
-   - 視覚的なレポート生成
-   - 修正提案の生成
+4. **違反報告と修正提案**
+   - 違反の詳細レポート生成
+   - 違反の重大度評価
+   - 自動修正案の提示
+   - 複数違反の関連性分析
 
-5. **自動修正機能**
-   - ハード制約違反の自動修正アルゴリズム
-   - ソフト制約の最適化アルゴリズム
-   - 最小変更による修正戦略
-   - 段階的な制約緩和による解決
+5. **最適化処理**
+   - 複数制約の同時処理最適化
+   - 優先順位に基づく制約緩和の提案
+   - スケジュール全体の最適性評価
+   - 実行パフォーマンスの最適化
+
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class ConstraintManager {
+        -constraint_repository: ConstraintRepository
+        +get_constraint(constraint_id: int): Constraint
+        +save_constraint(constraint: Constraint): int
+        +list_constraints(priority: str): list[Constraint]
+        +get_active_constraints(): list[Constraint]
+    }
+    
+    class ConstraintValidator {
+        -constraint_manager: ConstraintManager
+        +validate_schedule(schedule: Schedule): ValidationResult
+        +check_hard_constraints(schedule: Schedule): list[Violation]
+        +check_soft_constraints(schedule: Schedule): list[Warning]
+        -evaluate_constraint(schedule: Schedule, constraint: Constraint): ConstraintResult
+    }
+    
+    class ViolationReporter {
+        +generate_report(violations: list[Violation], warnings: list[Warning]): Report
+        +calculate_severity(violation: Violation): float
+        +group_related_violations(violations: list[Violation]): list[ViolationGroup]
+        -format_violation_message(violation: Violation): str
+    }
+    
+    class AutoCorrector {
+        -constraint_validator: ConstraintValidator
+        +suggest_corrections(schedule: Schedule, violations: list[Violation]): list[Correction]
+        +apply_corrections(schedule: Schedule, corrections: list[Correction]): Schedule
+        +get_correction_impact(schedule: Schedule, correction: Correction): ImpactAnalysis
+        -resolve_conflicts(corrections: list[Correction]): list[Correction]
+    }
+    
+    class OptimizationEngine {
+        -constraint_validator: ConstraintValidator
+        -auto_corrector: AutoCorrector
+        +optimize_schedule(schedule: Schedule): OptimizedSchedule
+        +relax_constraints(schedule: Schedule, constraint_ids: list[int]): Schedule
+        +evaluate_overall_quality(schedule: Schedule): QualityScore
+        -balance_constraint_satisfaction(schedule: Schedule): Schedule
+    }
+    
+    ConstraintValidator --> ConstraintManager : uses
+    ViolationReporter --> ConstraintValidator : uses
+    AutoCorrector --> ConstraintValidator : uses
+    OptimizationEngine --> ConstraintValidator : uses
+    OptimizationEngine --> AutoCorrector : uses
+```
 
 ## 実装アプローチ
 ### 制約検証アルゴリズム概要
-1. **前処理フェーズ**
-   - 完成したスケジュールデータのロード
-   - 適用される制約条件の特定
-   - 検証のための参照データロード
-   - 検証優先順位の決定
+1. **制約の初期化**
+   - 設定された全ての制約条件を読み込み
+   - 制約の優先順位に基づき分類
+   - 制約間の関連性や矛盾の確認
+   - 検証対象スケジュールの読み込み
 
-2. **検証フェーズ**
-   - ハード制約の違反チェック
-   - ソフト制約の評価
-   - 全体スケジュール品質スコアの計算
-   - 問題箇所のマーキング
+2. **ハードコンストレイント検証**
+   - 全ての絶対制約に対して検証実行
+   - 違反発見時に即時フラグを立てる
+   - 違反の詳細情報を記録
+   - 重大な違反は処理を停止
 
-3. **報告フェーズ**
-   - 違反の詳細リスト作成
-   - 深刻度による問題の優先順位付け
-   - 修正提案の生成
-   - 視覚的なレポート作成
+3. **ソフトコンストレイント検証**
+   - 全ての望ましい条件について検証
+   - 条件ごとに満足度スコアを計算
+   - 警告レベルの違反を記録
+   - 全体スコアの集計
 
-4. **修正フェーズ**
-   - ハード制約違反の自動修正
-   - ソフト制約最適化の提案
-   - 修正影響の分析
-   - 最終的な修正案の適用
+4. **違反のレポート生成**
+   - 検出された全ての違反をまとめたレポート作成
+   - 違反の重大度に基づいてソート
+   - 関連する違反をグループ化
+   - 修正に向けた提案を追加
+
+5. **自動修正処理**
+   - 違反の優先順位に基づいて修正案を生成
+   - 修正案の相互影響を評価
+   - 最適な修正の組み合わせを選定
+   - 修正適用後の再検証
 
 ## アルゴリズム詳細
 ### コアアルゴリズム
 ```
-制約検証アルゴリズム:
-1. スケジュール全体のデータ取得
-2. 適用する制約条件の読み込み
-3. ハード制約検証:
-   a. 時間的整合性チェック
-   b. リソース競合チェック
-   c. 必須順序チェック
-   d. 参加可能性チェック
-4. ソフト制約評価:
-   a. 各ソフト制約の満足度計算
-   b. 重み付けによる総合スコア計算
-5. 違反報告の生成:
-   a. 検出された違反のリスト化
-   b. 深刻度によるソート
-   c. 修正提案の生成
-6. 自動修正処理:
-   a. ハード制約違反の順次修正
-   b. ソフト制約の最適化調整
-   c. 修正影響の検証
-7. 最終的な検証結果と修正済みスケジュールを返却
+スケジュール制約検証アルゴリズム:
+1. 全ての制約条件をロード
+2. 対象スケジュールの全セッションを走査
+3. 各セッションについて:
+   a. 全てのハードコンストレイントに対して検証
+   b. 違反があれば違反リストに追加
+4. 全てのハードコンストレイント検証が完了後:
+   a. ハードコンストレイント違反がなければソフトコンストレイント検証へ
+   b. 違反があれば深刻度を評価し、報告
+5. ソフトコンストレイント検証:
+   a. 全セッションに対して全ソフトコンストレイントを検証
+   b. 各制約の満足度をスコア化
+   c. 警告レベルの問題を記録
+6. 違反と警告のレポート生成
+7. 自動修正が可能な場合は修正案を提示
+8. 修正適用後のスケジュールを返却
 ```
 
-### 制約違反自動修正ロジック
+### 制約評価ロジック
 ```
-制約違反修正アルゴリズム:
-1. 違反を深刻度順にソート
-2. 各ハード制約違反について:
-   a. 違反原因の分析
-   b. 可能な修正方法のリスト作成
-   c. 修正の影響範囲評価
-   d. 最小影響の修正を選択して適用
-   e. 新たな違反が生じないか再検証
-3. 全ハード制約違反が解消されたら:
-   a. ソフト制約の最適化
-   b. 局所的な改善の繰り返し
-4. 修正済みのスケジュールを返却
+制約評価ロジック:
+1. 制約タイプを確認（ハード/ソフト）
+2. 制約のチェック関数を実行
+3. ハードコンストレイントの場合:
+   a. 満たす: true を返す
+   b. 満たさない: 違反詳細を含む false を返す
+4. ソフトコンストレイントの場合:
+   a. 満足度を 0～100 でスコア化
+   b. 閾値未満のスコアは警告として記録
+   c. 閾値以上のスコアは問題なしとして処理
+5. 全制約の評価結果を集約
+6. 総合評価スコアを算出
 ```
 
-## 主要ファイル
-- `src/algorithm/scheduler/constraintManager.ts` - 制約管理機能
-- `src/algorithm/scheduler/hardConstraintValidator.ts` - ハード制約検証
-- `src/algorithm/scheduler/softConstraintEvaluator.ts` - ソフト制約評価
-- `src/algorithm/scheduler/violationDetector.ts` - 違反検出機能
-- `src/algorithm/scheduler/autoCorrector.ts` - 自動修正機能
-- `test/algorithm/constraintValidation.test.ts` - 制約検証テスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/scheduler/constraint_manager.py` - 制約条件管理
+- `src/algorithm/scheduler/constraint_validator.py` - 制約検証機能
+- `src/algorithm/scheduler/violation_reporter.py` - 違反レポート機能
+- `src/algorithm/scheduler/auto_corrector.py` - 自動修正機能
+- `src/algorithm/scheduler/optimization_engine.py` - 最適化エンジン
+- `src/algorithm/scheduler/models/constraint_models.py` - 制約モデル定義
+- `src/algorithm/scheduler/utils/constraint_utils.py` - 制約操作ユーティリティ
+- `src/algorithm/scheduler/config/constraint_config.py` - 制約設定
+- `tests/algorithm/scheduler/test_constraint_validation.py` - 制約検証テスト
+- `tests/algorithm/scheduler/test_auto_correction.py` - 自動修正テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/scheduler/constraint_manager.py`
+**目的**: スケジュール制約条件の管理と操作を行うための機能を提供する
+
+**クラス/インターフェース**:
+- `ConstraintManager`: 制約管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `get_constraint(constraint_id: int) -> Constraint` - 制約を取得
+    - `save_constraint(constraint: Constraint) -> int` - 制約を保存
+    - `list_constraints(priority: str) -> list[Constraint]` - 優先度別制約一覧取得
+    - `get_active_constraints() -> list[Constraint]` - 有効な制約を取得
+  - **依存クラス**: `ConstraintRepository`
+
+### `src/algorithm/scheduler/constraint_validator.py`
+**目的**: スケジュールに対して制約条件の検証を行う
+
+**クラス/インターフェース**:
+- `ConstraintValidator`: 制約検証クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `validate_schedule(schedule: Schedule) -> ValidationResult` - スケジュールを検証
+    - `check_hard_constraints(schedule: Schedule) -> list[Violation]` - ハード制約をチェック
+    - `check_soft_constraints(schedule: Schedule) -> list[Warning]` - ソフト制約をチェック
+    - `evaluate_constraint(schedule: Schedule, constraint: Constraint) -> ConstraintResult` - 制約を評価
+  - **依存クラス**: `ConstraintManager`
+
+### `src/algorithm/scheduler/violation_reporter.py`
+**目的**: 制約違反の詳細レポートを生成する
+
+**クラス/インターフェース**:
+- `ViolationReporter`: 違反レポート生成クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `generate_report(violations: list[Violation], warnings: list[Warning]) -> Report` - レポート生成
+    - `calculate_severity(violation: Violation) -> float` - 違反の重大度を計算
+    - `group_related_violations(violations: list[Violation]) -> list[ViolationGroup]` - 関連する違反をグループ化
+    - `format_violation_message(violation: Violation) -> str` - 違反メッセージを整形
+  - **依存クラス**: なし
+
+### `src/algorithm/scheduler/auto_corrector.py`
+**目的**: 制約違反の自動修正を行う
+
+**クラス/インターフェース**:
+- `AutoCorrector`: 自動修正クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `suggest_corrections(schedule: Schedule, violations: list[Violation]) -> list[Correction]` - 修正案を提案
+    - `apply_corrections(schedule: Schedule, corrections: list[Correction]) -> Schedule` - 修正を適用
+    - `get_correction_impact(schedule: Schedule, correction: Correction) -> ImpactAnalysis` - 修正の影響を分析
+    - `resolve_conflicts(corrections: list[Correction]) -> list[Correction]` - 修正間の競合を解決
+  - **依存クラス**: `ConstraintValidator`
+
+### `src/algorithm/scheduler/optimization_engine.py`
+**目的**: スケジュール全体の最適化を行う
+
+**クラス/インターフェース**:
+- `OptimizationEngine`: 最適化エンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `optimize_schedule(schedule: Schedule) -> OptimizedSchedule` - スケジュールを最適化
+    - `relax_constraints(schedule: Schedule, constraint_ids: list[int]) -> Schedule` - 制約を緩和
+    - `evaluate_overall_quality(schedule: Schedule) -> QualityScore` - 全体品質を評価
+    - `balance_constraint_satisfaction(schedule: Schedule) -> Schedule` - 制約満足度のバランスを取る
+  - **依存クラス**: `ConstraintValidator`, `AutoCorrector`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "constraint_manager.py"
+        CM[ConstraintManager]
+    end
+    
+    subgraph "constraint_validator.py"
+        CV[ConstraintValidator]
+    end
+    
+    subgraph "violation_reporter.py"
+        VR[ViolationReporter]
+    end
+    
+    subgraph "auto_corrector.py"
+        AC[AutoCorrector]
+    end
+    
+    subgraph "optimization_engine.py"
+        OE[OptimizationEngine]
+    end
+    
+    CV --> CM
+    VR --> CV
+    AC --> CV
+    OE --> CV
+    OE --> AC
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    
+    class CV,AC main;
+    class CM,VR,OE util;
+```

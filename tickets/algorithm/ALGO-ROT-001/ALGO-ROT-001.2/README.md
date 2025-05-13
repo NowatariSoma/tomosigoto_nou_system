@@ -66,6 +66,50 @@
    - 要件緩和による再割り当て
    - 特別対応セッションのフラグ付け
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class SupervisorAssigner {
+        -qualification_verifier: QualificationVerifier
+        -priority_calculator: PriorityCalculator
+        -availability_manager: AvailabilityManager
+        +assign_supervisors(sessions: list[Session]): list[Assignment]
+        -prioritize_sessions(sessions: list[Session]): list[Session]
+        -evaluate_assignment(assignments: list[Assignment]): AssignmentEvaluation
+    }
+    
+    class PriorityCalculator {
+        +calculate_session_priority(session: Session): float
+        +calculate_supervisor_score(supervisor: Supervisor, session: Session): float
+        -weight_factors(factors: dict): float
+    }
+    
+    class AvailabilityManager {
+        +check_availability(supervisor_id: int, time_slot: TimeSlot): bool
+        +get_available_supervisors(time_slot: TimeSlot): list[Supervisor]
+        +update_availability(supervisor_id: int, time_slot: TimeSlot, is_available: bool): None
+    }
+    
+    class LoadBalancer {
+        +calculate_load(supervisor: Supervisor): float
+        +balance_assignments(assignments: list[Assignment]): list[Assignment]
+        -detect_overloaded_supervisors(assignments: list[Assignment]): list[Supervisor]
+    }
+    
+    class AssignmentEvaluator {
+        +evaluate_fairness(assignments: list[Assignment]): FairnessMetrics
+        +identify_unassigned_sessions(sessions: list[Session], assignments: list[Assignment]): list[Session]
+        +suggest_improvements(assignments: list[Assignment]): list[Suggestion]
+    }
+    
+    SupervisorAssigner --> PriorityCalculator : uses
+    SupervisorAssigner --> AvailabilityManager : uses
+    SupervisorAssigner --> LoadBalancer : uses
+    SupervisorAssigner --> AssignmentEvaluator : uses
+```
+
 ## 実装アプローチ
 ### 基本監督割り当てアルゴリズム概要
 1. **前処理フェーズ**
@@ -134,10 +178,112 @@
 6. 最終スコア = 合計点数
 ```
 
-## 主要ファイル
-- `src/algorithm/rotation/supervisorAssigner.ts` - 監督割り当て機能
-- `src/algorithm/rotation/priorityCalculator.ts` - 優先度計算機能
-- `src/algorithm/rotation/availabilityManager.ts` - 利用可能性管理
-- `src/algorithm/rotation/loadBalancer.ts` - 負荷分散機能
-- `src/algorithm/rotation/assignmentEvaluator.ts` - 割り当て評価機能
-- `test/algorithm/basicAssignment.test.ts` - 基本割り当てテスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/rotation/supervisor_assigner.py` - 監督割り当て機能
+- `src/algorithm/rotation/priority_calculator.py` - 優先度計算機能
+- `src/algorithm/rotation/availability_manager.py` - 利用可能性管理
+- `src/algorithm/rotation/load_balancer.py` - 負荷分散機能
+- `src/algorithm/rotation/assignment_evaluator.py` - 割り当て評価機能
+- `src/algorithm/rotation/models.py` - データモデル定義
+- `src/algorithm/rotation/utils/scoring_utils.py` - スコア計算ユーティリティ
+- `src/algorithm/rotation/config/assignment_config.py` - 割り当て設定
+- `tests/algorithm/rotation/test_supervisor_assigner.py` - 監督割り当てテスト
+- `tests/algorithm/rotation/test_load_balancer.py` - 負荷分散テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/rotation/supervisor_assigner.py`
+**目的**: 基本監督割り当てのコア機能を実装し、各セッションに最適な監督者を割り当てる
+
+**クラス/インターフェース**:
+- `SupervisorAssigner`: 監督割り当て主要クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `assign_supervisors(sessions: list[Session]) -> list[Assignment]` - 監督者を各セッションに割り当て
+    - `prioritize_sessions(sessions: list[Session]) -> list[Session]` - セッションの優先順位付け
+    - `evaluate_assignment(assignments: list[Assignment]) -> AssignmentEvaluation` - 割り当て結果を評価
+  - **依存クラス**: `QualificationVerifier`, `PriorityCalculator`, `AvailabilityManager`, `LoadBalancer`
+
+### `src/algorithm/rotation/priority_calculator.py`
+**目的**: セッションと監督者の優先度・適合度を計算する
+
+**クラス/インターフェース**:
+- `PriorityCalculator`: 優先度計算クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_session_priority(session: Session) -> float` - セッションの優先度を計算
+    - `calculate_supervisor_score(supervisor: Supervisor, session: Session) -> float` - 監督者の適合度スコアを計算
+    - `weight_factors(factors: dict) -> float` - 複数要素の重み付け計算
+  - **依存クラス**: なし
+
+### `src/algorithm/rotation/availability_manager.py`
+**目的**: 監督者の利用可能性を管理し、時間的競合を検出する
+
+**クラス/インターフェース**:
+- `AvailabilityManager`: 利用可能性管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `check_availability(supervisor_id: int, time_slot: TimeSlot) -> bool` - 監督者の利用可能状態を確認
+    - `get_available_supervisors(time_slot: TimeSlot) -> list[Supervisor]` - 時間枠で利用可能な監督者を取得
+    - `update_availability(supervisor_id: int, time_slot: TimeSlot, is_available: bool) -> None` - 利用可能性を更新
+  - **依存クラス**: `DatabaseConnector`
+
+### `src/algorithm/rotation/load_balancer.py`
+**目的**: 監督者間の負荷を計算し、バランスを最適化する
+
+**クラス/インターフェース**:
+- `LoadBalancer`: 負荷分散クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_load(supervisor: Supervisor) -> float` - 監督者の現在負荷を計算
+    - `balance_assignments(assignments: list[Assignment]) -> list[Assignment]` - 割り当てのバランスを最適化
+    - `detect_overloaded_supervisors(assignments: list[Assignment]) -> list[Supervisor]` - 過負荷監督者を検出
+  - **依存クラス**: なし
+
+### `src/algorithm/rotation/assignment_evaluator.py`
+**目的**: 割り当て結果の公平性と効率性を評価し、改善点を特定する
+
+**クラス/インターフェース**:
+- `AssignmentEvaluator`: 割り当て評価クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `evaluate_fairness(assignments: list[Assignment]) -> FairnessMetrics` - 公平性指標を計算
+    - `identify_unassigned_sessions(sessions: list[Session], assignments: list[Assignment]) -> list[Session]` - 未割り当てセッションを特定
+    - `suggest_improvements(assignments: list[Assignment]) -> list[Suggestion]` - 改善提案を生成
+  - **依存クラス**: なし
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "supervisor_assigner.py"
+        SA[SupervisorAssigner]
+    end
+    
+    subgraph "priority_calculator.py"
+        PC[PriorityCalculator]
+    end
+    
+    subgraph "availability_manager.py"
+        AM[AvailabilityManager]
+    end
+    
+    subgraph "load_balancer.py"
+        LB[LoadBalancer]
+    end
+    
+    subgraph "assignment_evaluator.py"
+        AE[AssignmentEvaluator]
+    end
+    
+    SA --> PC
+    SA --> AM
+    SA --> LB
+    SA --> AE
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    
+    class SA main;
+    class PC,AM,LB,AE util;
+``` 

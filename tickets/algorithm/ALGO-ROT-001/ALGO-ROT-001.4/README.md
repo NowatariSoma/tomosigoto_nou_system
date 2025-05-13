@@ -67,6 +67,56 @@
    - ルール遵守度と公平性のトレードオフ評価
    - 可視化レポート生成
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class LoadCalculator {
+        +calculate_session_weight(session: Session): float
+        +calculate_supervisor_load(supervisor: Supervisor, assignments: list[Assignment]): float
+        -apply_adjustment_factors(base_load: float, factors: dict): float
+    }
+    
+    class FairnessEvaluator {
+        +calculate_fairness_metrics(assignments: list[Assignment]): FairnessMetrics
+        +calculate_unfairness_index(loads: list[float]): float
+        +analyze_load_distribution(loads: list[float]): LoadDistribution
+        -categorize_supervisors(loads: list[tuple]): dict
+    }
+    
+    class Balancer {
+        -load_calculator: LoadCalculator
+        -fairness_evaluator: FairnessEvaluator
+        +balance_assignments(assignments: list[Assignment]): list[Assignment]
+        -redistribute_load(overloaded: list[Supervisor], underloaded: list[Supervisor]): list[Exchange]
+        -find_optimal_exchanges(assignments: list[Assignment], supervisor_loads: dict): list[Exchange]
+    }
+    
+    class OptimizationEngine {
+        -load_calculator: LoadCalculator
+        -fairness_evaluator: FairnessEvaluator
+        -rule_evaluator: RuleEvaluator
+        +optimize_schedule(initial_assignments: list[Assignment]): list[Assignment]
+        -simulated_annealing(initial_state: list[Assignment], temperature: float, cooling_rate: float): list[Assignment]
+        -calculate_energy(assignments: list[Assignment]): float
+        -generate_neighbor(assignments: list[Assignment]): list[Assignment]
+    }
+    
+    class LoadVisualizer {
+        +create_load_distribution_chart(loads: dict): Chart
+        +create_fairness_comparison(before: FairnessMetrics, after: FairnessMetrics): ComparisonChart
+        +generate_supervisor_load_report(assignments: list[Assignment]): Report
+    }
+    
+    Balancer --> LoadCalculator : uses
+    Balancer --> FairnessEvaluator : uses
+    OptimizationEngine --> LoadCalculator : uses
+    OptimizationEngine --> FairnessEvaluator : uses
+    OptimizationEngine --> Balancer : uses
+    LoadVisualizer --> FairnessEvaluator : uses
+```
+
 ## 実装アプローチ
 ### 負荷均衡化アルゴリズム概要
 1. **前処理フェーズ**
@@ -133,10 +183,119 @@
    基本負荷 × 難易度係数 × 時間帯係数 × 曜日係数 × 長さ係数 × 経験係数 × 希望一致係数
 ```
 
-## 主要ファイル
-- `src/algorithm/rotation/loadCalculator.ts` - 負荷計算機能
-- `src/algorithm/rotation/fairnessEvaluator.ts` - 公平性評価機能
-- `src/algorithm/rotation/balancer.ts` - 負荷均衡化エンジン
-- `src/algorithm/rotation/optimizationEngine.ts` - 最適化エンジン
-- `src/algorithm/rotation/visualizer.ts` - 可視化機能
-- `test/algorithm/loadBalancing.test.ts` - 負荷均衡化テスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/rotation/load_calculator.py` - 負荷計算機能
+- `src/algorithm/rotation/fairness_evaluator.py` - 公平性評価機能
+- `src/algorithm/rotation/balancer.py` - 負荷均衡化エンジン
+- `src/algorithm/rotation/optimization_engine.py` - 最適化エンジン
+- `src/algorithm/rotation/load_visualizer.py` - 可視化機能
+- `src/algorithm/rotation/models/assignment_models.py` - 割り当てモデル
+- `src/algorithm/rotation/config/load_factors.py` - 負荷係数設定
+- `src/algorithm/rotation/utils/optimization_utils.py` - 最適化ユーティリティ
+- `tests/algorithm/rotation/test_load_calculator.py` - 負荷計算テスト
+- `tests/algorithm/rotation/test_balancer.py` - 均衡化テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/rotation/load_calculator.py`
+**目的**: 監督セッションや監督者の負荷を計算し、様々な要素を考慮した重み付けを行う
+
+**クラス/インターフェース**:
+- `LoadCalculator`: 負荷計算クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_session_weight(session: Session) -> float` - セッションの重み（負荷）を計算
+    - `calculate_supervisor_load(supervisor: Supervisor, assignments: list[Assignment]) -> float` - 監督者の総負荷を計算
+    - `apply_adjustment_factors(base_load: float, factors: dict) -> float` - 調整係数を適用
+  - **依存クラス**: なし
+
+### `src/algorithm/rotation/fairness_evaluator.py`
+**目的**: 監督割り当ての公平性を評価し、様々な指標を計算する
+
+**クラス/インターフェース**:
+- `FairnessEvaluator`: 公平性評価クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_fairness_metrics(assignments: list[Assignment]) -> FairnessMetrics` - 公平性指標を計算
+    - `calculate_unfairness_index(loads: list[float]) -> float` - 不公平度指標を計算
+    - `analyze_load_distribution(loads: list[float]) -> LoadDistribution` - 負荷分布を分析
+    - `categorize_supervisors(loads: list[tuple]) -> dict` - 監督者を負荷カテゴリに分類
+  - **依存クラス**: `LoadCalculator`
+
+### `src/algorithm/rotation/balancer.py`
+**目的**: 監督者間の負荷バランスを最適化する
+
+**クラス/インターフェース**:
+- `Balancer`: 負荷均衡化クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `balance_assignments(assignments: list[Assignment]) -> list[Assignment]` - 割り当てを均衡化
+    - `redistribute_load(overloaded: list[Supervisor], underloaded: list[Supervisor]) -> list[Exchange]` - 負荷を再分配
+    - `find_optimal_exchanges(assignments: list[Assignment], supervisor_loads: dict) -> list[Exchange]` - 最適な交換を特定
+  - **依存クラス**: `LoadCalculator`, `FairnessEvaluator`
+
+### `src/algorithm/rotation/optimization_engine.py`
+**目的**: 高度な最適化アルゴリズムを用いて割り当てを最適化する
+
+**クラス/インターフェース**:
+- `OptimizationEngine`: 最適化エンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `optimize_schedule(initial_assignments: list[Assignment]) -> list[Assignment]` - スケジュールを最適化
+    - `simulated_annealing(initial_state: list[Assignment], temperature: float, cooling_rate: float) -> list[Assignment]` - シミュレーテッドアニーリングを実行
+    - `calculate_energy(assignments: list[Assignment]) -> float` - 状態のエネルギー（コスト）を計算
+    - `generate_neighbor(assignments: list[Assignment]) -> list[Assignment]` - 近傍状態を生成
+  - **依存クラス**: `LoadCalculator`, `FairnessEvaluator`, `RuleEvaluator`
+
+### `src/algorithm/rotation/load_visualizer.py`
+**目的**: 負荷分布や均衡化効果を視覚的に表現する
+
+**クラス/インターフェース**:
+- `LoadVisualizer`: 負荷可視化クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `create_load_distribution_chart(loads: dict) -> Chart` - 負荷分布チャートを作成
+    - `create_fairness_comparison(before: FairnessMetrics, after: FairnessMetrics) -> ComparisonChart` - 均衡化前後の比較チャートを作成
+    - `generate_supervisor_load_report(assignments: list[Assignment]) -> Report` - 監督者負荷レポートを生成
+  - **依存クラス**: `FairnessEvaluator`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "load_calculator.py"
+        LC[LoadCalculator]
+    end
+    
+    subgraph "fairness_evaluator.py"
+        FE[FairnessEvaluator]
+    end
+    
+    subgraph "balancer.py"
+        BA[Balancer]
+    end
+    
+    subgraph "optimization_engine.py"
+        OE[OptimizationEngine]
+    end
+    
+    subgraph "load_visualizer.py"
+        LV[LoadVisualizer]
+    end
+    
+    FE --> LC
+    BA --> LC
+    BA --> FE
+    OE --> LC
+    OE --> FE
+    OE --> BA
+    LV --> FE
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    classDef vis fill:#dfd,stroke:#333,stroke-width:1px;
+    
+    class OE,BA main;
+    class LC,FE util;
+    class LV vis;
+``` 

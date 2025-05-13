@@ -51,7 +51,7 @@
 3. **資格マッチング**
    - メンバーの保有資格データベース管理
    - 練習セッションとの資格要件照合
-   - 適格監督者の検出アルゴリズム
+   - 適格者の検出アルゴリズム
    - 監督候補者リストの生成
 
 4. **資格履歴管理**
@@ -65,6 +65,66 @@
    - 特別承認プロセス
    - 資格要件緩和条件の定義
    - 非常時の代替監督者選定
+
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class QualificationVerifier {
+        -qualification_repo: QualificationRepository
+        -member_repo: MemberRepository
+        -session_repo: SessionRepository
+        +verify_qualification(member_id: int, session_id: int): QualificationResult
+        +find_eligible_supervisors(session_id: int): list[Supervisor]
+        -calculate_score(member: Member, requirements: QualificationRequirement): float
+    }
+    
+    class QualificationRepository {
+        +get_requirements(session_id: int): QualificationRequirement
+        +list_qualifications(): list[Qualification]
+        +get_member_qualifications(member_id: int): list[MemberQualification]
+    }
+    
+    class MemberRepository {
+        +get_member(id: int): Member
+        +list_all_members(): list[Member]
+    }
+    
+    class SessionRepository {
+        +get_session(id: int): Session
+        +list_sessions(): list[Session]
+    }
+    
+    class QualificationRequirement {
+        +session_id: int
+        +part_id: int
+        +required_qualifications: list[int]
+        +recommended_qualifications: list[int]
+        +minimum_score: float
+    }
+    
+    class Member {
+        +id: int
+        +name: str
+        +qualifications: list[MemberQualification]
+        +special_skills: list[str]
+    }
+    
+    class Session {
+        +id: int
+        +part_id: int
+        +content: str
+        +special_conditions: list[str]
+    }
+    
+    QualificationVerifier --> QualificationRepository : uses
+    QualificationVerifier --> MemberRepository : uses
+    QualificationVerifier --> SessionRepository : uses
+    QualificationRepository --> QualificationRequirement : returns
+    MemberRepository --> Member : returns
+    SessionRepository --> Session : returns
+```
 
 ## 実装アプローチ
 ### 監督資格検証アルゴリズム概要
@@ -131,10 +191,118 @@
 6. 最終スコア = 合計点数
 ```
 
-## 主要ファイル
-- `src/algorithm/rotation/qualificationManager.ts` - 資格管理機能
-- `src/algorithm/rotation/requirementDefinition.ts` - 要件定義機能
-- `src/algorithm/rotation/matchingEngine.ts` - マッチングエンジン
-- `src/algorithm/rotation/historyTracker.ts` - 履歴追跡機能
-- `src/algorithm/rotation/exceptionHandler.ts` - 例外処理機能
-- `test/algorithm/qualification.test.ts` - 資格検証テスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/rotation/qualification_manager.py` - 資格管理機能
+- `src/algorithm/rotation/requirement_definition.py` - 要件定義機能
+- `src/algorithm/rotation/matching_engine.py` - マッチングエンジン
+- `src/algorithm/rotation/history_tracker.py` - 履歴追跡機能
+- `src/algorithm/rotation/exception_handler.py` - 例外処理機能
+- `src/algorithm/rotation/types.py` - 型定義
+- `src/algorithm/rotation/constants.py` - 定数定義
+- `src/algorithm/rotation/utils/validation_utils.py` - 検証ユーティリティ関数
+- `src/algorithm/rotation/config/qualification_config.py` - 資格設定
+- `tests/algorithm/rotation/test_qualification_manager.py` - 資格管理機能テスト
+- `tests/algorithm/rotation/test_matching_engine.py` - マッチングエンジンテスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/rotation/qualification_manager.py`
+**目的**: 資格検証の中核機能を実装し、各メンバーの資格が特定のセッション要件に合致するかを判定する
+
+**クラス/インターフェース**:
+- `QualificationVerifier`: 資格検証の主要クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `verify_qualification(member_id: int, session_id: int) -> QualificationResult` - メンバーの資格をセッション要件と照合
+    - `find_eligible_supervisors(session_id: int) -> list[Supervisor]` - 特定セッションの監督候補者を抽出
+    - `calculate_score(member: Member, requirements: QualificationRequirement) -> float` - 適合度スコアを計算
+  - **依存クラス**: `QualificationRepository`, `MemberRepository`, `SessionRepository`
+
+### `src/algorithm/rotation/requirement_definition.py`
+**目的**: 各パートや練習内容に必要な資格要件を定義・管理する
+
+**クラス/インターフェース**:
+- `RequirementManager`: 資格要件管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `get_session_requirements(session_id: int) -> QualificationRequirement` - セッションの資格要件を取得
+    - `define_requirement(part_id: int, qualifications: list[str]) -> None` - パート別資格要件を定義
+  - **依存クラス**: `DatabaseConnector`
+
+- `QualificationRequirement`: 資格要件データモデル
+  - **継承/実装**: なし
+  - **主要メソッド**: なし（データモデル）
+  - **依存クラス**: なし
+
+### `src/algorithm/rotation/matching_engine.py`
+**目的**: 監督候補者とセッションの最適なマッチングを行うアルゴリズムを実装
+
+**クラス/インターフェース**:
+- `MatchingEngine`: マッチングエンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `generate_matches(sessions: list[Session], members: list[Member]) -> list[SupervisorAssignment]` - 最適な監督者割り当てを生成
+    - `optimize_assignments(assignments: list[SupervisorAssignment]) -> list[SupervisorAssignment]` - 割り当てを最適化
+  - **依存クラス**: `QualificationVerifier`, `RequirementManager`
+
+### `src/algorithm/rotation/history_tracker.py`
+**目的**: 監督資格の履歴と使用状況を追跡・記録する
+
+**クラス/インターフェース**:
+- `QualificationHistoryTracker`: 資格履歴管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `record_usage(member_id: int, qualification_id: int, session_id: int) -> None` - 資格使用を記録
+    - `get_usage_history(member_id: int) -> list[QualificationUsage]` - 資格使用履歴を取得
+  - **依存クラス**: `DatabaseConnector`
+
+### `src/algorithm/rotation/exception_handler.py`
+**目的**: 監督資格例外処理（一時的資格付与、特別承認など）の管理を行う
+
+**クラス/インターフェース**:
+- `QualificationExceptionHandler`: 資格例外処理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `grant_temporary_qualification(member_id: int, qualification_id: int, expiry: datetime) -> None` - 一時的資格を付与
+    - `check_special_approval(member_id: int, session_id: int) -> bool` - 特別承認を確認
+  - **依存クラス**: `QualificationVerifier`, `DatabaseConnector`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "qualification_manager.py"
+        QV[QualificationVerifier]
+    end
+    
+    subgraph "requirement_definition.py"
+        RM[RequirementManager]
+        QR[QualificationRequirement]
+    end
+    
+    subgraph "matching_engine.py"
+        ME[MatchingEngine]
+    end
+    
+    subgraph "history_tracker.py"
+        HT[QualificationHistoryTracker]
+    end
+    
+    subgraph "exception_handler.py"
+        EH[QualificationExceptionHandler]
+    end
+    
+    QV --> RM
+    ME --> QV
+    ME --> RM
+    EH --> QV
+    HT --> QV
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef model fill:#ddf,stroke:#333,stroke-width:1px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    
+    class QV,ME main;
+    class QR model;
+    class RM,HT,EH util;
+``` 

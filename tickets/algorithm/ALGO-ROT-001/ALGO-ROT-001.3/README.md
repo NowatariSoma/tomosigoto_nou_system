@@ -67,6 +67,75 @@
    - 特別条件下での例外処理
    - 例外履歴の記録と分析
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class RuleManager {
+        -rule_repository: RuleRepository
+        +load_rules(rule_set_id: int): list[Rule]
+        +get_rule(rule_id: int): Rule
+        +register_custom_rule(rule: Rule): int
+        -validate_rule(rule: Rule): bool
+    }
+    
+    class RuleEvaluator {
+        -rule_manager: RuleManager
+        +evaluate_schedule(assignments: list[Assignment], rule_set_id: int): EvaluationResult
+        +detect_violations(assignments: list[Assignment], rules: list[Rule]): list[Violation]
+        -score_violation(violation: Violation): float
+    }
+    
+    class ViolationDetector {
+        +detect_consecutive_supervision(assignments: list[Assignment], max_consecutive: int): list[Violation]
+        +detect_rest_violations(assignments: list[Assignment], min_rest_minutes: int): list[Violation]
+        +detect_weekly_overload(assignments: list[Assignment], max_weekly: int): list[Violation]
+    }
+    
+    class AutoCorrector {
+        -rule_evaluator: RuleEvaluator
+        -qualification_verifier: QualificationVerifier
+        +correct_violations(assignments: list[Assignment], violations: list[Violation]): list[Assignment]
+        -find_alternative_supervisor(violation: Violation): Supervisor
+        -estimate_correction_impact(original: list[Assignment], corrected: list[Assignment]): ImpactAssessment
+    }
+    
+    class ExceptionHandler {
+        +register_exception(rule_id: int, session_id: int, reason: str): ExceptionRecord
+        +check_exception(rule_id: int, session_id: int): bool
+        +list_active_exceptions(): list[ExceptionRecord]
+    }
+    
+    RuleEvaluator --> RuleManager : uses
+    RuleEvaluator --> ViolationDetector : uses
+    AutoCorrector --> RuleEvaluator : uses
+    AutoCorrector --> ExceptionHandler : uses
+    
+    class Rule {
+        <<interface>>
+        +rule_id: int
+        +name: str
+        +description: str
+        +priority: int
+        +is_hard_rule: bool
+        +evaluate(assignment: Assignment): bool
+    }
+    
+    class ConsecutiveSupervisionRule {
+        +max_consecutive: int
+        +evaluate(assignment: Assignment): bool
+    }
+    
+    class RestPeriodRule {
+        +min_rest_minutes: int
+        +evaluate(assignment: Assignment): bool
+    }
+    
+    Rule <|-- ConsecutiveSupervisionRule : implements
+    Rule <|-- RestPeriodRule : implements
+```
+
 ## 実装アプローチ
 ### ルールベース制約適用アルゴリズム概要
 1. **前処理フェーズ**
@@ -129,10 +198,125 @@
    e. 専門性活用: 得意パートの監督を優先
 ```
 
-## 主要ファイル
-- `src/algorithm/rotation/ruleManager.ts` - ルール管理機能
-- `src/algorithm/rotation/ruleEvaluator.ts` - ルール評価機能
-- `src/algorithm/rotation/violationDetector.ts` - 違反検出機能
-- `src/algorithm/rotation/autoCorrector.ts` - 自動修正機能
-- `src/algorithm/rotation/exceptionHandler.ts` - 例外処理機能
-- `test/algorithm/ruleApplication.test.ts` - ルール適用テスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/rotation/rule_manager.py` - ルール管理機能
+- `src/algorithm/rotation/rule_evaluator.py` - ルール評価機能
+- `src/algorithm/rotation/violation_detector.py` - 違反検出機能
+- `src/algorithm/rotation/auto_corrector.py` - 自動修正機能
+- `src/algorithm/rotation/exception_handler.py` - 例外処理機能
+- `src/algorithm/rotation/rules/base_rule.py` - 基本ルールクラス
+- `src/algorithm/rotation/rules/consecutive_rule.py` - 連続監督ルール
+- `src/algorithm/rotation/rules/rest_period_rule.py` - 休息期間ルール
+- `src/algorithm/rotation/config/rule_config.py` - ルール設定
+- `tests/algorithm/rotation/test_rule_evaluator.py` - ルール評価テスト
+- `tests/algorithm/rotation/test_auto_corrector.py` - 自動修正テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/rotation/rule_manager.py`
+**目的**: 監督割り当てルールを管理し、ルールセットの読み込みと更新を行う
+
+**クラス/インターフェース**:
+- `RuleManager`: ルール管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `load_rules(rule_set_id: int) -> list[Rule]` - ルールセットを読み込む
+    - `get_rule(rule_id: int) -> Rule` - 特定のルールを取得
+    - `register_custom_rule(rule: Rule) -> int` - カスタムルールを登録
+    - `validate_rule(rule: Rule) -> bool` - ルールを検証
+  - **依存クラス**: `RuleRepository`
+
+### `src/algorithm/rotation/rule_evaluator.py`
+**目的**: 監督スケジュールに対してルールを適用し、違反を評価する
+
+**クラス/インターフェース**:
+- `RuleEvaluator`: ルール評価クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `evaluate_schedule(assignments: list[Assignment], rule_set_id: int) -> EvaluationResult` - スケジュールを評価
+    - `detect_violations(assignments: list[Assignment], rules: list[Rule]) -> list[Violation]` - 違反を検出
+    - `score_violation(violation: Violation) -> float` - 違反の重大度をスコア化
+  - **依存クラス**: `RuleManager`, `ViolationDetector`
+
+### `src/algorithm/rotation/violation_detector.py`
+**目的**: 監督スケジュールの様々なルール違反パターンを検出する
+
+**クラス/インターフェース**:
+- `ViolationDetector`: 違反検出クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `detect_consecutive_supervision(assignments: list[Assignment], max_consecutive: int) -> list[Violation]` - 連続監督違反を検出
+    - `detect_rest_violations(assignments: list[Assignment], min_rest_minutes: int) -> list[Violation]` - 休息時間違反を検出
+    - `detect_weekly_overload(assignments: list[Assignment], max_weekly: int) -> list[Violation]` - 週間上限違反を検出
+  - **依存クラス**: なし
+
+### `src/algorithm/rotation/auto_corrector.py`
+**目的**: 検出されたルール違反を自動的に修正する
+
+**クラス/インターフェース**:
+- `AutoCorrector`: 自動修正クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `correct_violations(assignments: list[Assignment], violations: list[Violation]) -> list[Assignment]` - 違反を修正
+    - `find_alternative_supervisor(violation: Violation) -> Supervisor` - 代替監督者を検索
+    - `estimate_correction_impact(original: list[Assignment], corrected: list[Assignment]) -> ImpactAssessment` - 修正の影響を評価
+  - **依存クラス**: `RuleEvaluator`, `QualificationVerifier`, `ExceptionHandler`
+
+### `src/algorithm/rotation/exception_handler.py`
+**目的**: ルール例外を管理し、特別な条件下での例外処理を行う
+
+**クラス/インターフェース**:
+- `ExceptionHandler`: 例外処理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `register_exception(rule_id: int, session_id: int, reason: str) -> ExceptionRecord` - 例外を登録
+    - `check_exception(rule_id: int, session_id: int) -> bool` - 例外の存在を確認
+    - `list_active_exceptions() -> list[ExceptionRecord]` - 有効な例外を一覧表示
+  - **依存クラス**: `DatabaseConnector`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "rule_manager.py"
+        RM[RuleManager]
+    end
+    
+    subgraph "rule_evaluator.py"
+        RE[RuleEvaluator]
+    end
+    
+    subgraph "violation_detector.py"
+        VD[ViolationDetector]
+    end
+    
+    subgraph "auto_corrector.py"
+        AC[AutoCorrector]
+    end
+    
+    subgraph "exception_handler.py"
+        EH[ExceptionHandler]
+    end
+    
+    subgraph "rules/"
+        BR[BaseRule]
+        CR[ConsecutiveRule]
+        RPR[RestPeriodRule]
+    end
+    
+    RE --> RM
+    RE --> VD
+    AC --> RE
+    AC --> EH
+    RM --> BR
+    BR <|-- CR
+    BR <|-- RPR
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    classDef model fill:#ddf,stroke:#333,stroke-width:1px;
+    
+    class RE,AC main;
+    class RM,VD,EH util;
+    class BR,CR,RPR model;
+``` 

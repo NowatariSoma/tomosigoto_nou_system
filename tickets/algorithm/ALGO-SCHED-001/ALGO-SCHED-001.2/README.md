@@ -67,6 +67,57 @@
    - 履歴に基づく公平な会場割り当て
    - 会場割り当ての満足度評価
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class VenueManager {
+        -venue_repository: VenueRepository
+        -reservation_system: ReservationSystem
+        +get_available_venues(time_slot: TimeSlot): list[Venue]
+        +get_venue_details(venue_id: int): VenueDetails
+        +update_venue_info(venue_id: int, info: VenueInfo): bool
+    }
+    
+    class VenueMatchingEngine {
+        -venue_manager: VenueManager
+        -compatibility_calculator: CompatibilityCalculator
+        +find_optimal_venue(session: Session): Venue
+        +rank_venues(session: Session, venues: list[Venue]): list[RankedVenue]
+        -calculate_matching_score(session: Session, venue: Venue): float
+    }
+    
+    class CompatibilityCalculator {
+        +calculate_venue_score(session: Session, venue: Venue): float
+        +check_requirements(session_requirements: Requirements, venue_features: Features): bool
+        -adjust_score_for_history(venue_id: int, part_id: int): float
+    }
+    
+    class ReservationSystem {
+        -database_connector: DatabaseConnector
+        +reserve_venue(venue_id: int, time_slot: TimeSlot, session_id: int): ReservationResult
+        +check_availability(venue_id: int, time_slot: TimeSlot): bool
+        +cancel_reservation(reservation_id: int): bool
+        +get_venue_schedule(venue_id: int, date: date): list[TimeSlot]
+    }
+    
+    class ConflictResolver {
+        -venue_manager: VenueManager
+        -compatibility_calculator: CompatibilityCalculator
+        +detect_conflicts(assignments: list[Assignment]): list[Conflict]
+        +resolve_conflict(conflict: Conflict): Resolution
+        -find_alternative_venues(session: Session): list[Venue]
+        -prioritize_sessions(conflicting_sessions: list[Session]): list[Session]
+    }
+    
+    VenueMatchingEngine --> VenueManager : uses
+    VenueMatchingEngine --> CompatibilityCalculator : uses
+    VenueManager --> ReservationSystem : uses
+    ConflictResolver --> VenueManager : uses
+    ConflictResolver --> CompatibilityCalculator : uses
+```
+
 ## 実装アプローチ
 ### 会場割り当てアルゴリズム概要
 1. **前処理フェーズ**
@@ -125,10 +176,115 @@
 6. 最終スコア = 合計点数
 ```
 
-## 主要ファイル
-- `src/algorithm/scheduler/venueManager.ts` - 会場管理機能
-- `src/algorithm/scheduler/venueMatchingEngine.ts` - 会場マッチングエンジン
-- `src/algorithm/scheduler/compatibilityCalculator.ts` - 適合度計算機能
-- `src/algorithm/scheduler/reservationSystem.ts` - 予約システム実装
-- `src/algorithm/scheduler/conflictResolver.ts` - 競合解決機能
-- `test/algorithm/venueMatching.test.ts` - 会場マッチングのテスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/scheduler/venue_manager.py` - 会場管理機能
+- `src/algorithm/scheduler/venue_matching_engine.py` - 会場マッチングエンジン
+- `src/algorithm/scheduler/compatibility_calculator.py` - 適合度計算機能
+- `src/algorithm/scheduler/reservation_system.py` - 予約システム実装
+- `src/algorithm/scheduler/conflict_resolver.py` - 競合解決機能
+- `src/algorithm/scheduler/models/venue_models.py` - 会場モデル定義
+- `src/algorithm/scheduler/config/venue_config.py` - 会場設定
+- `src/algorithm/scheduler/utils/scoring_utils.py` - スコアリングユーティリティ
+- `tests/algorithm/scheduler/test_venue_matching.py` - 会場マッチングテスト
+- `tests/algorithm/scheduler/test_conflict_resolver.py` - 競合解決テスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/scheduler/venue_manager.py`
+**目的**: 会場情報の管理と取得機能を提供し、会場の基本操作を実装する
+
+**クラス/インターフェース**:
+- `VenueManager`: 会場管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `get_available_venues(time_slot: TimeSlot) -> list[Venue]` - 指定時間枠で利用可能な会場を取得
+    - `get_venue_details(venue_id: int) -> VenueDetails` - 会場の詳細情報を取得
+    - `update_venue_info(venue_id: int, info: VenueInfo) -> bool` - 会場情報を更新
+  - **依存クラス**: `VenueRepository`, `ReservationSystem`
+
+### `src/algorithm/scheduler/venue_matching_engine.py`
+**目的**: セッションと会場のマッチングを行い、最適な会場を選定する
+
+**クラス/インターフェース**:
+- `VenueMatchingEngine`: 会場マッチングエンジンクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `find_optimal_venue(session: Session) -> Venue` - セッションに最適な会場を選定
+    - `rank_venues(session: Session, venues: list[Venue]) -> list[RankedVenue]` - 会場をランク付け
+    - `calculate_matching_score(session: Session, venue: Venue) -> float` - マッチングスコアを計算
+  - **依存クラス**: `VenueManager`, `CompatibilityCalculator`
+
+### `src/algorithm/scheduler/compatibility_calculator.py`
+**目的**: セッションと会場の適合度を計算し、要件との互換性を評価する
+
+**クラス/インターフェース**:
+- `CompatibilityCalculator`: 適合度計算クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_venue_score(session: Session, venue: Venue) -> float` - 会場適合度スコアを計算
+    - `check_requirements(session_requirements: Requirements, venue_features: Features) -> bool` - 要件との互換性を確認
+    - `adjust_score_for_history(venue_id: int, part_id: int) -> float` - 過去の利用履歴に基づくスコア調整
+  - **依存クラス**: なし
+
+### `src/algorithm/scheduler/reservation_system.py`
+**目的**: 会場の予約管理と利用可能性の確認を行う
+
+**クラス/インターフェース**:
+- `ReservationSystem`: 予約システムクラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `reserve_venue(venue_id: int, time_slot: TimeSlot, session_id: int) -> ReservationResult` - 会場を予約
+    - `check_availability(venue_id: int, time_slot: TimeSlot) -> bool` - 会場の利用可能性を確認
+    - `cancel_reservation(reservation_id: int) -> bool` - 予約をキャンセル
+    - `get_venue_schedule(venue_id: int, date: date) -> list[TimeSlot]` - 会場のスケジュールを取得
+  - **依存クラス**: `DatabaseConnector`
+
+### `src/algorithm/scheduler/conflict_resolver.py`
+**目的**: 会場予約の競合を検出し、解決する
+
+**クラス/インターフェース**:
+- `ConflictResolver`: 競合解決クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `detect_conflicts(assignments: list[Assignment]) -> list[Conflict]` - 予約競合を検出
+    - `resolve_conflict(conflict: Conflict) -> Resolution` - 競合を解決
+    - `find_alternative_venues(session: Session) -> list[Venue]` - 代替会場を検索
+    - `prioritize_sessions(conflicting_sessions: list[Session]) -> list[Session]` - 競合セッションに優先順位を付ける
+  - **依存クラス**: `VenueManager`, `CompatibilityCalculator`
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "venue_manager.py"
+        VM[VenueManager]
+    end
+    
+    subgraph "venue_matching_engine.py"
+        VME[VenueMatchingEngine]
+    end
+    
+    subgraph "compatibility_calculator.py"
+        CC[CompatibilityCalculator]
+    end
+    
+    subgraph "reservation_system.py"
+        RS[ReservationSystem]
+    end
+    
+    subgraph "conflict_resolver.py"
+        CR[ConflictResolver]
+    end
+    
+    VME --> VM
+    VME --> CC
+    VM --> RS
+    CR --> VM
+    CR --> CC
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    
+    class VME,CR main;
+    class VM,RS,CC util;
+``` 

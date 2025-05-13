@@ -65,6 +65,49 @@
    - 割り当て漏れの確認
    - 基本計画との一致確認
 
+## 設計図
+
+### クラス図
+```mermaid
+classDiagram
+    class InitialPlanner {
+        -basic_plan_repo: BasicPlanRepository
+        -time_slot_manager: TimeSlotManager
+        -frequency_calculator: FrequencyCalculator
+        +generate_initial_schedule(plan_id: int): Schedule
+        -distribute_sessions(parts: list[Part], time_slots: list[TimeSlot]): list[Assignment]
+        -validate_schedule(schedule: Schedule): bool
+    }
+    
+    class TimeSlotManager {
+        -available_slots: list[TimeSlot]
+        +get_available_slots(start_date: date, end_date: date): list[TimeSlot]
+        +reserve_slot(slot_id: int, session_id: int): bool
+        +find_optimal_slot(session: Session, preferences: SlotPreference): TimeSlot
+    }
+    
+    class FrequencyCalculator {
+        +calculate_session_count(part: Part, duration: int): int
+        +calculate_distribution(practice_count: int, available_days: int): Distribution
+    }
+    
+    class BasicPlanRepository {
+        +get_plan(id: int): BasicPlan
+        +get_parts(plan_id: int): list[Part]
+    }
+    
+    class ConsistencyChecker {
+        +check_schedule(schedule: Schedule): ValidationResult
+        -check_conflicts(assignments: list[Assignment]): list[Conflict]
+        -check_coverage(schedule: Schedule, requirements: Requirements): Coverage
+    }
+    
+    InitialPlanner --> TimeSlotManager : uses
+    InitialPlanner --> FrequencyCalculator : uses
+    InitialPlanner --> BasicPlanRepository : uses
+    InitialPlanner --> ConsistencyChecker : uses
+```
+
 ## 実装アプローチ
 ### 初期割り当てアルゴリズム概要
 1. **前処理フェーズ**
@@ -102,10 +145,128 @@
 5. 最終的な初期スケジュールを返却
 ```
 
-## 主要ファイル
-- `src/algorithm/scheduler/initialPlanner.ts` - 初期プラン作成機能
-- `src/algorithm/scheduler/timeSlotManager.ts` - 時間枠管理機能
-- `src/algorithm/scheduler/frequencyCalculator.ts` - 頻度計算ロジック
-- `src/algorithm/scheduler/distributionStrategy.ts` - 分散戦略実装
-- `src/algorithm/scheduler/consistencyChecker.ts` - 整合性検証機能
-- `test/algorithm/initialPlanner.test.ts` - 初期プラナーのテスト 
+## 実装予定ファイル
+以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
+
+- `src/algorithm/scheduler/initial_planner.py` - 初期プラン作成機能
+- `src/algorithm/scheduler/time_slot_manager.py` - 時間枠管理機能
+- `src/algorithm/scheduler/frequency_calculator.py` - 頻度計算ロジック
+- `src/algorithm/scheduler/distribution_strategy.py` - 分散戦略実装
+- `src/algorithm/scheduler/consistency_checker.py` - 整合性検証機能
+- `src/algorithm/scheduler/models.py` - データモデル定義
+- `src/algorithm/scheduler/config.py` - スケジューラ設定
+- `src/algorithm/scheduler/utils/date_time_utils.py` - 日付時刻ユーティリティ
+- `src/algorithm/scheduler/exceptions.py` - 例外定義
+- `tests/algorithm/scheduler/test_initial_planner.py` - 初期プランナーのテスト
+- `tests/algorithm/scheduler/test_frequency_calculator.py` - 頻度計算のテスト
+
+## 実装ファイル構成詳細
+### `src/algorithm/scheduler/initial_planner.py`
+**目的**: 初期スケジュール生成の中核機能を実装し、基本計画から練習セッションを適切な日時に割り当てる
+
+**クラス/インターフェース**:
+- `InitialPlanner`: 初期スケジュール作成の主要クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `generate_initial_schedule(plan_id: int) -> Schedule` - 基本計画から初期スケジュールを生成
+    - `distribute_sessions(parts: list[Part], time_slots: list[TimeSlot]) -> list[Assignment]` - 練習セッションを時間枠に分散配置
+    - `validate_schedule(schedule: Schedule) -> bool` - スケジュール整合性を検証
+  - **依存クラス**: `TimeSlotManager`, `FrequencyCalculator`, `BasicPlanRepository`, `ConsistencyChecker`
+
+### `src/algorithm/scheduler/time_slot_manager.py`
+**目的**: 利用可能な時間枠を管理し、最適な時間枠を探索・割り当てる
+
+**クラス/インターフェース**:
+- `TimeSlotManager`: 時間枠管理クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `get_available_slots(start_date: date, end_date: date) -> list[TimeSlot]` - 期間内の利用可能枠を取得
+    - `reserve_slot(slot_id: int, session_id: int) -> bool` - 時間枠を予約
+    - `find_optimal_slot(session: Session, preferences: SlotPreference) -> TimeSlot` - 最適時間枠を探索
+  - **依存クラス**: `DatabaseConnector`
+
+### `src/algorithm/scheduler/frequency_calculator.py`
+**目的**: 練習の頻度を計算し、期間内の最適な練習回数分布を導出する
+
+**クラス/インターフェース**:
+- `FrequencyCalculator`: 頻度計算クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `calculate_session_count(part: Part, duration: int) -> int` - パートの必要練習回数を計算
+    - `calculate_distribution(practice_count: int, available_days: int) -> Distribution` - 練習の分布を計算
+  - **依存クラス**: なし
+
+### `src/algorithm/scheduler/distribution_strategy.py`
+**目的**: 練習の分布戦略を実装し、最適な練習配置パターンを提供する
+
+**クラス/インターフェース**:
+- `DistributionStrategy`: 分布戦略インターフェース
+  - **継承/実装**: 抽象クラス
+  - **主要メソッド**: 
+    - `calculate_distribution(sessions: list[Session], available_slots: list[TimeSlot]) -> list[Assignment]` - 分布計算
+  - **依存クラス**: なし
+
+- `EvenDistributionStrategy`: 均等分布戦略
+  - **継承/実装**: `DistributionStrategy`
+  - **主要メソッド**: 
+    - `calculate_distribution(sessions: list[Session], available_slots: list[TimeSlot]) -> list[Assignment]` - 均等分布計算
+  - **依存クラス**: なし
+
+- `PriorityBasedDistributionStrategy`: 優先度ベース分布戦略
+  - **継承/実装**: `DistributionStrategy`
+  - **主要メソッド**: 
+    - `calculate_distribution(sessions: list[Session], available_slots: list[TimeSlot]) -> list[Assignment]` - 優先度ベース分布計算
+  - **依存クラス**: なし
+
+### `src/algorithm/scheduler/consistency_checker.py`
+**目的**: 生成したスケジュールの整合性、論理的矛盾、要件充足度を検証する
+
+**クラス/インターフェース**:
+- `ConsistencyChecker`: 整合性検証クラス
+  - **継承/実装**: なし
+  - **主要メソッド**: 
+    - `check_schedule(schedule: Schedule) -> ValidationResult` - スケジュール整合性検証
+    - `check_conflicts(assignments: list[Assignment]) -> list[Conflict]` - 割り当て競合検出
+    - `check_coverage(schedule: Schedule, requirements: Requirements) -> Coverage` - 要件充足度確認
+  - **依存クラス**: なし
+
+## ファイル間クラス連携図
+```mermaid
+graph TD
+    subgraph "initial_planner.py"
+        IP[InitialPlanner]
+    end
+    
+    subgraph "time_slot_manager.py"
+        TSM[TimeSlotManager]
+    end
+    
+    subgraph "frequency_calculator.py"
+        FC[FrequencyCalculator]
+    end
+    
+    subgraph "distribution_strategy.py"
+        DS[DistributionStrategy]
+        EDS[EvenDistributionStrategy]
+        PBDS[PriorityBasedDistributionStrategy]
+    end
+    
+    subgraph "consistency_checker.py"
+        CC[ConsistencyChecker]
+    end
+    
+    IP --> TSM
+    IP --> FC
+    IP --> DS
+    IP --> CC
+    DS <|-- EDS
+    DS <|-- PBDS
+    
+    classDef main fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef util fill:#fdd,stroke:#333,stroke-width:1px;
+    classDef strategy fill:#dfd,stroke:#333,stroke-width:1px;
+    
+    class IP main;
+    class TSM,FC,CC util;
+    class DS,EDS,PBDS strategy;
+``` 
