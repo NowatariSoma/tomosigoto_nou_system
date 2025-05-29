@@ -264,161 +264,7 @@ erDiagram
 ## 実装するすべてのファイル構成詳細
 以下は全ての実装予定ファイルの詳細です。各ファイルごとに目的とクラス/インターフェース、メソッド、依存関係などを詳しく記載します。
 
-### `app/api/v1/endpoints/schedules.py`
-**目的**: スケジュール取得用のREST APIエンドポイントを定義する
-
-**クラス/関数**:
-- **ルーター定義**: `router = APIRouter()`
-- **エンドポイント関数**:
-  - `@router.get("/schedules/", response_model=PaginatedResponse[ScheduleResponseSchema])`: 日付範囲・パートによるスケジュール一覧取得
-  - `@router.get("/schedules/{schedule_id}", response_model=ScheduleResponseSchema)`: スケジュールID指定による詳細取得
-  - `@router.get("/schedules/month/{year}/{month}", response_model=List[ScheduleResponseSchema])`: 年月指定によるスケジュール取得
-  - `@router.get("/schedules/week/{year}/{week_num}", response_model=List[ScheduleResponseSchema])`: 年週指定によるスケジュール取得
-- **依存関係**:
-  - `ScheduleService`: スケジュールサービス（DI）
-  - `get_current_user`: 認証ユーザー取得（オプション）
-
-### `app/services/schedule_service.py`
-**目的**: スケジュール取得のビジネスロジックを実装する
-
-**クラス/インターフェース**:
-- `ScheduleService`: スケジュール操作サービス
-  - **初期化**: `def __init__(self, schedule_repository: ScheduleRepository)`
-  - **主要メソッド**:
-    - `get_schedules_by_date_range(start_date: date, end_date: date, part_id: Optional[int] = None, page: int = 1, limit: int = 20)`: 日付範囲でスケジュール取得
-    - `get_schedule_by_id(schedule_id: int)`: ID指定でスケジュール詳細取得
-    - `get_schedules_by_month(year: int, month: int, part_id: Optional[int] = None)`: 年月指定でスケジュール取得
-    - `get_schedules_by_week(year: int, week_num: int, part_id: Optional[int] = None)`: 年週指定でスケジュール取得
-  - **補助メソッド**:
-    - `_format_response_data(schedules: List[Dict])`: レスポンスデータの整形
-    - `_optimize_for_calendar(schedules: List[Dict], year: int, month: int)`: カレンダー表示用に最適化
-    - `_calculate_week_dates(year: int, week_num: int)`: 週の開始日と終了日を計算
-  - **例外処理**:
-    - `ScheduleNotFoundError`: スケジュールが見つからない場合
-    - `InvalidDateRangeError`: 無効な日付範囲の場合
-  - **依存クラス**: `ScheduleRepository`
-
-### `app/repositories/schedule_repository.py`
-**目的**: スケジュールデータへのアクセスロジックを提供する
-
-**クラス/インターフェース**:
-- `ScheduleRepository`: スケジュールデータアクセス層
-  - **初期化**: `def __init__(self, db_session: Session)`
-  - **主要メソッド**:
-    - `get_schedules_by_date_range(start_date: date, end_date: date, part_id: Optional[int] = None, skip: int = 0, limit: int = 20)`: 日付範囲でスケジュール取得
-    - `get_schedule_by_id(schedule_id: int)`: ID指定でスケジュール詳細取得
-    - `count_schedules_by_filter(start_date: date, end_date: date, part_id: Optional[int] = None)`: フィルタ条件に合うスケジュール数を取得
-  - **補助メソッド**:
-    - `_build_filter_criteria(start_date: date, end_date: date, part_id: Optional[int] = None)`: フィルタ条件の構築
-    - `_join_related_tables(query)`: 関連テーブルの結合処理
-  - **依存クラス**: `SQLAlchemy Session`, `ScheduleModel`, `SessionModel`, `PartModel`
-
-### `app/models/schedule.py`
-**目的**: スケジュールとセッションのORMモデルを定義する
-
-**クラス/インターフェース**:
-- `ScheduleModel`: スケジュールのORMモデル
-  - **継承/実装**: `Base` (SQLAlchemy)
-  - **テーブル定義**: `__tablename__ = "schedules"`
-  - **カラム定義**:
-    - `id`: プライマリキー
-    - `title`: スケジュールタイトル
-    - `start_datetime`: 開始日時
-    - `end_datetime`: 終了日時
-    - `location_id`: 会場ID（外部キー）
-    - `description`: 説明
-    - `created_at`: 作成日時
-    - `updated_at`: 更新日時
-  - **リレーション定義**:
-    - `sessions`: セッションとの1対多関係
-    - `location`: 会場との多対1関係
-
-- `SessionModel`: セッションのORMモデル
-  - **継承/実装**: `Base` (SQLAlchemy)
-  - **テーブル定義**: `__tablename__ = "sessions"`
-  - **カラム定義**:
-    - `id`: プライマリキー
-    - `schedule_id`: スケジュールID（外部キー）
-    - `part_id`: パートID（外部キー）
-    - `start_time`: 開始時間
-    - `end_time`: 終了時間
-    - `description`: 説明
-    - `supervisor_id`: 監督者ID（外部キー）
-    - `created_at`: 作成日時
-    - `updated_at`: 更新日時
-  - **リレーション定義**:
-    - `schedule`: スケジュールとの多対1関係
-    - `part`: パートとの多対1関係
-    - `supervisor`: ユーザーとの多対1関係
-
-### `app/schemas/schedule.py`
-**目的**: スケジュール関連のリクエスト/レスポンススキーマを定義する
-
-**クラス/インターフェース**:
-- `ScheduleResponseSchema`: スケジュールレスポンスのPydanticモデル
-  - **継承/実装**: `BaseModel` (Pydantic)
-  - **フィールド定義**:
-    - `id: int`: スケジュールID
-    - `title: str`: タイトル
-    - `start_datetime: datetime`: 開始日時
-    - `end_datetime: datetime`: 終了日時
-    - `location: LocationSchema`: 会場情報
-    - `description: Optional[str]`: 説明
-    - `sessions: List[SessionResponseSchema]`: セッションリスト
-  - **設定クラス**: `Config` (ORM対応設定)
-
-- `SessionResponseSchema`: セッションレスポンスのPydanticモデル
-  - **継承/実装**: `BaseModel` (Pydantic)
-  - **フィールド定義**:
-    - `id: int`: セッションID
-    - `part: PartSchema`: パート情報
-    - `start_time: datetime`: 開始時間
-    - `end_time: datetime`: 終了時間
-    - `description: Optional[str]`: 説明
-    - `supervisor: Optional[UserSchema]`: 監督者情報
-  - **設定クラス**: `Config` (ORM対応設定)
-
-- `ScheduleQueryParams`: スケジュールクエリパラメータのPydanticモデル
-  - **継承/実装**: `BaseModel` (Pydantic)
-  - **フィールド定義**:
-    - `start_date: Optional[date]`: 開始日
-    - `end_date: Optional[date]`: 終了日
-    - `part_id: Optional[int]`: パートID
-    - `page: int = 1`: ページ番号
-    - `limit: int = 20`: 1ページあたりの件数
-  - **バリデーション**:
-    - 日付範囲の整合性検証
-    - ページネーションパラメータの範囲検証
-
-### `app/core/filtering.py`
-**目的**: 共通フィルタリングロジックを提供する
-
-**クラス/関数**:
-- `apply_date_range_filter(query, model, start_date_field, end_date_field, start_date, end_date)`: 日付範囲フィルタを適用
-- `apply_part_filter(query, part_id)`: パートIDフィルタを適用
-
-### `app/core/pagination.py`
-**目的**: ページネーション共通ロジックを提供する
-
-**クラス/インターフェース**:
-- `PaginatedResponse[T]`: ページネーションレスポンスの汎用Pydanticモデル
-  - **継承/実装**: `GenericModel` (Pydantic)
-  - **型パラメータ**: `T` (項目の型)
-  - **フィールド定義**:
-    - `items: List[T]`: アイテムリスト
-    - `total: int`: 総件数
-    - `page: int`: 現在のページ
-    - `limit: int`: 1ページあたりの件数
-    - `pages: int`: 総ページ数
-
-- `paginate[T](query, page: int, limit: int)`: クエリにページネーションを適用する関数
-  - **パラメータ**:
-    - `query`: SQLAlchemyクエリオブジェクト
-    - `page`: ページ番号
-    - `limit`: 1ページあたりの件数
-  - **戻り値**: `Tuple[List[T], int]` (アイテムリスト, 総件数)
-
-## `app/api/v1/endpoints/schedules.ts`
+### `app/api/v1/endpoints/schedules.ts`
 
 **目的**: スケジュール取得用のREST APIエンドポイントを定義する
 
@@ -436,7 +282,7 @@ erDiagram
   * `ScheduleService`: スケジュールサービス（DI）
   * `getCurrentUser`: 認証ユーザー取得（オプション）
 
-## `app/services/schedule_service.ts`
+### `app/services/schedule_service.ts`
 
 **目的**: スケジュール取得のビジネスロジックを実装する
 
@@ -454,7 +300,7 @@ erDiagram
   * `_calculateWeekDates(year: number, weekNum: number): { start: Date, end: Date }`
   * 例外: `ScheduleNotFoundError`, `InvalidDateRangeError`
 
-## `app/repositories/schedule_repository.ts`
+### `app/repositories/schedule_repository.ts`
 
 **目的**: スケジュールデータへのアクセスロジック
 
@@ -469,7 +315,7 @@ erDiagram
   * `_buildFilterCriteria(...)`
   * `_joinRelatedTables(query: SelectQueryBuilder<ScheduleModel>)`
 
-## `app/models/schedule.ts`
+### `app/models/schedule.ts`
 
 **目的**: ORMモデル定義
 
@@ -500,7 +346,7 @@ erDiagram
   * `updatedAt: Date`
   * 関連: `schedule`, `part`, `supervisor`
 
-## `app/schemas/schedule.ts`
+### `app/schemas/schedule.ts`
 
 **目的**: スケジュール関連のスキーマ
 
@@ -533,7 +379,7 @@ erDiagram
   * `page?: number`
   * `limit?: number`
 
-## `app/core/filtering.ts`
+### `app/core/filtering.ts`
 
 **目的**: フィルタロジック
 
@@ -542,7 +388,7 @@ erDiagram
 * `applyDateRangeFilter<T>(query: SelectQueryBuilder<T>, fieldStart: string, fieldEnd: string, startDate?: Date, endDate?: Date): SelectQueryBuilder<T>`
 * `applyPartFilter<T>(query: SelectQueryBuilder<T>, partId?: number): SelectQueryBuilder<T>`
 
-## `app/core/pagination.ts`
+### `app/core/pagination.ts`
 
 **目的**: ページネーションロジック
 
