@@ -418,6 +418,148 @@ erDiagram
     - `limit`: 1ページあたりの件数
   - **戻り値**: `Tuple[List[T], int]` (アイテムリスト, 総件数)
 
+## `app/api/v1/endpoints/schedules.ts`
+
+**目的**: スケジュール取得用のREST APIエンドポイントを定義する
+
+**クラス/関数**:
+
+* **ルーター定義**: `const router = Router()`
+* **エンドポイント関数**:
+
+  * `router.get("/schedules/", getSchedulesByDateRange)`
+  * `router.get("/schedules/:scheduleId", getScheduleById)`
+  * `router.get("/schedules/month/:year/:month", getSchedulesByMonth)`
+  * `router.get("/schedules/week/:year/:weekNum", getSchedulesByWeek)`
+* **依存関係**:
+
+  * `ScheduleService`: スケジュールサービス（DI）
+  * `getCurrentUser`: 認証ユーザー取得（オプション）
+
+## `app/services/schedule_service.ts`
+
+**目的**: スケジュール取得のビジネスロジックを実装する
+
+**クラス**:
+
+* `ScheduleService`:
+
+  * `constructor(private readonly scheduleRepository: ScheduleRepository)`
+  * `getSchedulesByDateRange(startDate: Date, endDate: Date, partId?: number, page = 1, limit = 20)`
+  * `getScheduleById(scheduleId: number)`
+  * `getSchedulesByMonth(year: number, month: number, partId?: number)`
+  * `getSchedulesByWeek(year: number, weekNum: number, partId?: number)`
+  * `_formatResponseData(schedules: Schedule[]): ScheduleResponse[]`
+  * `_optimizeForCalendar(schedules: Schedule[], year: number, month: number): ScheduleResponse[]`
+  * `_calculateWeekDates(year: number, weekNum: number): { start: Date, end: Date }`
+  * 例外: `ScheduleNotFoundError`, `InvalidDateRangeError`
+
+## `app/repositories/schedule_repository.ts`
+
+**目的**: スケジュールデータへのアクセスロジック
+
+**クラス**:
+
+* `ScheduleRepository`:
+
+  * `constructor(private readonly db: DatabaseSession)`
+  * `getSchedulesByDateRange(startDate: Date, endDate: Date, partId?: number, skip = 0, limit = 20)`
+  * `getScheduleById(scheduleId: number)`
+  * `countSchedulesByFilter(startDate: Date, endDate: Date, partId?: number)`
+  * `_buildFilterCriteria(...)`
+  * `_joinRelatedTables(query: SelectQueryBuilder<ScheduleModel>)`
+
+## `app/models/schedule.ts`
+
+**目的**: ORMモデル定義
+
+**クラス**:
+
+* `ScheduleModel` (extends `BaseEntity`):
+
+  * `id: number`
+  * `title: string`
+  * `startDatetime: Date`
+  * `endDatetime: Date`
+  * `locationId: number`
+  * `description?: string`
+  * `createdAt: Date`
+  * `updatedAt: Date`
+  * 関連: `sessions: SessionModel[]`, `location: LocationModel`
+
+* `SessionModel`:
+
+  * `id: number`
+  * `scheduleId: number`
+  * `partId: number`
+  * `startTime: Date`
+  * `endTime: Date`
+  * `description?: string`
+  * `supervisorId?: number`
+  * `createdAt: Date`
+  * `updatedAt: Date`
+  * 関連: `schedule`, `part`, `supervisor`
+
+## `app/schemas/schedule.ts`
+
+**目的**: スケジュール関連のスキーマ
+
+**インターフェース**:
+
+* `ScheduleResponseSchema`:
+
+  * `id: number`
+  * `title: string`
+  * `startDatetime: Date`
+  * `endDatetime: Date`
+  * `location: LocationSchema`
+  * `description?: string`
+  * `sessions: SessionResponseSchema[]`
+
+* `SessionResponseSchema`:
+
+  * `id: number`
+  * `part: PartSchema`
+  * `startTime: Date`
+  * `endTime: Date`
+  * `description?: string`
+  * `supervisor?: UserSchema`
+
+* `ScheduleQueryParams`:
+
+  * `startDate?: Date`
+  * `endDate?: Date`
+  * `partId?: number`
+  * `page?: number`
+  * `limit?: number`
+
+## `app/core/filtering.ts`
+
+**目的**: フィルタロジック
+
+**関数**:
+
+* `applyDateRangeFilter<T>(query: SelectQueryBuilder<T>, fieldStart: string, fieldEnd: string, startDate?: Date, endDate?: Date): SelectQueryBuilder<T>`
+* `applyPartFilter<T>(query: SelectQueryBuilder<T>, partId?: number): SelectQueryBuilder<T>`
+
+## `app/core/pagination.ts`
+
+**目的**: ページネーションロジック
+
+**ジェネリック型・関数**:
+
+* `PaginatedResponse<T>`:
+
+  * `items: T[]`
+  * `total: number`
+  * `page: number`
+  * `limit: number`
+  * `pages: number`
+
+* `paginate<T>(query: SelectQueryBuilder<T>, page: number, limit: number): Promise<[T[], number]>`
+
+
+
 ## ファイル間クラス連携図
 ```mermaid
 graph TD
