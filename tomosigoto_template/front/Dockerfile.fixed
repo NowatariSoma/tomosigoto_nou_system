@@ -1,0 +1,6 @@
+FROM twentycrm/twenty:latest
+
+WORKDIR /app
+
+# アプリケーションのエントリポイントを実行
+CMD ["bash", "-c", "cd /app/front && yarn start"] 
