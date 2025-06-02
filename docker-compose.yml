@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  # PostgreSQLデータベース
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: default
+    ports:
+      - "5434:5432"
+    volumes:
+      - twenty_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # バックエンドサーバー
+  twenty-server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - DEBUG_MODE=false
+      - ACCESS_TOKEN_SECRET=secret_jwt
+      - ACCESS_TOKEN_EXPIRES_IN=5m
+      - LOGIN_TOKEN_SECRET=secret_login_token
+      - LOGIN_TOKEN_EXPIRES_IN=15m
+      - REFRESH_TOKEN_SECRET=secret_refresh_token
+      - REFRESH_TOKEN_EXPIRES_IN=90d
+      - PG_DATABASE_URL=postgres://postgres:postgrespassword@postgres:5432/default?connection_limit=1
+      - FRONT_AUTH_CALLBACK_URL=http://localhost:3002/auth/callback
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=.local-storage
+    ports:
+      - "3003:3001"
+    volumes:
+      - ./server:/app/server
+      - ./packages:/app/packages
+      - server_node_modules:/app/server/node_modules
+
+  # フロントエンド
+  twenty-front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    depends_on:
+      - twenty-server
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - REACT_APP_SERVER_BASE_URL=http://localhost:3003
+      - TSC_COMPILE_ON_ERROR=true
+      - ESLINT_NO_DEV_ERRORS=true
+      - DISABLE_ESLINT_PLUGIN=true
+      - REACT_APP_DISABLE_TELEMETRY=true
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./front:/app/front
+      - ./packages:/app/packages
+      - front_node_modules:/app/front/node_modules
+    command: >
+      sh -c "cd /app/front && 
+             yarn install && 
+             yarn start"
+
+  # ドキュメントサーバー (オプション)
+  twenty-docs:
+    build:
+      context: .
+      dockerfile: docs/Dockerfile
+    ports:
+      - "8001:5001"
+    volumes:
+      - ./docs:/app/docs
+      - docs_node_modules:/app/docs/node_modules
+
+volumes:
+  twenty_postgres_data:
+  server_node_modules:
+  front_node_modules:
+  docs_node_modules: 
