@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@blocknote/core": "0.4.0",
-    "@blocknote/react": "0.4.0",
-    "prosemirror-view": "1.27.0"
-  }
-}
