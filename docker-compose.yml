@@ -39,7 +39,7 @@ services:
       - STORAGE_TYPE=local
       - STORAGE_LOCAL_PATH=.local-storage
     ports:
-      - "3003:3001"
+      - "3001:3001"
     volumes:
       - ./server:/app/server
       - ./packages:/app/packages
@@ -56,13 +56,13 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - HOST=0.0.0.0
-      - REACT_APP_SERVER_BASE_URL=http://localhost:3003
+      - REACT_APP_API_URL=http://localhost:3001/graphql
       - TSC_COMPILE_ON_ERROR=true
       - ESLINT_NO_DEV_ERRORS=true
       - DISABLE_ESLINT_PLUGIN=true
       - REACT_APP_DISABLE_TELEMETRY=true
     ports:
-      - "3002:3000"
+      - "3000:3000"
     volumes:
       - ./front:/app/front
       - ./packages:/app/packages
