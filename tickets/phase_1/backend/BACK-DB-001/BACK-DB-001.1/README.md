@@ -1,12 +1,13 @@
 # BACK-DB-001.1: ユーザーアカウント・プロフィールテーブル設計
 
 ## 概要
-練習表自動生成システムのユーザー情報を管理するデータベース構造をPythonとSupabaseを用いて設計・実装します。ユーザーの認証情報、個人プロフィール、連絡先情報を適切に管理し、システム全体のユーザー管理基盤を構築します。
+能楽部練習表自動生成システムのユーザー情報を管理するデータベース構造をPythonとSupabaseを用いて設計・実装します。学生の認証情報、個人プロフィール、学籍情報、ロール管理を適切に管理し、システム全体のユーザー管理基盤を構築します。
 
 ## 詳細
 - ユーザーアカウントテーブル設計と実装（認証情報管理）
-- ユーザープロフィールテーブル設計と実装（個人情報管理）
-- ユーザー連絡先テーブル設計と実装（連絡手段の管理）
+- ユーザープロフィールテーブル設計と実装（学生個人情報管理）
+- 学部マスターテーブル設計と実装（学部情報の正規化）
+- ユーザーロールテーブル設計と実装（権限管理）
 - 外部キー制約と参照整合性の設定
 - インデックス設計とパフォーマンス最適化
 
@@ -22,7 +23,8 @@
 ## 成果物
 - ユーザーアカウントテーブルSQL定義
 - ユーザープロフィールテーブルSQL定義
-- 連絡先テーブルSQL定義
+- 学部マスターテーブルSQL定義
+- ユーザーロールテーブルSQL定義
 - マイグレーションスクリプト
 - Pythonデータモデル（Pydanticモデル）
 - データアクセスレイヤーコード
@@ -38,31 +40,38 @@
 
 ## 主要機能
 1. **ユーザーアカウント管理**
-   - ユーザーID管理（一意識別子）
-   - 認証情報管理（ログイン資格情報）
+   - ユーザーID管理（UUID）
+   - 認証情報管理（メールアドレス・パスワード）
    - アカウント状態管理（有効/無効/ロック等）
    - 最終ログイン情報の追跡
 
-2. **プロフィール情報管理**
-   - 基本情報管理（氏名、生年月日など）
-   - 表示名と公開情報の設定
-   - プロフィール画像のメタデータ管理
+2. **学生プロフィール情報管理**
+   - 基本個人情報（氏名：漢字・カタカナ）
+   - 学籍情報（学籍番号、学年、学部、キャンパス）
+   - 表示名とアバター画像管理
    - ユーザー設定の保存
 
-3. **連絡先情報管理**
-   - 複数連絡手段の登録と管理
-   - 通知設定と配信設定
-   - 優先連絡手段の設定
-   - 連絡先検証状態の管理
+3. **学部情報管理**
+   - 学部マスターデータの管理
+   - キャンパス情報の管理
+   - 学部コードと名称の正規化
+
+4. **ユーザーロール管理**
+   - 階層的権限管理（システム管理者、能楽部管理者、4回生枠、一般部員）
+   - ロール別アクセス制御
+   - システム管理者の非表示化制御
 
 ## 実装予定ファイル
 以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
 
 - `migrations/user_account.sql` - ユーザーアカウントテーブル定義SQL
 - `migrations/user_profile.sql` - ユーザープロフィールテーブル定義SQL
-- `migrations/user_contact.sql` - ユーザー連絡先テーブル定義SQL
+- `migrations/departments.sql` - 学部マスターテーブル定義SQL
+- `migrations/user_roles.sql` - ユーザーロールテーブル定義SQL
 - `app/models/user.py` - ユーザー関連Pydanticモデル定義
+- `app/models/department.py` - 学部関連Pydanticモデル定義
 - `app/repositories/user_repository.py` - ユーザーデータアクセスレイヤー
+- `app/repositories/department_repository.py` - 学部データアクセスレイヤー
 - `app/schemas/user_schemas.py` - ユーザーAPI用スキーマ定義
 - `app/services/user_service.py` - ユーザーサービスロジック
 - `tests/models/test_user_models.py` - ユーザーモデルのテスト
@@ -72,8 +81,10 @@
 ### データベース構造図
 ```mermaid
 erDiagram
-    users ||--o| user_profiles : "所有する"
-    users ||--o{ user_contacts : "持つ"
+    users ||--|| user_profiles : "所有する"
+    users ||--|| user_roles : "持つ"
+    user_profiles }|--|| departments : "所属する"
+    
     users {
         uuid id PK "ユーザーID"
         string email UK "メールアドレス"
@@ -84,45 +95,70 @@ erDiagram
         timestamp last_login "最終ログイン日時"
         boolean is_active "アクティブフラグ"
         boolean email_verified "メール検証済みフラグ"
-        string[] roles "ロール配列"
     }
     
     user_profiles {
         uuid id PK "プロフィールID"
         uuid user_id FK "ユーザーID参照"
-        string display_name "表示名"
-        string first_name "名"
-        string last_name "姓"
-        date birth_date "生年月日"
+        string student_id UK "学籍番号"
+        string first_name_kanji "名（漢字）"
+        string first_name_katakana "名（カタカナ）"
+        string last_name_kanji "姓（漢字）"
+        string last_name_katakana "姓（カタカナ）"
+        integer grade "学年（回生）"
+        uuid department_id FK "学部ID参照"
         string avatar_url "アバターURL"
         jsonb preferences "ユーザー設定(JSON)"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
     
-    user_contacts {
-        uuid id PK "連絡先ID"
-        uuid user_id FK "ユーザーID参照"
-        string contact_type "連絡先タイプ(email/phone/etc)"
-        string contact_value "連絡先値"
-        boolean is_verified "検証済みフラグ"
-        boolean is_primary "主要連絡先フラグ"
-        jsonb notification_settings "通知設定(JSON)"
+    departments {
+        uuid id PK "学部ID"
+        string department_code UK "学部コード"
+        string department_name "学部名"
+        string campus "キャンパス（今出川/田辺）"
+        boolean is_active "有効フラグ"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
+    
+    user_roles {
+        uuid id PK "ロールID"
+        uuid user_id FK "ユーザーID参照"
+        string role_type "ロールタイプ"
+        boolean is_visible_to_general "一般ユーザーに表示するか"
+        timestamp created_at "作成日時"
+        timestamp updated_at "更新日時"
+    }
+```
+
+### ロール階層図
+```mermaid
+flowchart TD
+    A[システム管理者] --> B[能楽部管理者]
+    B --> C[4回生枠]
+    C --> D[一般部員]
+    
+    A -.->|非表示| E[一般ユーザーからは見えない]
+    B -->|表示| F[部長として表示]
+    C -->|表示| G[4回生として表示]
+    D -->|表示| H[部員として表示]
 ```
 
 ## 実装アプローチ
 ### データベース設計と実装
 1. **テーブル構造設計**
    - 正規化レベルの決定（第3正規形を基本）
+   - 学部情報の正規化（マスターテーブル化）
+   - ロール管理の分離
    - 列タイプとデフォルト値の決定
    - 制約条件の定義（PK, FK, UK, Check制約）
    - インデックス戦略の設計
 
 2. **マイグレーションスクリプト作成**
    - テーブル作成SQLの記述
+   - 学部マスターデータの初期投入
    - インデックス作成SQLの記述
    - RLSポリシー設定
    - Supabase用マイグレーションファイル構成
@@ -130,7 +166,7 @@ erDiagram
 ### Pythonモデル実装
 1. **データモデル設計**
    - Pydanticベースモデルの実装
-   - バリデーションルールの定義
+   - 学生情報特有のバリデーションルール
    - モデル間の関連付け
    - シリアル化/デシリアル化の実装
 
@@ -147,21 +183,31 @@ erDiagram
 - コメントと説明の追加
 
 ### `migrations/user_profile.sql`
-**目的**: ユーザーの個人プロフィール情報を格納するテーブルを定義するSQL
+**目的**: 学生の個人プロフィール情報を格納するテーブルを定義するSQL
 
 **主要内容**:
 - `user_profiles`テーブルの作成
-- 外部キー制約の設定
+- 外部キー制約の設定（users, departments）
+- 学籍番号の一意制約設定
 - インデックスの設定
 - RLSポリシーの設定
 
-### `migrations/user_contact.sql`
-**目的**: ユーザーの連絡先情報を格納するテーブルを定義するSQL
+### `migrations/departments.sql`
+**目的**: 学部マスター情報を格納するテーブルを定義するSQL
 
 **主要内容**:
-- `user_contacts`テーブルの作成
+- `departments`テーブルの作成
+- 学部コードの一意制約設定
+- 初期データ投入（主要学部情報）
+- インデックスの設定
+
+### `migrations/user_roles.sql`
+**目的**: ユーザーロール情報を格納するテーブルを定義するSQL
+
+**主要内容**:
+- `user_roles`テーブルの作成
 - 外部キー制約の設定
-- 一意制約の設定
+- ロールタイプのCheck制約設定
 - インデックスの設定
 - RLSポリシーの設定
 
@@ -173,54 +219,74 @@ erDiagram
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
     - `id: UUID` - ユーザーID
-    - `email: str` - メールアドレス
+    - `email: EmailStr` - メールアドレス
     - `auth_provider: str` - 認証プロバイダ
     - `created_at: datetime` - 作成日時
     - `updated_at: datetime` - 更新日時
     - `last_login: Optional[datetime]` - 最終ログイン日時
     - `is_active: bool` - アクティブフラグ
     - `email_verified: bool` - メール検証済みフラグ
-    - `roles: List[str]` - ロール配列
   - **主要メソッド**: 
-    - `is_admin() -> bool` - 管理者かどうかを確認
-    - `has_role(role: str) -> bool` - 特定のロールを持っているか確認
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
-- `UserProfile`: ユーザープロフィールのドメインモデル
+- `UserProfile`: 学生プロフィールのドメインモデル
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
     - `id: UUID` - プロフィールID
     - `user_id: UUID` - ユーザーID参照
-    - `display_name: str` - 表示名
-    - `first_name: Optional[str]` - 名
-    - `last_name: Optional[str]` - 姓
-    - `birth_date: Optional[date]` - 生年月日
+    - `student_id: str` - 学籍番号
+    - `first_name_kanji: str` - 名（漢字）
+    - `first_name_katakana: str` - 名（カタカナ）
+    - `last_name_kanji: str` - 姓（漢字）
+    - `last_name_katakana: str` - 姓（カタカナ）
+    - `grade: int` - 学年（回生）
+    - `department_id: UUID` - 学部ID参照
     - `avatar_url: Optional[str]` - アバターURL
     - `preferences: Dict[str, Any]` - ユーザー設定
     - `created_at: datetime` - 作成日時
     - `updated_at: datetime` - 更新日時
   - **主要メソッド**: 
-    - `full_name() -> str` - フルネームを取得
-    - `age() -> Optional[int]` - 年齢を計算
+    - `full_name_kanji() -> str` - フルネーム（漢字）を取得
+    - `full_name_katakana() -> str` - フルネーム（カタカナ）を取得
+    - `grade_display() -> str` - 学年表示（例：「3回生」）
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
-- `UserContact`: ユーザー連絡先のドメインモデル
+- `UserRole`: ユーザーロールのドメインモデル
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
-    - `id: UUID` - 連絡先ID
+    - `id: UUID` - ロールID
     - `user_id: UUID` - ユーザーID参照
-    - `contact_type: str` - 連絡先タイプ
-    - `contact_value: str` - 連絡先値
-    - `is_verified: bool` - 検証済みフラグ
-    - `is_primary: bool` - 主要連絡先フラグ
-    - `notification_settings: Dict[str, bool]` - 通知設定
+    - `role_type: str` - ロールタイプ（system_admin, club_admin, senior, general）
+    - `is_visible_to_general: bool` - 一般ユーザーに表示するか
     - `created_at: datetime` - 作成日時
     - `updated_at: datetime` - 更新日時
   - **主要メソッド**: 
-    - `format_contact() -> str` - 連絡先を整形
-    - `can_notify(notification_type: str) -> bool` - 通知可能か確認
+    - `is_admin() -> bool` - 管理者権限かどうか
+    - `can_manage_users() -> bool` - ユーザー管理権限があるか
+    - `role_display_name() -> str` - ロール表示名を取得
+    - `to_dict() -> dict` - 辞書形式に変換
+  - **依存クラス**: なし
+
+### `app/models/department.py`
+**目的**: 学部関連のドメインモデルを定義するPythonファイル
+
+**クラス/インターフェース**:
+- `Department`: 学部のドメインモデル
+  - **継承/実装**: `pydantic.BaseModel`
+  - **主要属性**:
+    - `id: UUID` - 学部ID
+    - `department_code: str` - 学部コード
+    - `department_name: str` - 学部名
+    - `campus: str` - キャンパス（今出川/田辺）
+    - `is_active: bool` - 有効フラグ
+    - `created_at: datetime` - 作成日時
+    - `updated_at: datetime` - 更新日時
+  - **主要メソッド**: 
+    - `full_display_name() -> str` - フル表示名（学部名 + キャンパス）
+    - `is_imadegawa() -> bool` - 今出川キャンパスかどうか
+    - `is_tanabe() -> bool` - 田辺キャンパスかどうか
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
@@ -237,15 +303,35 @@ erDiagram
     - `__init__(db_client)` - コンストラクタ
     - `get_by_id(user_id: UUID) -> Optional[User]` - IDでユーザーを取得
     - `get_by_email(email: str) -> Optional[User]` - メールでユーザーを取得
+    - `get_by_student_id(student_id: str) -> Optional[UserProfile]` - 学籍番号でプロフィール取得
     - `create(user_data: dict) -> User` - ユーザーを作成
     - `update(user_id: UUID, update_data: dict) -> User` - ユーザーを更新
     - `delete(user_id: UUID) -> bool` - ユーザーを削除
     - `get_profile(user_id: UUID) -> Optional[UserProfile]` - プロフィールを取得
     - `update_profile(user_id: UUID, profile_data: dict) -> UserProfile` - プロフィール更新
-    - `get_contacts(user_id: UUID) -> List[UserContact]` - 連絡先リスト取得
-    - `add_contact(user_id: UUID, contact_data: dict) -> UserContact` - 連絡先追加
-    - `delete_contact(contact_id: UUID) -> bool` - 連絡先削除
-  - **依存クラス**: `User`, `UserProfile`, `UserContact`
+    - `get_user_role(user_id: UUID) -> Optional[UserRole]` - ユーザーロール取得
+    - `update_user_role(user_id: UUID, role_type: str) -> UserRole` - ロール更新
+    - `get_users_by_role(role_type: str, include_hidden: bool = False) -> List[User]` - ロール別ユーザー取得
+  - **依存クラス**: `User`, `UserProfile`, `UserRole`
+
+### `app/repositories/department_repository.py`
+**目的**: 学部関連データのデータアクセス層を実装するPythonファイル
+
+**クラス/インターフェース**:
+- `DepartmentRepository`: 学部データにアクセスするリポジトリクラス
+  - **継承/実装**: なし
+  - **主要属性**:
+    - `_db_client` - データベースクライアント
+    - `_logger` - ロガー
+  - **主要メソッド**: 
+    - `__init__(db_client)` - コンストラクタ
+    - `get_all() -> List[Department]` - 全学部取得
+    - `get_by_id(department_id: UUID) -> Optional[Department]` - IDで学部取得
+    - `get_by_code(department_code: str) -> Optional[Department]` - コードで学部取得
+    - `get_by_campus(campus: str) -> List[Department]` - キャンパス別学部取得
+    - `create(department_data: dict) -> Department` - 学部作成
+    - `update(department_id: UUID, update_data: dict) -> Department` - 学部更新
+  - **依存クラス**: `Department`
 
 ### `app/schemas/user_schemas.py`
 **目的**: API通信用のユーザー関連データスキーマを定義するPythonファイル
@@ -256,11 +342,19 @@ erDiagram
   - **主要属性**:
     - `email: EmailStr` - メールアドレス
     - `password: str` - パスワード
-    - `display_name: str` - 表示名
-    - `first_name: Optional[str]` - 名
-    - `last_name: Optional[str]` - 姓
+    - `student_id: str` - 学籍番号
+    - `first_name_kanji: str` - 名（漢字）
+    - `first_name_katakana: str` - 名（カタカナ）
+    - `last_name_kanji: str` - 姓（漢字）
+    - `last_name_katakana: str` - 姓（カタカナ）
+    - `grade: int` - 学年
+    - `department_id: UUID` - 学部ID
+    - `role_type: str` - ロールタイプ
   - **主要メソッド**: 
     - `validate_password(cls, v) -> str` - パスワード検証
+    - `validate_student_id(cls, v) -> str` - 学籍番号検証
+    - `validate_grade(cls, v) -> int` - 学年検証
+    - `validate_katakana(cls, v) -> str` - カタカナ検証
 
 - `UserResponse`: ユーザー情報レスポンススキーマ
   - **継承/実装**: `pydantic.BaseModel`
@@ -269,27 +363,35 @@ erDiagram
     - `email: str` - メールアドレス
     - `is_active: bool` - アクティブ状態
     - `email_verified: bool` - メール検証状態
-    - `roles: List[str]` - ロール
     - `created_at: datetime` - 作成日時
     - `profile: Optional[ProfileResponse]` - プロフィール情報
+    - `role: Optional[RoleResponse]` - ロール情報
 
 - `ProfileResponse`: プロフィール情報レスポンススキーマ
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
-    - `display_name: str` - 表示名
-    - `first_name: Optional[str]` - 名
-    - `last_name: Optional[str]` - 姓
+    - `student_id: str` - 学籍番号
+    - `full_name_kanji: str` - フルネーム（漢字）
+    - `full_name_katakana: str` - フルネーム（カタカナ）
+    - `grade: int` - 学年
+    - `grade_display: str` - 学年表示
     - `avatar_url: Optional[str]` - アバターURL
-    - `preferences: Dict[str, Any]` - 設定
+    - `department: DepartmentResponse` - 学部情報
 
-- `ContactResponse`: 連絡先情報レスポンススキーマ
+- `RoleResponse`: ロール情報レスポンススキーマ
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
-    - `id: UUID` - 連絡先ID
-    - `contact_type: str` - 連絡先タイプ
-    - `contact_value: str` - 連絡先値
-    - `is_verified: bool` - 検証状態
-    - `is_primary: bool` - 主要連絡先かどうか
+    - `role_type: str` - ロールタイプ
+    - `role_display_name: str` - ロール表示名
+    - `is_visible_to_general: bool` - 一般ユーザーに表示するか
+
+- `DepartmentResponse`: 学部情報レスポンススキーマ
+  - **継承/実装**: `pydantic.BaseModel`
+  - **主要属性**:
+    - `id: UUID` - 学部ID
+    - `department_name: str` - 学部名
+    - `campus: str` - キャンパス
+    - `full_display_name: str` - フル表示名
 
 ### `app/services/user_service.py`
 **目的**: ユーザー関連のビジネスロジックを実装するサービスクラスのPythonファイル
@@ -299,21 +401,23 @@ erDiagram
   - **継承/実装**: なし
   - **主要属性**:
     - `_user_repository: UserRepository` - ユーザーリポジトリ
+    - `_department_repository: DepartmentRepository` - 学部リポジトリ
     - `_auth_service` - 認証サービス
     - `_logger` - ロガー
   - **主要メソッド**: 
-    - `__init__(user_repository: UserRepository, auth_service)` - コンストラクタ
+    - `__init__(user_repository: UserRepository, department_repository: DepartmentRepository, auth_service)` - コンストラクタ
     - `register_user(user_data: UserCreate) -> UserResponse` - ユーザー登録
-    - `get_user_by_id(user_id: UUID) -> Optional[UserResponse]` - ユーザー取得
+    - `get_user_by_id(user_id: UUID, requester_role: str = 'general') -> Optional[UserResponse]` - ユーザー取得（権限考慮）
+    - `get_user_by_student_id(student_id: str) -> Optional[UserResponse]` - 学籍番号でユーザー取得
     - `update_user_profile(user_id: UUID, profile_data: dict) -> ProfileResponse` - プロフィール更新
-    - `add_user_contact(user_id: UUID, contact_data: dict) -> ContactResponse` - 連絡先追加
-    - `verify_contact(user_id: UUID, contact_id: UUID, verification_code: str) -> bool` - 連絡先検証
-    - `update_user_preferences(user_id: UUID, preferences: dict) -> ProfileResponse` - 設定更新
+    - `get_users_by_grade(grade: int) -> List[UserResponse]` - 学年別ユーザー取得
+    - `get_users_by_department(department_id: UUID) -> List[UserResponse]` - 学部別ユーザー取得
+    - `get_club_members(include_system_admin: bool = False) -> List[UserResponse]` - 部員一覧取得
+    - `update_user_role(user_id: UUID, new_role: str, requester_role: str) -> bool` - ロール更新
+    - `validate_student_id_uniqueness(student_id: str, exclude_user_id: Optional[UUID] = None) -> bool` - 学籍番号重複チェック
     - `deactivate_user(user_id: UUID) -> bool` - ユーザー無効化
     - `reactivate_user(user_id: UUID) -> bool` - ユーザー再有効化
-    - `assign_role(user_id: UUID, role: str) -> bool` - ロール付与
-    - `remove_role(user_id: UUID, role: str) -> bool` - ロール削除
-  - **依存クラス**: `UserRepository`, `UserCreate`, `UserResponse`, `ProfileResponse`, `ContactResponse`
+  - **依存クラス**: `UserRepository`, `DepartmentRepository`, `UserCreate`, `UserResponse`, `ProfileResponse`
 
 ### `tests/models/test_user_models.py`
 **目的**: ユーザーモデルのユニットテストを実装するPythonファイル
@@ -324,8 +428,7 @@ erDiagram
   - **主要メソッド**: 
     - `setUp()` - テスト準備
     - `test_create_user()` - ユーザー作成テスト
-    - `test_user_roles()` - ユーザーロールテスト
-    - `test_is_admin()` - 管理者判定テスト
+    - `test_email_validation()` - メールアドレス検証テスト
     - `test_to_dict()` - 辞書変換テスト
 
 - `TestUserProfileModel`: ユーザープロフィールモデルのテストクラス
@@ -333,16 +436,18 @@ erDiagram
   - **主要メソッド**: 
     - `setUp()` - テスト準備
     - `test_create_profile()` - プロフィール作成テスト
-    - `test_full_name()` - フルネームテスト
-    - `test_age_calculation()` - 年齢計算テスト
+    - `test_full_name_methods()` - フルネーム取得テスト
+    - `test_grade_display()` - 学年表示テスト
+    - `test_student_id_validation()` - 学籍番号検証テスト
 
-- `TestUserContactModel`: ユーザー連絡先モデルのテストクラス
+- `TestUserRoleModel`: ユーザーロールモデルのテストクラス
   - **継承/実装**: `unittest.TestCase`
   - **主要メソッド**: 
     - `setUp()` - テスト準備
-    - `test_create_contact()` - 連絡先作成テスト
-    - `test_format_contact()` - 連絡先整形テスト
-    - `test_notification_settings()` - 通知設定テスト
+    - `test_create_role()` - ロール作成テスト
+    - `test_admin_permissions()` - 管理者権限テスト
+    - `test_visibility_settings()` - 表示設定テスト
+    - `test_role_display_name()` - ロール表示名テスト
 
 ### `tests/repositories/test_user_repository.py`
 **目的**: ユーザーリポジトリのユニットテストを実装するPythonファイル
@@ -355,10 +460,12 @@ erDiagram
     - `tearDown()` - テスト後処理
     - `test_get_by_id()` - ID取得テスト
     - `test_get_by_email()` - メール取得テスト
+    - `test_get_by_student_id()` - 学籍番号取得テスト
     - `test_create_user()` - ユーザー作成テスト
     - `test_update_user()` - ユーザー更新テスト
     - `test_get_profile()` - プロフィール取得テスト
     - `test_update_profile()` - プロフィール更新テスト
-    - `test_get_contacts()` - 連絡先取得テスト
-    - `test_add_contact()` - 連絡先追加テスト
-    - `test_delete_contact()` - 連絡先削除テスト 
+    - `test_get_user_role()` - ロール取得テスト
+    - `test_update_user_role()` - ロール更新テスト
+    - `test_get_users_by_role()` - ロール別ユーザー取得テスト
+    - `test_role_visibility()` - ロール表示制御テスト 
