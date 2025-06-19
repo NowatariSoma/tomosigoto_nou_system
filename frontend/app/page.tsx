@@ -15,13 +15,8 @@ export default function Home() {
 
   // Check authentication
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
     setIsLoading(false);
-  }, [router]);
+  }, []);
 
   const handleMobileSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
