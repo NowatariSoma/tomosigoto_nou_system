@@ -7,6 +7,7 @@
 - ユーザーアカウントテーブル設計と実装（認証情報管理）
 - ユーザープロフィールテーブル設計と実装（学生個人情報管理）
 - 学部マスターテーブル設計と実装（学部情報の正規化）
+- 学科マスターテーブル設計と実装（学科情報の正規化）
 - ユーザーロールテーブル設計と実装（権限管理）
 - 外部キー制約と参照整合性の設定
 - インデックス設計とパフォーマンス最適化
@@ -24,6 +25,7 @@
 - ユーザーアカウントテーブルSQL定義
 - ユーザープロフィールテーブルSQL定義
 - 学部マスターテーブルSQL定義
+- 学科マスターテーブルSQL定義
 - ユーザーロールテーブルSQL定義
 - マイグレーションスクリプト
 - Pythonデータモデル（Pydanticモデル）
@@ -47,14 +49,16 @@
 
 2. **学生プロフィール情報管理**
    - 基本個人情報（氏名：漢字・カタカナ）
-   - 学籍情報（学籍番号、学年、学部、キャンパス）
+   - 学籍情報（学籍番号、学年、学部、学科、キャンパス）
    - 表示名とアバター画像管理
    - ユーザー設定の保存
 
-3. **学部情報管理**
+3. **学部・学科情報管理**
    - 学部マスターデータの管理
+   - 学科マスターデータの管理
    - キャンパス情報の管理
-   - 学部コードと名称の正規化
+   - 学部・学科コードと名称の正規化
+   - 学部と学科の階層関係管理
 
 4. **ユーザーロール管理**
    - 階層的権限管理（システム管理者、能楽部管理者、4回生枠、一般部員）
@@ -67,11 +71,12 @@
 - `migrations/user_account.sql` - ユーザーアカウントテーブル定義SQL
 - `migrations/user_profile.sql` - ユーザープロフィールテーブル定義SQL
 - `migrations/departments.sql` - 学部マスターテーブル定義SQL
+- `migrations/majors.sql` - 学科マスターテーブル定義SQL
 - `migrations/user_roles.sql` - ユーザーロールテーブル定義SQL
 - `app/models/user.py` - ユーザー関連Pydanticモデル定義
-- `app/models/department.py` - 学部関連Pydanticモデル定義
+- `app/models/department.py` - 学部・学科関連Pydanticモデル定義
 - `app/repositories/user_repository.py` - ユーザーデータアクセスレイヤー
-- `app/repositories/department_repository.py` - 学部データアクセスレイヤー
+- `app/repositories/department_repository.py` - 学部・学科データアクセスレイヤー
 - `app/schemas/user_schemas.py` - ユーザーAPI用スキーマ定義
 - `app/services/user_service.py` - ユーザーサービスロジック
 - `tests/models/test_user_models.py` - ユーザーモデルのテスト
@@ -84,6 +89,8 @@ erDiagram
     users ||--|| user_profiles : "所有する"
     users ||--|| user_roles : "持つ"
     user_profiles }|--|| departments : "所属する"
+    user_profiles }|--|| majors : "専攻する"
+    departments ||--o{ majors : "含む"
     
     users {
         uuid id PK "ユーザーID"
@@ -107,6 +114,7 @@ erDiagram
         string last_name_katakana "姓（カタカナ）"
         integer grade "学年（回生）"
         uuid department_id FK "学部ID参照"
+        uuid major_id FK "学科ID参照"
         string avatar_url "アバターURL"
         jsonb preferences "ユーザー設定(JSON)"
         timestamp created_at "作成日時"
@@ -118,6 +126,17 @@ erDiagram
         string department_code UK "学部コード"
         string department_name "学部名"
         string campus "キャンパス（今出川/田辺）"
+        boolean is_active "有効フラグ"
+        timestamp created_at "作成日時"
+        timestamp updated_at "更新日時"
+    }
+    
+    majors {
+        uuid id PK "学科ID"
+        uuid department_id FK "学部ID参照"
+        string major_code UK "学科コード"
+        string major_name "学科名"
+        string major_name_en "学科名（英語）"
         boolean is_active "有効フラグ"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
@@ -187,7 +206,7 @@ flowchart TD
 
 **主要内容**:
 - `user_profiles`テーブルの作成
-- 外部キー制約の設定（users, departments）
+- 外部キー制約の設定（users, departments, majors）
 - 学籍番号の一意制約設定
 - インデックスの設定
 - RLSポリシーの設定
@@ -199,6 +218,15 @@ flowchart TD
 - `departments`テーブルの作成
 - 学部コードの一意制約設定
 - 初期データ投入（主要学部情報）
+- インデックスの設定
+
+### `migrations/majors.sql`
+**目的**: 学科マスター情報を格納するテーブルを定義するSQL
+
+**主要内容**:
+- `majors`テーブルの作成
+- 学科コードの一意制約設定
+- 初期データ投入（主要学科情報）
 - インデックスの設定
 
 ### `migrations/user_roles.sql`
@@ -242,6 +270,7 @@ flowchart TD
     - `last_name_katakana: str` - 姓（カタカナ）
     - `grade: int` - 学年（回生）
     - `department_id: UUID` - 学部ID参照
+    - `major_id: UUID` - 学科ID参照
     - `avatar_url: Optional[str]` - アバターURL
     - `preferences: Dict[str, Any]` - ユーザー設定
     - `created_at: datetime` - 作成日時
@@ -270,7 +299,7 @@ flowchart TD
   - **依存クラス**: なし
 
 ### `app/models/department.py`
-**目的**: 学部関連のドメインモデルを定義するPythonファイル
+**目的**: 学部・学科関連のドメインモデルを定義するPythonファイル
 
 **クラス/インターフェース**:
 - `Department`: 学部のドメインモデル
@@ -287,6 +316,23 @@ flowchart TD
     - `full_display_name() -> str` - フル表示名（学部名 + キャンパス）
     - `is_imadegawa() -> bool` - 今出川キャンパスかどうか
     - `is_tanabe() -> bool` - 田辺キャンパスかどうか
+    - `to_dict() -> dict` - 辞書形式に変換
+  - **依存クラス**: なし
+
+- `Major`: 学科のドメインモデル
+  - **継承/実装**: `pydantic.BaseModel`
+  - **主要属性**:
+    - `id: UUID` - 学科ID
+    - `department_id: UUID` - 学部ID参照
+    - `major_code: str` - 学科コード
+    - `major_name: str` - 学科名
+    - `major_name_en: str` - 学科名（英語）
+    - `is_active: bool` - 有効フラグ
+    - `created_at: datetime` - 作成日時
+    - `updated_at: datetime` - 更新日時
+  - **主要メソッド**: 
+    - `display_name() -> str` - 表示名を取得
+    - `full_display_name_with_department(department_name: str) -> str` - 学部名付きフル表示名
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
@@ -315,7 +361,7 @@ flowchart TD
   - **依存クラス**: `User`, `UserProfile`, `UserRole`
 
 ### `app/repositories/department_repository.py`
-**目的**: 学部関連データのデータアクセス層を実装するPythonファイル
+**目的**: 学部・学科関連データのデータアクセス層を実装するPythonファイル
 
 **クラス/インターフェース**:
 - `DepartmentRepository`: 学部データにアクセスするリポジトリクラス
@@ -333,6 +379,21 @@ flowchart TD
     - `update(department_id: UUID, update_data: dict) -> Department` - 学部更新
   - **依存クラス**: `Department`
 
+- `MajorRepository`: 学科データにアクセスするリポジトリクラス
+  - **継承/実装**: なし
+  - **主要属性**:
+    - `_db_client` - データベースクライアント
+    - `_logger` - ロガー
+  - **主要メソッド**: 
+    - `__init__(db_client)` - コンストラクタ
+    - `get_all() -> List[Major]` - 全学科取得
+    - `get_by_id(major_id: UUID) -> Optional[Major]` - IDで学科取得
+    - `get_by_code(major_code: str) -> Optional[Major]` - コードで学科取得
+    - `get_by_department(department_id: UUID) -> List[Major]` - 学部別学科取得
+    - `create(major_data: dict) -> Major` - 学科作成
+    - `update(major_id: UUID, update_data: dict) -> Major` - 学科更新
+  - **依存クラス**: `Major`
+
 ### `app/schemas/user_schemas.py`
 **目的**: API通信用のユーザー関連データスキーマを定義するPythonファイル
 
@@ -349,6 +410,7 @@ flowchart TD
     - `last_name_katakana: str` - 姓（カタカナ）
     - `grade: int` - 学年
     - `department_id: UUID` - 学部ID
+    - `major_id: UUID` - 学科ID
     - `role_type: str` - ロールタイプ
   - **主要メソッド**: 
     - `validate_password(cls, v) -> str` - パスワード検証
@@ -377,6 +439,7 @@ flowchart TD
     - `grade_display: str` - 学年表示
     - `avatar_url: Optional[str]` - アバターURL
     - `department: DepartmentResponse` - 学部情報
+    - `major: MajorResponse` - 学科情報
 
 - `RoleResponse`: ロール情報レスポンススキーマ
   - **継承/実装**: `pydantic.BaseModel`
@@ -392,6 +455,14 @@ flowchart TD
     - `department_name: str` - 学部名
     - `campus: str` - キャンパス
     - `full_display_name: str` - フル表示名
+
+- `MajorResponse`: 学科情報レスポンススキーマ
+  - **継承/実装**: `pydantic.BaseModel`
+  - **主要属性**:
+    - `id: UUID` - 学科ID
+    - `major_name: str` - 学科名
+    - `major_name_en: str` - 学科名（英語）
+    - `display_name: str` - 表示名
 
 ### `app/services/user_service.py`
 **目的**: ユーザー関連のビジネスロジックを実装するサービスクラスのPythonファイル
@@ -412,6 +483,7 @@ flowchart TD
     - `update_user_profile(user_id: UUID, profile_data: dict) -> ProfileResponse` - プロフィール更新
     - `get_users_by_grade(grade: int) -> List[UserResponse]` - 学年別ユーザー取得
     - `get_users_by_department(department_id: UUID) -> List[UserResponse]` - 学部別ユーザー取得
+    - `get_users_by_major(major_id: UUID) -> List[UserResponse]` - 学科別ユーザー取得
     - `get_club_members(include_system_admin: bool = False) -> List[UserResponse]` - 部員一覧取得
     - `update_user_role(user_id: UUID, new_role: str, requester_role: str) -> bool` - ロール更新
     - `validate_student_id_uniqueness(student_id: str, exclude_user_id: Optional[UUID] = None) -> bool` - 学籍番号重複チェック
@@ -439,6 +511,7 @@ flowchart TD
     - `test_full_name_methods()` - フルネーム取得テスト
     - `test_grade_display()` - 学年表示テスト
     - `test_student_id_validation()` - 学籍番号検証テスト
+    - `test_major_relationship()` - 学科関連テスト
 
 - `TestUserRoleModel`: ユーザーロールモデルのテストクラス
   - **継承/実装**: `unittest.TestCase`
@@ -448,6 +521,22 @@ flowchart TD
     - `test_admin_permissions()` - 管理者権限テスト
     - `test_visibility_settings()` - 表示設定テスト
     - `test_role_display_name()` - ロール表示名テスト
+
+- `TestDepartmentModel`: 学部モデルのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `test_create_department()` - 学部作成テスト
+    - `test_campus_methods()` - キャンパス判定テスト
+    - `test_full_display_name()` - フル表示名テスト
+
+- `TestMajorModel`: 学科モデルのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `test_create_major()` - 学科作成テスト
+    - `test_display_name_methods()` - 表示名メソッドテスト
+    - `test_department_relationship()` - 学部関連テスト
 
 ### `tests/repositories/test_user_repository.py`
 **目的**: ユーザーリポジトリのユニットテストを実装するPythonファイル
@@ -468,4 +557,58 @@ flowchart TD
     - `test_get_user_role()` - ロール取得テスト
     - `test_update_user_role()` - ロール更新テスト
     - `test_get_users_by_role()` - ロール別ユーザー取得テスト
-    - `test_role_visibility()` - ロール表示制御テスト 
+    - `test_role_visibility()` - ロール表示制御テスト
+    - `test_users_by_major()` - 学科別ユーザー取得テスト
+
+- `TestDepartmentRepository`: 学部リポジトリのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `tearDown()` - テスト後処理
+    - `test_get_all_departments()` - 全学部取得テスト
+    - `test_get_by_id()` - ID取得テスト
+    - `test_get_by_code()` - コード取得テスト
+    - `test_get_by_campus()` - キャンパス別取得テスト
+    - `test_create_department()` - 学部作成テスト
+    - `test_update_department()` - 学部更新テスト
+
+- `TestMajorRepository`: 学科リポジトリのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `tearDown()` - テスト後処理
+    - `test_get_all_majors()` - 全学科取得テスト
+    - `test_get_by_id()` - ID取得テスト
+    - `test_get_by_code()` - コード取得テスト
+    - `test_get_by_department()` - 学部別学科取得テスト
+    - `test_create_major()` - 学科作成テスト
+    - `test_update_major()` - 学科更新テスト
+
+    - `test_role_visibility()` - ロール表示制御テスト
+    - `test_users_by_major()` - 学科別ユーザー取得テスト
+
+- `TestDepartmentRepository`: 学部リポジトリのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `tearDown()` - テスト後処理
+    - `test_get_all_departments()` - 全学部取得テスト
+    - `test_get_by_id()` - ID取得テスト
+    - `test_get_by_code()` - コード取得テスト
+    - `test_get_by_campus()` - キャンパス別取得テスト
+    - `test_create_department()` - 学部作成テスト
+    - `test_update_department()` - 学部更新テスト
+
+- `TestMajorRepository`: 学科リポジトリのテストクラス
+  - **継承/実装**: `unittest.TestCase`
+  - **主要メソッド**: 
+    - `setUp()` - テスト準備
+    - `tearDown()` - テスト後処理
+    - `test_get_all_majors()` - 全学科取得テスト
+    - `test_get_by_id()` - ID取得テスト
+    - `test_get_by_code()` - コード取得テスト
+    - `test_get_by_department()` - 学部別学科取得テスト
+    - `test_create_major()` - 学科作成テスト
+    - `test_update_major()` - 学科更新テスト 
+ 
+ 
