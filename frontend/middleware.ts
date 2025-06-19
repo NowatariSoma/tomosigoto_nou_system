@@ -2,26 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('authToken')?.value;
-  const isLoginPage = request.nextUrl.pathname === '/login';
-  const isPublicRoute = request.nextUrl.pathname === '/login' || 
-                       request.nextUrl.pathname.startsWith('/api/') ||
-                       request.nextUrl.pathname.startsWith('/_next/') ||
-                       request.nextUrl.pathname === '/favicon.ico' ||
-                       request.nextUrl.pathname === '/favicon.png' ||
-                       request.nextUrl.pathname.startsWith('/images/') ||
-                       request.nextUrl.pathname.startsWith('/icons/');
-
-  // If user is not authenticated and trying to access protected route
-  if (!token && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // If user is authenticated and trying to access login page, redirect to home
-  if (token && isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
+  // 認証チェック・リダイレクト処理を削除
   return NextResponse.next();
 }
 
