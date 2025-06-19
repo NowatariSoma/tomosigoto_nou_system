@@ -1,5 +1,42 @@
-**/**/.env
+# Distribution / packaging
+# IDE
+# OS
+# PowerPoint temporary files
+# Python cache
+# Virtual environments
+*$py.class
+*.egg
+*.egg-info/
+*.py[cod]
+*.so
+*.swo
+*.swp
 .DS_Store
-node_modules/
-# yarn is the recommended package manager across the project
-.package-lock.json
+.Python
+.eggs/
+.idea/
+.installed.cfg
+.vscode/
+ENV/
+Thumbs.db
+__pycache__/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+env/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+wheels/
+~$*.potm
+~$*.potx
+~$*.ppsm
+~$*.ppsx
+~$*.ppt
+~$*.pptm
+~$*.pptx
