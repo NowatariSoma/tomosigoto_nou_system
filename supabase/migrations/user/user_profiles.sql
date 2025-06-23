@@ -1,14 +1,14 @@
 -- 拠点テーブル
 create table if not exists public.user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES public.users(id),
     student_id TEXT UNIQUE NOT NULL,
     frist_name_kanji TEXT NOT NULL,
     frist_name_katakana TEXT NOT NULL,
     last_name_kanji TEXT NOT NULL,
     last_name_katakana TEXT NOT NULL,
     grade INTEGER,
-    department_id TEXT NOT NULL,
+    department_id TEXT NOT NULL REFERENCES public.user_profiles(id),
     abatar_url TEXT,
     preferences JSON,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
