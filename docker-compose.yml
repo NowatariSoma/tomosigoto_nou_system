@@ -1,25 +1,81 @@
 version: '3.8'
 
 services:
-  tomosigoto-slidehub:
-    build: .
+  # FastAPI バックエンド
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/ppt-diff/app:/app/backend/ppt-diff/app
-      - ./uploads:/tmp/ppt_uploads
+    env_file:
+      - .env
     environment:
-      - DEBUG=true
-      - HOST=0.0.0.0
-      - PORT=8000
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    volumes:
+      # 開発時のみマウント（本番では無効）
+      - ./backend:/app:${DEVELOPMENT_MOUNT:-}
+      # env.exampleと.envファイルをマウント
+      - ./env.example:/env.example:ro
+      - ./.env:/.env
     restart: unless-stopped
+    command: >
+      sh -c "
+      cp /env.example /.env &&
+      if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      else
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+      fi"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    networks:
-      - slidehub-network
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=FastAPI Backend with Supabase integration"
+
+  # Next.js フロントエンド
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    volumes:
+      # 開発時のみマウント（本番では無効）
+      - ./frontend:/app:${DEVELOPMENT_MOUNT:-}
+      - /app/node_modules
+      - /app/.next
+      # env.exampleと.envファイルをマウント
+      - ./env.example:/env.example:ro
+      - ./.env:/.env
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command: >
+      sh -c "
+      cp /env.example /.env &&
+      if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
+        yarn dev
+      else
+        yarn start
+      fi"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=Next.js Frontend with Supabase integration"
 
   # Optional: PostgreSQL for future database features
   postgres:
@@ -52,5 +108,9 @@ volumes:
   redis_data:
 
 networks:
+  app-network:
+    driver: bridge
   slidehub-network:
-    driver: bridge 
+    driver: bridge
+  default:
+    name: tomosigoto-network

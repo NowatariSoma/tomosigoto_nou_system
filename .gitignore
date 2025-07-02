@@ -187,3 +187,14 @@ storybook-static/
 # Custom project files
 # ====================
 # Add any project-specific files or directories here
+
+# ====================
+# Python
+# ====================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.eggs/
