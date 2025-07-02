@@ -47,3 +47,6 @@
 2. [設計書](./設計書/README.md) - ドメイン駆動設計に基づいたシステム設計
 
 開発に参加する際は、まず要件定義を確認し、次に設計書の内容を理解することをお勧めします。 
+
+
+docker-compose exec twenty-server node scripts/test-supabase-connection.js
