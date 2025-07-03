@@ -13,8 +13,6 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
-      # 開発時のみマウント（本番では無効）
-      - ./backend:/app:${DEVELOPMENT_MOUNT:-}
       # env.exampleと.envファイルをマウント
       - ./env.example:/env.example:ro
       - ./.env:/.env
@@ -50,8 +48,6 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     volumes:
-      # 開発時のみマウント（本番では無効）
-      - ./frontend:/app:${DEVELOPMENT_MOUNT:-}
       - /app/node_modules
       - /app/.next
       # env.exampleと.envファイルをマウント
