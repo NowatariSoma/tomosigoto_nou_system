@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { X, Plus, Calendar, Clock, Users } from 'lucide-react';
+import { Sidebar } from '@/components/layout/sidebar';
 
 interface Room {
   id: number;
@@ -25,12 +26,17 @@ interface TimeSlot {
   end: string;
 }
 
-export default function BoltPage() {
+export default function BoltPage(){
+
   const [selectedRooms, setSelectedRooms] = useState<Room[]>([
     { id: 347, name: '347' },
     { id: 537, name: '537' },
     { id: 538, name: '538' }
   ]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   
   const [date, setDate] = useState({
     month: '19',
@@ -58,8 +64,23 @@ export default function BoltPage() {
     setSelectedRooms([...selectedRooms, { id: newRoomNumber, name: newRoomNumber.toString() }]);
   };
 
+  const handleMobileSidebarToggle = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
+  const handleMobileSidebarClose = () => {
+    setIsMobileSidebarOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-white flex">
+    {/* Sidebar */}
+    <Sidebar 
+      isMobileOpen={isMobileSidebarOpen}
+      onMobileClose={handleMobileSidebarClose}
+    />
+    
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex-1">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-6 px-8 shadow-lg">
         <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -68,7 +89,7 @@ export default function BoltPage() {
         </h1>
       </div>
 
-      <div className="max-w-6xl mx-auto p-8 space-y-8">
+      <div className="max-w-7xl mx-auto p-8 space-y-8">
         {/* Room Selection */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="pb-4">
@@ -262,5 +283,6 @@ export default function BoltPage() {
         </div>
       </div>
     </div>
+  </div>
   );
-} 
+}
