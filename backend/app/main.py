@@ -43,35 +43,26 @@ async def debug_supabase_users():
     """実際のSupabaseからユーザを取得（デバッグ用・認証不要）"""
     try:
         from app.services.supabase_service import supabase_service
+        from app.core.exceptions import create_success_response, create_error_response
+        
         users = await supabase_service.get_all_users()
-        return {
-            "status": "success",
-            "user_count": len(users),
-            "users": users
-        }
+        return create_success_response(users, f"Found {len(users)} users")
     except Exception as e:
-        return {
-            "status": "error",
-            "error_message": str(e),
-            "error_type": type(e).__name__
-        }
+        from app.core.exceptions import create_error_response
+        return create_error_response("Failed to fetch users", e)
 
 @app.get("/debug/supabase-tables")
 async def debug_supabase_tables():
     """利用可能なSupabaseテーブルを確認（デバッグ用）"""
     try:
         from app.services.supabase_service import supabase_service
+        from app.core.exceptions import create_success_response, create_error_response
+        
         tables = await supabase_service.get_table_list()
-        return {
-            "status": "success",
-            "available_tables": tables
-        }
+        return create_success_response(tables, "Available tables retrieved")
     except Exception as e:
-        return {
-            "status": "error",
-            "error_message": str(e),
-            "error_type": type(e).__name__
-        }
+        from app.core.exceptions import create_error_response
+        return create_error_response("Failed to fetch tables", e)
 
 if __name__ == "__main__":
     import uvicorn
