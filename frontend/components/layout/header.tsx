@@ -27,8 +27,8 @@ export function Header({ onLogout, onMobileSidebarToggle }: HeaderProps) {
   // 模擬ユーザーデータ
   useEffect(() => {
     const mockUser = {
-      username: 'ユーザー',
-      email: 'user@example.com'
+      username: 'テストユーザー',
+      email: 'test.user@tomosigoto-system.local'
     };
     setUser(mockUser);
   }, []);

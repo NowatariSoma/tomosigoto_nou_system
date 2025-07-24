@@ -70,7 +70,9 @@ export default function UploadPage() {
     setUploadStatus('idle');
     
     try {
-      // TODO: API呼び出しを実装
+      // ファイルアップロードAPI呼び出し（モック）
+      console.log('Uploading files:', files.map(f => f.name));
+      // await uploadFiles(files);
       await new Promise(resolve => setTimeout(resolve, 2000)); // 模擬アップロード
       setUploadStatus('success');
       

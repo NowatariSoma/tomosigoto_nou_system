@@ -60,8 +60,8 @@ export default function SettingsPage() {
 
   // プロフィール情報
   const [profile, setProfile] = useState<UserProfile>({
-    name: 'ユーザー',
-    email: 'user@example.com',
+    name: 'テストユーザー',
+    email: 'admin@tomosigoto-system.local',
     role: 'admin',
     theme: 'light',
   });
@@ -70,22 +70,22 @@ export default function SettingsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
       id: '1',
-      name: 'ユーザー',
-      email: 'user@example.com',
+      name: 'テスト管理者',
+      email: 'admin@tomosigoto-system.local',
       role: 'admin',
       lastActive: '2024-01-15T10:30:00Z',
     },
     {
       id: '2',
       name: 'チームメンバー1',
-      email: 'member1@example.com',
+      email: 'member1@tomosigoto-system.local',
       role: 'user',
       lastActive: '2024-01-14T16:45:00Z',
     },
     {
       id: '3',
       name: 'チームメンバー2',
-      email: 'member2@example.com',
+      email: 'member2@tomosigoto-system.local',
       role: 'viewer',
       lastActive: '2024-01-13T09:15:00Z',
     },
@@ -112,16 +112,30 @@ export default function SettingsPage() {
     router.push(`/settings?tab=${tab}`);
   };
 
-  const handleProfileUpdate = () => {
-    // TODO: API呼び出し
-    alert('プロフィールを更新しました');
+  const handleProfileUpdate = async () => {
+    try {
+      // プロフィール更新API呼び出し（モック）
+      console.log('Updating profile:', profile);
+      // await updateUserProfile(profile);
+      alert('プロフィールを更新しました');
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      alert('プロフィールの更新に失敗しました');
+    }
   };
 
-  const handleInviteMember = () => {
+  const handleInviteMember = async () => {
     const email = prompt('招待するメンバーのメールアドレスを入力してください');
     if (email) {
-      // TODO: API呼び出し
-      alert(`${email} に招待メールを送信しました`);
+      try {
+        // メンバー招待API呼び出し（モック）
+        console.log('Inviting member:', email);
+        // await inviteTeamMember(email);
+        alert(`${email} に招待メールを送信しました`);
+      } catch (error) {
+        console.error('Member invitation failed:', error);
+        alert('招待メールの送信に失敗しました');
+      }
     }
   };
 
