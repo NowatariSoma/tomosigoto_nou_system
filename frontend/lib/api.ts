@@ -74,6 +74,71 @@ export const userApi = {
   },
 }
 
+// 認証API関数
+export const authApi = {
+  // ログイン
+  login: async (email: string, password: string): Promise<{ success: boolean; token?: string; user?: User; message?: string }> => {
+    try {
+      const response = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+      
+      return {
+        success: true,
+        token: response.token,
+        user: response.user,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'ログインに失敗しました',
+      }
+    }
+  },
+
+  // ログアウト
+  logout: async (token: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      await apiRequest('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'ログアウトに失敗しました',
+      }
+    }
+  },
+
+  // トークンの検証
+  verifyToken: async (token: string): Promise<{ success: boolean; user?: User; message?: string }> => {
+    try {
+      const response = await apiRequest('/api/auth/verify', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      
+      return {
+        success: true,
+        user: response.user,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'トークンの検証に失敗しました',
+      }
+    }
+  },
+}
+
 // 既存のauth関数（互換性維持）
 export const auth = async (params?: unknown): Promise<{ success: boolean; message?: string }> => {
   // 仮実装: 必要に応じてAPIリクエスト処理を追加
