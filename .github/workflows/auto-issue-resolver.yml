@@ -20,28 +20,54 @@ jobs:
           # Personal Access Tokenを使用（設定されていない場合はGITHUB_TOKENを使用）
           github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
-            // 優先度順にissueを探す
-            const priorities = ['high', 'middle', 'low'];
+            // 優先度順にissueを探す（ラベルなしも含む）
+            const priorities = ['high', 'middle', 'low', 'no-priority'];
             const processedLabel = 'claude-code-requested';
             
             for (const priority of priorities) {
-              // 優先度ラベルがついたissueを取得（作成日時の降順）
-              const issues = await github.rest.issues.listForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: priority,
-                state: 'open',
-                sort: 'created',
-                direction: 'desc',
-                per_page: 100
-              });
+              let issues;
+              
+              if (priority === 'no-priority') {
+                // 優先度ラベルがないissueを取得
+                const allOpenIssues = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  sort: 'created',
+                  direction: 'desc',
+                  per_page: 100
+                });
+                
+                // high, middle, lowのいずれのラベルも持たないissueをフィルタ
+                issues = {
+                  data: allOpenIssues.data.filter(issue => 
+                    !issue.labels.some(label => 
+                      ['high', 'middle', 'low', processedLabel].includes(label.name)
+                    )
+                  )
+                };
+              } else {
+                // 特定の優先度ラベルがついたissueを取得
+                issues = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: priority,
+                  state: 'open',
+                  sort: 'created',
+                  direction: 'desc',
+                  per_page: 100
+                });
+              }
               
               // 未処理のissueを探す
               const unprocessedIssue = issues.data.find(issue => 
                 !issue.labels.some(label => label.name === processedLabel)
               );
               
-              if (unprocessedIssue) {                
+              if (unprocessedIssue) {
+                // 優先度の表示を調整
+                const priorityText = priority === 'no-priority' ? '優先度: 未設定' : `優先度: ${priority}`;
+                
                 // @claudeメンションコメントを投稿
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -57,7 +83,7 @@ jobs:
                     '**説明**:',
                     unprocessedIssue.body || '説明なし',
                     '',
-                    `優先度: ${priority}`
+                    priorityText
                   ].join('\n')
                 });
                 
@@ -69,6 +95,7 @@ jobs:
                   labels: [processedLabel]
                 });
                 
+                console.log(`Processed issue #${unprocessedIssue.number} (${priority})`);
                 console.log('Claude Code Action will be triggered by the mention');
                 return; // 1つのissueのみ処理して終了
               }
