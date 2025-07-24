@@ -1,0 +1,77 @@
+name: Auto Issue Resolver
+
+on:
+  schedule:
+    # JST 23:00-06:00の間、30分ごとに実行
+    # JST = UTC + 9時間
+    # JST 23:00 = UTC 14:00, JST 06:00 = UTC 21:00
+    - cron: '0,30 14-20 * * *'  # UTC 14:00-20:30 (JST 23:00-05:30)
+    - cron: '0 21 * * *'        # UTC 21:00 (JST 06:00)
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  process-issue:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Find and process highest priority issue
+        uses: actions/github-script@v7
+        with:
+          # Personal Access Tokenを使用（設定されていない場合はGITHUB_TOKENを使用）
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            // 優先度順にissueを探す
+            const priorities = ['high', 'middle', 'low'];
+            const processedLabel = 'claude-code-requested';
+            
+            for (const priority of priorities) {
+              // 優先度ラベルがついたissueを取得（作成日時の降順）
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: priority,
+                state: 'open',
+                sort: 'created',
+                direction: 'desc',
+                per_page: 100
+              });
+              
+              // 未処理のissueを探す
+              const unprocessedIssue = issues.data.find(issue => 
+                !issue.labels.some(label => label.name === processedLabel)
+              );
+              
+              if (unprocessedIssue) {                
+                // @claudeメンションコメントを投稿
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: unprocessedIssue.number,
+                  body: [
+                    `@claude このIssue #${unprocessedIssue.number} を解決してください。`,
+                    '',
+                    '以下の内容に基づいて、具体的な実装方針と必要なコード変更を提案してください：',
+                    '',
+                    `**タイトル**: ${unprocessedIssue.title}`,
+                    '',
+                    '**説明**:',
+                    unprocessedIssue.body || '説明なし',
+                    '',
+                    `優先度: ${priority}`
+                  ].join('\n')
+                });
+                
+                // 処理済みラベルを追加
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: unprocessedIssue.number,
+                  labels: [processedLabel]
+                });
+                
+                console.log('Claude Code Action will be triggered by the mention');
+                return; // 1つのissueのみ処理して終了
+              }
+            }
+            
+            console.log('No unprocessed issues found');
