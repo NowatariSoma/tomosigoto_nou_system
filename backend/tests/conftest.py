@@ -12,6 +12,11 @@ from backend.app.services.pdf_service import PDFService
 from backend.app.core.pdf_generator import PDFGenerator
 from backend.app.core.pdf_templates import PDFTemplateEngine
 from backend.app.utils.cache_manager import CacheManager
+import pytest
+import os
+from unittest.mock import Mock, MagicMock
+from fastapi.testclient import TestClient
+from app.main import app
 
 
 @pytest.fixture
@@ -34,6 +39,25 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
+=======
+def mock_supabase_client():
+    """Mock Supabase client for testing"""
+    mock_client = Mock()
+    mock_client.table = Mock()
+    mock_client.auth = Mock()
+    mock_client.auth.admin = Mock()
+    mock_client.auth.get_user = Mock()
+    return mock_client
+
+
+@pytest.fixture
+def sample_user():
+    """Sample user data for testing"""
+    return {
+        "id": "test-user-id",
+        "email": "test@example.com",
+        "created_at": "2025-01-01T00:00:00.000Z",
+        "updated_at": "2025-01-01T00:00:00.000Z"
     }
 
 
@@ -62,6 +86,21 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
+
+def sample_users():
+    """Sample users list for testing"""
+    return [
+        {
+            "id": "user1",
+            "email": "user1@example.com",
+            "created_at": "2025-01-01T00:00:00.000Z",
+            "updated_at": "2025-01-01T00:00:00.000Z"
+        },
+        {
+            "id": "user2", 
+            "email": "user2@example.com",
+            "created_at": "2025-01-01T00:00:00.000Z",
+            "updated_at": "2025-01-01T00:00:00.000Z"
         }
     ]
 
@@ -120,3 +159,15 @@ def setup_test_environment():
         del os.environ["TESTING"]
     if "CACHE_EXPIRY_HOURS" in os.environ:
         del os.environ["CACHE_EXPIRY_HOURS"]
+          
+def mock_jwt_token():
+    """Mock JWT token for testing"""
+    return "mock.jwt.token"
+
+
+@pytest.fixture(autouse=True)
+def setup_test_env(monkeypatch):
+    """Setup test environment variables"""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key")
