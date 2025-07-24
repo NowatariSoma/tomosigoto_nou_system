@@ -14,14 +14,7 @@ async def get_users(
     supabase_service: SupabaseService = Depends(get_supabase_service),
 ):
     """すべてのユーザーを取得"""
-    try:
-        users = await supabase_service.get_all_users()
-        return users
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return await supabase_service.get_all_users()
 
 
 @router.get("/{user_id}", response_model=Dict[str, Any])
@@ -31,21 +24,13 @@ async def get_user(
     supabase_service: SupabaseService = Depends(get_supabase_service),
 ):
     """特定のユーザー情報を取得"""
-    try:
-        user = await supabase_service.get_user_by_id(user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        return user
-    except HTTPException:
-        raise
-    except Exception as e:
+    user = await supabase_service.get_user_by_id(user_id)
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
+    return user
 
 
 @router.get("/me/", response_model=Dict[str, Any])
