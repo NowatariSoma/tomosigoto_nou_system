@@ -32,7 +32,7 @@ jobs:
                   repo: context.repo.repo,
                   state: 'open',
                   sort: 'created',
-                  direction: 'asc',  // 古い順に変更
+                  direction: 'desc',
                   per_page: 100
                 });
                 
@@ -52,7 +52,7 @@ jobs:
                   labels: priority,
                   state: 'open',
                   sort: 'created',
-                  direction: 'asc',  // 古い順に変更
+                  direction: 'desc',
                   per_page: 100
                 });
               }
