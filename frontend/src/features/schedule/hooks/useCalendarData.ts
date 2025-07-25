@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Schedule, DateRange, CalendarDataParams, ScheduleApiResponse } from '@/types/schedule';
+import { fetchSchedulesFromApi } from '../services/scheduleApi';
 
 /**
  * カレンダーデータ取得フック
@@ -50,20 +51,27 @@ export function useCalendarData(params: CalendarDataParams) {
     setError(null);
 
     try {
-      // TODO: 実際のAPI呼び出しを実装
-      // 現在はモックデータを返す
-      const mockData = await fetchScheduleData(params);
+      // 実際のAPI呼び出しを実行（フォールバック付き）
+      let scheduleData: Schedule[];
       
-      setData(mockData);
+      try {
+        scheduleData = await fetchSchedulesFromApi(params);
+      } catch (apiError) {
+        // API呼び出し失敗時はモックデータにフォールバック
+        console.warn('API呼び出しが失敗しました。モックデータを使用します:', apiError);
+        scheduleData = await fetchScheduleData(params);
+      }
+      
+      setData(scheduleData);
       setLastFetchTime(Date.now());
       
       // キャッシュに保存（タイムスタンプ付き）
-      setCache(prev => new Map(prev).set(cacheKey, mockData));
+      setCache(prev => new Map(prev).set(cacheKey, scheduleData));
       
       // デバッグ情報（開発環境のみ）
       if (process.env.NODE_ENV === 'development') {
         console.log(`Calendar data fetched in ${Date.now() - startTime}ms:`, {
-          scheduleCount: mockData.length,
+          scheduleCount: scheduleData.length,
           dateRange: `${params.dateRange.start.toLocaleDateString()} - ${params.dateRange.end.toLocaleDateString()}`,
           partId: params.partId,
           viewMode: params.viewMode
