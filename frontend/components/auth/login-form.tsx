@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { auth } from '@/lib/supabase'
+import { auth } from '@/lib/auth-service'
 
 const loginSchema = z.object({
   email: z
@@ -49,8 +49,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
       const result = await auth.signIn(data.email, data.password)
       
-      if (result.error) {
-        setError('ログインに失敗しました')
+      if (!result.success) {
+        setError(result.error || 'ログインに失敗しました')
         return
       }
 

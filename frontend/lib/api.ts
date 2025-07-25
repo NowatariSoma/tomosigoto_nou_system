@@ -1,19 +1,10 @@
 // APIクライアントの雛形
 // 必要に応じてaxiosやfetchを使って実装してください
 
+import { User } from '@/types/auth'
+
 // APIクライアントの設定
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-
-// 型定義
-interface User {
-  id: string
-  email: string
-  name?: string
-  created_at?: string
-  updated_at?: string
-  email_confirmed_at?: string
-  last_sign_in_at?: string
-}
 
 // APIリクエストヘルパー
 const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<any> => {

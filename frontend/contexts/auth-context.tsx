@@ -1,23 +1,9 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { auth } from '@/lib/supabase'
+import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react'
+import { auth } from '@/lib/auth-service'
 import { TokenManager } from '@/lib/token-manager'
-
-interface User {
-  id: string
-  email: string
-  name?: string
-}
-
-interface AuthContextType {
-  user: User | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-}
+import { User, AuthContextType } from '@/types/auth'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -61,8 +47,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const result = await auth.signIn(email, password)
 
-      if (result.error) {
-        setError('ログインに失敗しました')
+      if (!result.success) {
+        setError(result.error || 'ログインに失敗しました')
         return
       }
 
@@ -95,14 +81,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isAuthenticated,
     isLoading,
     error,
     login,
     logout,
-  }
+  }), [user, isAuthenticated, isLoading, error])
 
   return (
     <AuthContext.Provider value={value}>

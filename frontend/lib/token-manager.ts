@@ -1,44 +1,49 @@
-interface TokenPayload {
-  sub: string
-  email?: string
-  name?: string
-  exp: number
-  iat: number
-  [key: string]: any
-}
-
-interface User {
-  id: string
-  email: string
-  name?: string
-}
+import { jwtDecode } from 'jwt-decode'
+import { TokenPayload, User } from '@/types/auth'
 
 export class TokenManager {
   private static readonly TOKEN_KEY = 'auth_token'
+  private static memoryToken: string | null = null
 
   /**
-   * トークンをlocalStorageに保存
+   * トークンをメモリに保存（セキュリティ向上のため）
+   * Note: 本番環境ではHttpOnly cookieの使用を推奨
    */
   static saveToken(token: string): void {
+    // メモリ保存を優先
+    this.memoryToken = token
+    
+    // フォールバックとしてlocalStorageも使用（将来的には削除予定）
     if (typeof window !== 'undefined') {
       localStorage.setItem(this.TOKEN_KEY, token)
     }
   }
 
   /**
-   * localStorageからトークンを取得
+   * トークンを取得（メモリ優先）
    */
   static getToken(): string | null {
+    // メモリから取得を試行
+    if (this.memoryToken) {
+      return this.memoryToken
+    }
+    
+    // フォールバックとしてlocalStorageから取得
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(this.TOKEN_KEY)
+      const token = localStorage.getItem(this.TOKEN_KEY)
+      if (token) {
+        this.memoryToken = token
+        return token
+      }
     }
     return null
   }
 
   /**
-   * localStorageからトークンを削除
+   * トークンを削除
    */
   static removeToken(): void {
+    this.memoryToken = null
     if (typeof window !== 'undefined') {
       localStorage.removeItem(this.TOKEN_KEY)
     }
@@ -62,19 +67,16 @@ export class TokenManager {
   }
 
   /**
-   * JWTトークンからペイロードを取得
+   * JWTトークンからペイロードを取得（安全にデコード）
    */
   static getTokenPayload(token: string): TokenPayload | null {
     if (!token) return null
 
     try {
-      const parts = token.split('.')
-      if (parts.length !== 3) return null
-
-      const payload = parts[1]
-      const decodedPayload = atob(payload)
-      return JSON.parse(decodedPayload) as TokenPayload
-    } catch {
+      // jwt-decodeライブラリを使用して安全にデコード
+      return jwtDecode<TokenPayload>(token)
+    } catch (error) {
+      console.error('JWT decode error:', error)
       return null
     }
   }
