@@ -3,12 +3,16 @@ const nextConfig = {
   // Dockerでのスタンドアロンビルドを有効化
   output: 'standalone',
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // ESLintエラーを許可（開発環境で段階的に修正）
     ignoreDuringBuilds: true,
   },
   images: {
     unoptimized: true,
+    domains: ['localhost', 'example.com'],
+  },
+  env: {
+    API_BASE_URL: process.env.API_BASE_URL,
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
   webpack: (config, { dev, isServer }) => {
     // Disable CSS optimization in production to avoid build errors
@@ -21,6 +25,7 @@ const nextConfig = {
   async rewrites() {
     const isDev = process.env.NODE_ENV === 'development';
     return [
+      // 既存のカメラとDB API設定
       {
         source: '/api/camera1/:path*',
         destination: isDev 
@@ -38,6 +43,19 @@ const nextConfig = {
         destination: isDev 
           ? 'http://localhost:8003/:path*'
           : 'http://db-access:8000/:path*',
+      },
+      // 練習表システム用API設定
+      {
+        source: '/api/schedules/:path*',
+        destination: `${process.env.API_BASE_URL || 'http://localhost:8000'}/api/schedules/:path*`,
+      },
+      {
+        source: '/api/users/:path*',
+        destination: `${process.env.API_BASE_URL || 'http://localhost:8000'}/api/users/:path*`,
+      },
+      {
+        source: '/api/auth/:path*',
+        destination: `${process.env.API_BASE_URL || 'http://localhost:8000'}/api/auth/:path*`,
       },
     ];
   },
