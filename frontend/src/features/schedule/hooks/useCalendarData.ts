@@ -23,6 +23,7 @@ export function useCalendarData(params: CalendarDataParams) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [cache, setCache] = useState<Map<string, Schedule[]>>(new Map());
+  const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
   // キャッシュキーの生成
   const generateCacheKey = useCallback((params: CalendarDataParams): string => {
@@ -44,6 +45,7 @@ export function useCalendarData(params: CalendarDataParams) {
       return;
     }
 
+    const startTime = Date.now();
     setIsLoading(true);
     setError(null);
 
@@ -53,13 +55,29 @@ export function useCalendarData(params: CalendarDataParams) {
       const mockData = await fetchScheduleData(params);
       
       setData(mockData);
+      setLastFetchTime(Date.now());
       
-      // キャッシュに保存
+      // キャッシュに保存（タイムスタンプ付き）
       setCache(prev => new Map(prev).set(cacheKey, mockData));
+      
+      // デバッグ情報（開発環境のみ）
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Calendar data fetched in ${Date.now() - startTime}ms:`, {
+          scheduleCount: mockData.length,
+          dateRange: `${params.dateRange.start.toLocaleDateString()} - ${params.dateRange.end.toLocaleDateString()}`,
+          partId: params.partId,
+          viewMode: params.viewMode
+        });
+      }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
+      const error = err instanceof Error ? err : new Error('スケジュールデータの取得に失敗しました');
       setError(error);
       setData([]);
+      
+      // エラーログ（開発環境のみ）
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Calendar data fetch error:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +97,8 @@ export function useCalendarData(params: CalendarDataParams) {
     data,
     isLoading,
     error,
-    refetch
+    refetch,
+    lastFetchTime
   };
 }
 

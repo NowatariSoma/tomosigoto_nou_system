@@ -145,12 +145,21 @@ function CalendarCell({ data, onDateClick, onSessionClick }: CalendarCellProps) 
   return (
     <div
       className={cn(
-        'min-h-[80px] p-1 border-r border-b border-gray-200 cursor-pointer hover:bg-gray-50',
+        'min-h-[80px] sm:min-h-[100px] p-1 border-r border-b border-gray-200 cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
         isToday && 'bg-blue-50',
         isSelected && 'ring-2 ring-blue-500',
         !isCurrentMonth && 'bg-gray-100 text-gray-400'
       )}
       onClick={handleDateClick}
+      tabIndex={0}
+      role="button"
+      aria-label={`${date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}${hasSchedules ? `, ${schedules.length}件のスケジュール` : ''}${isToday ? '（今日）' : ''}${isSelected ? '（選択中）' : ''}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleDateClick();
+        }
+      }}
     >
       {/* 日付番号 */}
       <div
@@ -169,15 +178,27 @@ function CalendarCell({ data, onDateClick, onSessionClick }: CalendarCellProps) 
           {schedules.slice(0, 2).map((schedule) => (
             <div
               key={schedule.id}
-              className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80"
+              className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-1 focus:ring-white"
               style={{ backgroundColor: schedule.color || '#3b82f6' }}
               onClick={(e) => handleSessionClick(e, schedule)}
+              tabIndex={0}
+              role="button"
+              aria-label={`スケジュール: ${schedule.title}, ${schedule.startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}から`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSessionClick(e, schedule);
+                }
+              }}
             >
-              <span className="text-white">{schedule.title}</span>
+              <span className="text-white font-medium">{schedule.title}</span>
+              <div className="text-white opacity-90 text-[10px] mt-0.5 hidden sm:block">
+                {schedule.startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
           ))}
           {schedules.length > 2 && (
-            <div className="text-xs text-gray-500 text-center">
+            <div className="text-xs text-gray-500 text-center font-medium">
               +{schedules.length - 2}件
             </div>
           )}
