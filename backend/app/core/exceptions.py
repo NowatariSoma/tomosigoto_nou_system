@@ -66,3 +66,64 @@ def create_success_response(data: Any, message: Optional[str] = None) -> Dict[st
     else:
         response["data"] = data
     return response
+
+
+# 会場関連の例外クラス
+class VenueError(Exception):
+    """会場関連のベース例外クラス"""
+    def __init__(self, message: str, detail: Optional[str] = None):
+        self.message = message
+        self.detail = detail
+        super().__init__(self.message)
+
+
+class VenueNotFoundError(VenueError):
+    """会場が見つからない場合の例外"""
+    def __init__(self, venue_id: str):
+        super().__init__(
+            message=f"会場が見つかりません: {venue_id}",
+            detail="指定されたIDの会場が存在しません"
+        )
+
+
+class VenueCodeDuplicateError(VenueError):
+    """会場コードが重複している場合の例外"""
+    def __init__(self, code: str):
+        super().__init__(
+            message=f"会場コードが既に存在します: {code}",
+            detail="会場コードは一意である必要があります"
+        )
+
+
+class AvailabilitySlotError(Exception):
+    """利用可能時間枠関連のベース例外クラス"""
+    def __init__(self, message: str, detail: Optional[str] = None):
+        self.message = message
+        self.detail = detail
+        super().__init__(self.message)
+
+
+class AvailabilitySlotNotFoundError(AvailabilitySlotError):
+    """利用可能時間枠が見つからない場合の例外"""
+    def __init__(self, slot_id: str):
+        super().__init__(
+            message=f"利用可能時間枠が見つかりません: {slot_id}",
+            detail="指定されたIDの時間枠が存在しません"
+        )
+
+
+class AvailabilitySlotConflictError(AvailabilitySlotError):
+    """利用可能時間枠が競合している場合の例外"""
+    def __init__(self, venue_id: str, date: str, time_range: str):
+        super().__init__(
+            message=f"時間枠が競合しています: 会場{venue_id}, 日時{date} {time_range}",
+            detail="同じ会場・日時の時間枠が既に存在します"
+        )
+
+
+class RecurringSlotError(Exception):
+    """定期予約枠関連のベース例外クラス"""
+    def __init__(self, message: str, detail: Optional[str] = None):
+        self.message = message
+        self.detail = detail
+        super().__init__(self.message)
