@@ -148,6 +148,106 @@ describe('GenerationResultView', () => {
 
       expect(weekButton).toHaveClass('bg-blue-500', 'text-white');
     });
+
+    describe('月表示ビュー', () => {
+      it('月表示モードでカレンダーグリッドが表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const monthButton = screen.getByText('月表示');
+        fireEvent.click(monthButton);
+        
+        expect(screen.getByTestId('month-calendar-grid')).toBeInTheDocument();
+      });
+
+      it('月表示でセッションが日付セルに表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const monthButton = screen.getByText('月表示');
+        fireEvent.click(monthButton);
+        
+        expect(screen.getByTestId('calendar-session-session-1')).toBeInTheDocument();
+        expect(screen.getByTestId('calendar-session-session-2')).toBeInTheDocument();
+      });
+
+      it('月表示で前月・次月ナビゲーションができる', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const monthButton = screen.getByText('月表示');
+        fireEvent.click(monthButton);
+        
+        const prevButton = screen.getByLabelText('前の期間');
+        const nextButton = screen.getByLabelText('次の期間');
+        
+        fireEvent.click(nextButton);
+        fireEvent.click(prevButton);
+        
+        expect(screen.getByTestId('month-calendar-grid')).toBeInTheDocument();
+      });
+    });
+
+    describe('週表示ビュー', () => {
+      it('週表示モードで週グリッドが表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const weekButton = screen.getByText('週表示');
+        fireEvent.click(weekButton);
+        
+        expect(screen.getByTestId('week-schedule-grid')).toBeInTheDocument();
+      });
+
+      it('週表示で7日分の曜日ヘッダーが表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const weekButton = screen.getByText('週表示');
+        fireEvent.click(weekButton);
+        
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        weekdays.forEach(day => {
+          expect(screen.getByText(day)).toBeInTheDocument();
+        });
+      });
+
+      it('週表示でセッションが時間軸に配置される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const weekButton = screen.getByText('週表示');
+        fireEvent.click(weekButton);
+        
+        expect(screen.getByTestId('week-session-session-1')).toBeInTheDocument();
+        expect(screen.getByTestId('week-session-session-2')).toBeInTheDocument();
+      });
+    });
+
+    describe('日表示ビュー', () => {
+      it('日表示モードで時間軸スケジュールが表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const dayButton = screen.getByText('日表示');
+        fireEvent.click(dayButton);
+        
+        expect(screen.getByTestId('day-schedule-timeline')).toBeInTheDocument();
+      });
+
+      it('日表示で時間スロットが表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const dayButton = screen.getByText('日表示');
+        fireEvent.click(dayButton);
+        
+        expect(screen.getByText('09:00')).toBeInTheDocument();
+        expect(screen.getByText('10:00')).toBeInTheDocument();
+      });
+
+      it('日表示で選択日のセッションのみ表示される', () => {
+        render(<GenerationResultView {...defaultProps} />);
+        
+        const dayButton = screen.getByText('日表示');
+        fireEvent.click(dayButton);
+        
+        // 選択された日のセッションが表示される
+        expect(screen.getByTestId('day-session-session-1')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('フィルタリング機能', () => {
@@ -288,6 +388,64 @@ describe('GenerationResultView', () => {
       fireEvent.click(session);
 
       expect(screen.queryByTestId('session-edit-modal')).not.toBeInTheDocument();
+    });
+
+    it('編集モーダルにセッション情報が表示される', async () => {
+      render(<GenerationResultView {...defaultProps} />);
+
+      const session = screen.getByText('セッション1');
+      fireEvent.click(session);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('session-edit-modal')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('セッション1')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('09:00')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('10:00')).toBeInTheDocument();
+      });
+    });
+
+    it('編集モーダルで保存ボタンをクリックできる', async () => {
+      render(<GenerationResultView {...defaultProps} />);
+
+      const session = screen.getByText('セッション1');
+      fireEvent.click(session);
+
+      await waitFor(() => {
+        const saveButton = screen.getByText('保存');
+        expect(saveButton).toBeInTheDocument();
+        fireEvent.click(saveButton);
+      });
+    });
+
+    it('編集モーダルでキャンセルボタンをクリックするとモーダルが閉じる', async () => {
+      render(<GenerationResultView {...defaultProps} />);
+
+      const session = screen.getByText('セッション1');
+      fireEvent.click(session);
+
+      await waitFor(() => {
+        const cancelButton = screen.getByText('キャンセル');
+        fireEvent.click(cancelButton);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('session-edit-modal')).not.toBeInTheDocument();
+      });
+    });
+
+    it('編集モーダルでセッション情報を変更できる', async () => {
+      render(<GenerationResultView {...defaultProps} />);
+
+      const session = screen.getByText('セッション1');
+      fireEvent.click(session);
+
+      await waitFor(() => {
+        const titleInput = screen.getByDisplayValue('セッション1');
+        fireEvent.change(titleInput, { target: { value: '更新されたセッション1' } });
+        
+        const saveButton = screen.getByText('保存');
+        fireEvent.click(saveButton);
+      });
     });
   });
 
