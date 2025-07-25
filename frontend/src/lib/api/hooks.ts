@@ -23,11 +23,35 @@ export interface InfiniteQueryOptions extends FetchOptions {
   pageSize?: number
 }
 
-// キャッシュ管理
-class QueryCache {
-  private cache = new Map<string, { data: any; timestamp: number; staleTime: number }>()
+// LRUキャッシュエントリー
+interface CacheEntry {
+  data: any
+  timestamp: number
+  staleTime: number
+}
+
+// LRUキャッシュ実装
+class LRUQueryCache {
+  private cache = new Map<string, CacheEntry>()
+  private maxSize: number
+
+  constructor(maxSize: number = 100) {
+    this.maxSize = maxSize
+  }
 
   set(key: string, data: any, staleTime: number = 5 * 60 * 1000): void {
+    // すでに存在する場合は削除してから追加（LRUの順序を更新）
+    if (this.cache.has(key)) {
+      this.cache.delete(key)
+    }
+
+    // 容量制限チェック
+    if (this.cache.size >= this.maxSize) {
+      // 最も古いエントリを削除
+      const firstKey = this.cache.keys().next().value
+      this.cache.delete(firstKey)
+    }
+
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -39,10 +63,15 @@ class QueryCache {
     const cached = this.cache.get(key)
     if (!cached) return null
 
+    // 期限切れチェック
     if (Date.now() - cached.timestamp > cached.staleTime) {
       this.cache.delete(key)
       return null
     }
+
+    // アクセスされたアイテムを再挿入してLRU順序を更新
+    this.cache.delete(key)
+    this.cache.set(key, cached)
 
     return cached.data
   }
@@ -54,9 +83,47 @@ class QueryCache {
   clear(): void {
     this.cache.clear()
   }
+
+  // キャッシュサイズの取得
+  size(): number {
+    return this.cache.size
+  }
+
+  // 統計情報の取得
+  getStats(): { size: number; maxSize: number; hitRate?: number } {
+    return {
+      size: this.cache.size,
+      maxSize: this.maxSize,
+    }
+  }
 }
 
-const queryCache = new QueryCache()
+const queryCache = new LRUQueryCache(200) // 最大200エントリーまでキャッシュ
+
+// リトライ可能なエラーかどうかを判定
+function shouldRetry(error: ApiError): boolean {
+  // 認証エラーやクライアントエラー（400番台）はリトライしない
+  if (error.status >= 400 && error.status < 500) {
+    return false
+  }
+  
+  // サーバーエラー（500番台）はリトライする
+  if (error.status >= 500) {
+    return true
+  }
+  
+  // レート制限エラーはリトライする
+  if (error.status === 429) {
+    return true
+  }
+  
+  // ネットワークエラー（status 0）はリトライする
+  if (error.status === 0) {
+    return true
+  }
+  
+  return false
+}
 
 // APIクライアントのインスタンス（実際のプロジェクトでは外部から注入）
 let apiClient: ApiClient
@@ -120,13 +187,25 @@ export function useFetch<T>(
       if (err instanceof ApiError) {
         setError(err)
         
-        // リトライロジック
-        if (retryCount < retry && err.status !== 404 && err.status !== 401) {
+        // より具体的なリトライ戦略
+        if (retryCount < retry && shouldRetry(err)) {
+          const backoffDelay = retryDelay * Math.pow(2, retryCount) + Math.random() * 1000 // ジッターを追加
           setTimeout(() => {
             setRetryCount(prev => prev + 1)
             fetchData(false)
-          }, retryDelay * Math.pow(2, retryCount))
+          }, backoffDelay)
         }
+      } else if (err.name === 'AbortError') {
+        // AbortErrorは通常のエラーとして扱わない
+        console.debug('リクエストがキャンセルされました')
+      } else {
+        // その他の予期しないエラー
+        const apiError = new ApiError(
+          err.message || '予期しないエラーが発生しました',
+          0,
+          'UNKNOWN_ERROR'
+        )
+        setError(apiError)
       }
     } finally {
       setIsLoading(false)
@@ -161,9 +240,20 @@ export function useFetch<T>(
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
+        abortControllerRef.current = null
       }
     }
   }, [])
+
+  // コンポーネントアンマウント時の確実なクリーンアップ
+  useEffect(() => {
+    const controller = abortControllerRef.current
+    return () => {
+      if (controller) {
+        controller.abort()
+      }
+    }
+  }, [path, params]) // 依存関係が変わるたびにクリーンアップ
 
   return {
     data,

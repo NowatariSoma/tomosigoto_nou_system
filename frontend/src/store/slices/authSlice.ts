@@ -1,12 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-
-// 型定義
-export interface User {
-  id: string
-  email: string
-  name: string
-  role?: string
-}
+import { User } from '../../types'
 
 export interface AuthState {
   user: User | null

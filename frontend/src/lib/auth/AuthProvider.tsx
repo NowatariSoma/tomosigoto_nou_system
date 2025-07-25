@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { 
   loginAsync, 
@@ -9,11 +9,11 @@ import {
   selectUser, 
   selectIsAuthenticated, 
   selectAuthLoading, 
-  selectAuthError,
-  User
+  selectAuthError
 } from '../../store/slices/authSlice'
-import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { User } from '../../types'
 import { api } from '../api/client'
+import { secureTokenStorage } from './secureTokenStorage'
 
 // サインアップデータ型
 export interface SignupData {
@@ -47,13 +47,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
   const isLoading = useAppSelector(selectAuthLoading)
   const error = useAppSelector(selectAuthError)
-  
-  const [storedToken, setStoredToken] = useLocalStorage<string | null>('auth_token', null)
 
   // 認証初期化フック
   useEffect(() => {
     const initializeAuth = async () => {
-      if (storedToken) {
+      const storedToken = secureTokenStorage.getToken()
+      
+      if (storedToken && secureTokenStorage.isTokenValid()) {
         // ストアされたトークンをAPIクライアントに設定
         api.setAuthToken(storedToken)
         
@@ -62,62 +62,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await dispatch(refreshTokenAsync()).unwrap()
         } catch (error) {
           // トークンが無効な場合はクリア
-          setStoredToken(null)
+          secureTokenStorage.clearToken()
           api.setAuthToken(null)
         }
       }
     }
 
     initializeAuth()
-  }, [storedToken, dispatch, setStoredToken])
+  }, [dispatch])
 
-  // トークンの永続化
-  useEffect(() => {
-    const state = { auth: { user, token: storedToken, isAuthenticated, isLoading, error } }
-    const currentToken = state.auth.token
-
-    if (currentToken && currentToken !== storedToken) {
-      setStoredToken(currentToken)
-      api.setAuthToken(currentToken)
-    } else if (!currentToken && storedToken) {
-      setStoredToken(null)
-      api.setAuthToken(null)
-    }
-  }, [user, isAuthenticated, storedToken, setStoredToken])
 
   // ログイン関数
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
-      setStoredToken(result.token)
+      
+      // セキュアなトークンストレージに保存
+      secureTokenStorage.setToken(result.token, result.refreshToken)
       api.setAuthToken(result.token)
     } catch (error) {
       // エラーは既にストアで管理されているため、ここでは何もしない
       throw error
     }
-  }
+  }, [dispatch])
 
   // ログアウト関数
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await dispatch(logoutAsync()).unwrap()
     } catch (error) {
       // ログアウトエラーがあってもローカルの状態はクリア
       console.warn('ログアウト中にエラーが発生しましたが、ローカルセッションをクリアします:', error)
     } finally {
-      setStoredToken(null)
+      secureTokenStorage.clearToken()
       api.setAuthToken(null)
     }
-  }
+  }, [dispatch])
 
   // サインアップ関数
-  const signup = async (userData: SignupData): Promise<void> => {
+  const signup = useCallback(async (userData: SignupData): Promise<void> => {
     try {
       const response = await api.post('/auth/signup', userData)
       
       // サインアップ後、自動的にログイン
       if (response.token) {
-        setStoredToken(response.token)
+        secureTokenStorage.setToken(response.token, response.refreshToken)
         api.setAuthToken(response.token)
         
         // ユーザー情報を取得してストアを更新
@@ -126,25 +115,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       throw error
     }
-  }
+  }, [dispatch])
 
   // トークン更新関数
-  const refreshToken = async (): Promise<void> => {
+  const refreshToken = useCallback(async (): Promise<void> => {
     try {
       const result = await dispatch(refreshTokenAsync()).unwrap()
       if (result.token) {
-        setStoredToken(result.token)
+        secureTokenStorage.setToken(result.token, result.refreshToken)
         api.setAuthToken(result.token)
       }
     } catch (error) {
       // トークン更新に失敗した場合はログアウト
-      setStoredToken(null)
+      secureTokenStorage.clearToken()
       api.setAuthToken(null)
       throw error
     }
-  }
+  }, [dispatch])
 
-  const contextValue: AuthContextType = {
+  const contextValue: AuthContextType = useMemo(() => ({
     user,
     isAuthenticated,
     isLoading,
@@ -153,7 +142,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     signup,
     refreshToken,
-  }
+  }), [user, isAuthenticated, isLoading, error, login, logout, signup, refreshToken])
 
   return (
     <AuthContext.Provider value={contextValue}>
