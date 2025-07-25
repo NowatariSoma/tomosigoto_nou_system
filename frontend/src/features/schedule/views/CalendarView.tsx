@@ -11,6 +11,7 @@ import { MonthCalendar } from '../components/MonthCalendar';
 import { WeekCalendar } from '../components/WeekCalendar';
 import { useCalendarData } from '../hooks/useCalendarData';
 import { getMonthRange, getWeekRange, formatMonthTitle, formatWeekTitle } from '../utils/dateUtils';
+import { addMonths, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -69,25 +70,17 @@ export function CalendarView({
 
   const handlePrevious = () => {
     if (viewMode === 'month') {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() - 1);
-      setCurrentDate(newDate);
+      setCurrentDate(addMonths(currentDate, -1));
     } else {
-      const newDate = new Date(currentDate);
-      newDate.setDate(newDate.getDate() - 7);
-      setCurrentDate(newDate);
+      setCurrentDate(addDays(currentDate, -7));
     }
   };
 
   const handleNext = () => {
     if (viewMode === 'month') {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() + 1);
-      setCurrentDate(newDate);
+      setCurrentDate(addMonths(currentDate, 1));
     } else {
-      const newDate = new Date(currentDate);
-      newDate.setDate(newDate.getDate() + 7);
-      setCurrentDate(newDate);
+      setCurrentDate(addDays(currentDate, 7));
     }
   };
 

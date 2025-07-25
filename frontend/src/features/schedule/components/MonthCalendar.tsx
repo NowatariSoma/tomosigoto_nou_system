@@ -37,7 +37,7 @@ interface MonthCalendarProps {
  * - 日付クリック時にonDateClickコールバック呼び出し
  * - スケジュールクリック時にonSessionClickコールバック呼び出し
  */
-export function MonthCalendar({
+export const MonthCalendar = React.memo(function MonthCalendar({
   date,
   schedules,
   onDateClick,
@@ -70,7 +70,7 @@ export function MonthCalendar({
       </div>
     </div>
   );
-}
+});
 
 /**
  * 月間カレンダーヘッダーコンポーネント

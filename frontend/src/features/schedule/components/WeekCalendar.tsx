@@ -37,7 +37,7 @@ interface WeekCalendarProps {
  * - セッションクリック時にonSessionClickコールバック呼び出し
  * - レスポンシブ対応
  */
-export function WeekCalendar({
+export const WeekCalendar = React.memo(function WeekCalendar({
   startDate,
   schedules,
   onSessionClick,
@@ -71,7 +71,7 @@ export function WeekCalendar({
       </div>
     </div>
   );
-}
+});
 
 /**
  * 週間カレンダーヘッダーコンポーネント
@@ -277,8 +277,8 @@ function generateSessionBlocks(
     const endHour = schedule.endDate.getHours();
     const endMinute = schedule.endDate.getMinutes();
     
-    // 表示範囲外は除外
-    if (startHour < hourRange.start || endHour > hourRange.end) {
+    // 完全に表示範囲外は除外（開始時間が範囲より後、または終了時間が範囲より前）
+    if (endHour < hourRange.start || startHour > hourRange.end) {
       return;
     }
     

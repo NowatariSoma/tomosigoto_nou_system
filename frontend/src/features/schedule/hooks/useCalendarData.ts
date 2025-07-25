@@ -27,7 +27,11 @@ export function useCalendarData(params: CalendarDataParams) {
   // キャッシュキーの生成
   const generateCacheKey = useCallback((params: CalendarDataParams): string => {
     const { dateRange, partId, viewMode } = params;
-    return `${dateRange.start.toISOString()}-${dateRange.end.toISOString()}-${partId || 'all'}-${viewMode || 'month'}`;
+    const locale = 'ja'; // 将来的にユーザー設定から取得
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const version = '1.0'; // スキーマ変更時にインクリメント
+    
+    return `${dateRange.start.toISOString()}-${dateRange.end.toISOString()}-${partId || 'all'}-${viewMode || 'month'}-${locale}-${timezone}-${version}`;
   }, []);
 
   // データ取得関数
