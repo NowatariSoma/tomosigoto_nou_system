@@ -1,9 +1,30 @@
+import { z } from 'zod'
 import type {
   Venue,
   VenueAvailability,
   VenueListResponse,
   VenueQueryParams,
 } from '@/types/venue'
+
+// 入力検証スキーマ
+const SearchTermSchema = z.string().max(100).regex(/^[a-zA-Z0-9\s\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]*$/).optional()
+const CapacitySchema = z.number().min(0).max(10000).optional()
+const PriceSchema = z.number().min(0).max(1000000).optional()
+const EquipmentIdsSchema = z.array(z.number().positive()).optional()
+const AreaSchema = z.string().max(50).regex(/^[a-zA-Z0-9\s\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]*$/).optional()
+
+const VenueFiltersSchema = z.object({
+  searchTerm: SearchTermSchema,
+  minCapacity: CapacitySchema,
+  maxCapacity: CapacitySchema,
+  equipmentIds: EquipmentIdsSchema,
+  area: AreaSchema,
+  priceRange: z.object({
+    min: PriceSchema,
+    max: PriceSchema,
+  }).optional(),
+  availableDate: z.date().optional(),
+})
 
 class VenuesApiError extends Error {
   constructor(
@@ -19,44 +40,54 @@ class VenuesApiError extends Error {
 function buildQueryString(params: VenueQueryParams): string {
   const searchParams = new URLSearchParams()
 
-  // ページネーション
-  searchParams.set('page', String(params.page ?? 1))
-  searchParams.set('pageSize', String(params.pageSize ?? 20))
+  // ページネーション（基本的な検証）
+  const page = Math.max(1, params.page ?? 1)
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20))
+  searchParams.set('page', String(page))
+  searchParams.set('pageSize', String(pageSize))
 
   // ソート
-  if (params.sortBy) {
+  if (params.sortBy && ['name', 'capacity', 'price', 'distance'].includes(params.sortBy)) {
     searchParams.set('sortBy', params.sortBy)
   }
-  if (params.sortOrder) {
+  if (params.sortOrder && ['asc', 'desc'].includes(params.sortOrder)) {
     searchParams.set('sortOrder', params.sortOrder)
   }
 
-  // フィルタ
+  // フィルタ（Zodによる検証）
   if (params.filters) {
-    const { filters } = params
-    if (filters.searchTerm) {
-      searchParams.set('searchTerm', filters.searchTerm)
-    }
-    if (filters.minCapacity !== undefined) {
-      searchParams.set('minCapacity', String(filters.minCapacity))
-    }
-    if (filters.maxCapacity !== undefined) {
-      searchParams.set('maxCapacity', String(filters.maxCapacity))
-    }
-    if (filters.equipmentIds && filters.equipmentIds.length > 0) {
-      searchParams.set('equipmentIds', filters.equipmentIds.join(','))
-    }
-    if (filters.area) {
-      searchParams.set('area', filters.area)
-    }
-    if (filters.priceRange?.min !== undefined) {
-      searchParams.set('priceMin', String(filters.priceRange.min))
-    }
-    if (filters.priceRange?.max !== undefined) {
-      searchParams.set('priceMax', String(filters.priceRange.max))
-    }
-    if (filters.availableDate) {
-      searchParams.set('availableDate', filters.availableDate.toISOString().split('T')[0])
+    try {
+      const validatedFilters = VenueFiltersSchema.parse(params.filters)
+      
+      if (validatedFilters.searchTerm) {
+        searchParams.set('searchTerm', validatedFilters.searchTerm.trim())
+      }
+      if (validatedFilters.minCapacity !== undefined) {
+        searchParams.set('minCapacity', String(validatedFilters.minCapacity))
+      }
+      if (validatedFilters.maxCapacity !== undefined) {
+        searchParams.set('maxCapacity', String(validatedFilters.maxCapacity))
+      }
+      if (validatedFilters.equipmentIds && validatedFilters.equipmentIds.length > 0) {
+        searchParams.set('equipmentIds', validatedFilters.equipmentIds.join(','))
+      }
+      if (validatedFilters.area) {
+        searchParams.set('area', validatedFilters.area.trim())
+      }
+      if (validatedFilters.priceRange?.min !== undefined) {
+        searchParams.set('priceMin', String(validatedFilters.priceRange.min))
+      }
+      if (validatedFilters.priceRange?.max !== undefined) {
+        searchParams.set('priceMax', String(validatedFilters.priceRange.max))
+      }
+      if (validatedFilters.availableDate) {
+        searchParams.set('availableDate', validatedFilters.availableDate.toISOString().split('T')[0])
+      }
+    } catch (error) {
+      // 検証に失敗した場合は、フィルタを無視してログ出力
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Invalid filters provided:', error)
+      }
     }
   }
 

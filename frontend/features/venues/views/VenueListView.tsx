@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useVenues } from '../hooks/useVenues'
+import { useDebounce } from '../hooks/useDebounce'
 import { VenueSearch } from '../components/VenueSearch'
 import { VenueFilter } from '../components/VenueFilter'
 import { VenueGrid } from '../components/VenueGrid'
@@ -32,29 +33,45 @@ export function VenueListView() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filters, setFilters] = useState<VenueFilters>({})
 
+  // デバウンス機能: 検索語句を300ms遅延させる
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
   // 初期データ読み込み
   useEffect(() => {
     fetchVenues({})
   }, [fetchVenues])
 
+  // デバウンスされた検索語句でAPI呼び出し
+  useEffect(() => {
+    if (debouncedSearchTerm !== '') {
+      const newFilters = { ...filters, searchTerm: debouncedSearchTerm }
+      setFilters(newFilters)
+      fetchVenues({ filters: newFilters })
+    } else if (searchTerm === '') {
+      // 検索語句が空の場合も検索をクリア
+      const newFilters = { ...filters }
+      delete newFilters.searchTerm
+      setFilters(newFilters)
+      fetchVenues({ filters: newFilters })
+    }
+  }, [debouncedSearchTerm, filters, fetchVenues, searchTerm])
+
   // 検索・フィルタ変更時の処理
   const handleSearchChange = useCallback(
     (term: string) => {
       setSearchTerm(term)
-      const newFilters = { ...filters, searchTerm: term }
-      setFilters(newFilters)
-      fetchVenues({ filters: newFilters })
+      // API呼び出しはuseEffectで実行される
     },
-    [filters, fetchVenues]
+    []
   )
 
   const handleFilterChange = useCallback(
     (newFilters: VenueFilters) => {
-      const combinedFilters = { ...filters, ...newFilters, searchTerm }
+      const combinedFilters = { ...filters, ...newFilters, searchTerm: debouncedSearchTerm }
       setFilters(combinedFilters)
       fetchVenues({ filters: combinedFilters })
     },
-    [filters, searchTerm, fetchVenues]
+    [filters, debouncedSearchTerm, fetchVenues]
   )
 
   // 表示モード切り替え

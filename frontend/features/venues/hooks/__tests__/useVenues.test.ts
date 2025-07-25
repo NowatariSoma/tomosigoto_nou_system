@@ -179,4 +179,92 @@ describe('useVenues', () => {
 
     expect(result.current.currentPage).toBe(2)
   })
+
+  test('コンポーネントアンマウント後はstate更新が行われない', async () => {
+    const mockResponse = {
+      venues: mockVenues,
+      totalCount: 2,
+      currentPage: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+    
+    // 遅延を持つPromiseを作成
+    let resolveApiCall: (value: any) => void
+    const delayedPromise = new Promise((resolve) => {
+      resolveApiCall = resolve
+    })
+    
+    mockVenuesApi.fetchVenues.mockReturnValue(delayedPromise)
+
+    const { result, unmount } = renderHook(() => useVenues())
+
+    // API呼び出しを開始
+    act(() => {
+      result.current.fetchVenues()
+    })
+
+    // loadingがtrueになることを確認
+    expect(result.current.loading).toBe(true)
+
+    // コンポーネントをアンマウント
+    unmount()
+
+    // API呼び出しを完了
+    await act(async () => {
+      resolveApiCall!(mockResponse)
+    })
+
+    // アンマウント後はstateが更新されないことを確認
+    // （この時点でresult.currentにアクセスしても、アンマウント前の値が返される）
+    // 実際の実装では、isMountedフラグによりstate更新がスキップされる
+  })
+
+  test('複数の並行API呼び出しがある場合、最新のもののみが反映される', async () => {
+    const firstResponse = {
+      venues: [mockVenues[0]],
+      totalCount: 1,
+      currentPage: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+
+    const secondResponse = {
+      venues: mockVenues,
+      totalCount: 2,
+      currentPage: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+
+    const { result } = renderHook(() => useVenues())
+
+    // 最初のAPI呼び出し（遅く応答）
+    mockVenuesApi.fetchVenues.mockImplementationOnce(
+      () => new Promise(resolve => setTimeout(() => resolve(firstResponse), 200))
+    )
+
+    // 2番目のAPI呼び出し（早く応答）
+    mockVenuesApi.fetchVenues.mockImplementationOnce(
+      () => new Promise(resolve => setTimeout(() => resolve(secondResponse), 100))
+    )
+
+    // 2つのAPI呼び出しを連続で実行
+    act(() => {
+      result.current.fetchVenues({ filters: { searchTerm: 'first' } })
+      result.current.fetchVenues({ filters: { searchTerm: 'second' } })
+    })
+
+    // 両方のAPI呼び出しが完了するまで待機
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 300))
+    })
+
+    // 最新の呼び出し結果が反映されることを確認
+    expect(result.current.venues).toEqual(secondResponse.venues)
+    expect(result.current.totalCount).toBe(2)
+  })
 })

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { VenueListView } from '../VenueListView'
 
 // Mock the useVenues hook
@@ -253,5 +253,59 @@ describe('VenueListView', () => {
     render(<VenueListView />)
 
     expect(mockFetchVenues).toHaveBeenCalledWith({})
+  })
+
+  test('検索入力は300ms後にAPI呼び出しが行われる（デバウンス）', async () => {
+    jest.useFakeTimers()
+    
+    render(<VenueListView />)
+
+    const searchInput = screen.getByPlaceholderText(/会場名や地域で検索/)
+    
+    // 連続で入力する
+    fireEvent.change(searchInput, { target: { value: 'テ' } })
+    fireEvent.change(searchInput, { target: { value: 'テス' } })
+    fireEvent.change(searchInput, { target: { value: 'テスト' } })
+
+    // 300ms経過前ではAPI呼び出しが行われないことを確認
+    expect(mockFetchVenues).toHaveBeenCalledTimes(1) // 初期読み込みのみ
+
+    // 300ms経過
+    act(() => {
+      jest.advanceTimersByTime(300)
+    })
+
+    // デバウンス後にAPI呼び出しが行われることを確認
+    await waitFor(() => {
+      expect(mockFetchVenues).toHaveBeenCalledWith({
+        filters: { searchTerm: 'テスト' },
+      })
+    })
+
+    jest.useRealTimers()
+  })
+
+  test('検索入力の途中でコンポーネントがアンマウントされてもエラーが起きない', async () => {
+    jest.useFakeTimers()
+    
+    const { unmount } = render(<VenueListView />)
+
+    const searchInput = screen.getByPlaceholderText(/会場名や地域で検索/)
+    
+    // 検索入力
+    fireEvent.change(searchInput, { target: { value: 'テスト' } })
+
+    // デバウンス期間中にアンマウント
+    unmount()
+
+    // デバウンス時間経過
+    act(() => {
+      jest.advanceTimersByTime(300)
+    })
+
+    // エラーが発生しないことを確認（コンソールエラーなし）
+    expect(mockFetchVenues).toHaveBeenCalledTimes(1) // 初期読み込みのみ
+
+    jest.useRealTimers()
   })
 })

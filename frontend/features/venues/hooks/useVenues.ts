@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { venuesApi } from '../api/venuesApi'
 import type {
   Venue,
@@ -36,7 +36,24 @@ export function useVenues(options: UseVenuesOptions = {}): UseVenuesReturn {
   const [hasNextPage, setHasNextPage] = useState(false)
   const [hasPrevPage, setHasPrevPage] = useState(false)
 
+  // メモリリーク防止のためのフラグ
+  const isMountedRef = useRef(true)
+  const currentRequestRef = useRef<string | null>(null)
+
+  // クリーンアップ関数
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   const fetchVenues = useCallback(async (params: VenueQueryParams = {}) => {
+    if (!isMountedRef.current) return
+
+    // リクエストID生成（並行リクエスト管理用）
+    const requestId = Date.now().toString()
+    currentRequestRef.current = requestId
+
     setLoading(true)
     setError(null)
 
@@ -49,16 +66,23 @@ export function useVenues(options: UseVenuesOptions = {}): UseVenuesReturn {
 
       const response = await venuesApi.fetchVenues(queryParams)
       
-      setVenues(response.venues)
-      setTotalCount(response.totalCount)
-      setCurrentPage(response.currentPage)
-      setHasNextPage(response.hasNextPage)
-      setHasPrevPage(response.hasPrevPage)
+      // コンポーネントがマウントされており、これが最新のリクエストの場合のみ更新
+      if (isMountedRef.current && currentRequestRef.current === requestId) {
+        setVenues(response.venues)
+        setTotalCount(response.totalCount)
+        setCurrentPage(response.currentPage)
+        setHasNextPage(response.hasNextPage)
+        setHasPrevPage(response.hasPrevPage)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-      setVenues([])
+      if (isMountedRef.current && currentRequestRef.current === requestId) {
+        setError(err instanceof Error ? err : new Error('Unknown error'))
+        setVenues([])
+      }
     } finally {
-      setLoading(false)
+      if (isMountedRef.current && currentRequestRef.current === requestId) {
+        setLoading(false)
+      }
     }
   }, [currentPage, pageSize])
 

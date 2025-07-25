@@ -90,6 +90,91 @@ describe('venuesApi', () => {
         'Failed to fetch venues: 500 Internal Server Error'
       )
     })
+
+    test('不正な検索語句は除外される', async () => {
+      const queryParams: VenueQueryParams = {
+        filters: {
+          searchTerm: '<script>alert("xss")</script>',
+        },
+      }
+
+      const mockResponse = {
+        venues: [],
+        totalCount: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response)
+
+      await venuesApi.fetchVenues(queryParams)
+
+      // 不正な文字が除去されることを確認
+      expect(mockFetch).toHaveBeenCalledWith('/api/venues?page=1&pageSize=20')
+    })
+
+    test('長すぎる検索語句は切り詰められる', async () => {
+      const longSearchTerm = 'a'.repeat(200) // 200文字の検索語句
+
+      const queryParams: VenueQueryParams = {
+        filters: {
+          searchTerm: longSearchTerm,
+        },
+      }
+
+      const mockResponse = {
+        venues: [],
+        totalCount: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response)
+
+      await venuesApi.fetchVenues(queryParams)
+
+      // 100文字以下に切り詰められることを確認
+      const expectedSearchTerm = encodeURIComponent('a'.repeat(100))
+      expect(mockFetch).toHaveBeenCalledWith(`/api/venues?page=1&pageSize=20&searchTerm=${expectedSearchTerm}`)
+    })
+
+    test('負の数値パラメータは除外される', async () => {
+      const queryParams: VenueQueryParams = {
+        filters: {
+          minCapacity: -10,
+          maxCapacity: -5,
+        },
+      }
+
+      const mockResponse = {
+        venues: [],
+        totalCount: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response)
+
+      await venuesApi.fetchVenues(queryParams)
+
+      // 負の値は除外されることを確認
+      expect(mockFetch).toHaveBeenCalledWith('/api/venues?page=1&pageSize=20')
+    })
   })
 
   describe('fetchVenueById', () => {

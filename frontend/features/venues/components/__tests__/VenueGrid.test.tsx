@@ -164,4 +164,67 @@ describe('VenueGrid', () => {
     expect(screen.getByText('設備: 1件')).toBeInTheDocument()
     expect(screen.getByText('設備: 0件')).toBeInTheDocument()
   })
+
+  test('キーボードナビゲーションでカードを操作できる', () => {
+    const mockOnVenueClick = jest.fn()
+    render(<VenueGrid venues={mockVenues} onVenueClick={mockOnVenueClick} />)
+
+    const venueCard = screen.getByTestId('venue-card-1')
+    
+    // タブでフォーカス可能
+    venueCard.focus()
+    expect(document.activeElement).toBe(venueCard)
+
+    // Enterキーでクリック可能
+    fireEvent.keyDown(venueCard, { key: 'Enter', code: 'Enter' })
+    expect(mockOnVenueClick).toHaveBeenCalledWith(1)
+  })
+
+  test('スペースキーでもカードを操作できる', () => {
+    const mockOnVenueClick = jest.fn()
+    render(<VenueGrid venues={mockVenues} onVenueClick={mockOnVenueClick} />)
+
+    const venueCard = screen.getByTestId('venue-card-1')
+    
+    // スペースキーでクリック可能
+    fireEvent.keyDown(venueCard, { key: ' ', code: 'Space' })
+    expect(mockOnVenueClick).toHaveBeenCalledWith(1)
+  })
+
+  test('会場カードに適切なARIA属性が設定されている', () => {
+    const mockOnVenueClick = jest.fn()
+    render(<VenueGrid venues={mockVenues} onVenueClick={mockOnVenueClick} />)
+
+    const venueCard = screen.getByTestId('venue-card-1')
+    
+    // role="button"が設定されている
+    expect(venueCard).toHaveAttribute('role', 'button')
+    
+    // tabIndex="0"が設定されている
+    expect(venueCard).toHaveAttribute('tabIndex', '0')
+    
+    // aria-labelが設定されている
+    expect(venueCard).toHaveAttribute('aria-label', '体育館A の詳細を見る')
+  })
+
+  test('画像にalt属性が適切に設定されている', () => {
+    const mockOnVenueClick = jest.fn()
+    render(<VenueGrid venues={mockVenues} onVenueClick={mockOnVenueClick} />)
+
+    const image = screen.getByAltText('体育館Aの写真')
+    expect(image).toBeInTheDocument()
+  })
+
+  test('デフォルト画像にもalt属性が設定されている', () => {
+    const venueWithoutPhoto = {
+      ...mockVenues[0],
+      photos: [], // 写真なし
+    }
+    
+    const mockOnVenueClick = jest.fn()
+    render(<VenueGrid venues={[venueWithoutPhoto]} onVenueClick={mockOnVenueClick} />)
+
+    const defaultImage = screen.getByTestId('default-venue-image')
+    expect(defaultImage).toHaveAttribute('aria-label', '会場の画像がありません')
+  })
 })

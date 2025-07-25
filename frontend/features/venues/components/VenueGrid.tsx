@@ -48,17 +48,28 @@ function VenueCard({ venue, onVenueClick }: { venue: Venue; onVenueClick: (id: n
   const [hoveredVenueId, setHoveredVenueId] = useState<number | null>(null)
   const primaryPhoto = venue.photos.find(photo => photo.isPrimary) || venue.photos[0]
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onVenueClick(venue.id)
+    }
+  }
+
   return (
     <Card
       className={cn(
         'overflow-hidden cursor-pointer transition-all duration-200',
-        'hover:shadow-lg hover:-translate-y-1',
+        'hover:shadow-lg hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-blue-500',
         hoveredVenueId === venue.id && 'shadow-lg'
       )}
       data-testid={`venue-card-${venue.id}`}
       onClick={() => onVenueClick(venue.id)}
+      onKeyDown={handleKeyDown}
       onMouseEnter={() => setHoveredVenueId(venue.id)}
       onMouseLeave={() => setHoveredVenueId(null)}
+      role="button"
+      tabIndex={0}
+      aria-label={`${venue.name} の詳細を見る`}
     >
       {/* 会場画像 */}
       <div className="aspect-video relative bg-gray-100">
@@ -74,6 +85,7 @@ function VenueCard({ venue, onVenueClick }: { venue: Venue; onVenueClick: (id: n
           <div
             className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400"
             data-testid="default-venue-image"
+            aria-label="会場の画像がありません"
           >
             <Settings className="h-12 w-12" />
           </div>

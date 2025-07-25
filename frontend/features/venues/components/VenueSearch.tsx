@@ -20,24 +20,18 @@ export function VenueSearch({
 }: VenueSearchProps) {
   const [searchTerm, setSearchTerm] = useState(initialValue)
 
-  // デバウンス処理
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange(searchTerm)
-    }, debounceMs)
-
-    return () => clearTimeout(timer)
-  }, [searchTerm, onSearchChange, debounceMs])
-
   // 入力値変更処理
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-  }, [])
+    const value = e.target.value
+    setSearchTerm(value)
+    onSearchChange(value)
+  }, [onSearchChange])
 
   // クリア処理
   const handleClear = useCallback(() => {
     setSearchTerm('')
-  }, [])
+    onSearchChange('')
+  }, [onSearchChange])
 
   return (
     <div className="relative">
