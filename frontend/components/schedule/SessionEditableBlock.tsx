@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useRef, useCallback, useState } from 'react'
-import { Session } from '../../../../types/session'
-import { formatSessionTime, getSessionDuration } from '../utils/sessionHelpers'
-import { useSessionEdit } from '../context/SessionEditContext'
-import { cn } from '../../../lib/utils'
+import { Session } from '../../../types/session'
+import { formatSessionTime, getSessionDuration } from '../../lib/schedule/sessionHelpers'
+import { useSessionEdit } from './context/SessionEditContext'
+import { cn } from '../../lib/utils'
 
 interface SessionEditableBlockProps {
   session: Session

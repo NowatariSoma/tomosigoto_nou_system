@@ -13,7 +13,7 @@ import {
   snapToGrid,
   calculateNewSessionTime,
   getSessionColorByPart
-} from '../../../src/features/schedule/utils/sessionHelpers'
+} from '../../lib/schedule/sessionHelpers'
 
 import { Session } from '../../../types/session'
 

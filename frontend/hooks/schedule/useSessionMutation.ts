@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Session, SessionCreateData, SessionUpdateData } from '../../../../types/session'
-import { supabase } from '../../../lib/supabase'
+import { Session, SessionCreateData, SessionUpdateData } from '../../../types/session'
+import { supabase } from '../../lib/supabase'
 
 interface UseSessionMutationResult {
   createSession: (data: SessionCreateData) => Promise<Session>

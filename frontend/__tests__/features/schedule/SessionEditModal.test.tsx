@@ -6,7 +6,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SessionEditModal } from '../../../src/features/schedule/components/SessionEditModal'
+import { SessionEditModal } from '../../components/schedule/SessionEditModal'
 import { Session, SessionFormData } from '../../../types/session'
 
 // テストデータ

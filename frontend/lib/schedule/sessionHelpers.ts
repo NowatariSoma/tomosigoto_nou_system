@@ -1,4 +1,4 @@
-import { Session, ValidationResult, ValidationErrors } from '../../../../types/session'
+import { Session, ValidationResult, ValidationErrors } from '../../../types/session'
 
 export const formatSessionTime = (start: Date, end: Date): string => {
   const formatTime = (date: Date) => {

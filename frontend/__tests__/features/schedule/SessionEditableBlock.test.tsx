@@ -5,8 +5,8 @@
 
 import React from 'react'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import { SessionEditableBlock } from '../../../src/features/schedule/components/SessionEditableBlock'
-import { SessionEditProvider } from '../../../src/features/schedule/context/SessionEditContext'
+import { SessionEditableBlock } from '../../components/schedule/SessionEditableBlock'
+import { SessionEditProvider } from '../../components/schedule/context/SessionEditContext'
 import { Session } from '../../../types/session'
 
 // テストデータ

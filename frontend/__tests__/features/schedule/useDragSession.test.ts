@@ -4,7 +4,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react'
-import { useDragSession } from '../../../src/features/schedule/hooks/useDragSession'
+import { useDragSession } from '../../hooks/schedule/useDragSession'
 
 // モック関数を作成
 const mockOnSessionMove = jest.fn()

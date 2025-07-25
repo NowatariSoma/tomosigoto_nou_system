@@ -5,7 +5,7 @@
 
 import React from 'react'
 import { renderHook, act } from '@testing-library/react'
-import { SessionEditProvider, useSessionEdit } from '../../../src/features/schedule/context/SessionEditContext'
+import { SessionEditProvider, useSessionEdit } from '../../components/schedule/context/SessionEditContext'
 import { Position } from '../../../types/session'
 
 // テストヘルパー: プロバイダーでラップしたカスタムフック

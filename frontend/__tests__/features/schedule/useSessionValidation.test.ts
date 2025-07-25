@@ -4,7 +4,7 @@
  */
 
 import { renderHook } from '@testing-library/react'
-import { useSessionValidation } from '../../../src/features/schedule/hooks/useSessionValidation'
+import { useSessionValidation } from '../../hooks/schedule/useSessionValidation'
 import { Session, SessionCreateData, SessionUpdateData } from '../../../types/session'
 
 const mockSessions: Session[] = [

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { DragPreview } from '../../../../types/session'
-import { calculateNewSessionTime, snapToGrid } from '../utils/sessionHelpers'
+import { DragPreview } from '../../../types/session'
+import { calculateNewSessionTime, snapToGrid } from '../../lib/schedule/sessionHelpers'
 
 interface DragSessionConfig {
   onSessionMove: (sessionId: string, newStart: Date, newEnd: Date) => Promise<boolean>

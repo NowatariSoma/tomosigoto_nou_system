@@ -4,11 +4,11 @@
  */
 
 import { renderHook, act } from '@testing-library/react'
-import { useSessionMutation } from '../../../src/features/schedule/hooks/useSessionMutation'
+import { useSessionMutation } from '../../hooks/schedule/useSessionMutation'
 import { SessionCreateData, SessionUpdateData } from '../../../types/session'
 
 // Supabaseクライアントのモック
-jest.mock('../../../lib/supabase', () => ({
+jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(() => ({
       insert: jest.fn(() => ({

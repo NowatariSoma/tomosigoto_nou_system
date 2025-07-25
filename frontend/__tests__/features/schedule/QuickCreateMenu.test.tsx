@@ -6,7 +6,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { QuickCreateMenu } from '../../../src/features/schedule/components/QuickCreateMenu'
+import { QuickCreateMenu } from '../../components/schedule/QuickCreateMenu'
 import { Position } from '../../../types/session'
 
 // テストデータ

@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Session, SessionCreateData, SessionUpdateData, ValidationResult, ValidationErrors } from '../../../../types/session'
-import { validateSessionTimes, checkSessionConflicts, getSessionDuration } from '../utils/sessionHelpers'
+import { Session, SessionCreateData, SessionUpdateData, ValidationResult, ValidationErrors } from '../../../types/session'
+import { validateSessionTimes, checkSessionConflicts, getSessionDuration } from '../../lib/schedule/sessionHelpers'
 
 interface UseSessionValidationConfig {
   sessions: Session[]
