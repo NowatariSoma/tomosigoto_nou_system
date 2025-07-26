@@ -1,0 +1,176 @@
+{
+  "policies": {
+    "users": [
+      {
+        "name": "users_select_policy",
+        "type": "SELECT",
+        "definition": {
+          "using": "auth.uid() = id OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "ユーザーは自分の情報または管理者のみ閲覧可能"
+      },
+      {
+        "name": "users_update_policy", 
+        "type": "UPDATE",
+        "definition": {
+          "using": "auth.uid() = id OR has_role(auth.uid(), 'admin')",
+          "with_check": "auth.uid() = id OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "ユーザーは自分の情報または管理者のみ更新可能"
+      },
+      {
+        "name": "users_delete_policy",
+        "type": "DELETE",
+        "definition": {
+          "using": "has_role(auth.uid(), 'admin')"
+        },
+        "description": "管理者のみユーザー削除可能"
+      }
+    ],
+    "user_roles": [
+      {
+        "name": "user_roles_select_policy",
+        "type": "SELECT", 
+        "definition": {
+          "using": "user_id = auth.uid() OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "ユーザーは自分のロールまたは管理者のみ閲覧可能"
+      },
+      {
+        "name": "user_roles_insert_policy",
+        "type": "INSERT",
+        "definition": {
+          "with_check": "has_role(auth.uid(), 'admin')"
+        },
+        "description": "管理者のみロール割り当て可能"
+      },
+      {
+        "name": "user_roles_update_policy",
+        "type": "UPDATE",
+        "definition": {
+          "using": "has_role(auth.uid(), 'admin')",
+          "with_check": "has_role(auth.uid(), 'admin')"
+        },
+        "description": "管理者のみロール変更可能"
+      },
+      {
+        "name": "user_roles_delete_policy",
+        "type": "DELETE",
+        "definition": {
+          "using": "has_role(auth.uid(), 'admin')"
+        },
+        "description": "管理者のみロール削除可能"
+      }
+    ],
+    "schedules": [
+      {
+        "name": "schedules_select_policy",
+        "type": "SELECT",
+        "definition": {
+          "using": "is_visible_to_general = true OR created_by = auth.uid() OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "一般公開またはオーナーまたは管理者のみ閲覧可能"
+      },
+      {
+        "name": "schedules_insert_policy",
+        "type": "INSERT",
+        "definition": {
+          "with_check": "created_by = auth.uid() AND has_permission(auth.uid(), 'schedule:write')"
+        },
+        "description": "権限を持つユーザーのみスケジュール作成可能"
+      },
+      {
+        "name": "schedules_update_policy",
+        "type": "UPDATE",
+        "definition": {
+          "using": "created_by = auth.uid() OR has_role(auth.uid(), 'admin')",
+          "with_check": "created_by = auth.uid() OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "オーナーまたは管理者のみスケジュール更新可能"
+      },
+      {
+        "name": "schedules_delete_policy",
+        "type": "DELETE",
+        "definition": {
+          "using": "created_by = auth.uid() OR has_role(auth.uid(), 'admin')"
+        },
+        "description": "オーナーまたは管理者のみスケジュール削除可能"
+      }
+    ],
+    "practice_sessions": [
+      {
+        "name": "practice_sessions_select_policy",
+        "type": "SELECT",
+        "definition": {
+          "using": "EXISTS(SELECT 1 FROM schedules WHERE schedules.id = practice_sessions.schedule_id AND (schedules.is_visible_to_general = true OR schedules.created_by = auth.uid() OR has_role(auth.uid(), 'admin')))"
+        },
+        "description": "関連スケジュールが閲覧可能な場合のみ練習セッション閲覧可能"
+      },
+      {
+        "name": "practice_sessions_insert_policy",
+        "type": "INSERT",
+        "definition": {
+          "with_check": "EXISTS(SELECT 1 FROM schedules WHERE schedules.id = practice_sessions.schedule_id AND (schedules.created_by = auth.uid() OR has_role(auth.uid(), 'admin'))) AND has_permission(auth.uid(), 'schedule:write')"
+        },
+        "description": "スケジュールオーナーまたは管理者かつ権限を持つユーザーのみ練習セッション作成可能"
+      },
+      {
+        "name": "practice_sessions_update_policy",
+        "type": "UPDATE",
+        "definition": {
+          "using": "EXISTS(SELECT 1 FROM schedules WHERE schedules.id = practice_sessions.schedule_id AND (schedules.created_by = auth.uid() OR has_role(auth.uid(), 'admin')))",
+          "with_check": "EXISTS(SELECT 1 FROM schedules WHERE schedules.id = practice_sessions.schedule_id AND (schedules.created_by = auth.uid() OR has_role(auth.uid(), 'admin')))"
+        },
+        "description": "スケジュールオーナーまたは管理者のみ練習セッション更新可能"
+      },
+      {
+        "name": "practice_sessions_delete_policy",
+        "type": "DELETE",
+        "definition": {
+          "using": "EXISTS(SELECT 1 FROM schedules WHERE schedules.id = practice_sessions.schedule_id AND (schedules.created_by = auth.uid() OR has_role(auth.uid(), 'admin')))"
+        },
+        "description": "スケジュールオーナーまたは管理者のみ練習セッション削除可能"
+      }
+    ]
+  },
+  "functions": [
+    {
+      "name": "has_role",
+      "definition": "CREATE OR REPLACE FUNCTION has_role(user_id UUID, role_name TEXT) RETURNS BOOLEAN AS $$ BEGIN RETURN EXISTS(SELECT 1 FROM user_roles WHERE user_id = $1 AND role_type = $2); END; $$ LANGUAGE plpgsql SECURITY DEFINER;",
+      "description": "ユーザーが指定ロールを持っているかチェック"
+    },
+    {
+      "name": "has_permission", 
+      "definition": "CREATE OR REPLACE FUNCTION has_permission(user_id UUID, permission_name TEXT) RETURNS BOOLEAN AS $$ DECLARE role_record RECORD; permission_exists BOOLEAN := FALSE; BEGIN FOR role_record IN SELECT role_type FROM user_roles WHERE user_id = $1 LOOP IF role_record.role_type = 'admin' THEN RETURN TRUE; END IF; SELECT TRUE INTO permission_exists FROM ( VALUES ('user', ARRAY['users:read:self', 'schedule:read', 'schedule:write:self']), ('viewer', ARRAY['schedule:read']) ) AS role_permissions(role_name, permissions) WHERE role_name = role_record.role_type AND $2 = ANY(permissions); IF permission_exists THEN RETURN TRUE; END IF; END LOOP; RETURN FALSE; END; $$ LANGUAGE plpgsql SECURITY DEFINER;",
+      "description": "ユーザーが指定権限を持っているかチェック"
+    },
+    {
+      "name": "get_user_effective_roles",
+      "definition": "CREATE OR REPLACE FUNCTION get_user_effective_roles(user_id UUID) RETURNS TEXT[] AS $$ DECLARE roles TEXT[]; BEGIN SELECT ARRAY_AGG(role_type) INTO roles FROM user_roles WHERE user_id = $1; RETURN COALESCE(roles, ARRAY[]::TEXT[]); END; $$ LANGUAGE plpgsql SECURITY DEFINER;",
+      "description": "ユーザーの実効ロール一覧を取得"
+    },
+    {
+      "name": "get_user_effective_permissions",
+      "definition": "CREATE OR REPLACE FUNCTION get_user_effective_permissions(user_id UUID) RETURNS TEXT[] AS $$ DECLARE permissions TEXT[] := ARRAY[]::TEXT[]; role_record RECORD; BEGIN FOR role_record IN SELECT role_type FROM user_roles WHERE user_id = $1 LOOP IF role_record.role_type = 'admin' THEN permissions := permissions || ARRAY['users:read', 'users:write', 'users:delete', 'roles:read', 'roles:write', 'schedule:read', 'schedule:write', 'schedule:delete', 'admin:manage']; ELSIF role_record.role_type = 'user' THEN permissions := permissions || ARRAY['users:read:self', 'schedule:read', 'schedule:write:self']; ELSIF role_record.role_type = 'viewer' THEN permissions := permissions || ARRAY['schedule:read']; END IF; END LOOP; RETURN array_remove(array_remove(permissions, NULL), ''); END; $$ LANGUAGE plpgsql SECURITY DEFINER;",
+      "description": "ユーザーの実効権限一覧を取得"
+    }
+  ],
+  "table_settings": {
+    "users": {
+      "enable_rls": true,
+      "force_rls": false
+    },
+    "user_roles": {
+      "enable_rls": true,
+      "force_rls": true
+    },
+    "schedules": {
+      "enable_rls": true,
+      "force_rls": false
+    },
+    "practice_sessions": {
+      "enable_rls": true,
+      "force_rls": false
+    }
+  }
+}

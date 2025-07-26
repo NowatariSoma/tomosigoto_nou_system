@@ -1,0 +1,57 @@
+{
+  "roles": [
+    {
+      "name": "admin",
+      "description": "システム管理者",
+      "permissions": [
+        "users:read",
+        "users:write", 
+        "users:delete",
+        "roles:read",
+        "roles:write",
+        "schedule:read",
+        "schedule:write",
+        "schedule:delete",
+        "admin:manage"
+      ],
+      "inherits_from": []
+    },
+    {
+      "name": "user",
+      "description": "一般ユーザー",
+      "permissions": [
+        "users:read:self",
+        "schedule:read",
+        "schedule:write:self"
+      ],
+      "inherits_from": []
+    },
+    {
+      "name": "viewer",
+      "description": "閲覧専用ユーザー",
+      "permissions": [
+        "schedule:read"
+      ],
+      "inherits_from": []
+    }
+  ],
+  "permissions": {
+    "users:read": "ユーザー情報の閲覧",
+    "users:read:self": "自身のユーザー情報の閲覧",
+    "users:write": "ユーザー情報の編集",
+    "users:delete": "ユーザー情報の削除",
+    "roles:read": "ロール情報の閲覧",
+    "roles:write": "ロール情報の編集",
+    "schedule:read": "スケジュールの閲覧",
+    "schedule:write": "スケジュールの編集",
+    "schedule:write:self": "自身に関するスケジュールの編集",
+    "schedule:delete": "スケジュールの削除",
+    "admin:manage": "システム管理"
+  },
+  "resource_permissions": {
+    "users": ["read", "write", "delete"],
+    "roles": ["read", "write"],
+    "schedule": ["read", "write", "delete"],
+    "admin": ["manage"]
+  }
+}
