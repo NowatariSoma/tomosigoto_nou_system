@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メールアドレスの確認</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic UI', 'メイリオ', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content h2 {
+            color: #4f46e5;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4f46e5;
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #3730a3;
+        }
+        .info-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #4f46e5;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 20px 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .link {
+            color: #4f46e5;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>練習表自動生成システム</h1>
+        </div>
+        
+        <div class="content">
+            <h2>メールアドレスの確認</h2>
+            
+            <p>こんにちは、</p>
+            
+            <p>練習表自動生成システムにご登録いただき、ありがとうございます。<br>
+            アカウントを有効化するために、以下のボタンをクリックしてメールアドレスを確認してください。</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ confirmation_url }}" class="button">メールアドレスを確認する</a>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>注意事項：</strong></p>
+                <ul>
+                    <li>このリンクは24時間で有効期限が切れます</li>
+                    <li>リンクが機能しない場合は、以下のURLを直接ブラウザにコピー＆ペーストしてください</li>
+                </ul>
+            </div>
+            
+            <p><strong>確認URL：</strong><br>
+            <a href="{{ confirmation_url }}" class="link">{{ confirmation_url }}</a></p>
+            
+            <p>もしこのメールに心当たりがない場合は、このメールを無視してください。<br>
+            第三者がお客様のメールアドレスを誤って入力した可能性があります。</p>
+            
+            <p>何かご不明な点がございましたら、サポートまでお問い合わせください。</p>
+            
+            <p>よろしくお願いいたします。<br>
+            練習表自動生成システム開発チーム</p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 練習表自動生成システム. All rights reserved.</p>
+            <p>このメールは自動送信されています。返信はできません。</p>
+        </div>
+    </div>
+</body>
+</html>
