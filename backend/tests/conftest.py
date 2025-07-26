@@ -7,16 +7,11 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock
 from fastapi.testclient import TestClient
-from backend.app.main import app
-from backend.app.services.pdf_service import PDFService
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.core.pdf_templates import PDFTemplateEngine
-from backend.app.utils.cache_manager import CacheManager
-import pytest
-import os
-from unittest.mock import Mock, MagicMock
-from fastapi.testclient import TestClient
 from app.main import app
+from app.services.pdf_service import PDFService
+from app.core.pdf_generator import PDFGenerator
+from app.core.pdf_templates import TemplateEngine
+from app.utils.cache_manager import CacheManager
 
 
 @pytest.fixture
@@ -39,7 +34,10 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
-=======
+    }
+
+
+@pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for testing"""
     mock_client = Mock()
@@ -59,6 +57,25 @@ def sample_user():
         "created_at": "2025-01-01T00:00:00.000Z",
         "updated_at": "2025-01-01T00:00:00.000Z"
     }
+
+
+@pytest.fixture
+def sample_users():
+    """Sample users list for testing"""
+    return [
+        {
+            "id": "user1",
+            "email": "user1@example.com",
+            "created_at": "2025-01-01T00:00:00.000Z",
+            "updated_at": "2025-01-01T00:00:00.000Z"
+        },
+        {
+            "id": "user2", 
+            "email": "user2@example.com",
+            "created_at": "2025-01-01T00:00:00.000Z",
+            "updated_at": "2025-01-01T00:00:00.000Z"
+        }
+    ]
 
 
 @pytest.fixture
@@ -86,21 +103,6 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
-
-def sample_users():
-    """Sample users list for testing"""
-    return [
-        {
-            "id": "user1",
-            "email": "user1@example.com",
-            "created_at": "2025-01-01T00:00:00.000Z",
-            "updated_at": "2025-01-01T00:00:00.000Z"
-        },
-        {
-            "id": "user2", 
-            "email": "user2@example.com",
-            "created_at": "2025-01-01T00:00:00.000Z",
-            "updated_at": "2025-01-01T00:00:00.000Z"
         }
     ]
 
@@ -121,7 +123,7 @@ def pdf_generator():
 @pytest.fixture
 def pdf_template_engine(temp_dir):
     """PDFテンプレートエンジンインスタンス"""
-    return PDFTemplateEngine(template_dir=temp_dir / "templates")
+    return TemplateEngine(template_dir=temp_dir / "templates")
 
 
 @pytest.fixture
@@ -133,11 +135,12 @@ def cache_manager(temp_dir):
 @pytest.fixture
 def sample_pdf_export_options():
     """サンプルPDFエクスポートオプション"""
+    from datetime import date
     return {
-        "start_date": "2024-01-01",
-        "end_date": "2024-01-31",
-        "part_id": "part-1",
-        "format": "detailed",
+        "start_date": date(2024, 1, 1),
+        "end_date": date(2024, 1, 31),
+        "part_id": 1,
+        "template_id": "default",
         "paper_size": "A4",
         "orientation": "portrait",
         "font_size": 10,
@@ -145,21 +148,7 @@ def sample_pdf_export_options():
     }
 
 
-@pytest.fixture(autouse=True)
-def setup_test_environment():
-    """テスト環境セットアップ"""
-    # テスト用の環境変数設定
-    os.environ["TESTING"] = "1"
-    os.environ["CACHE_EXPIRY_HOURS"] = "1"
-    
-    yield
-    
-    # クリーンアップ
-    if "TESTING" in os.environ:
-        del os.environ["TESTING"]
-    if "CACHE_EXPIRY_HOURS" in os.environ:
-        del os.environ["CACHE_EXPIRY_HOURS"]
-          
+@pytest.fixture
 def mock_jwt_token():
     """Mock JWT token for testing"""
     return "mock.jwt.token"
@@ -171,3 +160,5 @@ def setup_test_env(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
     monkeypatch.setenv("SECRET_KEY", "test-secret-key")
+    monkeypatch.setenv("TESTING", "1")
+    monkeypatch.setenv("CACHE_EXPIRY_HOURS", "1")

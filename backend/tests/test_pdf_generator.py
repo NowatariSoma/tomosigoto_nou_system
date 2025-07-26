@@ -6,8 +6,8 @@ from io import BytesIO
 from unittest.mock import patch, Mock
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4, A3, B4, B5, letter
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.schemas.pdf_export import PDFExportOptions
+from app.core.pdf_generator import PDFGenerator
+from app.schemas.pdf_export import PDFExportOptions
 
 
 class TestPDFGenerator:
@@ -15,29 +15,31 @@ class TestPDFGenerator:
 
     def test_create_schedule_pdf_basic(self, pdf_generator, sample_schedule_data):
         """基本的なPDF生成テスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
         pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
-        assert pdf_data.startswith(b'%PDF')  # PDFヘッダー確認
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
+        assert pdf_data.getvalue().startswith(b'%PDF')  # PDFヘッダー確認
 
     def test_create_schedule_pdf_empty_data(self, pdf_generator):
         """空データでのPDF生成テスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf([], options)
+        pdf_data = pdf_generator.create_schedule_pdf({"schedules": []}, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
-        assert pdf_data.startswith(b'%PDF')
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
+        assert pdf_data.getvalue().startswith(b'%PDF')
 
     @pytest.mark.parametrize("paper_size,expected", [
         ("A4", A4),
