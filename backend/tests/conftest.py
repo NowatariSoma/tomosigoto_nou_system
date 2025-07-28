@@ -7,11 +7,11 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock
 from fastapi.testclient import TestClient
-from backend.app.main import app
-from backend.app.services.pdf_service import PDFService
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.core.pdf_templates import PDFTemplateEngine
-from backend.app.utils.cache_manager import CacheManager
+from app.main import app
+from app.services.pdf_service import PDFService
+from app.core.pdf_generator import PDFGenerator
+from app.core.pdf_templates import PDFTemplateEngine
+from app.utils.cache_manager import CacheManager
 import pytest
 import os
 from unittest.mock import Mock, MagicMock
@@ -39,7 +39,10 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
-=======
+    }
+
+
+@pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for testing"""
     mock_client = Mock()
@@ -86,7 +89,11 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
+        }
+    ]
 
+
+@pytest.fixture
 def sample_users():
     """Sample users list for testing"""
     return [
@@ -159,7 +166,9 @@ def setup_test_environment():
         del os.environ["TESTING"]
     if "CACHE_EXPIRY_HOURS" in os.environ:
         del os.environ["CACHE_EXPIRY_HOURS"]
-          
+
+
+@pytest.fixture
 def mock_jwt_token():
     """Mock JWT token for testing"""
     return "mock.jwt.token"

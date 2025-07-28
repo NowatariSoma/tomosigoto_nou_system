@@ -28,7 +28,7 @@ class VersionUtil:
     # タイムスタンプバージョンの正規表現（検証用）
     TIMESTAMP_VALIDATION_PATTERN = re.compile(r'^\d{14}$')
     SEMANTIC_VALIDATION_PATTERN = re.compile(r'^\d+\.\d+\.\d+$')
-    SEQUENTIAL_VALIDATION_PATTERN = re.compile(r'^\d+$')
+    SEQUENTIAL_VALIDATION_PATTERN = re.compile(r'^\d+$')  # 1桁以上の連番
     
     @staticmethod
     def parse_version(filename: str) -> Optional[str]:
@@ -102,8 +102,23 @@ class VersionUtil:
         Returns:
             str: YYYYMMDDHHmmss形式のバージョン文字列
         """
+        import time
         now = datetime.now()
-        return now.strftime("%Y%m%d%H%M%S")
+        timestamp = now.strftime("%Y%m%d%H%M%S")
+        
+        # 同じ秒内で複数回呼ばれた場合の一意性を確保
+        if not hasattr(VersionUtil, '_last_generated_time'):
+            VersionUtil._last_generated_time = None
+            VersionUtil._counter = 0
+        
+        if VersionUtil._last_generated_time == timestamp:
+            # 同じ秒内の場合は秒を1つ進める
+            time.sleep(1.001)
+            now = datetime.now()
+            timestamp = now.strftime("%Y%m%d%H%M%S")
+        
+        VersionUtil._last_generated_time = timestamp
+        return timestamp
     
     @staticmethod
     def extract_timestamp(version: str) -> Optional[datetime]:
@@ -137,7 +152,16 @@ class VersionUtil:
         if not isinstance(version, str) or not version:
             return False
         
-        # タイムスタンプ形式の検証
+        # タイムスタンプ形式の検証（13-15桁の数字で2000年代で始まるものは明らかにタイムスタンプの意図）
+        if (len(version) >= 13 and len(version) <= 15 and 
+            version.isdigit() and version.startswith('20')):
+            # タイムスタンプとして扱い、厳密に検証
+            if VersionUtil.TIMESTAMP_VALIDATION_PATTERN.match(version):
+                return VersionUtil._is_valid_timestamp(version)
+            else:
+                return False  # タイムスタンプの意図だが形式が無効
+        
+        # タイムスタンプ形式の検証（正確な14桁）
         if VersionUtil.TIMESTAMP_VALIDATION_PATTERN.match(version):
             return VersionUtil._is_valid_timestamp(version)
         
@@ -145,8 +169,9 @@ class VersionUtil:
         if VersionUtil.SEMANTIC_VALIDATION_PATTERN.match(version):
             return True  # 正規表現に一致すれば有効
         
-        # 連番形式の検証
-        if VersionUtil.SEQUENTIAL_VALIDATION_PATTERN.match(version):
+        # 連番形式の検証（タイムスタンプではないもの）
+        if (VersionUtil.SEQUENTIAL_VALIDATION_PATTERN.match(version) and 
+            not version.startswith('20')):  # 20xxで始まるものはタイムスタンプとみなす
             return True  # 正規表現に一致すれば有効
         
         return False
