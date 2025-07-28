@@ -7,6 +7,7 @@ class Settings(BaseModel):
     # Supabase設定
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
     
     # JWT設定
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
