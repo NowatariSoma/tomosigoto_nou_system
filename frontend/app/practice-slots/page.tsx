@@ -142,7 +142,7 @@ export default function TrainingSchedule() {
             <div className="flex items-center justify-center mb-4">
               <button
                 onClick={() => navigateDate('prev')}
-                className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors duration-200"
+                className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors duration-50"
               >
                 <ChevronLeft className="w-6 h-6 text-blue-600" />
               </button>
@@ -178,11 +178,10 @@ export default function TrainingSchedule() {
                   {scheduleData.map((item, index) => (
                     <tr
                       key={index}
-                      className={`border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150 ${
-                        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                      className={`border-b border-gray-200 bg-white hover:bg-blue-100 transition-colors duration-150
                       }`}
                     >
-                      <td className="px-4 py-4 font-medium text-blue-700 bg-blue-50 border-r border-gray-200">
+                      <td className="px-4 py-4 font-medium text-white bg-blue-500 border-r border-gray-100">
                         <div className="flex items-center">
                           <span className="text-sm font-bold">{item.time}</span>
                           {item.duration && (
