@@ -104,7 +104,7 @@ export default function BoltPage(){
                 <Badge
                   key={room.id}
                   variant="outline"
-                  className="px-4 py-2 text-base border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  className="px-4 py-2 text-base border-2 border-blue-200 bg-white  transition-colors"
                 >
                   <button
                     onClick={() => removeRoom(room.id)}
@@ -119,7 +119,7 @@ export default function BoltPage(){
                 onClick={addRoom}
                 variant="outline"
                 size="sm"
-                className="border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                className="border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-100 transition-all"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -165,7 +165,7 @@ export default function BoltPage(){
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-blue-50 border-blue-200 hover:bg-blue-100"
+                  className="bg-blue-100 border-blue-200 hover:bg-green-100"
                 >
                   カレンダー
                 </Button>
