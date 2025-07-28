@@ -19,7 +19,7 @@ try:
     print("✓ すべてのテストモジュールのインポートが成功しました")
 except ImportError as e:
     print(f"✗ テストモジュールのインポートに失敗しました: {e}")
-    return 1
+    sys.exit(1)
 
 def run_tests():
     """テストを実行"""
