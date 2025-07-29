@@ -92,36 +92,41 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
     React.useEffect(() => {
       if (!isOpen) return
 
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      
-      if (focusableElements && focusableElements.length > 0) {
-        const firstElement = focusableElements[0] as HTMLElement
-        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+      // DOMが完全にレンダリングされるまで待機
+      const focusTimeout = setTimeout(() => {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        
+        if (focusableElements && focusableElements.length > 0) {
+          const firstElement = focusableElements[0] as HTMLElement
+          const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
 
-        // 初期フォーカス
-        firstElement.focus()
+          // 初期フォーカス
+          firstElement.focus()
 
-        const handleTabKey = (event: KeyboardEvent) => {
-          if (event.key !== 'Tab') return
+          const handleTabKey = (event: KeyboardEvent) => {
+            if (event.key !== 'Tab') return
 
-          if (event.shiftKey) {
-            if (document.activeElement === firstElement) {
-              event.preventDefault()
-              lastElement.focus()
-            }
-          } else {
-            if (document.activeElement === lastElement) {
-              event.preventDefault()
-              firstElement.focus()
+            if (event.shiftKey) {
+              if (document.activeElement === firstElement) {
+                event.preventDefault()
+                lastElement.focus()
+              }
+            } else {
+              if (document.activeElement === lastElement) {
+                event.preventDefault()
+                firstElement.focus()
+              }
             }
           }
-        }
 
-        document.addEventListener('keydown', handleTabKey)
-        return () => document.removeEventListener('keydown', handleTabKey)
-      }
+          document.addEventListener('keydown', handleTabKey)
+          return () => document.removeEventListener('keydown', handleTabKey)
+        }
+      }, 0)
+
+      return () => clearTimeout(focusTimeout)
     }, [isOpen])
 
     // オーバーレイクリックのハンドリング

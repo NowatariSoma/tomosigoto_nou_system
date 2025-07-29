@@ -58,3 +58,8 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 }
+
+// Mock the cn utility function
+jest.mock('./lib/utils', () => ({
+  cn: (...inputs) => inputs.filter(Boolean).join(' ')
+}))
