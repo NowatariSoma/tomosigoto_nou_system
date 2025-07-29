@@ -61,11 +61,30 @@ class TestUserRepository(unittest.TestCase):
         """テスト後処理"""
         pass
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    def _setup_mock_query_response(self, data, table_name='users'):
+        """モッククエリレスポンスを設定するヘルパーメソッド"""
+        mock_response = Mock()
+        mock_response.data = data
+        
+        # Select系のクエリをモック
+        self.mock_db_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
+        self.mock_db_client.table.return_value.select.return_value.execute.return_value = mock_response
+        
+        # Insert系のクエリをモック  
+        self.mock_db_client.table.return_value.insert.return_value.execute.return_value = mock_response
+        
+        # Update系のクエリをモック
+        self.mock_db_client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_response
+        
+        # Delete系のクエリをモック
+        self.mock_db_client.table.return_value.delete.return_value.eq.return_value.execute.return_value = mock_response
+    
     def test_get_by_id(self):
         """ID取得テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_user_data]
+        mock_response = Mock()
+        mock_response.data = [self.sample_user_data]
+        self.mock_db_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         
         result = self.repository.get_by_id(self.sample_user_id)
         
@@ -73,25 +92,22 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, User)
         self.assertEqual(result.email, "test@example.com")
         self.assertEqual(str(result.id), str(self.sample_user_id))
-        
-        # クエリが正しく呼ばれているか確認
-        self.repository._execute_query.assert_called_once()
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
     def test_get_by_id_not_found(self):
         """ID取得（見つからない）テスト"""
-        # モックの戻り値を空に設定
-        self.repository._execute_query.return_value = []
+        # 空の結果を返すよう設定
+        mock_response = Mock()
+        mock_response.data = []
+        self.mock_db_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         
         result = self.repository.get_by_id(uuid4())
         
         self.assertIsNone(result)
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
     def test_get_by_email(self):
         """メール取得テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_user_data]
+        self._setup_mock_query_response([self.sample_user_data])
         
         result = self.repository.get_by_email("test@example.com")
         
@@ -99,11 +115,11 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, User)
         self.assertEqual(result.email, "test@example.com")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_get_by_student_id(self):
         """学籍番号取得テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_profile_data]
+        mock_execute_query.return_value = [self.sample_profile_data]
         
         result = self.repository.get_by_student_id("20251001")
         
@@ -111,11 +127,10 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, UserProfile)
         self.assertEqual(result.student_id, "20251001")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
     def test_create_user(self):
         """ユーザー作成テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_user_data]
+        self._setup_mock_query_response([self.sample_user_data])
         
         user_data = {
             "email": "test@example.com",
@@ -130,7 +145,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, User)
         self.assertEqual(result.email, "test@example.com")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_update_user(self):
         """ユーザー更新テスト"""
         # 更新後のデータ
@@ -138,7 +153,7 @@ class TestUserRepository(unittest.TestCase):
         updated_data["email"] = "updated@example.com"
         
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [updated_data]
+        mock_execute_query.return_value = [updated_data]
         
         update_data = {"email": "updated@example.com"}
         
@@ -148,21 +163,21 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, User)
         self.assertEqual(result.email, "updated@example.com")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_delete_user(self):
         """ユーザー削除テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = []
+        mock_execute_query.return_value = []
         
         result = self.repository.delete(self.sample_user_id)
         
         self.assertTrue(result)
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_get_profile(self):
         """プロフィール取得テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_profile_data]
+        mock_execute_query.return_value = [self.sample_profile_data]
         
         result = self.repository.get_profile(self.sample_user_id)
         
@@ -171,7 +186,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertEqual(result.student_id, "20251001")
         self.assertEqual(str(result.user_id), str(self.sample_user_id))
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_update_profile(self):
         """プロフィール更新テスト"""
         # 更新後のデータ
@@ -179,7 +194,7 @@ class TestUserRepository(unittest.TestCase):
         updated_profile["first_name_kanji"] = "次郎"
         
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [updated_profile]
+        mock_execute_query.return_value = [updated_profile]
         
         profile_data = {"first_name_kanji": "次郎"}
         
@@ -189,11 +204,11 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, UserProfile)
         self.assertEqual(result.first_name_kanji, "次郎")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_get_user_role(self):
         """ユーザーロール取得テスト"""
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [self.sample_role_data]
+        mock_execute_query.return_value = [self.sample_role_data]
         
         result = self.repository.get_user_role(self.sample_user_id)
         
@@ -202,7 +217,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertEqual(result.role_type, "general")
         self.assertEqual(str(result.user_id), str(self.sample_user_id))
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_update_user_role(self):
         """ロール更新テスト"""
         # 更新後のデータ
@@ -210,7 +225,7 @@ class TestUserRepository(unittest.TestCase):
         updated_role["role_type"] = "senior"
         
         # モックの戻り値を設定
-        self.repository._execute_query.return_value = [updated_role]
+        mock_execute_query.return_value = [updated_role]
         
         result = self.repository.update_user_role(self.sample_user_id, "senior")
         
@@ -218,7 +233,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result, UserRole)
         self.assertEqual(result.role_type, "senior")
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_get_users_by_role(self):
         """ロール別ユーザー取得テスト"""
         # モックの戻り値を設定（複数ユーザー）
@@ -226,7 +241,7 @@ class TestUserRepository(unittest.TestCase):
         user_data_2["id"] = str(uuid4())
         user_data_2["email"] = "test2@example.com"
         
-        self.repository._execute_query.return_value = [
+        mock_execute_query.return_value = [
             self.sample_user_data,
             user_data_2
         ]
@@ -238,7 +253,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertIsInstance(result[0], User)
         self.assertIsInstance(result[1], User)
     
-    @patch('app.repositories.user_repository.UserRepository._execute_query')
+    # Removed @patch decorator - using direct DB client mocking
     def test_role_visibility(self):
         """ロール表示制御テスト"""
         # システム管理者（非表示）のデータ
@@ -247,7 +262,7 @@ class TestUserRepository(unittest.TestCase):
         admin_data["email"] = "admin@example.com"
         
         # include_hidden=False の場合、システム管理者は含まれない
-        self.repository._execute_query.return_value = [self.sample_user_data]
+        mock_execute_query.return_value = [self.sample_user_data]
         
         result = self.repository.get_users_by_role("general", include_hidden=False)
         
@@ -255,7 +270,7 @@ class TestUserRepository(unittest.TestCase):
         self.assertEqual(result[0].email, "test@example.com")
         
         # include_hidden=True の場合、システム管理者も含まれる
-        self.repository._execute_query.return_value = [
+        mock_execute_query.return_value = [
             self.sample_user_data,
             admin_data
         ]

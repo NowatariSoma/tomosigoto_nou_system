@@ -5,24 +5,7 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock
-from fastapi.testclient import TestClient
-from backend.app.main import app
-from backend.app.services.pdf_service import PDFService
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.core.pdf_templates import PDFTemplateEngine
-from backend.app.utils.cache_manager import CacheManager
-import pytest
-import os
-from unittest.mock import Mock, MagicMock
-from fastapi.testclient import TestClient
-from app.main import app
-
-
-@pytest.fixture
-def client():
-    """FastAPIテストクライアント"""
-    return TestClient(app)
+from unittest.mock import Mock, AsyncMock, MagicMock
 
 
 @pytest.fixture
@@ -39,7 +22,10 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
-=======
+    }
+
+
+@pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for testing"""
     mock_client = Mock()
@@ -86,7 +72,11 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
+        }
+    ]
 
+
+@pytest.fixture
 def sample_users():
     """Sample users list for testing"""
     return [
@@ -105,44 +95,10 @@ def sample_users():
     ]
 
 
-@pytest.fixture
-def pdf_service(temp_dir):
-    """PDFサービスインスタンス"""
-    cache_manager = CacheManager(cache_dir=temp_dir / "cache")
-    return PDFService(cache_manager=cache_manager)
+# PDF関連のfixtureは必要に応じて後で追加
 
 
-@pytest.fixture
-def pdf_generator():
-    """PDF生成エンジンインスタンス"""
-    return PDFGenerator()
-
-
-@pytest.fixture
-def pdf_template_engine(temp_dir):
-    """PDFテンプレートエンジンインスタンス"""
-    return PDFTemplateEngine(template_dir=temp_dir / "templates")
-
-
-@pytest.fixture
-def cache_manager(temp_dir):
-    """キャッシュマネージャーインスタンス"""
-    return CacheManager(cache_dir=temp_dir / "cache")
-
-
-@pytest.fixture
-def sample_pdf_export_options():
-    """サンプルPDFエクスポートオプション"""
-    return {
-        "start_date": "2024-01-01",
-        "end_date": "2024-01-31",
-        "part_id": "part-1",
-        "format": "detailed",
-        "paper_size": "A4",
-        "orientation": "portrait",
-        "font_size": 10,
-        "include_details": True
-    }
+# PDF export関連のfixtureは必要に応じて後で追加
 
 
 @pytest.fixture(autouse=True)
@@ -159,7 +115,8 @@ def setup_test_environment():
         del os.environ["TESTING"]
     if "CACHE_EXPIRY_HOURS" in os.environ:
         del os.environ["CACHE_EXPIRY_HOURS"]
-          
+
+@pytest.fixture
 def mock_jwt_token():
     """Mock JWT token for testing"""
     return "mock.jwt.token"
