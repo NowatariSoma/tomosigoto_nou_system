@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: "Noto Sans JP", Arial, sans-serif;
+            font-size: {{ font_size }}px;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .period {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: {{ font_size + 2 }}px;
+            font-weight: bold;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: center;
+        }
+        .schedule-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .part-{{ part_id }} {
+            background-color: #e6f3ff;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: {{ font_size - 2 }}px;
+            color: #666;
+        }
+        @media print {
+            body { margin: 0; }
+            .header { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+    </div>
+    
+    <div class="period">
+        {{ start_date|format_date }} ～ {{ end_date|format_date }}
+        {% if part_name %}（{{ part_name }}）{% endif %}
+    </div>
+    
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>日付</th>
+                <th>時間</th>
+                <th>セッション</th>
+                {% if include_details %}
+                <th>詳細</th>
+                <th>担当者</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in schedules %}
+            <tr class="part-{{ schedule.part_id }}">
+                <td>{{ schedule.date|format_date }}</td>
+                <td>{{ schedule.start_time|format_time }} - {{ schedule.end_time|format_time }}</td>
+                <td>{{ schedule.session_name }}</td>
+                {% if include_details %}
+                <td>{{ schedule.description or '' }}</td>
+                <td>{{ schedule.assigned_user or '' }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>生成日時: {{ generated_at|format_date }}</p>
+    </div>
+</body>
+</html>

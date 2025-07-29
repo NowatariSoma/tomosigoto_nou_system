@@ -19,7 +19,7 @@ class TestPDFService:
             mock_generator.return_value = BytesIO(b"fake pdf content")
             
             options = PDFExportOptions(**sample_pdf_export_options)
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             result = pdf_service.generate_schedule_pdf(options, user_id)
             
             assert result.status == "completed"
@@ -40,7 +40,7 @@ class TestPDFService:
             mock_cache_check.return_value = mock_response
             
             options = PDFExportOptions(**sample_pdf_export_options)
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             result = pdf_service.generate_schedule_pdf(options, user_id)
             
             assert result.status == "completed"
@@ -52,7 +52,7 @@ class TestPDFService:
             mock_generator.side_effect = Exception("PDF生成エラー")
             
             options = PDFExportOptions(**sample_pdf_export_options)
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             result = pdf_service.generate_schedule_pdf(options, user_id)
             
             assert result.status == "failed"
@@ -142,7 +142,7 @@ class TestPDFService:
     def test_generate_cache_key(self, pdf_service, sample_pdf_export_options, mock_current_user):
         """キャッシュキー生成テスト"""
         options = PDFExportOptions(**sample_pdf_export_options)
-        user_id = mock_current_user.get("user_id", 1)
+        user_id = mock_current_user.get("user_id", "test-user-123")
         
         cache_key = pdf_service._generate_cache_key(options, user_id)
         
@@ -155,18 +155,19 @@ class TestPDFService:
 
     def test_generate_cache_key_different_options(self, pdf_service, mock_current_user):
         """異なるオプションで異なるキャッシュキーが生成されることのテスト"""
+        from datetime import date
         options1 = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             part_id="part-1"
         )
         options2 = PDFExportOptions(
-            start_date="2024-02-01",
-            end_date="2024-02-28",
+            start_date=date(2024, 2, 1),
+            end_date=date(2024, 2, 28),
             part_id="part-1"
         )
         
-        user_id = mock_current_user.get("user_id", 1)
+        user_id = mock_current_user.get("user_id", "test-user-123")
         key1 = pdf_service._generate_cache_key(options1, user_id)
         key2 = pdf_service._generate_cache_key(options2, user_id)
         
@@ -187,7 +188,7 @@ class TestPDFService:
         with patch.object(pdf_service.pdf_generator, 'create_schedule_pdf') as mock_generator:
             mock_generator.return_value = BytesIO(b"fake pdf content")
             
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             result = pdf_service.generate_schedule_pdf(options, user_id)
             
             assert result.status == "completed"
@@ -207,7 +208,7 @@ class TestPDFService:
             large_pdf_data = BytesIO(b"x" * (10 * 1024 * 1024))  # 10MB
             mock_generator.return_value = large_pdf_data
             
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             result = pdf_service.generate_schedule_pdf(options, user_id)
             
             assert result.status == "completed"
@@ -222,7 +223,7 @@ class TestPDFService:
             
             # 複数の同時生成
             results = []
-            user_id = mock_current_user.get("user_id", 1)
+            user_id = mock_current_user.get("user_id", "test-user-123")
             for i in range(3):
                 result = pdf_service.generate_schedule_pdf(options, user_id)
                 results.append(result)

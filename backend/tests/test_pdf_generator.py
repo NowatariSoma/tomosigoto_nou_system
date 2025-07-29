@@ -21,7 +21,9 @@ class TestPDFGenerator:
             end_date=date(2024, 1, 31)
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
+        # データ構造を辞書形式に修正
+        schedule_dict = {"schedules": sample_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
         assert isinstance(pdf_data, BytesIO)
         assert len(pdf_data.getvalue()) > 0
@@ -61,56 +63,64 @@ class TestPDFGenerator:
     @pytest.mark.parametrize("orientation", ["portrait", "landscape"])
     def test_create_schedule_pdf_orientation(self, pdf_generator, sample_schedule_data, orientation):
         """用紙向きテスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             orientation=orientation
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
+        schedule_dict = {"schedules": sample_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     @pytest.mark.parametrize("font_size", [8, 10, 12, 14])
     def test_create_schedule_pdf_font_sizes(self, pdf_generator, sample_schedule_data, font_size):
         """フォントサイズテスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             font_size=font_size
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
+        schedule_dict = {"schedules": sample_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_create_schedule_pdf_with_details(self, pdf_generator, sample_schedule_data):
         """詳細情報付きPDF生成テスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             include_details=True
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
+        schedule_dict = {"schedules": sample_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_create_schedule_pdf_without_details(self, pdf_generator, sample_schedule_data):
         """詳細情報なしPDF生成テスト"""
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             include_details=False
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(sample_schedule_data, options)
+        schedule_dict = {"schedules": sample_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_setup_japanese_fonts(self, pdf_generator):
         """日本語フォント設定テスト"""
@@ -126,9 +136,10 @@ class TestPDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
         # ヘッダー・フッターを描画
@@ -146,9 +157,10 @@ class TestPDFGenerator:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             include_details=True
         )
         
@@ -218,15 +230,17 @@ class TestPDFGenerator:
                 "details": f"業務{i}"
             })
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(large_schedule_data, options)
+        schedule_dict = {"schedules": large_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_japanese_text_handling(self, pdf_generator):
         """日本語テキスト処理テスト"""
@@ -242,15 +256,17 @@ class TestPDFGenerator:
             "details": "新規顧客開拓・既存顧客フォロー"
         }]
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(japanese_schedule_data, options)
+        schedule_dict = {"schedules": japanese_schedule_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_multi_page_pdf_generation(self, pdf_generator):
         """複数ページPDF生成テスト"""
@@ -269,32 +285,36 @@ class TestPDFGenerator:
                 "details": f"業務内容{i}の詳細説明"
             })
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
             include_details=True
         )
         
-        pdf_data = pdf_generator.create_schedule_pdf(multi_page_data, options)
+        schedule_dict = {"schedules": multi_page_data}
+        pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
         
-        assert isinstance(pdf_data, bytes)
-        assert len(pdf_data) > 0
+        assert isinstance(pdf_data, BytesIO)
+        assert len(pdf_data.getvalue()) > 0
 
     def test_pdf_generation_error_handling(self, pdf_generator):
         """PDF生成エラーハンドリングテスト"""
         # 無効なデータでのテスト
         invalid_data = [{"invalid": "data"}]
         
+        from datetime import date
         options = PDFExportOptions(
-            start_date="2024-01-01",
-            end_date="2024-01-31"
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31)
         )
         
         # エラーが適切に処理されることを確認
         try:
-            pdf_data = pdf_generator.create_schedule_pdf(invalid_data, options)
+            schedule_dict = {"schedules": invalid_data}
+            pdf_data = pdf_generator.create_schedule_pdf(schedule_dict, options)
             # エラーが発生しなかった場合も、PDFデータが返されることを確認
-            assert isinstance(pdf_data, bytes)
+            assert isinstance(pdf_data, BytesIO)
         except Exception as e:
             # エラーが発生した場合は、適切な例外であることを確認
             assert isinstance(e, (ValueError, KeyError, TypeError))

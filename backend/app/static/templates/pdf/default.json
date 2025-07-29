@@ -1,0 +1,19 @@
+{
+  "name": "デフォルトテンプレート",
+  "description": "標準的なスケジュール表示テンプレート",
+  "supported_options": {
+    "paper_size": [
+      "A4",
+      "A3",
+      "B4"
+    ],
+    "orientation": [
+      "portrait",
+      "landscape"
+    ],
+    "font_size": {
+      "min": 8,
+      "max": 14
+    }
+  }
+}
