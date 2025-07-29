@@ -93,7 +93,7 @@ class PDFGenerator:
                 parent=self.styles['Title'],
                 fontSize=options.font_size + 4,
                 alignment=TA_CENTER,
-                fontName='NotoSansJP'
+                fontName='Helvetica-Bold'  # 安全なデフォルトフォントを使用
             )
             title = Paragraph("練習スケジュール", title_style)
             content.append(title)
@@ -105,7 +105,7 @@ class PDFGenerator:
                 parent=self.styles['Normal'],
                 fontSize=options.font_size + 2,
                 alignment=TA_CENTER,
-                fontName='NotoSansJP'
+                fontName='Helvetica'
             )
             period_text = f"{options.start_date.strftime('%Y年%m月%d日')} ～ {options.end_date.strftime('%Y年%m月%d日')}"
             if 'part_name' in schedule_data:
@@ -127,7 +127,7 @@ class PDFGenerator:
                     parent=self.styles['Normal'],
                     fontSize=options.font_size,
                     alignment=TA_CENTER,
-                    fontName='NotoSansJP'
+                    fontName='Helvetica'
                 )
                 no_data = Paragraph("指定された期間にスケジュールがありません", no_data_style)
                 content.append(no_data)
@@ -139,7 +139,7 @@ class PDFGenerator:
                 parent=self.styles['Normal'],
                 fontSize=options.font_size - 2,
                 alignment=TA_CENTER,
-                fontName='NotoSansJP',
+                fontName='Helvetica',
                 textColor=colors.grey
             )
             footer_text = f"生成日時: {datetime.now().strftime('%Y年%m月%d日 %H:%M')}"
@@ -298,11 +298,11 @@ class PDFGenerator:
     
     def _setup_custom_styles(self):
         """カスタムスタイルの設定"""
-        # 日本語フォント用のスタイルを追加
+        # 安全なフォント用のスタイルを追加
         self.styles.add(ParagraphStyle(
             name='Japanese',
             parent=self.styles['Normal'],
-            fontName='NotoSansJP',
+            fontName='Helvetica',  # 安全なデフォルトフォントを使用
             fontSize=10,
             leading=12,
         ))

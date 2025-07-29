@@ -67,7 +67,7 @@ def test_pdf_generator_data_structure():
                  patch('reportlab.platypus.SimpleDocTemplate') as mock_doc:
                 
                 mock_prepare.return_value = [['日付', '時間', 'セッション'], ['2024-01-15', '09:00-17:00', '営業部']]
-                mock_layout.return_value = {'page_width': 595, 'page_height': 842, 'page_size': (595, 842)}
+                mock_layout.return_value = {'page_width': 595, 'page_height': 842, 'page_size': (595, 842), 'margin': 54.0}
                 
                 # Mock the document build process
                 mock_doc_instance = Mock()
