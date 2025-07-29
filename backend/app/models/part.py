@@ -3,7 +3,7 @@
 BACK-DB-001.2: パート区分・メンバー所属テーブル設計
 """
 from datetime import datetime, date
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 from uuid import UUID
 from pydantic import BaseModel, Field, validator
 
@@ -66,6 +66,13 @@ class PartDefinition(BaseModel):
             raise ValueError('Part cannot be its own parent')
         return v
     
+    @validator('level')
+    def validate_level_depth(cls, v, values):
+        """階層レベルの深さ制限チェック"""
+        if v > 5:  # 最大階層深度を5に制限
+            raise ValueError('Part hierarchy cannot exceed 5 levels deep')
+        return v
+    
     def has_requirement(self, req_name: str) -> bool:
         """特定の要件を持つかどうか確認"""
         return req_name in self.requirements
@@ -73,6 +80,34 @@ class PartDefinition(BaseModel):
     def is_sub_part_of(self, parent_id: UUID) -> bool:
         """特定パートの下位パートかどうか確認"""
         return self.parent_id == parent_id
+    
+    @staticmethod
+    def validate_no_circular_reference(part_id: UUID, new_parent_id: UUID, all_parts: List['PartDefinition']) -> bool:
+        """循環参照がないかチェック（サービスレイヤーで使用）"""
+        if new_parent_id is None:
+            return True
+            
+        # 新しい親から辿って、自分自身に戻らないかチェック
+        visited = set()
+        current_id = new_parent_id
+        
+        while current_id is not None:
+            if current_id in visited:
+                # 既に訪問済みの場合は循環参照
+                return False
+            if current_id == part_id:
+                # 自分自身に戻った場合は循環参照
+                return False
+                
+            visited.add(current_id)
+            
+            # 次の親を探す
+            current_part = next((p for p in all_parts if p.id == current_id), None)
+            if current_part is None:
+                break
+            current_id = current_part.parent_id
+            
+        return True
     
     def to_dict(self) -> dict:
         """辞書形式に変換"""

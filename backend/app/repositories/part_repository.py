@@ -66,7 +66,7 @@ class PartRepository:
             self._logger.info(f"Created category: {category_data['name']}")
             return PartCategory(**response.data[0])
         
-        raise Exception("Failed to create category")
+        raise Exception(f"Failed to create category '{category_data.get('name', 'Unknown')}': No data returned from database")
     
     @handle_supabase_errors("update_category")
     async def update_category(self, category_id: int, data: dict) -> PartCategory:
@@ -90,7 +90,7 @@ class PartRepository:
             self._logger.info(f"Updated category {category_id}")
             return PartCategory(**response.data[0])
         
-        raise Exception(f"Failed to update category {category_id}")
+        raise Exception(f"Failed to update category {category_id}: No data returned from database or category not found")
     
     @handle_supabase_errors("get_parts")
     async def get_parts(self) -> List[PartDefinition]:
@@ -162,7 +162,7 @@ class PartRepository:
             self._logger.info(f"Created part: {part_data['name']}")
             return PartDefinition(**data)
         
-        raise Exception("Failed to create part")
+        raise Exception(f"Failed to create part '{part_data.get('name', 'Unknown')}': No data returned from database")
     
     @handle_supabase_errors("update_part")
     async def update_part(self, part_id: UUID, data: dict) -> PartDefinition:
@@ -194,7 +194,7 @@ class PartRepository:
             self._logger.info(f"Updated part {part_id}")
             return PartDefinition(**data)
         
-        raise Exception(f"Failed to update part {part_id}")
+        raise Exception(f"Failed to update part {part_id}: No data returned from database or part not found")
     
     @handle_supabase_errors("get_child_parts")
     async def get_child_parts(self, parent_id: UUID) -> List[PartDefinition]:
@@ -254,6 +254,30 @@ class PartRepository:
     async def get_parts_by_category(self, category_id: int) -> List[PartDefinition]:
         """カテゴリ別パート取得"""
         response = self._db_client.table('part_definitions').select('*').eq('category_id', category_id).execute()
+        
+        parts = []
+        if response.data:
+            for data in response.data:
+                # UUIDの文字列を変換
+                if 'id' in data and isinstance(data['id'], str):
+                    data['id'] = UUID(data['id'])
+                if 'parent_id' in data and data['parent_id'] and isinstance(data['parent_id'], str):
+                    data['parent_id'] = UUID(data['parent_id'])
+                
+                parts.append(PartDefinition(**data))
+        
+        return parts
+    
+    @handle_supabase_errors("get_parts_by_ids")
+    async def get_parts_by_ids(self, part_ids: List[UUID]) -> List[PartDefinition]:
+        """複数のパートIDからパートを一括取得（N+1クエリ対策）"""
+        if not part_ids:
+            return []
+            
+        # UUIDを文字列に変換
+        id_strings = [str(part_id) for part_id in part_ids]
+        
+        response = self._db_client.table('part_definitions').select('*').in_('id', id_strings).execute()
         
         parts = []
         if response.data:

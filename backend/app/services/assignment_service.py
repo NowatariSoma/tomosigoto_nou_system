@@ -64,11 +64,15 @@ class AssignmentService:
         """ユーザーの所属取得"""
         assignments = await self._assignment_repository.get_user_assignments(user_id)
         
-        # パート名を取得してレスポンスを作成
+        # パート情報を一括取得（N+1クエリ対策）
+        part_ids = [assignment.part_id for assignment in assignments]
+        parts = await self._part_repository.get_parts_by_ids(part_ids)
+        part_dict = {part.id: part.name for part in parts}
+        
+        # レスポンスを作成
         responses = []
         for assignment in assignments:
-            part = await self._part_repository.get_part(assignment.part_id)
-            part_name = part.name if part else f"Unknown-{assignment.part_id}"
+            part_name = part_dict.get(assignment.part_id, f"Unknown-{assignment.part_id}")
             responses.append(self._create_assignment_response(assignment, part_name))
         
         return responses
@@ -77,11 +81,15 @@ class AssignmentService:
         """有効な所属取得"""
         assignments = await self._assignment_repository.get_active_assignments(user_id)
         
-        # パート名を取得してレスポンスを作成
+        # パート情報を一括取得（N+1クエリ対策）
+        part_ids = [assignment.part_id for assignment in assignments]
+        parts = await self._part_repository.get_parts_by_ids(part_ids)
+        part_dict = {part.id: part.name for part in parts}
+        
+        # レスポンスを作成
         responses = []
         for assignment in assignments:
-            part = await self._part_repository.get_part(assignment.part_id)
-            part_name = part.name if part else f"Unknown-{assignment.part_id}"
+            part_name = part_dict.get(assignment.part_id, f"Unknown-{assignment.part_id}")
             responses.append(self._create_assignment_response(assignment, part_name))
         
         return responses

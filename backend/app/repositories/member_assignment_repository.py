@@ -33,7 +33,7 @@ class MemberAssignmentRepository:
         
         # UUIDの文字列を変換
         for uuid_field in ['id', 'user_id', 'part_id']:
-            if uuid_field in converted and isinstance(converted[uuid_field], str):
+            if uuid_field in converted and converted[uuid_field] is not None and isinstance(converted[uuid_field], str):
                 converted[uuid_field] = UUID(converted[uuid_field])
         
         # 日付の文字列を変換
@@ -56,7 +56,7 @@ class MemberAssignmentRepository:
         
         # UUIDの文字列を変換
         for uuid_field in ['id', 'assignment_id', 'modified_by']:
-            if uuid_field in converted and isinstance(converted[uuid_field], str):
+            if uuid_field in converted and converted[uuid_field] is not None and isinstance(converted[uuid_field], str):
                 converted[uuid_field] = UUID(converted[uuid_field])
         
         # datetimeの文字列を変換

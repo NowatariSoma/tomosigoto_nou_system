@@ -26,8 +26,6 @@ class TestPartCategoryModel:
     
     def test_create_category(self):
         """カテゴリ作成テスト"""
-        # このテストは現時点では失敗することを期待
-        # PartCategoryモデルがまだ実装されていないため
         from app.models.part import PartCategory
         
         category = PartCategory(**self.sample_category_data)

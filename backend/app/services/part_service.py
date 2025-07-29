@@ -8,7 +8,7 @@ from uuid import UUID
 
 from app.repositories.part_repository import PartRepository
 from app.schemas.part_schemas import (
-    CategoryCreate, CategoryResponse, PartCreate, PartResponse
+    CategoryCreate, CategoryUpdate, CategoryResponse, PartCreate, PartResponse
 )
 
 
@@ -68,7 +68,7 @@ class PartService:
             created_at=category.created_at
         )
     
-    async def update_category(self, category_id: int, data: dict) -> CategoryResponse:
+    async def update_category(self, category_id: int, data: CategoryUpdate) -> CategoryResponse:
         """カテゴリ更新"""
         # 存在チェック
         existing_category = await self._part_repository.get_category(category_id)
@@ -76,13 +76,15 @@ class PartService:
             raise ValueError(f"Category with id {category_id} not found")
         
         # 名前の重複チェック（名前を変更する場合）
-        if "name" in data and data["name"] != existing_category.name:
+        if data.name is not None and data.name != existing_category.name:
             all_categories = await self._part_repository.get_categories()
             for category in all_categories:
-                if category.id != category_id and category.name == data["name"]:
-                    raise ValueError(f"Category with name '{data['name']}' already exists")
+                if category.id != category_id and category.name == data.name:
+                    raise ValueError(f"Category with name '{data.name}' already exists")
         
-        updated_category = await self._part_repository.update_category(category_id, data)
+        # Pydanticモデルをdictに変換（Noneでない値のみ）
+        update_data = data.model_dump(exclude_unset=True)
+        updated_category = await self._part_repository.update_category(category_id, update_data)
         
         return CategoryResponse(
             id=updated_category.id,

@@ -39,7 +39,10 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
-=======
+    }
+
+
+@pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for testing"""
     mock_client = Mock()
@@ -86,7 +89,11 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
+        }
+    ]
 
+
+@pytest.fixture
 def sample_users():
     """Sample users list for testing"""
     return [
