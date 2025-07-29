@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
-from backend.app.utils.cache_manager import CacheManager
+from app.utils.cache_manager import CacheManager
 
 
 class TestCacheManager:

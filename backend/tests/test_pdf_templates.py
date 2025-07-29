@@ -4,16 +4,16 @@ PDF Template Engine のテスト
 import pytest
 from pathlib import Path
 from unittest.mock import patch, mock_open
-from backend.app.core.pdf_templates import PDFTemplateEngine
+from app.core.pdf_templates import TemplateEngine
 
 
-class TestPDFTemplateEngine:
+class TestTemplateEngine:
     """PDFテンプレートエンジンテストクラス"""
 
     def test_init_template_engine(self, temp_dir):
         """テンプレートエンジン初期化テスト"""
         template_dir = temp_dir / "templates"
-        engine = PDFTemplateEngine(template_dir=template_dir)
+        engine = TemplateEngine(template_dir=template_dir)
         
         assert engine.template_dir == template_dir
         assert template_dir.exists()
@@ -296,14 +296,14 @@ class TestPDFTemplateEngine:
     def test_different_template_types(self, pdf_template_engine, sample_schedule_data, template_name):
         """異なるテンプレートタイプのテスト"""
         # 各種テンプレートを作成
-        template_content = f"""
-        <h1>{template_name.replace('_', ' ').title()}</h1>
+        template_content = """
+        <h1>{}</h1>
         <table>
         {% for schedule in schedules %}
         <tr><td>{{ schedule.date }}</td><td>{{ schedule.worker_name }}</td></tr>
         {% endfor %}
         </table>
-        """
+        """.format(template_name.replace('_', ' ').title())
         
         template_file = pdf_template_engine.template_dir / f"{template_name}.html"
         template_file.parent.mkdir(parents=True, exist_ok=True)

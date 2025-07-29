@@ -4,7 +4,7 @@ Pydantic Schemas のテスト
 import pytest
 from datetime import datetime
 from pydantic import ValidationError
-from backend.app.schemas.pdf_export import (
+from app.schemas.pdf_export import (
     PDFExportOptions, 
     PDFExportResponse, 
     PDFTemplateInfo

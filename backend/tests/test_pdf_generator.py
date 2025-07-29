@@ -6,8 +6,8 @@ from io import BytesIO
 from unittest.mock import patch, Mock
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4, A3, B4, B5, letter
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.schemas.pdf_export import PDFExportOptions
+from app.core.pdf_generator import PDFGenerator
+from app.schemas.pdf_export import PDFExportOptions
 
 
 class TestPDFGenerator:

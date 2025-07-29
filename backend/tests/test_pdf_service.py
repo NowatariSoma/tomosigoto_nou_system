@@ -4,9 +4,9 @@ PDF Service レイヤーのテスト
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
-from backend.app.services.pdf_service import PDFService
-from backend.app.schemas.pdf_export import PDFExportOptions, PDFExportResponse
-from backend.app.utils.cache_manager import CacheManager
+from app.services.pdf_service import PDFService
+from app.schemas.pdf_export import PDFExportOptions, PDFExportResponse
+from app.utils.cache_manager import CacheManager
 
 
 class TestPDFService:

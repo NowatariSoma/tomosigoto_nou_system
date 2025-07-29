@@ -5,7 +5,7 @@ import pytest
 import json
 from unittest.mock import patch, Mock
 from fastapi import status
-from backend.app.schemas.pdf_export import PDFExportOptions, PDFExportResponse
+from app.schemas.pdf_export import PDFExportOptions, PDFExportResponse
 
 
 class TestPDFExportEndpoints:
