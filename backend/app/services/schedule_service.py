@@ -268,7 +268,7 @@ class ScheduleService:
         schedules: List[PracticeSchedule]
     ) -> Dict[UUID, List[Session]]:
         """
-        スケジュールリストのセッション情報を取得
+        スケジュールリストのセッション情報を取得（N+1問題対策）
         
         Args:
             schedules: スケジュールリスト
@@ -276,11 +276,21 @@ class ScheduleService:
         Returns:
             スケジュールID: セッションリストの辞書
         """
-        sessions_map = {}
+        if not schedules:
+            return {}
         
-        for schedule in schedules:
-            sessions = await self._schedule_repository.get_sessions_by_schedule_id(schedule.id)
-            sessions_map[schedule.id] = sessions
+        # 全スケジュールIDを一度で取得してN+1問題を回避
+        schedule_ids = [schedule.id for schedule in schedules]
+        all_sessions = await self._schedule_repository.get_sessions_by_schedule_ids(schedule_ids)
+        
+        # スケジュールIDごとにセッションをグループ化
+        sessions_map = {}
+        for schedule_id in schedule_ids:
+            sessions_map[schedule_id] = []
+        
+        for session in all_sessions:
+            if session.schedule_id in sessions_map:
+                sessions_map[session.schedule_id].append(session)
         
         return sessions_map
     

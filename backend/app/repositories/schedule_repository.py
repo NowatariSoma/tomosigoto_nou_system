@@ -385,6 +385,44 @@ class ScheduleRepository:
             self._logger.error(f"Error fetching sessions for schedule {schedule_id}: {str(e)}")
             raise
     
+    async def get_sessions_by_schedule_ids(self, schedule_ids: List[UUID]) -> List[Session]:
+        """
+        複数スケジュールのセッションを一括取得（N+1問題対策）
+        
+        Args:
+            schedule_ids: スケジュールIDリスト
+            
+        Returns:
+            セッションリスト
+        """
+        try:
+            if not schedule_ids:
+                return []
+            
+            # UUIDを文字列に変換
+            str_schedule_ids = [str(schedule_id) for schedule_id in schedule_ids]
+            
+            response = (
+                self._client
+                .table("sessions")
+                .select("*")
+                .in_("schedule_id", str_schedule_ids)
+                .order("schedule_id", desc=False)
+                .order("start_time", desc=False)
+                .execute()
+            )
+            
+            sessions = [
+                self._convert_to_session(data) 
+                for data in response.data
+            ] if response.data else []
+            
+            return sessions
+            
+        except Exception as e:
+            self._logger.error(f"Error fetching sessions for schedules {schedule_ids}: {str(e)}")
+            raise
+    
     async def count_schedules_by_filters(self, filters: Dict[str, Any]) -> int:
         """
         フィルター条件でのスケジュール件数を取得

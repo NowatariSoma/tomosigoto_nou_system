@@ -35,9 +35,9 @@ class FilterBuilder:
     ) -> 'FilterBuilder':
         """時間範囲フィルターを追加"""
         if target_start:
-            self.filters[f"{end_field}_gte"] = target_start
+            self.filters[f"{start_field}_gte"] = target_start
         if target_end:
-            self.filters[f"{start_field}_lte"] = target_end
+            self.filters[f"{end_field}_lte"] = target_end
         return self
     
     def add_equal_filter(self, field_name: str, value: Any) -> 'FilterBuilder':
@@ -68,26 +68,35 @@ class FilterBuilder:
         self.joins.append(f"LEFT JOIN {table} ON {condition}")
         return self
     
-    def build_where_clause(self) -> str:
-        """WHERE句を構築"""
+    def build_where_clause(self) -> tuple[str, list]:
+        """WHERE句を構築（パラメータ化クエリ対応）"""
         conditions = []
+        parameters = []
+        param_count = 1
         
         for key, value in self.filters.items():
             field, operator = key.rsplit('_', 1)
             
             if operator == 'eq':
-                conditions.append(f"{field} = '{value}'")
+                conditions.append(f"{field} = %s")
+                parameters.append(value)
             elif operator == 'gte':
-                conditions.append(f"{field} >= '{value}'")
+                conditions.append(f"{field} >= %s")
+                parameters.append(value)
             elif operator == 'lte':
-                conditions.append(f"{field} <= '{value}'")
+                conditions.append(f"{field} <= %s")
+                parameters.append(value)
             elif operator == 'in':
-                value_list = "', '".join(map(str, value))
-                conditions.append(f"{field} IN ('{value_list}')")
+                placeholders = ", ".join(["%s"] * len(value))
+                conditions.append(f"{field} IN ({placeholders})")
+                parameters.extend(value)
             elif operator == 'like':
-                conditions.append(f"{field} ILIKE '{value}'")
+                conditions.append(f"{field} ILIKE %s")
+                parameters.append(value)
+            param_count += 1
         
-        return " AND ".join(conditions) if conditions else "1=1"
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        return where_clause, parameters
     
     def build_join_clause(self) -> str:
         """JOIN句を構築"""
