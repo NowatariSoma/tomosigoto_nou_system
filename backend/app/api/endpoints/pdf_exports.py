@@ -137,14 +137,4 @@ async def get_pdf_templates(
         raise HTTPException(status_code=500, detail=f"テンプレート一覧取得エラー: {str(e)}")
 
 
-# エラーハンドラー
-@router.exception_handler(PDFExportError)
-async def pdf_export_error_handler(request, exc: PDFExportError):
-    """PDF出力エラー処理"""
-    raise HTTPException(status_code=500, detail=str(exc))
-
-
-@router.exception_handler(PDFNotFoundError)
-async def pdf_not_found_error_handler(request, exc: PDFNotFoundError):
-    """PDF未発見エラー処理"""
-    raise HTTPException(status_code=404, detail=str(exc))
+# Note: Exception handlers are handled at the application level or within individual endpoints

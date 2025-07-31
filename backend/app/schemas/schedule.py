@@ -3,14 +3,15 @@
 """
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date, time
+from datetime import datetime, time
+from datetime import date as DateType
 from uuid import UUID
 
 
 class ScheduleQueryParams(BaseModel):
     """スケジュール取得クエリパラメータ"""
-    start_date: Optional[date] = Field(None, description="開始日")
-    end_date: Optional[date] = Field(None, description="終了日")
+    start_date: Optional[DateType] = Field(None, description="開始日")
+    end_date: Optional[DateType] = Field(None, description="終了日")
     part_id: Optional[UUID] = Field(None, description="パートID")
     venue_id: Optional[UUID] = Field(None, description="会場ID")
     schedule_type: Optional[str] = Field(None, description="練習種別")
@@ -102,7 +103,7 @@ class ScheduleResponseSchema(BaseModel):
     
     id: UUID = Field(description="スケジュールID")
     venue: VenueSchema = Field(description="会場情報")
-    schedule_date: date = Field(description="練習日")
+    schedule_date: DateType = Field(description="練習日")
     start_time: time = Field(description="開始時間")
     end_time: time = Field(description="終了時間")
     title: str = Field(description="練習タイトル")
@@ -134,7 +135,7 @@ class CalendarDataSchema(BaseModel):
     """カレンダー表示用データスキーマ"""
     model_config = ConfigDict(from_attributes=True)
     
-    date: date = Field(description="日付")
+    date: DateType = Field(description="日付")
     schedules: List[ScheduleResponseSchema] = Field(description="その日のスケジュール")
     total_schedules: int = Field(description="その日の総スケジュール数")
     has_conflicts: bool = Field(description="時間重複があるか")
@@ -157,7 +158,7 @@ class WeeklyScheduleResponse(BaseModel):
     
     year: int = Field(description="年")
     week_number: int = Field(description="週番号")
-    start_date: date = Field(description="週の開始日")
-    end_date: date = Field(description="週の終了日")
+    start_date: DateType = Field(description="週の開始日")
+    end_date: DateType = Field(description="週の終了日")
     calendar_data: List[CalendarDataSchema] = Field(description="カレンダーデータ")
     total_schedules: int = Field(description="週の総スケジュール数")

@@ -57,7 +57,7 @@ class PaginatedResult(BaseModel, Generic[T]):
 class SortParams(BaseModel):
     """ソートパラメータ"""
     sort_by: str = Field(default="created_at", description="ソート項目")
-    sort_order: str = Field(default="desc", regex="^(asc|desc)$", description="ソート順")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$", description="ソート順")
     
     def get_order_clause(self, table_prefix: str = "") -> str:
         """ORDER BY句を生成"""
@@ -75,7 +75,7 @@ class ScheduleSortParams(SortParams):
     """スケジュール用ソートパラメータ"""
     sort_by: str = Field(
         default="schedule_date", 
-        regex="^(schedule_date|start_time|end_time|title|created_at|updated_at)$",
+        pattern="^(schedule_date|start_time|end_time|title|created_at|updated_at)$",
         description="ソート項目"
     )
 
@@ -84,7 +84,7 @@ class SessionSortParams(SortParams):
     """セッション用ソートパラメータ"""
     sort_by: str = Field(
         default="start_time", 
-        regex="^(start_time|end_time|title|priority|created_at|updated_at)$",
+        pattern="^(start_time|end_time|title|priority|created_at|updated_at)$",
         description="ソート項目"
     )
 

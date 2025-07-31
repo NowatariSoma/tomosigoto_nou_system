@@ -95,7 +95,7 @@ async def get_schedules(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"スケジュール取得エラー: {str(e)}"
         )
 
@@ -117,7 +117,7 @@ async def get_schedule_by_id(
         
         if not schedule:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="指定されたスケジュールが見つかりません"
             )
         
@@ -127,7 +127,7 @@ async def get_schedule_by_id(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"スケジュール詳細取得エラー: {str(e)}"
         )
 
@@ -151,13 +151,13 @@ async def get_monthly_schedules(
         # 年月の妥当性チェック
         if not (1 <= month <= 12):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="月は1-12の範囲で指定してください"
             )
         
         if not (2000 <= year <= 2100):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="年は2000-2100の範囲で指定してください"
             )
         
@@ -168,7 +168,7 @@ async def get_monthly_schedules(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"月別スケジュール取得エラー: {str(e)}"
         )
 
@@ -192,13 +192,13 @@ async def get_weekly_schedules(
         # 週番号の妥当性チェック
         if not (1 <= week_number <= 53):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="週番号は1-53の範囲で指定してください"
             )
         
         if not (2000 <= year <= 2100):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="年は2000-2100の範囲で指定してください"
             )
         
@@ -209,7 +209,7 @@ async def get_weekly_schedules(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"週別スケジュール取得エラー: {str(e)}"
         )
 
@@ -250,7 +250,7 @@ async def get_schedules_by_part(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"パート別スケジュール取得エラー: {str(e)}"
         )
 
@@ -300,6 +300,6 @@ async def get_schedules_by_venue(
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"会場別スケジュール取得エラー: {str(e)}"
         )

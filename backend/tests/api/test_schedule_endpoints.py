@@ -69,35 +69,54 @@ class TestScheduleEndpoints:
             "has_previous": False
         }
 
-    @patch('app.api.deps.get_current_user')
-    @patch('app.services.schedule_service.ScheduleService')
     def test_get_schedules_by_date_range(
-        self, 
-        mock_schedule_service, 
-        mock_get_current_user,
+        self,
         client, 
         mock_current_user,
         sample_schedule_response,
         sample_paginated_response
     ):
         """日付範囲指定でスケジュール取得エンドポイントテスト"""
-        # Arrange
-        mock_get_current_user.return_value = mock_current_user
-        mock_service_instance = Mock()
-        mock_service_instance.get_schedules_by_date_range = AsyncMock(
-            return_value=PaginatedResult.create(
-                items=[sample_schedule_response],
-                total=1,
-                page=1,
-                limit=20
+        from app.main import app
+        from app.api.deps import get_current_user, get_supabase_service
+        from app.services.schedule_service import ScheduleService
+        
+        # Arrange - Mock dependencies
+        def mock_get_current_user_dep():
+            return mock_current_user
+            
+        def mock_get_supabase_service_dep():
+            mock_supabase = Mock()
+            mock_supabase.client = Mock()
+            return mock_supabase
+            
+        def mock_get_schedule_service_dep():
+            mock_service = Mock(spec=ScheduleService)
+            mock_service.get_schedules_by_date_range = AsyncMock(
+                return_value=PaginatedResult.create(
+                    items=[sample_schedule_response],
+                    total=1,
+                    page=1,
+                    limit=20
+                )
             )
-        )
-        mock_schedule_service.return_value = mock_service_instance
+            return mock_service
+        
+        # Import the actual dependency function to override
+        from app.api.v1.endpoints.schedules import get_schedule_service
+        
+        # Override dependencies
+        app.dependency_overrides[get_current_user] = mock_get_current_user_dep
+        app.dependency_overrides[get_supabase_service] = mock_get_supabase_service_dep
+        app.dependency_overrides[get_schedule_service] = mock_get_schedule_service_dep
         
         # Act
         response = client.get(
             "/api/schedules/?start_date=2025-01-10&end_date=2025-01-20&page=1&limit=20"
         )
+        
+        # Clean up
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 200

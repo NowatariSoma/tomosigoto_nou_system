@@ -5,18 +5,13 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock
-from fastapi.testclient import TestClient
-from backend.app.main import app
-from backend.app.services.pdf_service import PDFService
-from backend.app.core.pdf_generator import PDFGenerator
-from backend.app.core.pdf_templates import PDFTemplateEngine
-from backend.app.utils.cache_manager import CacheManager
-import pytest
-import os
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 from app.main import app
+from app.services.pdf_service import PDFService
+from app.core.pdf_generator import PDFGenerator
+from app.core.pdf_templates import TemplateEngine
+from app.utils.cache_manager import CacheManager
 
 
 @pytest.fixture
@@ -39,7 +34,10 @@ def mock_current_user():
         "user_id": "test-user-123",
         "email": "test@example.com",
         "name": "Test User"
-=======
+    }
+
+
+@pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for testing"""
     mock_client = Mock()
@@ -86,7 +84,11 @@ def sample_schedule_data():
             "worker_name": "佐藤花子",
             "position": "エンジニア",
             "details": "フロントエンド開発"
+        }
+    ]
 
+
+@pytest.fixture
 def sample_users():
     """Sample users list for testing"""
     return [
@@ -121,7 +123,7 @@ def pdf_generator():
 @pytest.fixture
 def pdf_template_engine(temp_dir):
     """PDFテンプレートエンジンインスタンス"""
-    return PDFTemplateEngine(template_dir=temp_dir / "templates")
+    return TemplateEngine(template_dir=temp_dir / "templates")
 
 
 @pytest.fixture
