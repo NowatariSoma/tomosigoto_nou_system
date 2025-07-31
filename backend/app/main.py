@@ -64,6 +64,39 @@ async def debug_supabase_tables():
         from app.core.exceptions import create_error_response
         return create_error_response("Failed to fetch tables", e)
 
+
+@app.get("/debug/users-crud")
+async def debug_users_crud():
+    """ユーザーCRUD操作のテスト（デバッグ用・認証不要）"""
+    try:
+        from app.services.supabase_service import supabase_service
+        from app.core.exceptions import create_success_response, create_error_response
+        
+        # ユーザー一覧取得
+        users = await supabase_service.get_all_users()
+        
+        # 最初のユーザーでテスト
+        if users:
+            test_user = users[0]
+            user_id = test_user["id"]
+            
+            # 特定ユーザー取得テスト
+            specific_user = await supabase_service.get_user_by_id(user_id)
+            
+            return {
+                "status": "success",
+                "message": "CRUD operations test completed",
+                "total_users": len(users),
+                "test_user": specific_user,
+                "all_users": users[:3]  # 最初の3ユーザーのみ表示
+            }
+        else:
+            return create_error_response("No users found", "No users available for testing")
+            
+    except Exception as e:
+        from app.core.exceptions import create_error_response
+        return create_error_response("CRUD test failed", e)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 
