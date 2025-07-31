@@ -1,6 +1,6 @@
 import uuid
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
@@ -24,16 +24,16 @@ class Session:
         self.user_agent = user_agent
         self.ip_address = ip_address
         self.session_id = session_id or str(uuid.uuid4())
-        self.created_at = created_at or datetime.utcnow()
-        self.expires_at = expires_at or (datetime.utcnow() + timedelta(days=1))  # デフォルト24時間
+        self.created_at = created_at or datetime.now(UTC)
+        self.expires_at = expires_at or (datetime.now(UTC) + timedelta(days=1))  # デフォルト24時間
     
     def is_expired(self) -> bool:
         """有効期限確認"""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
     
     def time_until_expiry(self) -> timedelta:
         """残り有効時間取得"""
-        return self.expires_at - datetime.utcnow()
+        return self.expires_at - datetime.now(UTC)
     
     def extend(self, additional_time: int) -> None:
         """有効期間延長（秒単位）"""
@@ -212,7 +212,7 @@ class SessionManager:
             
             # 新しいJWTでセッションを更新
             session.jwt = new_jwt
-            session.expires_at = datetime.utcnow() + timedelta(seconds=self.session_ttl)
+            session.expires_at = datetime.now(UTC) + timedelta(seconds=self.session_ttl)
             
             # Redisに更新されたセッションを保存
             updated_session_data = json.dumps(session.to_dict())

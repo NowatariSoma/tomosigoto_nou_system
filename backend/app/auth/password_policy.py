@@ -1,6 +1,6 @@
 import re
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional, Dict, Any
 from passlib.context import CryptContext
 import jwt
@@ -100,7 +100,7 @@ class PasswordPolicy:
         if expires_delta is None:
             expires_delta = timedelta(hours=1)  # デフォルト1時間
         
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
         payload = {
             "user_id": user_id,
             "exp": expire,
