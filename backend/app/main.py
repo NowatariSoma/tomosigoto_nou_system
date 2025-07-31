@@ -1,13 +1,13 @@
+from dotenv import load_dotenv
+# 環境変数を読み込み
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 # Supabase連携を有効にする
 from app.api.api import api_router
 from app.core.config import settings
-
-# 環境変数を読み込み
-load_dotenv()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
