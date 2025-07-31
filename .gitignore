@@ -80,7 +80,6 @@ Thumbs.db
 # IDE & Editor files
 # ====================
 .vscode/
-.idea/
 *.sublime-project
 *.sublime-workspace
 *.code-workspace
