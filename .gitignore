@@ -197,3 +197,5 @@ __pycache__/
 *.pdb
 *.egg-info/
 *.eggs/
+
+.venv/
