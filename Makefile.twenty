@@ -1,4 +1,4 @@
-.PHONY: build up down logs sh init-db reset-db
+.PHONY: build up down logs sh init-db reset-db test-users test-users-unit test-users-integration
 
 # コンテナのビルド
 build:
@@ -48,4 +48,36 @@ clean:
 	@echo "セットアップが完了しました！"
 	@echo "フロントエンド: http://localhost:3000"
 	@echo "バックエンドAPI: http://localhost:3001/graphql"
-	@echo "ドキュメント: http://localhost:5001" 
+	@echo "ドキュメント: http://localhost:5001"
+
+# ===== ユーザーCRUD操作テスト =====
+
+# ユーザー関連の全テストを実行
+test-users: test-users-unit test-users-integration
+	@echo "✅ ユーザーCRUD操作テスト完了"
+
+# ユーザー関連のユニットテストを実行
+test-users-unit:
+	@echo "🧪 ユーザーCRUD操作ユニットテスト実行中..."
+	@cd backend && python3 -m pytest tests/unit/api/endpoints/test_users.py -v
+
+# ユーザー関連の統合テストを実行（実際のSupabaseトークン使用）
+test-users-integration:
+	@echo "🔧 ユーザーCRUD操作統合テスト実行中..."
+	@cd backend && python3 tests/integration_test_users_with_supabase.py
+
+# バックエンドコンテナ内でテストを実行
+test-users-docker:
+	@echo "🐳 Dockerコンテナ内でユーザーCRUD操作テスト実行中..."
+	@docker compose exec backend python3 -m pytest tests/unit/api/endpoints/test_users.py -v
+	@docker compose exec backend python3 tests/integration_test_users_with_supabase.py
+
+# バックエンドの全テストを実行
+test-backend:
+	@echo "🧪 バックエンド全テスト実行中..."
+	@cd backend && python3 -m pytest tests/ -v
+
+# バックエンドの全テストをDockerコンテナ内で実行
+test-backend-docker:
+	@echo "🐳 Dockerコンテナ内でバックエンド全テスト実行中..."
+	@docker compose exec backend python3 -m pytest tests/ -v 
