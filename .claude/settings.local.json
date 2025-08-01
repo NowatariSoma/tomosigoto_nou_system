@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(gh auth:*)",
@@ -30,7 +31,23 @@
       "Bash(./supabase --help)",
       "Bash(./supabase db push)",
       "Bash(./supabase link --project-ref uilydqaqephxtcnnqihy)",
-      "Bash(./supabase:*)"
+      "Bash(./supabase:*)",
+      "Bash(python -m pytest tests/unit/db/test_supabase.py -v)",
+      "Bash(pip install:*)",
+      "Bash(SUPABASE_URL=https://test.supabase.co SUPABASE_SERVICE_ROLE_KEY=test-key python -m pytest tests/unit/db/test_supabase.py::TestGetSupabase -v -s)",
+      "Bash(source:*)",
+      "Bash(SUPABASE_URL=https://test.supabase.co SUPABASE_SERVICE_ROLE_KEY=test-key python -m pytest test_supabase.py::TestGetSupabase -v --tb=short)",
+      "Bash(python -m pytest tests/unit/services/test_user_service.py -v)",
+      "Bash(python -m pytest tests/unit/services/test_user_service.py::TestUserService -v)",
+      "Bash(python:*)",
+      "Bash(find:*)",
+      "Bash(cloc:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(./test_api.sh:*)",
+      "Bash([ -f .env ])",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
