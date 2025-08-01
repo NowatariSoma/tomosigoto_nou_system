@@ -1,24 +1,44 @@
 from typing import Optional, Dict, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import Client
 
-from app.services.supabase_service import supabase_service
+from app.services.user_service import UserService
+from app.repositories.user_repository import UserRepository
+from app.core.supabase import get_supabase
+from app.core.exceptions import APIException
+from app.core.error_messages import ErrorMessage
 
 security = HTTPBearer()
 
 
+def get_user_repository(
+    supabase_client: Client = Depends(get_supabase)
+) -> UserRepository:
+    """UserRepositoryのインスタンスを取得"""
+    return UserRepository(supabase_client)
+
+
+def get_user_service(
+    supabase_client: Client = Depends(get_supabase),
+    user_repository: UserRepository = Depends(get_user_repository)
+) -> UserService:
+    """UserServiceのインスタンスを依存性注入で取得"""
+    return UserService(user_repository, supabase_client.auth)
+
+
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user_service: UserService = Depends(get_user_service)
 ) -> Dict[str, Any]:
     """JWTトークンから現在のユーザー情報を取得"""
     token = credentials.credentials
-    user = await supabase_service.verify_jwt_token(token)
+    user = await user_service.verify_jwt_token(token)
     
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise APIException(
+            ErrorMessage.INVALID_CREDENTIALS,
+            headers={"WWW-Authenticate": "Bearer"}
         )
     
     return user
@@ -28,12 +48,7 @@ async def get_current_active_user(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """現在のアクティブなユーザーを取得"""
-    # ここで必要に応じてユーザーの状態チェックを行う
-    # 例: if not current_user.get("active", True):
-    #         raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-def get_supabase_service() -> object:
-    """Supabaseサービスのインスタンスを取得"""
-    return supabase_service 
+    # ユーザーのアクティブ状態をチェック（必要に応じて有効化）
+    # if not current_user.get("active", True):
+    #     raise APIException(ErrorMessage.INACTIVE_USER)
+    return current_user 
