@@ -4,7 +4,46 @@ from functools import wraps
 from supabase import PostgrestAPIError, AuthError
 from fastapi import HTTPException, status
 
+from app.core.error_messages import ErrorMessage
+
 logger = logging.getLogger(__name__)
+
+
+class APIException(HTTPException):
+    """API例外
+    
+    HTTPExceptionを拡張して、統一的なエラーレスポンス形式を提供
+    """
+    
+    default_status_code = status.HTTP_400_BAD_REQUEST
+    
+    def __init__(
+        self,
+        error: Any,
+        status_code: int = default_status_code,
+        headers: dict[str, Any] | None = None,
+    ) -> None:
+        self.headers = headers
+        try:
+            error_obj = error()
+        except Exception:
+            error_obj = error
+        
+        try:
+            message = error_obj.text.format(error_obj.param)
+        except Exception:
+            message = error_obj.text
+        
+        try:
+            self.status_code = error_obj.status_code
+        except Exception:
+            self.status_code = status_code
+        
+        self.detail = {"error_code": str(error_obj), "error_msg": message}
+        
+        logger.error(f"{operation_name if 'operation_name' in locals() else 'Unknown operation'}: {self.detail}")
+        
+        super().__init__(self.status_code, self.detail)
 
 
 def handle_supabase_errors(operation_name: str = "operation"):
@@ -19,25 +58,16 @@ def handle_supabase_errors(operation_name: str = "operation"):
                 return await func(*args, **kwargs)
             except PostgrestAPIError as e:
                 logger.error(f"Database error in {operation_name}: {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Database connection error"
-                )
+                raise APIException(ErrorMessage.DATABASE_ERROR)
             except AuthError as e:
                 logger.error(f"Authentication error in {operation_name}: {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Authentication error"
-                )
+                raise APIException(ErrorMessage.AUTHENTICATION_ERROR)
             except HTTPException:
                 # Re-raise HTTP exceptions without modification
                 raise
             except Exception as e:
                 logger.error(f"Unexpected error in {operation_name}: {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Internal server error"
-                )
+                raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
         return wrapper
     return decorator
 
