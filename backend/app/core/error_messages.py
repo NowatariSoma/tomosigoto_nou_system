@@ -47,6 +47,15 @@ class ErrorMessage:
         status_code = status.HTTP_403_FORBIDDEN
         text = "このユーザーは無効化されています"
     
+    # 会場関連
+    class VENUE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "会場が見つかりません"
+    
+    class VENUE_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "この会場名は既に使用されています"
+    
     # データベース関連
     class DATABASE_ERROR(BaseMessage):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

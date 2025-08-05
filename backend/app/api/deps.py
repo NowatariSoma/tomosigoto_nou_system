@@ -4,7 +4,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 
 from app.services.user_service import UserService
+from app.services.venue_service import VenueService
 from app.repositories.user_repository import UserRepository
+from app.repositories.venue_repository import VenueRepository
 from app.core.supabase import get_supabase
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
@@ -25,6 +27,20 @@ def get_user_service(
 ) -> UserService:
     """UserServiceのインスタンスを依存性注入で取得"""
     return UserService(user_repository, supabase_client.auth)
+
+
+def get_venue_repository(
+    supabase_client: Client = Depends(get_supabase)
+) -> VenueRepository:
+    """VenueRepositoryのインスタンスを取得"""
+    return VenueRepository(supabase_client)
+
+
+def get_venue_service(
+    venue_repository: VenueRepository = Depends(get_venue_repository)
+) -> VenueService:
+    """VenueServiceのインスタンスを依存性注入で取得"""
+    return VenueService(venue_repository)
 
 
 async def get_current_user(
