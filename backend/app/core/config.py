@@ -6,11 +6,6 @@ import json
 
 class Settings(BaseSettings):
     # Supabase設定
-    # SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    # SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-    # SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
-
-    # Supabase設定
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
     SUPABASE_ANON_KEY: str = ""
