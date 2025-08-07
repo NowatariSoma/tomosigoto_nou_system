@@ -62,7 +62,22 @@ CREATE POLICY "Admins can manage all roles" ON public.user_roles
     FOR ALL USING (auth.role() = 'service_role');
 
 -- ========================================
--- Step 4: public.departments テーブルのRLS設定
+-- Step 4: public.venues テーブルのRLS設定
+-- ========================================
+
+-- RLSを有効化
+ALTER TABLE public.venues ENABLE ROW LEVEL SECURITY;
+
+-- 認証済みユーザーはアクティブな会場を閲覧可能
+CREATE POLICY "Authenticated users can view active venues" ON public.venues
+    FOR SELECT TO authenticated USING (is_active = true);
+
+-- 管理者は全会場アクセス可能
+CREATE POLICY "Admins can manage all venues" ON public.venues
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- ========================================
+-- Step 5: public.departments テーブルのRLS設定
 -- ========================================
 
 -- RLSを有効化
@@ -77,6 +92,51 @@ CREATE POLICY "Admins can manage all departments" ON public.departments
     FOR ALL USING (auth.role() = 'service_role');
 
 -- ========================================
+-- Step 6: public.availability_slots テーブルのRLS設定
+-- ========================================
+
+-- RLSを有効化
+ALTER TABLE public.availability_slots ENABLE ROW LEVEL SECURITY;
+
+-- 認証済みユーザーは空き状況を閲覧可能
+CREATE POLICY "Authenticated users can view availability" ON public.availability_slots
+    FOR SELECT TO authenticated USING (true);
+
+-- 管理者は全空き状況アクセス可能
+CREATE POLICY "Admins can manage all availability" ON public.availability_slots
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- ========================================
+-- Step 7: public.venue_attributes テーブルのRLS設定
+-- ========================================
+
+-- RLSを有効化
+ALTER TABLE public.venue_attributes ENABLE ROW LEVEL SECURITY;
+
+-- 認証済みユーザーは会場属性を閲覧可能
+CREATE POLICY "Authenticated users can view venue attributes" ON public.venue_attributes
+    FOR SELECT TO authenticated USING (true);
+
+-- 管理者は全会場属性アクセス可能
+CREATE POLICY "Admins can manage all venue attributes" ON public.venue_attributes
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- ========================================
+-- Step 8: public.recurring_units テーブルのRLS設定
+-- ========================================
+
+-- RLSを有効化
+ALTER TABLE public.recurring_units ENABLE ROW LEVEL SECURITY;
+
+-- 認証済みユーザーは定期予約枠を閲覧可能
+CREATE POLICY "Authenticated users can view recurring units" ON public.recurring_units
+    FOR SELECT TO authenticated USING (true);
+
+-- 管理者は全定期予約枠アクセス可能
+CREATE POLICY "Admins can manage all recurring units" ON public.recurring_units
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- ========================================
 -- セキュリティ設定完了
 -- ========================================
 
@@ -85,4 +145,3 @@ CREATE POLICY "Admins can manage all departments" ON public.departments
 -- 2. 認証済みユーザーは公開データを閲覧可能
 -- 3. 管理者（service role）は全データにアクセス可能
 -- 4. auth.usersテーブルは適切に保護されている（Supabase標準）
--- 5. venue関連のテーブルは別のマイグレーションファイルで設定
