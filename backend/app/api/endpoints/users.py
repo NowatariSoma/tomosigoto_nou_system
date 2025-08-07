@@ -1,9 +1,11 @@
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import get_current_user, get_supabase_service
+from app.api.deps import get_current_user, get_user_service
 from app.schemas.user import UserResponse, UserCreate, UserUpdate
-from app.services.supabase_service import SupabaseService
+from app.services.user_service import UserService
+from app.core.exceptions import APIException
+from app.core.error_messages import ErrorMessage
 
 router = APIRouter()
 
@@ -11,26 +13,20 @@ router = APIRouter()
 @router.get("/", response_model=List[Dict[str, Any]])
 async def get_users(
     current_user: Dict[str, Any] = Depends(get_current_user),
-    supabase_service: SupabaseService = Depends(get_supabase_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     """すべてのユーザーを取得"""
-    return await supabase_service.get_all_users()
+    return await user_service.get_all_users()
 
 
 @router.get("/{user_id}", response_model=Dict[str, Any])
 async def get_user(
     user_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    supabase_service: SupabaseService = Depends(get_supabase_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     """特定のユーザー情報を取得"""
-    user = await supabase_service.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    return await user_service.get_user_by_id(user_id)
 
 
 @router.get("/me/", response_model=Dict[str, Any])
@@ -45,7 +41,7 @@ async def get_current_user_info(
 async def create_user(
     user_data: UserCreate,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    supabase_service: SupabaseService = Depends(get_supabase_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     """
     新しいユーザーを作成
@@ -58,16 +54,7 @@ async def create_user(
     Returns:
         作成されたユーザー情報
     """
-    try:
-        created_user = await supabase_service.create_user(user_data.dict())
-        return created_user
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"ユーザー作成エラー: {str(e)}"
-        )
+    return await user_service.create_user(user_data.dict())
 
 
 @router.put("/{user_id}", response_model=Dict[str, Any])
@@ -75,7 +62,7 @@ async def update_user(
     user_id: str,
     user_data: UserUpdate,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    supabase_service: SupabaseService = Depends(get_supabase_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     """
     ユーザー情報を更新
@@ -93,33 +80,16 @@ async def update_user(
     update_data = {k: v for k, v in user_data.dict().items() if v is not None}
     
     if not update_data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="更新データが指定されていません"
-        )
+        raise APIException(ErrorMessage.BAD_REQUEST)
     
-    try:
-        updated_user = await supabase_service.update_user(user_id, update_data)
-        if not updated_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        return updated_user
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"ユーザー更新エラー: {str(e)}"
-        )
+    return await user_service.update_user(user_id, update_data)
 
 
 @router.delete("/{user_id}")
 async def delete_user(
     user_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    supabase_service: SupabaseService = Depends(get_supabase_service),
+    user_service: UserService = Depends(get_user_service),
 ):
     """
     ユーザーを削除
@@ -132,22 +102,5 @@ async def delete_user(
     Returns:
         削除成功メッセージ
     """
-    try:
-        # ユーザーが存在するかチェック
-        existing_user = await supabase_service.get_user_by_id(user_id)
-        if not existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        # 削除実行
-        await supabase_service.delete_user(user_id)
-        return {"message": "User deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"ユーザー削除エラー: {str(e)}"
-        ) 
+    await user_service.delete_user(user_id)
+    return {"message": "User deleted successfully"} 
