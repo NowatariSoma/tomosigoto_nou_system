@@ -55,6 +55,8 @@ erDiagram
         float longitude "経度"
         string venue_type "会場種別"
         int capacity "収容人数"
+        int desk "机の数"
+        int chair "椅子の数"
         string description "説明"
         boolean is_active "有効フラグ"
         timestamp created_at "作成日時"
