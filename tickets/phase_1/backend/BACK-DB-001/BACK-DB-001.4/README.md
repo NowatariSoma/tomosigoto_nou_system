@@ -49,7 +49,7 @@ erDiagram
         uuid id PK "会場ID"
         string name "会場名"
         string code UK "会場コード"
-        string campas "キャンパス"
+        string campus "キャンパス"
         string address "住所"
         float latitude "緯度"
         float longitude "経度"
