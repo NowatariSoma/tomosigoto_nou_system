@@ -18,7 +18,8 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
-  Home
+  Home,
+  Building
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -240,6 +241,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 <NavTitle label="設定" />
                 
                 <NavItem
+                  icon={<Building className="w-4 h-4" />}
+                  label="会場設定"
+                  active={pathname === '/room-settings'}
+                  onClick={() => handleNavigateAndClose('/room-settings')}
+                />
+                
+                <NavItem
                   icon={<Users className="w-4 h-4" />}
                   label="チーム管理"
                   active={pathname === '/settings' && new URLSearchParams(window.location.search).get('tab') === 'team'}
@@ -436,6 +444,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
         <div className="pt-6">
           <NavTitle label="設定" />
+          
+          <NavItem
+            icon={<Building className="w-4 h-4" />}
+            label="会場設定"
+            active={pathname === '/room-settings'}
+            href="/room-settings"
+          />
           
           <NavItem
             icon={<Users className="w-4 h-4" />}
