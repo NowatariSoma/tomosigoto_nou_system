@@ -53,7 +53,7 @@ erDiagram
         string address "住所"
         float latitude "緯度"
         float longitude "経度"
-        string venue_type "会場種別"
+        boolean can_mai "舞の可能判定"
         int capacity "収容人数"
         int desk "机の数"
         int chair "椅子の数"
