@@ -17,8 +17,8 @@ class TestUsersEndpoints:
         self.client = TestClient(app)
 
     @patch('app.api.endpoints.users.get_current_user', new_callable=AsyncMock)
-    @patch('app.api.endpoints.users.get_supabase_service')
-    async def test_get_users_success(self, mock_get_supabase_service, mock_get_current_user, sample_users):
+    @patch('app.api.endpoints.users.get_user_service')
+    async def test_get_users_success(self, mock_get_user_service, mock_get_current_user, sample_users):
         """Test successful GET /users"""
         # Mock dependencies
         mock_get_current_user.return_value = {"id": "current-user"}
@@ -26,7 +26,7 @@ class TestUsersEndpoints:
         # Create a mock service with async method
         mock_service = Mock()
         mock_service.get_all_users = AsyncMock(return_value=sample_users)
-        mock_get_supabase_service.return_value = mock_service
+        mock_get_user_service.return_value = mock_service
 
         response = self.client.get(
             "/api/users/",
