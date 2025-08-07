@@ -11,7 +11,7 @@ class VenueRepository:
 
     @handle_supabase_errors("find_all")
     async def find_all(self) -> List[Dict[str, Any]]:
-        response = await self.client.table(self.table_name).select('*').execute()
+        response = self.client.table(self.table_name).select('*').execute()
 
         return response.data
     

@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY backend/ppt-diff/requirements.txt ./backend/ppt-diff/
-RUN pip install --no-cache-dir -r backend/ppt-diff/requirements.txt
+COPY backend/requirements.txt ./backend/
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Copy the entire project
 COPY . .
@@ -29,5 +29,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
 # Change to backend/ppt-diff directory and run the application
-WORKDIR /app/backend/ppt-diff
+WORKDIR /app/backend
 CMD ["python", "run.py"] 
