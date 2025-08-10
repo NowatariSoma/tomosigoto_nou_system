@@ -8,7 +8,7 @@ class VenueBase(BaseModel):
     name: str
     capacity: Optional[int] = None
     campus: Optional[str] = None
-    is_activate: bool = True
+    is_active: bool = True
 
 class VenueCreate(VenueBase):
     code: Optional[str] = None
@@ -16,12 +16,15 @@ class VenueCreate(VenueBase):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     description: Optional[str] = None
+    can_mai: bool = False
+    desk: Optional[int] = None
+    chair: Optional[int] = None
 
 class VenueUpdate(BaseModel):
     name: Optional[str] = None
     capacity: Optional[int] = None
     campus: Optional[str] = None
-    is_activate: Optional[bool] = None
+    is_active: Optional[bool] = None
     code: Optional[str] = None
     address: Optional[str] = None
     latitude: Optional[float] = None

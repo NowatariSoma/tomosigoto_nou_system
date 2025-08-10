@@ -29,13 +29,13 @@ class VenueRepository:
     
     @handle_supabase_errors("update")
     async def update(self, venue_id, venue_data) -> Dict[str, Any]:
-        response = self.supabase.table('venues').update(venue_data).eq("id", venue_id).execute()
+        response = self.client.table('venues').update(venue_data).eq("id", venue_id).execute()
 
         return response.data[0]
     
     @handle_supabase_errors("delete")
     async def delete(self, venue_id) -> bool:
-        self.supabase.table('venues').delete().eq('id',venue_id).execute()
+        self.client.table('venues').delete().eq('id',venue_id).execute()
 
         return True
     
