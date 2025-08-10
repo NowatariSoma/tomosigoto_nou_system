@@ -7,7 +7,7 @@
 - 練習スケジュールマスターテーブル設計と実装
 - セッション詳細テーブル設計と実装
 - セッション担当者テーブル設計と実装
-- パート別セッション割り当てテーブル設計と実装
+- セッション出欠管理テーブル設計と実装（パート別メンバー出欠を管理）
 - スケジュールの時系列管理機能の実装
 
 ## 依存関係
@@ -25,7 +25,6 @@
 - 練習スケジュールマスターテーブルSQL定義
 - セッション詳細テーブルSQL定義
 - セッション担当者テーブルSQL定義
-- パート別セッション割り当てテーブルSQL定義
 - マイグレーションスクリプト
 - Pythonデータモデル（Pydanticモデル）
 - データアクセスレイヤーコード
@@ -58,11 +57,11 @@
    - 担当者の役割定義
    - 担当履歴の記録と追跡
 
-4. **パート別割り当て**
-   - セッションへのパート割り当て
-   - 複数パート対応と優先順位設定
-   - 参加必須度の管理
-   - 特別要件の記録
+4. **セッション出欠管理**
+   - パートメンバー個別の出欠記録
+   - 出席状況（出席・欠席・遅刻・早退）の管理
+   - 欠席理由と備考の記録
+   - チェックイン・チェックアウト時間の管理
 
 ## 実装予定ファイル
 以下は実装予定の全ファイルのリストです。各ファイルの役割と目的を簡潔に記載します。
@@ -70,7 +69,7 @@
 - `migrations/practice_schedule.sql` - 練習スケジュールテーブル定義SQL
 - `migrations/session.sql` - セッション詳細テーブル定義SQL
 - `migrations/session_instructor.sql` - セッション担当者テーブル定義SQL
-- `migrations/part_session_assignment.sql` - パート別セッション割り当てテーブル定義SQL
+- `migrations/session_attendance.sql` - セッション出欠管理テーブル定義SQL
 - `app/models/schedule.py` - スケジュール関連Pydanticモデル定義
 - `app/repositories/schedule_repository.py` - スケジュールデータアクセスレイヤー
 - `app/repositories/session_repository.py` - セッションデータアクセスレイヤー
@@ -86,10 +85,11 @@
 erDiagram
     practice_schedules ||--o{ sessions : "含む"
     sessions ||--o{ session_instructors : "担当"
-    sessions ||--o{ part_session_assignments : "参加"
+    sessions ||--o{ session_attendances : "出欠管理"
     venues ||--|| practice_schedules : "開催場所"
-    users ||--o{ session_instructors : "担当する"
-    part_definitions ||--o{ part_session_assignments : "参加する"
+    members ||--o{ session_instructors : "担当する"
+    members ||--o{ session_attendances : "出席する"
+    parts ||--o{ session_attendances : "パート単位で"
     
     practice_schedules {
         uuid id PK "スケジュールID"
@@ -97,28 +97,23 @@ erDiagram
         date schedule_date "練習日"
         time start_time "開始時間"
         time end_time "終了時間"
-        string title "練習タイトル"
         string description "説明"
         string schedule_type "練習種別(定期/特別等)"
         string status "ステータス"
-        jsonb metadata "メタデータ(JSON)"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
         uuid created_by "作成者ID"
+        uuid updated_by "更新者ID"
     }
     
     sessions {
         uuid id PK "セッションID"
         uuid schedule_id FK "スケジュールID参照"
+        string title "セッションタイトル"
         time start_time "開始時間"
         time end_time "終了時間"
-        string title "セッションタイトル"
-        string description "説明"
-        string session_type "セッション種別"
-        int priority "優先度"
-        jsonb resources "必要リソース(JSON)"
         string location_in_venue "会場内位置"
-        string status "ステータス"
+        int priority "優先度"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
@@ -127,21 +122,18 @@ erDiagram
         uuid id PK "担当者ID"
         uuid session_id FK "セッションID参照"
         uuid user_id FK "ユーザーID参照"
-        string role "役割(主担当/補助等)"
-        string status "ステータス"
-        jsonb notes "備考(JSON)"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
     
-    part_session_assignments {
-        uuid id PK "割り当てID"
+    session_attendances {
+        uuid id PK "出欠ID"
         uuid session_id FK "セッションID参照"
+        uuid member_id FK "メンバーID参照"
         uuid part_id FK "パートID参照"
-        int priority "優先度"
-        boolean is_required "必須参加フラグ"
-        jsonb special_requirements "特別要件(JSON)"
-        string status "ステータス"
+        string attendance_status "出席状況"
+        timestamp check_in_time "チェックイン時間"
+        timestamp check_out_time "チェックアウト時間"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
@@ -194,14 +186,15 @@ erDiagram
 - インデックスの設定
 - RLSポリシーの設定
 
-### `migrations/part_session_assignment.sql`
-**目的**: パート別セッション割り当て情報を格納するテーブルを定義するSQL
+### `migrations/session_attendance.sql`
+**目的**: セッション出欠管理情報を格納するテーブルを定義するSQL
 
 **主要内容**:
-- `part_session_assignments`テーブルの作成
+- `session_attendances`テーブルの作成
 - 主キー、外部キー制約の設定
-- ユニーク制約の設定
-- 優先度に関するインデックスの設定
+- ユニーク制約の設定（session_id, member_id, part_id）
+- 出席状況のENUM制約設定
+- インデックスの設定
 - RLSポリシーの設定
 
 ### `app/models/schedule.py`
@@ -268,19 +261,24 @@ erDiagram
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
-- `PartSessionAssignment`: パート別セッション割り当てのドメインモデル
+- `SessionAttendance`: セッション出欠記録のドメインモデル
   - **継承/実装**: `pydantic.BaseModel`
   - **主要属性**:
-    - `id: UUID` - 割り当てID
+    - `id: UUID` - 出欠ID
     - `session_id: UUID` - セッションID参照
+    - `member_id: UUID` - メンバーID参照
     - `part_id: UUID` - パートID参照
-    - `priority: int` - 優先度
-    - `is_required: bool` - 必須参加フラグ
-    - `special_requirements: Dict[str, Any]` - 特別要件
-    - `status: str` - ステータス
+    - `attendance_status: str` - 出席状況
+    - `absence_reason: Optional[str]` - 欠席理由
+    - `check_in_time: Optional[datetime]` - チェックイン時間
+    - `check_out_time: Optional[datetime]` - チェックアウト時間
+    - `notes: Optional[str]` - 備考
+    - `recorded_by: Optional[UUID]` - 記録者ID
     - `created_at: datetime` - 作成日時
     - `updated_at: datetime` - 更新日時
   - **主要メソッド**: 
+    - `is_present() -> bool` - 出席しているかどうか確認
+    - `duration_minutes() -> Optional[int]` - 参加時間（分）を計算
     - `to_dict() -> dict` - 辞書形式に変換
   - **依存クラス**: なし
 
@@ -323,11 +321,12 @@ erDiagram
     - `get_session_instructors(session_id: UUID) -> List[SessionInstructor]` - セッション担当者取得
     - `add_instructor(instructor_data: dict) -> SessionInstructor` - 担当者追加
     - `remove_instructor(instructor_id: UUID) -> bool` - 担当者削除
-    - `get_part_assignments(session_id: UUID) -> List[PartSessionAssignment]` - パート割り当て取得
-    - `assign_part(assignment_data: dict) -> PartSessionAssignment` - パート割り当て
-    - `remove_part_assignment(assignment_id: UUID) -> bool` - パート割り当て削除
-    - `get_sessions_by_part(part_id: UUID, start_date: Optional[date] = None) -> List[Session]` - パート別セッション取得
-  - **依存クラス**: `Session`, `SessionInstructor`, `PartSessionAssignment`
+    - `get_session_attendances(session_id: UUID) -> List[SessionAttendance]` - セッション出欠記録取得
+    - `record_attendance(attendance_data: dict) -> SessionAttendance` - 出欠記録
+    - `update_attendance(attendance_id: UUID, data: dict) -> SessionAttendance` - 出欠更新
+    - `get_member_attendances(member_id: UUID, start_date: Optional[date] = None) -> List[SessionAttendance]` - メンバー別出欠取得
+    - `get_part_attendances(part_id: UUID, session_id: UUID) -> List[SessionAttendance]` - パート別出欠取得
+  - **依存クラス**: `Session`, `SessionInstructor`, `SessionAttendance`
 
 ### `app/schemas/schedule_schemas.py`
 **目的**: API通信用のスケジュール関連データスキーマを定義するPythonファイル
@@ -483,7 +482,12 @@ erDiagram
     - `validate_session_time(schedule_id: UUID, start_time: time, end_time: time) -> Tuple[bool, List[str]]` - セッション時間の検証
     - `get_instructor_sessions(user_id: UUID, start_date: date, end_date: date) -> List[SessionResponse]` - 担当者別セッション取得
     - `get_part_sessions(part_id: UUID, start_date: date, end_date: date) -> List[SessionResponse]` - パート別セッション取得
-  - **依存クラス**: `SessionRepository`, `ScheduleRepository`, `SessionCreate`, `SessionResponse`, `InstructorCreate`, `InstructorResponse`, `PartAssignmentCreate`, `PartAssignmentResponse`
+    - `record_attendance(attendance_data: AttendanceCreate) -> AttendanceResponse` - 出欠記録
+    - `update_attendance(attendance_id: UUID, data: dict) -> AttendanceResponse` - 出欠更新
+    - `get_session_attendance_summary(session_id: UUID) -> Dict[str, Any]` - セッション出欠サマリー取得
+    - `get_member_attendance_history(member_id: UUID, start_date: date, end_date: date) -> List[AttendanceResponse]` - メンバー出欠履歴取得
+    - `bulk_record_attendance(session_id: UUID, attendances: List[AttendanceCreate]) -> List[AttendanceResponse]` - 一括出欠記録
+  - **依存クラス**: `SessionRepository`, `ScheduleRepository`, `SessionCreate`, `SessionResponse`, `InstructorCreate`, `InstructorResponse`, `PartAssignmentCreate`, `PartAssignmentResponse`, `AttendanceCreate`, `AttendanceResponse`
 
 ### `tests/models/test_schedule_models.py`
 **目的**: スケジュールモデルのユニットテストを実装するPythonファイル
