@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
-import { Information } from '@/components/ui/noh/information';
-import { ScheduleTable } from '@/components/ui/noh/Schedule-Table';
-import { DateButton } from '@/components/ui/noh/date-button';
+import { Information } from '@/components/ui/noh/practice slots/information';
+import { ScheduleTable } from '@/components/ui/noh/practice slots/Schedule-Table';
+import { DateButton } from '@/components/ui/noh/practice slots/date-button';
 import { scheduleData } from '@/data/schedule-data';
 
 export default function TrainingSchedule() {
