@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { X, Plus, Calendar, Clock, Users } from 'lucide-react';
+import { X, Plus, Calendar, Users } from 'lucide-react';
 import { Sidebar } from '@/components/layout/sidebar';
+import RoomSelection from '@/components/ui/noh/register/room-selection';
+import DateTimeSelection from '@/components/ui/noh/register/date-time-selection';
 
 interface Room {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -29,9 +30,9 @@ interface TimeSlot {
 export default function BoltPage(){
 
   const [selectedRooms, setSelectedRooms] = useState<Room[]>([
-    { id: 347, name: '347' },
-    { id: 537, name: '537' },
-    { id: 538, name: '538' }
+    { id: '347', name: '347' },
+    { id: '537', name: '537' },
+    { id: '538', name: '538' }
   ]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -55,13 +56,13 @@ export default function BoltPage(){
     { id: 2, name: '田 二回生', available: false, timeSlot: '10:00 ~ 12:00' }
   ]);
 
-  const removeRoom = (roomId: number) => {
+  const removeRoom = (roomId: string) => {
     setSelectedRooms(selectedRooms.filter(room => room.id !== roomId));
   };
 
   const addRoom = () => {
     const newRoomNumber = Math.floor(Math.random() * 900) + 100;
-    setSelectedRooms([...selectedRooms, { id: newRoomNumber, name: newRoomNumber.toString() }]);
+    setSelectedRooms([...selectedRooms, { id: newRoomNumber.toString(), name: newRoomNumber.toString() }]);
   };
 
   const handleMobileSidebarToggle = () => {
@@ -90,132 +91,21 @@ export default function BoltPage(){
       </div>
 
       <div className="max-w-7xl mx-auto p-8 space-y-8">
-        {/* Room Selection */}
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              部屋
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {selectedRooms.map((room) => (
-                <Badge
-                  key={room.id}
-                  variant="outline"
-                  className="px-4 py-2 text-base border-2 border-blue-200 bg-white  transition-colors"
-                >
-                  <button
-                    onClick={() => removeRoom(room.id)}
-                    className="mr-2 hover:text-red-600 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  {room.name}
-                </Badge>
-              ))}
-              <Button
-                onClick={addRoom}
-                variant="outline"
-                size="sm"
-                className="border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-100 transition-all"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
+        <RoomSelection 
+          selectedRooms={selectedRooms}
+          onAddRoom={addRoom}
+          onRemoveRoom={removeRoom}
+        />
         <Separator className="my-8" />
 
-        {/* Date and Time Selection */}
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              日時
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Date Selection */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Input
-                  value={date.month}
-                  onChange={(e) => setDate({ ...date, month: e.target.value })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-                <span className="text-gray-600 font-medium">月</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={date.day}
-                  onChange={(e) => setDate({ ...date, day: e.target.value })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-                <span className="text-gray-600 font-medium">日</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={dayOfWeek}
-                  onChange={(e) => setDayOfWeek(e.target.value)}
-                  className="w-24 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-blue-100 border-blue-200 hover:bg-green-100"
-                >
-                  カレンダー
-                </Button>
-              </div>
-            </div>
-
-            {/* Time Selection */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Input
-                  value={timeSlot.start.split(':')[0]}
-                  onChange={(e) => setTimeSlot({ 
-                    ...timeSlot, 
-                    start: `${e.target.value}:${timeSlot.start.split(':')[1]}` 
-                  })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-                <span className="text-gray-600">:</span>
-                <Input
-                  value={timeSlot.start.split(':')[1]}
-                  onChange={(e) => setTimeSlot({ 
-                    ...timeSlot, 
-                    start: `${timeSlot.start.split(':')[0]}:${e.target.value}` 
-                  })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-              </div>
-              <span className="text-gray-600 font-medium">〜</span>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={timeSlot.end.split(':')[0]}
-                  onChange={(e) => setTimeSlot({ 
-                    ...timeSlot, 
-                    end: `${e.target.value}:${timeSlot.end.split(':')[1]}` 
-                  })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-                <span className="text-gray-600">:</span>
-                <Input
-                  value={timeSlot.end.split(':')[1]}
-                  onChange={(e) => setTimeSlot({ 
-                    ...timeSlot, 
-                    end: `${timeSlot.end.split(':')[0]}:${e.target.value}` 
-                  })}
-                  className="w-20 text-center border-2 border-blue-200 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <DateTimeSelection
+          date={date}
+          timeSlot={timeSlot}
+          dayOfWeek={dayOfWeek}
+          onDateChange={setDate}
+          onTimeSlotChange={setTimeSlot}
+          onDayOfWeekChange={setDayOfWeek}
+        />
 
         <Separator className="my-8" />
 
