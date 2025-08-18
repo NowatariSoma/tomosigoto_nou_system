@@ -1,4 +1,4 @@
-import { ScheduleItem } from '@/features/practice_slots/types/schedule';
+import { ScheduleItem } from '@/features/practice-slots/types/schedule';
 
 export const scheduleData: ScheduleItem[] = [
   {
