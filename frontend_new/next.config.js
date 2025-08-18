@@ -11,11 +11,8 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config, { dev, isServer }) => {
-    // Disable CSS optimization in production to avoid build errors
-    if (!dev && !isServer) {
-      config.optimization.minimize = false;
-      config.optimization.minimizer = [];
-    }
+    // Enable CSS optimization for proper Tailwind CSS purging
+    // Remove the minimize = false setting to allow proper CSS processing
     return config;
   },
   async rewrites() {
