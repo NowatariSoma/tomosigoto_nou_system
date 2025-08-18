@@ -1,0 +1,1 @@
+export { useHearingAssistant } from './useHearingAssistant'; 
