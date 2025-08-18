@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { ScheduleItem, ScheduleTableProps } from '@/features/practice_slots/types/schedule';
+import { ScheduleItem, ScheduleTableProps } from '@/features/practice-slots/types/schedule';
 
 const ScheduleTable: React.FC<ScheduleTableProps> = ({ 
   className,

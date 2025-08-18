@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { InformationProps } from '@/features/practice_slots/types/schedule';
+import { InformationProps } from '@/features/practice-slots/types/schedule';
 
 const Information: React.FC<InformationProps> = ({ 
   className,

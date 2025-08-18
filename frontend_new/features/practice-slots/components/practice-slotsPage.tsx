@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { Information } from '@/features/practice_slots/components/information';
-import { ScheduleTable } from '@/features/practice_slots/components/Schedule-Table';
-import { DateButton } from '@/features/practice_slots/components/date-button';
-import { scheduleData } from '@/features/practice_slots/services/schedule-data';
+import { Information } from '@/features/practice-slots/components/information';
+import { ScheduleTable } from '@/features/practice-slots/components/Schedule-Table';
+import { DateButton } from '@/features/practice-slots/components/date-button';
+import { scheduleData } from '@/features/practice-slots/services/schedule-data';
 
 export const PracticeSlotsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date(2024, 4, 26)); // May 26, 2024
@@ -19,7 +19,7 @@ export const PracticeSlotsPage: React.FC = () => {
   return (
     <AppTemplate
       title="練習表"
-      description="機械設備の仕様と運用情報の管理システム"
+      description="練習表の管理システム"
       maxWidth="7xl"
     >
       <div className="space-y-6">

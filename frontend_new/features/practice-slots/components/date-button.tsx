@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DateNavigationProps } from '@/features/practice_slots/types/schedule';
+import { DateNavigationProps } from '@/features/practice-slots/types/schedule';
 
 const DateButton: React.FC<DateNavigationProps> = ({ 
   currentDate,
