@@ -98,6 +98,17 @@ erDiagram
         uuid updated_by FK
     }
 
+    schedule_available_venues {
+        uuid id PK
+        uuid schedule_id FK
+        uuid venue_id FK
+        boolean is_preferred
+        int priority
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
     sessions {
         uuid id PK
         uuid schedule_id FK
@@ -126,18 +137,6 @@ erDiagram
         varchar attendance_status
         timestamp check_in_time
         timestamp check_out_time
-        timestamp created_at
-        timestamp updated_at
-    }
-
-
-    schedule_available_venues {
-        uuid id PK
-        uuid schedule_id FK
-        uuid venue_id FK
-        boolean is_preferred
-        int priority
-        text notes
         timestamp created_at
         timestamp updated_at
     }

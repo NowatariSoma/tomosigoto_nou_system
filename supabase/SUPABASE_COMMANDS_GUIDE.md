@@ -193,3 +193,8 @@ supabase seed
 - [Supabase CLI公式ドキュメント](https://supabase.com/docs/reference/cli)
 - [ローカル開発ガイド](https://supabase.com/docs/guides/local-development)
 - [マイグレーションガイド](https://supabase.com/docs/guides/database/migrations) 
+
+
+```
+supabase db reset --linked
+```
