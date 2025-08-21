@@ -1,15 +1,14 @@
--- 1. users テーブル (他のテーブルから参照されるため最初に作成)
-CREATE TABLE users (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255),
-    auth_provider VARCHAR(255),
-    password_hash VARCHAR(255),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    last_login TIMESTAMP,
-    is_active BOOLEAN DEFAULT FALSE,
-    email_verified BOOLEAN DEFAULT FALSE
-);
+
+-- 1. users ビュー (認証の真実は auth.users。GUI/JOIN 用に公開スキーマへビュー提供)
+CREATE OR REPLACE VIEW public.users AS
+SELECT
+    u.id,
+    u.email,
+    u.created_at,
+    u.updated_at,
+    u.last_sign_in_at AS last_login,
+    u.raw_user_meta_data
+FROM auth.users u;
 
 -- 2. departments テーブル
 CREATE TABLE departments (
@@ -25,7 +24,7 @@ CREATE TABLE departments (
 -- 3. user_profiles テーブル
 CREATE TABLE user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.users(id),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
     student_id TEXT UNIQUE NOT NULL,
     first_name_kanji TEXT NOT NULL,
     first_name_katakana TEXT NOT NULL,
@@ -42,7 +41,7 @@ CREATE TABLE user_profiles (
 -- 4. user_roles テーブル
 CREATE TABLE user_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.users(id), 
+    user_id UUID REFERENCES auth.users(id), 
     role_type TEXT NOT NULL,
     is_visible_to_general BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

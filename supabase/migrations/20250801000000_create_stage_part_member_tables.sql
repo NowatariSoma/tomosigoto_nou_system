@@ -26,7 +26,7 @@ CREATE TABLE parts (
 -- 3. member_assignments テーブル（メンバー所属管理）
 CREATE TABLE member_assignments (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     part_id uuid NOT NULL REFERENCES public.parts(id) ON DELETE CASCADE,
     category VARCHAR(10) NOT NULL CHECK (category IN ('utai', 'mai')),
     display_order INTEGER DEFAULT 0,

@@ -2,28 +2,17 @@
 -- SECURITY_ANALYSIS.md に基づくセキュリティ設定
 -- リモートプロジェクト your-project-ref 用
 
+
 -- ========================================
--- Step 1: public.users テーブルのRLS設定
+-- Step 1: public.users はビュー。RLSは付与しない（ビューにRLS不可）
+--         認証ユーザー情報は auth.users にて Supabase 標準で保護。
+--         アプリ側は user_profiles / user_roles 等のRLSで制御する。
 -- ========================================
 
--- RLSを有効化
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- ========================================
 
--- ユーザーは自分のデータのみアクセス可能（SELECT）
-CREATE POLICY "Users can only view own data" ON public.users
-    FOR SELECT USING (auth.uid() = id);
-
--- ユーザーは自分のデータのみ更新可能（UPDATE）
-CREATE POLICY "Users can only update own data" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
-
--- ユーザーは自分のデータのみ挿入可能（INSERT）
-CREATE POLICY "Users can only insert own data" ON public.users
-    FOR INSERT WITH CHECK (auth.uid() = id);
-
--- 管理者（service role）は全データアクセス可能
-CREATE POLICY "Admins can manage all users" ON public.users
-    FOR ALL USING (auth.role() = 'service_role');
+-- public.users はビューなので RLS ポリシーは設定しない
+-- 代わりに auth.users が Supabase 標準で保護されている
 
 -- ========================================
 -- Step 2: public.user_profiles テーブルのRLS設定
@@ -94,47 +83,50 @@ CREATE POLICY "Admins can manage all departments" ON public.departments
 -- ========================================
 -- Step 6: public.availability_slots テーブルのRLS設定
 -- ========================================
+-- availability_slots テーブルが未作成のためコメントアウト
 
--- RLSを有効化
-ALTER TABLE public.availability_slots ENABLE ROW LEVEL SECURITY;
+-- -- RLSを有効化
+-- ALTER TABLE public.availability_slots ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは空き状況を閲覧可能
-CREATE POLICY "Authenticated users can view availability" ON public.availability_slots
-    FOR SELECT TO authenticated USING (true);
+-- -- 認証済みユーザーは空き状況を閲覧可能
+-- CREATE POLICY "Authenticated users can view availability" ON public.availability_slots
+--     FOR SELECT TO authenticated USING (true);
 
--- 管理者は全空き状況アクセス可能
-CREATE POLICY "Admins can manage all availability" ON public.availability_slots
-    FOR ALL USING (auth.role() = 'service_role');
+-- -- 管理者は全空き状況アクセス可能
+-- CREATE POLICY "Admins can manage all availability" ON public.availability_slots
+--     FOR ALL USING (auth.role() = 'service_role');
 
 -- ========================================
 -- Step 7: public.venue_attributes テーブルのRLS設定
 -- ========================================
+-- venue_attributes テーブルが未作成のためコメントアウト
 
--- RLSを有効化
-ALTER TABLE public.venue_attributes ENABLE ROW LEVEL SECURITY;
+-- -- RLSを有効化
+-- ALTER TABLE public.venue_attributes ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは会場属性を閲覧可能
-CREATE POLICY "Authenticated users can view venue attributes" ON public.venue_attributes
-    FOR SELECT TO authenticated USING (true);
+-- -- 認証済みユーザーは会場属性を閲覧可能
+-- CREATE POLICY "Authenticated users can view venue attributes" ON public.venue_attributes
+--     FOR SELECT TO authenticated USING (true);
 
--- 管理者は全会場属性アクセス可能
-CREATE POLICY "Admins can manage all venue attributes" ON public.venue_attributes
-    FOR ALL USING (auth.role() = 'service_role');
+-- -- 管理者は全会場属性アクセス可能
+-- CREATE POLICY "Admins can manage all venue attributes" ON public.venue_attributes
+--     FOR ALL USING (auth.role() = 'service_role');
 
 -- ========================================
 -- Step 8: public.recurring_units テーブルのRLS設定
 -- ========================================
+-- recurring_units テーブルが未作成のためコメントアウト
 
--- RLSを有効化
-ALTER TABLE public.recurring_units ENABLE ROW LEVEL SECURITY;
+-- -- RLSを有効化
+-- ALTER TABLE public.recurring_units ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは定期予約枠を閲覧可能
-CREATE POLICY "Authenticated users can view recurring units" ON public.recurring_units
-    FOR SELECT TO authenticated USING (true);
+-- -- 認証済みユーザーは定期予約枠を閲覧可能
+-- CREATE POLICY "Authenticated users can view recurring units" ON public.recurring_units
+--     FOR SELECT TO authenticated USING (true);
 
--- 管理者は全定期予約枠アクセス可能
-CREATE POLICY "Admins can manage all recurring units" ON public.recurring_units
-    FOR ALL USING (auth.role() = 'service_role');
+-- -- 管理者は全定期予約枠アクセス可能
+-- CREATE POLICY "Admins can manage all recurring units" ON public.recurring_units
+--     FOR ALL USING (auth.role() = 'service_role');
 
 -- ========================================
 -- セキュリティ設定完了

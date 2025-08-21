@@ -12,16 +12,16 @@ create table members (
     updated_at timestamp not null default current_timestamp
 );
 
--- partsテーブル（パート区分）
-create table parts (
-    id uuid primary key default gen_random_uuid(),
-    part_name varchar(50) not null,
-    description varchar(200),
-    priority integer default 5,
-    is_active boolean default true,
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
-);
+-- partsテーブル（パート区分）- 既に20250801000000で作成済みのためスキップ
+-- create table parts (
+--     id uuid primary key default gen_random_uuid(),
+--     part_name varchar(50) not null,
+--     description varchar(200),
+--     priority integer default 5,
+--     is_active boolean default true,
+--     created_at timestamp not null default current_timestamp,
+--     updated_at timestamp not null default current_timestamp
+-- );
 
 -- practice_schedulesテーブル（参照元になるため最初に作成）
 create table practice_schedules (
@@ -35,8 +35,8 @@ create table practice_schedules (
     status varchar(20),
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp,
-    created_by uuid references users(id),
-    updated_by uuid references users(id)
+    created_by uuid references auth.users(id),
+    updated_by uuid references auth.users(id)
 );
 
 -- sessionsテーブル
@@ -57,7 +57,7 @@ create table sessions (
 create table session_instructors (
     id uuid primary key default gen_random_uuid(),
     session_id uuid references sessions(id),
-    user_id uuid references users(id),
+    user_id uuid references auth.users(id),
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp
 );
