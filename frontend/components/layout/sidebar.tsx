@@ -168,15 +168,15 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 <div className="w-8 h-8 flex items-center justify-center">
                   <Image 
                     src="/favicon.png" 
-                    alt="演算工房" 
+                    alt="トモシゴト" 
                     width={32} 
                     height={32}
                     className="rounded"
                   />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">演算工房</h2>
-                  <p className="text-xs text-gray-500">AI-CN</p>
+                  <h2 className="text-sm font-semibold text-gray-900">トモシゴト</h2>
+                  <p className="text-xs text-gray-500">能楽部練習表</p>
                 </div>
               </div>
               <Button
@@ -251,22 +251,22 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <div className="w-8 h-8 flex items-center justify-center">
                 <Image 
                   src="/favicon.png" 
-                  alt="演算工房" 
+                  alt="トモシゴト" 
                   width={32} 
                   height={32}
                   className="rounded"
                 />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">演算工房</h2>
-                <p className="text-xs text-gray-500">AI-CN</p>
+                <h2 className="text-sm font-semibold text-gray-900">トモシゴト</h2>
+                <p className="text-xs text-gray-500">能楽部練習表</p>
               </div>
             </div>
           ) : (
             <div className="w-8 h-8 flex items-center justify-center mx-auto">
               <Image 
                 src="/favicon.png" 
-                alt="演算工房" 
+                alt="トモシゴト" 
                 width={32} 
                 height={32}
                 className="rounded"
