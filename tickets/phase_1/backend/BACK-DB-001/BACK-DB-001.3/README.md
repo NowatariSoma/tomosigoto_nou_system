@@ -101,6 +101,7 @@ erDiagram
     sessions {
         uuid id PK
         uuid schedule_id FK
+        uuid part_id FK
         varchar title
         time start_time
         time end_time
@@ -121,14 +122,14 @@ erDiagram
     session_attendances {
         uuid id PK
         uuid session_id FK
-        uuid member_id FK
-        uuid part_id FK
+        uuid member_assignment_id FK
         varchar attendance_status
         timestamp check_in_time
         timestamp check_out_time
         timestamp created_at
         timestamp updated_at
     }
+
 
     schedule_available_venues {
         uuid id PK
@@ -148,10 +149,11 @@ erDiagram
     practice_schedules ||--o{ sessions : "contains"
     
     sessions ||--o{ session_instructors : "taught by"
-    sessions ||--o{ session_attendances : "attended by"
+    sessions ||--o{ session_attendances : "attended by members"
     session_attendances ||--o{ session_instructors : "selected as instructor"
     
-    users ||--o{ session_attendances : "attends"
+    parts ||--o{ sessions : "assigned to sessions"
+    member_assignments ||--o{ session_attendances : "attends"
 ```
 
 ### 会場利用可能性管理の設計方針
