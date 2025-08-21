@@ -4,6 +4,7 @@ import { useState, ReactNode } from 'react';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Badge } from '@/components/ui/feedback/badge';
+import { StatusBadge } from '@/components/ui/feedback/status-badge';
 
 interface AppTemplateProps {
   children: ReactNode;
@@ -12,6 +13,14 @@ interface AppTemplateProps {
   icon?: ReactNode;
   badge?: string;
   badgeVariant?: 'default' | 'destructive' | 'outline' | 'secondary';
+  developmentBadge?: {
+    level: 'alpha' | 'beta' | 'stable';
+    text: string;
+  };
+  permissionBadge?: {
+    level: 'basic' | 'admin' | 'super';
+    text: string;
+  };
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '7xl' | 'full';
   className?: string;
 }
@@ -23,6 +32,8 @@ export function AppTemplate({
   icon,
   badge,
   badgeVariant = 'default',
+  developmentBadge,
+  permissionBadge,
   maxWidth = '7xl',
   className = ''
 }: AppTemplateProps) {
@@ -61,16 +72,37 @@ export function AppTemplate({
         
         <main className="flex-1 w-full px-4 py-8 bg-white">
           <div className={`${getMaxWidthClass()} mx-auto ${className}`}>
-            {(title || description || icon || badge) && (
+            {(title || description || icon || badge || developmentBadge || permissionBadge) && (
               <div className="mb-8">
                 {(title || icon) && (
                   <div className="flex items-center gap-3 mb-4">
                     {icon}
                     {title && (
-                      <div>
+                      <div className="flex items-center gap-2">
                         <h1 className="text-3xl font-bold text-gray-900">
                           {title}
                         </h1>
+                        {developmentBadge && (
+                          <StatusBadge 
+                            type="development" 
+                            level={developmentBadge.level}
+                          >
+                            {developmentBadge.text}
+                          </StatusBadge>
+                        )}
+                        {permissionBadge && (
+                          <StatusBadge 
+                            type="permission" 
+                            level={permissionBadge.level}
+                          >
+                            {permissionBadge.text}
+                          </StatusBadge>
+                        )}
+                        {badge && (
+                          <Badge variant={badgeVariant}>
+                            {badge}
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </div>

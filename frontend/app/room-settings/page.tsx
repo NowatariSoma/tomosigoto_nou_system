@@ -10,8 +10,14 @@ export default function Page() {
       title="部屋登録ページ"
       description="使用する部屋を登録するページ"
       icon={<Activity className="h-8 w-8 text-blue-600" />}
-      badge="難易度：中"
-      badgeVariant="secondary"
+      developmentBadge={{
+        level: 'beta',
+        text: 'バックエンド結合'
+      }}
+      permissionBadge={{
+        level: 'admin',
+        text: '管理者'
+      }}
       maxWidth="7xl"
     >
       <RoomSettingsPage />

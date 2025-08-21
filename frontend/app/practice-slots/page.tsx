@@ -10,8 +10,14 @@ export default function Page() {
       title="練習表ページ"
       description="日毎の練習表を作成するページ"
       icon={<Brain className="h-8 w-8 text-blue-600" />}
-      badge="AI解析"
-      badgeVariant="secondary"
+      developmentBadge={{
+        level: 'alpha',
+        text: 'バックエンド作成、UI改善'
+      }}
+      permissionBadge={{
+        level: 'basic',
+        text: '基本権限'
+      }}
       maxWidth="7xl"
     >
       <PracticeSlotsPage />

@@ -8,6 +8,14 @@ export default function Template() {
     <AppTemplate
       title="テンプレートレイアウト"
       description="統一されたレイアウトテンプレートのデモンストレーション"
+      developmentBadge={{
+        level: 'alpha',
+        text: 'アルファ版'
+      }}
+      permissionBadge={{
+        level: 'basic',
+        text: '基本権限'
+      }}
       maxWidth="7xl"
     >
       <TemplatePage />
