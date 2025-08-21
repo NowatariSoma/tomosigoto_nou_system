@@ -85,13 +85,6 @@ erDiagram
         timestamp updated_at "更新日時"
     }
     
-    users {
-        uuid id PK "ユーザーID"
-        string name "氏名"
-        string email "メールアドレス"
-        timestamp created_at "作成日時"
-    }
-    
     member_assignments {
         uuid id PK "配属ID"
         uuid user_id FK "ユーザーID参照"
