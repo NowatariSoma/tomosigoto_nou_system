@@ -26,7 +26,7 @@ create table parts (
 -- practice_schedulesテーブル（参照元になるため最初に作成）
 create table practice_schedules (
     id uuid primary key default gen_random_uuid(),
-    venue_id uuid references venues(id),
+    selected_venue_id uuid references venues(id),
     schedule_date date not null,
     start_time time not null,
     end_time time not null,
@@ -73,5 +73,40 @@ create table session_attendances (
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp
 );
+
+-- session_partsテーブル（セッションとパートの関連）
+create table session_parts (
+    id uuid primary key default gen_random_uuid(),
+    session_id uuid not null references sessions(id),
+    part_id uuid not null references parts(id),
+    is_required boolean not null default true,
+    priority integer not null default 1,
+    notes text,
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp,
+    
+    -- 同じセッションで同じパートの重複を防ぐ
+    unique(session_id, part_id)
+);
+
+-- パート別出欠状況サマリービュー
+create view session_part_attendance_summary as
+select 
+    sp.session_id,
+    sp.part_id,
+    p.name as part_name,
+    count(ma.id) as total_members,
+    count(sa.id) as recorded_attendances,
+    count(case when sa.attendance_status = 'present' then 1 end) as present_count,
+    count(case when sa.attendance_status = 'absent' then 1 end) as absent_count
+from session_parts sp
+join parts p on sp.part_id = p.id
+left join member_assignments ma on p.id = ma.part_id
+left join session_attendances sa on sp.session_id = sa.session_id and ma.user_id = sa.member_id
+group by sp.session_id, sp.part_id, p.name;
+
+-- インデックス作成
+create index idx_session_parts_session_id on session_parts(session_id);
+create index idx_session_parts_part_id on session_parts(part_id);
 
 -- これでテーブルは完成
