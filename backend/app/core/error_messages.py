@@ -40,7 +40,7 @@ class ErrorMessage:
         text = "ユーザーが見つかりません"
     
     class USER_ALREADY_EXISTS(BaseMessage):
-        status_code = status.HTTP_400_BAD_REQUEST
+        status_code = status.HTTP_409_CONFLICT
         text = "このメールアドレスは既に使用されています"
     
     class INACTIVE_USER(BaseMessage):
