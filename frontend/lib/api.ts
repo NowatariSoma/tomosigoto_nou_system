@@ -1,81 +1,152 @@
-// APIクライアントの雛形
-// 必要に応じてaxiosやfetchを使って実装してください
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL;
 
-// APIクライアントの設定
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+// Debug: Log the URLs being used
+console.log('API Configuration:', {
+  API_BASE_URL,
+  AUTH_URL,
+  NODE_ENV: process.env.NODE_ENV,
+});
 
-// 型定義
-interface User {
-  id: string
-  email: string
-  name?: string
-  created_at?: string
-  updated_at?: string
-  email_confirmed_at?: string
-  last_sign_in_at?: string
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-// APIリクエストヘルパー
-const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
-  const url = `${API_BASE_URL}${endpoint}`
+async function fetchApi(url: string, options: RequestInit = {}) {
+  const token = localStorage.getItem('authToken');
   
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-  }
-  
-  const config: RequestInit = {
+  const response = await fetch(url, {
     ...options,
     headers: {
-      ...defaultHeaders,
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
-  }
-  
-  const response = await fetch(url, config)
-  
+  });
+
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`API Error: ${response.status} - ${error}`)
+    throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
   }
-  
-  return response.json()
+
+  return response;
 }
 
-// ユーザーAPI関数
-export const userApi = {
-  // すべてのユーザーを取得
-  getUsers: async (token: string): Promise<User[]> => {
-    return apiRequest('/api/users', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
+// Authentication
+export const auth = {
+  async login(username: string, password: string) {
+    console.log('Login attempt:', { username, password: '***' });
+    console.log('Auth URL:', `${AUTH_URL}/auth/login`);
+    
+    const response = await fetch(`${AUTH_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Login failed:', errorText);
+      throw new ApiError(response.status, 'Invalid credentials');
+    }
+
+    const data = await response.json();
+    console.log('Login successful:', data);
+    
+    // Save token to both localStorage and cookie
+    localStorage.setItem('authToken', data.access_token);
+    
+    // Set cookie with secure options (session-only - expires when browser closes)
+    document.cookie = `authToken=${data.access_token}; path=/; samesite=strict${
+      window.location.protocol === 'https:' ? '; secure' : ''
+    }`;
+    
+    console.log('Token saved to localStorage and session cookie');
+    
+    return data;
   },
-  
-  // 特定のユーザーを取得
-  getUser: async (userId: string, token: string): Promise<User> => {
-    return apiRequest(`/api/users/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
+
+  async logout() {
+    console.log('Logging out...');
+    localStorage.removeItem('authToken');
+    
+    // Remove cookie
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    
+    console.log('Auth tokens cleared');
   },
-  
-  // 現在のユーザー情報を取得
-  getCurrentUser: async (token: string): Promise<User> => {
-    return apiRequest('/api/users/me', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
+
+  async getCurrentUser() {
+    return fetchApi(`${AUTH_URL}/auth/me`);
   },
+
+  // Debug function to clear all auth data
+  clearAuthData() {
+    console.log('Clearing all auth data...');
+    localStorage.removeItem('authToken');
+    localStorage.clear();
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    console.log('All auth data cleared');
+  }
+};
+
+// Legacy API functions (keep for backward compatibility)
+export async function fetchWorkerCounts() {
+  const response = await fetchApi(`${API_BASE_URL}/api/workers/counts`);
+  return response.json();
 }
 
-// 既存のauth関数（互換性維持）
-export const auth = async (params?: unknown): Promise<{ success: boolean; message?: string }> => {
-  // 仮実装: 必要に応じてAPIリクエスト処理を追加
-  return { success: true, message: 'ダミー認証成功' };
-}; 
+export async function fetchWorkerCountsFromAuth() {
+  const response = await fetchApi(`${AUTH_URL}/api/workers/counts`);
+  return response.json();
+}
+
+export async function fetchHistoricalData() {
+  const response = await fetchApi(`${API_BASE_URL}/api/workers/historical`);
+  return response.json();
+}
+
+export async function fetchHistoricalDataFromAuth() {
+  const response = await fetchApi(`${AUTH_URL}/api/workers/historical`);
+  return response.json();
+}
+
+export const historical = {
+  async getData() {
+    return fetchHistoricalData();
+  },
+  async getDataFromAuth() {
+    return fetchHistoricalDataFromAuth();
+  },
+  async getHistoricalData(startDate: string, endDate: string) {
+    const response = await fetchApi(`/api/db/historical?start=${startDate}&end=${endDate}`);
+    return response.json();
+  },
+  async saveCurrentData() {
+    // 現在のデータを履歴に保存（オプション）
+    try {
+      const response = await fetchApi(`${API_BASE_URL}/api/workers/save-current`);
+      return response.json();
+    } catch (error) {
+      // 履歴保存は必須ではないので、エラーは無視
+      console.warn('Failed to save current data to historical:', error);
+      return null;
+    }
+  }
+};
+
+// Settings
+export const settings = {
+  async getProjectSettings() {
+    return fetchApi(`${API_BASE_URL}/settings/project`);
+  },
+
+  async getUserSettings() {
+    return fetchApi(`${API_BASE_URL}/settings/user`);
+  }
+};

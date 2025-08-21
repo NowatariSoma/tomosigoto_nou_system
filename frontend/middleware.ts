@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // 認証チェック・リダイレクト処理を削除
+  // 認証チェックを無効化 - すべてのルートにアクセス可能
   return NextResponse.next();
 }
 
