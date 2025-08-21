@@ -6,7 +6,7 @@ SELECT
     u.email,
     u.created_at,
     u.updated_at,
-    u.last_sign_in_at AS last_login,
+    u.last_sign_in_at,
     u.raw_user_meta_data
 FROM auth.users u;
 
