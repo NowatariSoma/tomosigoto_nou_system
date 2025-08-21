@@ -1,14 +1,18 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
 
 class VenueBase(BaseModel):
-    """ 会場の基本情報"""
+    """会場の基本情報"""
+
     name: str
     capacity: Optional[int] = None
     campus: Optional[str] = None
     is_active: bool = True
+
 
 class VenueCreate(VenueBase):
     code: Optional[str] = None
@@ -19,6 +23,7 @@ class VenueCreate(VenueBase):
     can_mai: bool = False
     desk: Optional[int] = None
     chair: Optional[int] = None
+
 
 class VenueUpdate(BaseModel):
     name: Optional[str] = None
@@ -33,11 +38,10 @@ class VenueUpdate(BaseModel):
 
 
 class VenueResponse(VenueCreate):
-    """ 会場レスポンス用スキーマ """
+    """会場レスポンス用スキーマ"""
+
     id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
