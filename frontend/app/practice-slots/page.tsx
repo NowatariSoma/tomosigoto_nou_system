@@ -1,51 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Information } from '@/components/ui/noh/practice slots/information';
-import { ScheduleTable } from '@/components/ui/noh/practice slots/Schedule-Table';
-import { DateButton } from '@/components/ui/noh/practice slots/date-button';
-import { scheduleData } from '@/data/schedule-data';
+import { AppTemplate } from '@/shared/components/layout/AppTemplate';
+import { Brain } from 'lucide-react';
+import { PracticeSlotsPage } from '@/features/practice-slots/components/practice-slotsPage';
 
-export default function TrainingSchedule() {
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 4, 26)); // May 26, 2024
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  const handleMobileSidebarClose = () => {
-    setIsMobileSidebarOpen(false);
-  };
-
-  const handleMobileSidebarToggle = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
-  };
-
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
-    setCurrentDate(newDate);
-  };
-
+export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex">
-      {/* Sidebar */}
-      <Sidebar 
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileClose={handleMobileSidebarClose}
-      />
-      <div className="flex-1">
-        <div className="max-w-6xl mx-auto">
-          {/* Header with Date Navigation */}
-          <DateButton 
-            currentDate={currentDate}
-            onDateChange={navigateDate}
-          />
-          
-          {/* Schedule Table */}
-          <ScheduleTable scheduleData={scheduleData} />
-
-          <Information currentDate={currentDate} />
-        </div>
-      </div>
-    </div>
+    <AppTemplate
+      title="練習表ページ"
+      description="日毎の練習表を作成するページ"
+      icon={<Brain className="h-8 w-8 text-blue-600" />}
+      badge="AI解析"
+      badgeVariant="secondary"
+      maxWidth="7xl"
+    >
+      <PracticeSlotsPage />
+    </AppTemplate>
   );
-}
+} 
