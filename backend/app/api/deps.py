@@ -4,7 +4,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 
 from app.services.user_service import UserService
+from app.services.venue_service import VenueService
 from app.repositories.user_repository import UserRepository
+from app.repositories.venue_repository import VenueRepository
 from app.core.supabase import get_supabase
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
@@ -17,7 +19,6 @@ def get_user_repository(
 ) -> UserRepository:
     """UserRepositoryのインスタンスを取得"""
     return UserRepository(supabase_client)
-
 
 def get_user_service(
     supabase_client: Client = Depends(get_supabase),
@@ -52,3 +53,16 @@ async def get_current_active_user(
     # if not current_user.get("active", True):
     #     raise APIException(ErrorMessage.INACTIVE_USER)
     return current_user 
+
+
+def get_venue_repository(
+    supabase_client: Client = Depends(get_supabase)
+) -> VenueRepository:
+    return VenueRepository(supabase_client)
+
+def get_venue_service(
+    supabase_client: Client = Depends(get_supabase),
+    venue_repository: VenueRepository = Depends(get_venue_repository)
+) -> VenueService:
+    return VenueService(venue_repository, supabase_client.auth)
+
