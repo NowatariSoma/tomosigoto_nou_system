@@ -87,8 +87,8 @@ erDiagram
     sessions ||--o{ session_instructors : "担当"
     sessions ||--o{ session_attendances : "出欠管理"
     venues ||--|| practice_schedules : "開催場所"
-    users ||--o{ session_instructors : "担当する"
-    members ||--o{ session_attendances : "出席する"
+    users ||--o{ session_attendances : "担当する"
+    users ||--o{ session_attendances : "出席する"
     parts ||--o{ session_attendances : "パート単位で"
     
     practice_schedules {
