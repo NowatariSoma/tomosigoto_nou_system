@@ -212,7 +212,19 @@ export function SimulationDashboard() {
           <PredictionDataTable
             excavationAdvance={excavationAdvance}
             distanceFromFace={distanceFromFace}
-            data={analysisResult.simulation_data}
+            data={analysisResult.simulation_data.map((item, index) => ({
+              step: item.distance_from_face,
+              days: index + 1,
+              prediction1: Object.keys(item).find(key => key.includes('prediction') || key.includes('予測')) 
+                ? String(item[Object.keys(item).find(key => key.includes('prediction') || key.includes('予測'))!] || 0)
+                : '0',
+              prediction2: Object.keys(item).filter(key => key.includes('prediction') || key.includes('予測'))[1] 
+                ? String(item[Object.keys(item).filter(key => key.includes('prediction') || key.includes('予測'))[1]] || 0)
+                : '0',
+              prediction3: Object.keys(item).filter(key => key.includes('prediction') || key.includes('予測'))[2] 
+                ? String(item[Object.keys(item).filter(key => key.includes('prediction') || key.includes('予測'))[2]] || 0)
+                : '0',
+            }))}
           />
         </>
       )}
