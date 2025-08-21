@@ -83,60 +83,91 @@
 ### データベース構造図
 ```mermaid
 erDiagram
-    practice_schedules ||--o{ sessions : "含む"
-    sessions ||--o{ session_instructors : "担当"
-    sessions ||--o{ session_attendances : "出欠管理"
-    session_instructors ||--o{ session_attendances : "担当する"
-    users ||--o{ session_attendances : "出席する"
-    parts ||--o{ session_attendances : "パート単位で"
-    
     practice_schedules {
-        uuid id PK "スケジュールID"
-        uuid venue_id FK "会場ID参照"
-        date schedule_date "練習日"
-        time start_time "開始時間"
-        time end_time "終了時間"
-        string description "説明"
-        string schedule_type "練習種別(定期/特別等)"
-        string status "ステータス"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
-        uuid created_by "作成者ID"
-        uuid updated_by "更新者ID"
+        uuid id PK
+        date schedule_date
+        time start_time
+        time end_time
+        text description
+        varchar schedule_type
+        varchar status
+        uuid selected_venue_id FK
+        timestamp created_at
+        timestamp updated_at
+        uuid created_by FK
+        uuid updated_by FK
     }
-    
+
     sessions {
-        uuid id PK "セッションID"
-        uuid schedule_id FK "スケジュールID参照"
-        string title "セッションタイトル"
-        time start_time "開始時間"
-        time end_time "終了時間"
-        string location_in_venue "会場内位置"
-        int priority "優先度"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+        uuid id PK
+        uuid schedule_id FK
+        varchar title
+        time start_time
+        time end_time
+        varchar location_in_venue
+        int priority
+        timestamp created_at
+        timestamp updated_at
     }
-    
+
     session_instructors {
-        uuid id PK "担当者ID"
-        uuid session_id FK "セッションID参照"
-        uuid user_id FK "ユーザーID参照"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+        uuid id PK
+        uuid session_id FK
+        uuid user_id FK
+        timestamp created_at
+        timestamp updated_at
     }
-    
+
     session_attendances {
-        uuid id PK "出欠ID"
-        uuid session_id FK "セッションID参照"
-        uuid member_id FK "メンバーID参照"
-        uuid part_id FK "パートID参照"
-        string attendance_status "出席状況"
-        timestamp check_in_time "チェックイン時間"
-        timestamp check_out_time "チェックアウト時間"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+        uuid id PK
+        uuid session_id FK
+        uuid member_id FK
+        uuid part_id FK
+        varchar attendance_status
+        timestamp check_in_time
+        timestamp check_out_time
+        timestamp created_at
+        timestamp updated_at
     }
+
+    schedule_available_venues {
+        uuid id PK
+        uuid schedule_id FK
+        uuid venue_id FK
+        boolean is_preferred
+        int priority
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% リレーション
+    venues ||--o{ schedule_available_venues : "selected venue"
+    
+    practice_schedules ||--o{ schedule_available_venues : "has available venues"
+    practice_schedules ||--o{ sessions : "contains"
+    
+    sessions ||--o{ session_instructors : "taught by"
+    sessions ||--o{ session_attendances : "attended by"
+    session_attendances ||--o{ session_instructors : "selected as instructor"
+    
+    users ||--o{ session_attendances : "attends"
 ```
+
+### 会場利用可能性管理の設計方針
+
+**1. 3層構造による柔軟な会場管理**
+- `venue_availability_rules`: 曜日・時間帯別の基本利用可能性
+- `venue_date_exceptions`: 特定日の例外（メンテナンス・イベント等）
+- `schedule_available_venues`: 練習スケジュール別の利用可能会場
+
+**2. 優先度管理**
+- 複数のルールが競合する場合の優先順位制御
+- 会場選択時の優先度設定
+
+**3. 履歴管理**
+- `selected_venue_id`で実際に選択された会場を記録
+- 意思決定の履歴を保持
 
 ## 実装アプローチ
 ### データベース設計と実装
