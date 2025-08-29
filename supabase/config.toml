@@ -60,7 +60,7 @@ sql_paths = [
   "./seeds/02_stage_and_parts_seed.sql",
   "./seeds/03_venue_seed.sql",
   "./seeds/04_practice_schedules_seed.sql",
-  "./seeds/05_member_assignments_seed.sql"
+  "./seeds/05_practice_user_attendance_seed.sql"
 ]
 
 [realtime]
