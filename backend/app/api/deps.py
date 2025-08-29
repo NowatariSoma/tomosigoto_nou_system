@@ -5,8 +5,10 @@ from app.core.exceptions import APIException
 from app.core.supabase import get_supabase
 from app.repositories.user_repository import UserRepository
 from app.repositories.venue_repository import VenueRepository
+from app.repositories.attendance_repository import AttendanceRepository
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
+from app.services.attendance_service import AttendanceService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -67,3 +69,18 @@ def get_venue_service(
     venue_repository: VenueRepository = Depends(get_venue_repository),
 ) -> VenueService:
     return VenueService(venue_repository, supabase_client.auth)
+
+
+def get_attendance_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> "AttendanceRepository":
+    """AttendanceRepositoryのインスタンスを取得"""
+    return AttendanceRepository(supabase_client)
+
+
+def get_attendance_service(
+    supabase_client: Client = Depends(get_supabase),
+    attendance_repository: "AttendanceRepository" = Depends(get_attendance_repository),
+) -> "AttendanceService":
+    """AttendanceServiceのインスタンスを依存性注入で取得"""
+    return AttendanceService(attendance_repository)
