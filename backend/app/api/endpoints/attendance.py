@@ -254,3 +254,4 @@ async def bulk_update_attendances(
     )
     return [AttendanceResponse(**attendance) for attendance in updated_attendances]
 
+
