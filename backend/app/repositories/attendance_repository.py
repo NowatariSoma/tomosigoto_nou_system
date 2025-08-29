@@ -105,3 +105,4 @@ class AttendanceRepository:
         response = self.client.table("practice_user_attendance_history").select("*").execute()
         return response.data
 
+
