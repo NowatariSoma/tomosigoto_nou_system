@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from './Header';
 import { RoomList } from './RoomList';
 import { RoomModal } from './RoomModal';
-import { Room } from '../types/room';
+import { Room } from '../types';
 import { useRooms } from '../hooks';
 
 export const RoomSettingsPage: React.FC = () => {

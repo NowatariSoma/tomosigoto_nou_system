@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { roomService } from '../services';
-import { Room } from '../types/room';
-import { CreateRoomRequest, UpdateRoomRequest } from '../services/room-service';
+import { Room, CreateRoomRequest, UpdateRoomRequest } from '../types';
 
 interface UseRoomsState {
   rooms: Room[];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Room } from '../types/room';
+import { Room } from '../types';
 
 interface RoomModalProps {
   room: Room | null;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Room } from '../types/room';
+import { Room } from '../types';
 
 interface RoomCardProps {
   room: Room;

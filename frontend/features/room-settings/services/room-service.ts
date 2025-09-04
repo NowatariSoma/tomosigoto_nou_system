@@ -1,23 +1,5 @@
 import { apiClient } from './api-client';
-import { Room } from '../types/room';
-
-export interface CreateRoomRequest {
-  name: string;
-  campus: string;
-  capacity: number;
-  danceAllowed: boolean;
-  description?: string;
-  location?: string;
-}
-
-export interface UpdateRoomRequest extends Partial<CreateRoomRequest> {}
-
-export interface RoomListResponse {
-  venues: Room[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+import { Room, CreateRoomRequest, UpdateRoomRequest, RoomListResponse } from '../types';
 
 export class RoomService {
   private readonly basePath = '/api/venues/';
