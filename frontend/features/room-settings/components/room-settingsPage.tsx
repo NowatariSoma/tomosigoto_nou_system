@@ -5,6 +5,7 @@ import { RoomList } from './RoomList';
 import { RoomModal } from './RoomModal';
 import { Room } from '../types';
 import { useRooms } from '../hooks';
+import { UI_TEXT } from '../constants';
 
 export const RoomSettingsPage: React.FC = () => {
   const { rooms, loading, error, updateRoom, deleteRoom } = useRooms();
@@ -41,7 +42,7 @@ export const RoomSettingsPage: React.FC = () => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        <span className="ml-2">読み込み中...</span>
+        <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
       </div>
     );
   }

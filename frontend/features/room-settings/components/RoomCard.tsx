@@ -1,5 +1,6 @@
 import React from 'react';
 import { Room } from '../types';
+import { UI_TEXT } from '../constants';
 
 interface RoomCardProps {
   room: Room;
@@ -33,7 +34,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onClick }) => {
           <span className={`ml-2 font-medium ${
             room.danceAllowed ? 'text-green-600' : 'text-red-600'
           }`}>
-            {room.danceAllowed ? '可能' : '不可'}
+            {room.danceAllowed ? UI_TEXT.DANCE_ALLOWED : UI_TEXT.DANCE_NOT_ALLOWED}
           </span>
         </div>
         
