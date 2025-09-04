@@ -1,56 +1,49 @@
-import { apiClient } from './api-client';
 import { Room, CreateRoomRequest, UpdateRoomRequest, RoomListResponse } from '../types';
 import { mapVenueToRoom, mapRoomToVenue } from '../mappers';
 import { API_ENDPOINTS } from '../constants';
+import { fetchApi } from '../../../lib/api';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export class RoomService {
   private readonly basePath = API_ENDPOINTS.VENUES;
 
   async getRooms(): Promise<Room[]> {
-    try {
-      const response = await apiClient.get<any>(this.basePath);
-      
-      // レスポンスのログ出力（デバッグ用）
-      console.log('API Response:', response);
-      
-      // レスポンスが配列の場合
-      if (Array.isArray(response)) {
-        return response.map(mapVenueToRoom);
-      }
-      
-      // レスポンスがオブジェクトでvenuesプロパティを持つ場合
-      if (response && response.venues && Array.isArray(response.venues)) {
-        return response.venues.map(mapVenueToRoom);
-      }
-      
-      // それ以外の場合は空配列を返す
-      console.warn('Unexpected API response format:', response);
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch rooms:', error);
-      return [];
-    }
+    const response = await fetchApi(`${API_BASE_URL}${this.basePath}`);
+    const venues = await response.json();
+    return venues.map(mapVenueToRoom);
   }
 
   async getRoom(id: string): Promise<Room> {
-    const venue = await apiClient.get<any>(`${this.basePath}/${id}`);
+    const response = await fetchApi(`${API_BASE_URL}${this.basePath}/${id}`);
+    const venue = await response.json();
     return mapVenueToRoom(venue);
   }
 
   async createRoom(data: CreateRoomRequest): Promise<Room> {
     const venueData = mapRoomToVenue(data);
-    const venue = await apiClient.post<any>(this.basePath, venueData);
+    const response = await fetchApi(`${API_BASE_URL}${this.basePath}`, {
+      method: 'POST',
+      body: JSON.stringify(venueData),
+    });
+    const venue = await response.json();
     return mapVenueToRoom(venue);
   }
 
   async updateRoom(id: string, data: UpdateRoomRequest): Promise<Room> {
     const venueData = mapRoomToVenue(data);
-    const venue = await apiClient.patch<any>(`${this.basePath}${id}/`, venueData);
+    const response = await fetchApi(`${API_BASE_URL}${this.basePath}/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(venueData),
+    });
+    const venue = await response.json();
     return mapVenueToRoom(venue);
   }
 
   async deleteRoom(id: string): Promise<void> {
-    return apiClient.delete<void>(`${this.basePath}/${id}`);
+    await fetchApi(`${API_BASE_URL}${this.basePath}/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

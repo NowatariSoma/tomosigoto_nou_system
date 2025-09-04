@@ -66,26 +66,6 @@ async def create_venue(
     return VenueResponse(**created_venue)
 
 
-@router.put("/{venue_id}", response_model=VenueResponse)
-async def update_venue(
-    venue_id: UUID,
-    venue_data: VenueUpdate,
-    venue_service: VenueService = Depends(get_venue_service),
-):
-    """
-    指定した会場情報を更新
-
-    Args:
-        venue_id: 会場を指定するuuid
-        venue_data: 更新後の会場情報
-        venue_service: supabaseサービス
-
-    Returns
-        スキーマを通して辞書型とした会場情報
-    """
-    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict())
-    return VenueResponse(**updated_venue)
-
 
 @router.patch("/{venue_id}", response_model=VenueResponse)
 async def patch_venue(
