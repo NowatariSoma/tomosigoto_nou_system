@@ -19,16 +19,15 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
-    const isDev = process.env.NODE_ENV === 'development';
     return [
       {
-        source: '/api/db/:path*',
-        destination: isDev 
-          ? 'http://localhost:8001/:path*'
-          : 'http://auth:8000/:path*',
+        source: '/api/:path*',
+        destination: 'http://localhost:8000/api/:path*',
       },
     ];
   },
+  // Skip trailing slash redirect for API routes
+  skipTrailingSlashRedirect: true,
 };
 
 module.exports = nextConfig;
