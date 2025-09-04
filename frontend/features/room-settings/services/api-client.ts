@@ -1,10 +1,6 @@
-const API_BASE_URL = '';
+import { ApiError } from '../types';
 
-interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
-}
+const API_BASE_URL = '';
 
 export class ApiClient {
   private baseURL: string;
