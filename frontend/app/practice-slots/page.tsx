@@ -7,7 +7,7 @@ import { PracticeSlotsPage } from '@/features/practice-slots/components/practice
 export default function Page() {
   return (
     <AppTemplate
-      title="練習表ページ"
+      title="練習表ページテスト"
       description="日毎の練習表を作成するページ"
       icon={<Brain className="h-8 w-8 text-blue-600" />}
       developmentBadge={{
