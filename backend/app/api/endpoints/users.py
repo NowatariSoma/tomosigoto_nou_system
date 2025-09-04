@@ -37,6 +37,17 @@ async def get_current_user_info(
     return current_user
 
 
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register_user(
+    user_data: UserCreate,
+    user_service: UserService = Depends(get_user_service),
+):
+    """
+    新規ユーザー登録（認証不要）
+    """
+    return await user_service.create_user(user_data.dict())
+
+
 @router.post("/", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
@@ -44,7 +55,7 @@ async def create_user(
     user_service: UserService = Depends(get_user_service),
 ):
     """
-    新しいユーザーを作成
+    新しいユーザーを作成（管理者用・認証必要）
     """
     return await user_service.create_user(user_data.dict())
 
