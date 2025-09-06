@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Room } from '../types/room';
+import { Room } from '../types';
+import { INITIAL_ROOM_FORM } from '../constants';
 
 interface RoomModalProps {
   room: Room | null;
@@ -10,15 +11,7 @@ interface RoomModalProps {
 }
 
 export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState<Room>({
-    id: '',
-    name: '',
-    campus: '京田辺',
-    capacity: 0,
-    danceAllowed: false,
-    description: '',
-    location: ''
-  });
+  const [formData, setFormData] = useState<Room>(INITIAL_ROOM_FORM);
 
   useEffect(() => {
     if (room) {
