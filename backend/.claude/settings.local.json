@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/nowatari/repos/tomosigoto/tomosigoto_nou_system/supabase/seeds/**)",
+      "Bash(docker logs:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
