@@ -20,8 +20,8 @@ if not url or not key:
 supabase: Client = create_client(url, key)
 
 # テストユーザーでサインイン（.env.testから読み込み）
-test_email = os.getenv("TEST_USER_EMAIL", "test@example.com")
-test_password = os.getenv("TEST_USER_PASSWORD", "Test123456!")
+test_email = os.getenv("TEST_USER_EMAIL", "testlogin@example.com")
+test_password = os.getenv("TEST_USER_PASSWORD", "testpass123")
 
 print(f"テストユーザー {test_email} でサインインを試みます...")
 

@@ -108,9 +108,9 @@ async def create_attendance(
         作成された出欠記録
     """
     # 作成者と更新者を設定
-    attendance_dict = attendance_data.dict()
-    attendance_dict["created_by"] = current_user["id"]
-    attendance_dict["updated_by"] = current_user["id"]
+    attendance_dict = attendance_data.model_dump()
+    attendance_dict["created_by"] = str(current_user["id"])
+    attendance_dict["updated_by"] = str(current_user["id"])
     
     created_attendance = await attendance_service.create_attendance(attendance_dict)
     return AttendanceResponse(**created_attendance)
@@ -136,8 +136,8 @@ async def update_attendance(
         更新された出欠記録
     """
     # 更新者を設定
-    attendance_dict = attendance_data.dict(exclude_unset=True)
-    attendance_dict["updated_by"] = current_user["id"]
+    attendance_dict = attendance_data.model_dump(exclude_unset=True)
+    attendance_dict["updated_by"] = str(current_user["id"])
     
     updated_attendance = await attendance_service.update_attendance(attendance_id, attendance_dict)
     return AttendanceResponse(**updated_attendance)
@@ -161,9 +161,9 @@ async def upsert_attendance(
         作成または更新された出欠記録
     """
     # 作成者と更新者を設定
-    attendance_dict = attendance_data.dict()
-    attendance_dict["created_by"] = current_user["id"]
-    attendance_dict["updated_by"] = current_user["id"]
+    attendance_dict = attendance_data.model_dump()
+    attendance_dict["created_by"] = str(current_user["id"])
+    attendance_dict["updated_by"] = str(current_user["id"])
     
     upserted_attendance = await attendance_service.upsert_attendance(attendance_dict)
     return AttendanceResponse(**upserted_attendance)
@@ -244,9 +244,9 @@ async def bulk_update_attendances(
     # 各記録に作成者と更新者を設定
     attendance_dicts = []
     for attendance in attendances:
-        attendance_dict = attendance.dict()
-        attendance_dict["created_by"] = current_user["id"]
-        attendance_dict["updated_by"] = current_user["id"]
+        attendance_dict = attendance.model_dump()
+        attendance_dict["created_by"] = str(current_user["id"])
+        attendance_dict["updated_by"] = str(current_user["id"])
         attendance_dicts.append(attendance_dict)
     
     updated_attendances = await attendance_service.bulk_update_attendances(

@@ -1,4 +1,4 @@
-from app.api.endpoints import users, venues, attendance
+from app.api.endpoints import users, venues, attendance, auth
 from fastapi import APIRouter
 
 api_router = APIRouter()
