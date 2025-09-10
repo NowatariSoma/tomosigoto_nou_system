@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from enum import Enum
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -11,6 +12,18 @@ class AttendanceRepository:
     def __init__(self, client: Client):
         self.client = client
         self.table_name = "practice_user_attendance"
+    
+    def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """UUID型とEnum型を文字列に変換"""
+        serialized_data = {}
+        for key, value in data.items():
+            if isinstance(value, UUID):
+                serialized_data[key] = str(value)
+            elif isinstance(value, Enum):
+                serialized_data[key] = value.value
+            else:
+                serialized_data[key] = value
+        return serialized_data
 
     @handle_supabase_errors("find_all")
     async def find_all(self) -> List[Dict[str, Any]]:
@@ -63,15 +76,19 @@ class AttendanceRepository:
     @handle_supabase_errors("create")
     async def create(self, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
         """出欠記録を作成"""
-        response = self.client.table(self.table_name).insert(attendance_data).execute()
+        # UUID型を文字列に変換
+        serialized_data = self._serialize_uuid_fields(attendance_data)
+        response = self.client.table(self.table_name).insert(serialized_data).execute()
         return response.data[0]
 
     @handle_supabase_errors("update")
     async def update(self, attendance_id: UUID, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
         """出欠記録を更新"""
+        # UUID型を文字列に変換
+        serialized_data = self._serialize_uuid_fields(attendance_data)
         response = (
             self.client.table(self.table_name)
-            .update(attendance_data)
+            .update(serialized_data)
             .eq("id", attendance_id)
             .execute()
         )
@@ -80,11 +97,28 @@ class AttendanceRepository:
     @handle_supabase_errors("upsert")
     async def upsert(self, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
         """出欠記録を作成または更新（practice_schedule_id + user_idの組み合わせで）"""
-        response = (
-            self.client.table(self.table_name)
-            .upsert(attendance_data, on_conflict="practice_schedule_id,user_id")
-            .execute()
+        # UUID型を文字列に変換
+        serialized_data = self._serialize_uuid_fields(attendance_data)
+        
+        # 既存の記録を確認
+        existing = await self.find_by_practice_and_user(
+            serialized_data["practice_schedule_id"], 
+            serialized_data["user_id"]
         )
+        
+        if existing:
+            # 更新
+            response = (
+                self.client.table(self.table_name)
+                .update(serialized_data)
+                .eq("practice_schedule_id", serialized_data["practice_schedule_id"])
+                .eq("user_id", serialized_data["user_id"])
+                .execute()
+            )
+        else:
+            # 作成
+            response = self.client.table(self.table_name).insert(serialized_data).execute()
+        
         return response.data[0]
 
     @handle_supabase_errors("delete")
