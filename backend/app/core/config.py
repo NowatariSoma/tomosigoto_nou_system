@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Tomosigoto API"
     
+    # MLエンジン設定
+    ML_ENGINE_URL: str = "http://ml-engine:8001"
+    
     # CORS設定
     BACKEND_CORS_ORIGINS: List[str] = []
     
