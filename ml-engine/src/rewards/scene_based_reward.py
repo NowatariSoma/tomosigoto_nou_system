@@ -200,16 +200,45 @@ class SceneBasedReward:
             # 人ごとの同時間帯参加数
             scenes_per_person = np.sum(ppl_scene[:, scenes_assigned], axis=1)
             overlaps = np.maximum(0, scenes_per_person - 1)
-            # 小さな係数（設定から取得、なければデフォルト）
-            factor = float(self.reward_config.get('person_constraints', {}).get('small_overlap_factor', 0.05)) * scale_P
-            return -factor * float(np.sum(overlaps))
+            
+            # 指数関数的ペナルティを適用
+            total_penalty = 0.0
+            for person_idx in range(len(scenes_per_person)):
+                if overlaps[person_idx] > 0:
+                    # 重複している場面のインデックスを取得
+                    conflicting_scenes = np.where(ppl_scene[person_idx, scenes_assigned])[0]
+                    if len(conflicting_scenes) > 1:  # 重複がある場合
+                        penalty = self._calculate_priority_weighted_penalty(person_idx, conflicting_scenes)
+                        total_penalty += penalty
+            
+            return total_penalty
         except Exception:
             return 0.0
     
-    # 最適化: 不要な優先度重み付きペナルティ計算を削除
-    # def _calculate_priority_weighted_penalty(self, person_idx, conflicting_scenes):
-    #     """優先度重み付きペナルティの計算（最適化により削除）"""
-    #     pass
+    def _calculate_priority_weighted_penalty(self, person_idx, conflicting_scenes):
+        """人の優先度に基づく指数関数的ペナルティ計算"""
+        if self.people_scene_priorities is None:
+            return 0.0
+        
+        try:
+            # 人の優先度を取得（0-1範囲に正規化済み）
+            person_priorities = self.people_scene_priorities[person_idx, conflicting_scenes]
+            
+            # 0-1範囲を1-5に戻す
+            priority_values = person_priorities * 4.0 + 1.0  # 0-1 -> 1-5
+            
+            # 指数関数的な重み付け（優先度が高いほど指数関数的に重いペナルティ）
+            # 優先度5の場合: exp(5) ≈ 148.4
+            # 優先度1の場合: exp(1) ≈ 2.7
+            exponential_weights = np.exp(priority_values)
+            
+            # 重複数 × 指数関数的重みでペナルティ計算
+            # 係数は調整可能（指数関数的なので小さめに設定）
+            penalty = np.sum(exponential_weights) * 0.01  # 係数を小さく調整
+            
+            return -penalty
+        except Exception:
+            return 0.0
 
     def calculate_terminal_penalty(self, schedule):
         """エピソード終了時の人物重複ペナルティ（完全最適化版）"""
@@ -232,12 +261,21 @@ class SceneBasedReward:
         # shape: (times, people) - 各時間帯・人物の参加場面数
         scenes_per_person = np.sum(participation_expanded * scenes_assigned[:, np.newaxis, :], axis=2)
         
-        # 重複がある人物（2場所以上に参加）のペナルティを一括計算
-        # shape: (times, people) - 各時間帯・人物の重複ペナルティ
-        conflicts_per_person = np.maximum(0, scenes_per_person - 1)
+        # 指数関数的ペナルティを適用
+        total_penalty = 0.0
         
-        # 全時間帯・全人物の重複ペナルティを合計
-        total_conflicts = np.sum(conflicts_per_person)
+        # 各時間帯・各人物について重複ペナルティを計算
+        for time_idx in range(times):
+            for person_idx in range(participation_expanded.shape[1]):
+                person_scenes = scenes_per_person[time_idx, person_idx]
+                if person_scenes > 1:  # 重複がある場合
+                    # その人物が参加している場面のインデックスを取得
+                    participating_scenes = np.where(
+                        participation_expanded[time_idx, person_idx] & scenes_assigned[time_idx]
+                    )[0]
+                    if len(participating_scenes) > 1:
+                        penalty = self._calculate_priority_weighted_penalty(person_idx, participating_scenes)
+                        total_penalty += penalty
         
         # スケール（max/actual people）
         scale_P = 1.0
@@ -248,7 +286,9 @@ class SceneBasedReward:
                 scale_P = float(Pmax) / float(P)
         except Exception:
             pass
-        total_penalty = total_conflicts * (float(self.person_constraints['person_conflict']) * scale_P)
+        
+        # スケールを適用
+        total_penalty *= scale_P
 
         return total_penalty * float(self.person_constraints.get('terminal_multiplier', 5.0))
     

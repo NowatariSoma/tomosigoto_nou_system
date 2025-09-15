@@ -176,22 +176,23 @@ class PracticeScheduleEnv(gym.Env):
             # 参加場面と優先度を設定
             for scene_idx in participating_scenes:
                 self.people_scene_participation[person_idx, scene_idx] = 1
-                # 最適化: 優先度は削除
-                # if self.priority_discrete:
-                #     # 最適化: 離散1..5からランダムに選択（軽量）
-                #     priority = random.randint(1, 5)
-                #     # 範囲チェック: 観測空間の範囲内か確認
-                #     if priority > 1.0:  # 観測空間が0.0-1.0の場合
-                #         print(f"[WARNING] 優先度範囲外: {priority} > 1.0")
-                #         priority = 1.0  # 範囲内に制限
-                #     self.people_scene_priorities[person_idx, scene_idx] = float(priority)
-                # else:
-                #     # 最適化: 連続優先度をランダム生成（軽量）
-                #     priority = random.uniform(
-                #         self.priority_range['min'],
-                #         self.priority_range['max']
-                #     )
-                #     self.people_scene_priorities[person_idx, scene_idx] = priority
+                # 人の優先度を生成（離散1-5）
+                if self.priority_discrete:
+                    # 離散1..5からランダムに選択
+                    priority = random.randint(
+                        self.priority_range['min'], 
+                        self.priority_range['max']
+                    )
+                    # 観測空間用に0-1範囲に正規化
+                    normalized_priority = (priority - 1) / 4.0  # 1-5 -> 0-1
+                    self.people_scene_priorities[person_idx, scene_idx] = normalized_priority
+                else:
+                    # 連続優先度をランダム生成
+                    priority = random.uniform(
+                        self.priority_range['min'],
+                        self.priority_range['max']
+                    )
+                    self.people_scene_priorities[person_idx, scene_idx] = priority
 
         # 監督者を割合で付与
         try:
@@ -208,15 +209,14 @@ class PracticeScheduleEnv(gym.Env):
         self._prepare_supervisor_structures()
     
     def _create_enhanced_observation_space(self):
-        """拡張された観測空間の作成（最適化版）"""
-        # 最適化: 不要な観測項目を削除して軽量化
+        """拡張された観測空間の作成（人の優先度対応版）"""
         return spaces.Dict({
             'schedule': spaces.MultiBinary((self.max_timeslots, self.max_scenes, self.max_rooms)),
             'scene_status': spaces.MultiBinary(self.max_scenes),
-            # 人物情報を追加（連続優先度0.0-1.0に戻す）
+            # 人物参加情報
             'people_scene_participation': spaces.MultiBinary((self.max_people, self.max_scenes)),
-            # 最適化: people_scene_prioritiesを削除（1,200次元削減）
-            # 'people_scene_priorities': spaces.Box(low=0.0, high=1.0, shape=(self.max_people, self.max_scenes), dtype=np.float32)
+            # 人の優先度情報（0-1範囲に正規化済み）
+            'people_scene_priorities': spaces.Box(low=0.0, high=1.0, shape=(self.max_people, self.max_scenes), dtype=np.float32)
         })
     
 
@@ -227,21 +227,17 @@ class PracticeScheduleEnv(gym.Env):
         """パート情報の初期化（動的場面システム対応）"""
         # 動的に生成された場面情報を使用
         part_names = []
-        part_priorities = []
         
-        # 実際に選択された場面から名前と優先度を取得
+        # 実際に選択された場面から名前を取得（優先度は削除）
         for i, scene in enumerate(self.scenes[:self.num_scenes]):
             part_names.append(scene['name'])
-            part_priorities.append(scene.get('priority', 3) / 5.0)  # 0-1範囲に正規化
         
-        # 最大場面数まで拡張（報酬関数の互換性のため）
+        # 最大場面数まで拡張
         while len(part_names) < self.max_scenes:
             part_names.append(f'Scene{len(part_names)}')
-            part_priorities.append(0.5)  # デフォルト優先度
         
         return {
-            'part_names': part_names,
-            'part_priorities': part_priorities
+            'part_names': part_names
         }
     
 
