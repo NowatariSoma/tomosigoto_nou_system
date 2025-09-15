@@ -94,7 +94,6 @@ erDiagram
         text description
         varchar schedule_type
         varchar status
-        uuid selected_venue_id FK
         timestamp created_at
         timestamp updated_at
         uuid created_by FK
@@ -119,7 +118,7 @@ erDiagram
         varchar title
         time start_time
         time end_time
-        varchar location_in_venue
+        uuid schedule_available_venues FK
         int priority
         timestamp created_at
         timestamp updated_at
@@ -133,12 +132,11 @@ erDiagram
         timestamp updated_at
     }
 
-    %% 新規：ユーザー出欠（auth.usersにひも付く）
     practice_user_attendance {
         uuid id PK
         uuid practice_schedule_id FK
         uuid user_id FK
-        text status  %% present / absent / late / no_show
+        text status
         text notes
         timestamptz created_at
         timestamptz updated_at
@@ -146,40 +144,20 @@ erDiagram
         uuid updated_by FK
     }
 
-    %% 図示用の最小テーブル（実DBは既存想定）
-    venues {
-        uuid id PK
-        varchar name
-    }
-
-    parts {
-        uuid id PK
-        varchar name
-    }
-
-    %% Mermaid上の表現用エイリアス（実DBは auth.users）
-    auth_users {
-        uuid id PK
-    }
-
     %% -------------------------
     %% Relations
     %% -------------------------
-    venues ||--o{ schedule_available_venues : "candidate"
     practice_schedules ||--o{ schedule_available_venues : "has"
-
     practice_schedules ||--o{ sessions : "contains"
-    parts ||--o{ sessions : "assigned to"
-
-    sessions ||--o{ session_instructors : "taught by"
-    auth_users ||--o{ session_instructors : "instructor"
-
-    %% 新規出欠：スケジュール×ユーザー
     practice_schedules ||--o{ practice_user_attendance : "attendance"
-    auth_users ||--o{ practice_user_attendance : "user"
 
-    %% ※削除：session_attendances / member_assignments は廃止
+    schedule_available_venues }o--|| venues : "candidate"
+    sessions }o--|| schedule_available_venues : "uses"
+    sessions }o--|| parts : "assigned to"
+    sessions ||--o{ session_instructors : "taught by"
 
+    practice_user_attendance ||--o{ session_instructors : "if instructor"
+    practice_user_attendance }o--|| users : "user"
 ```
 
 ### 会場利用可能性管理の設計方針
