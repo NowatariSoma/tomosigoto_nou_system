@@ -1,111 +1,103 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_venue_service
-from app.schemas.parts import PartBase, PartCreate, PartResponse, PartUpdate
-from app.services.venue_service import VenueService
+from app.api.deps import get_current_user, get_part_service
+from app.schemas.part import PartBase, PartCreate, PartResponse, PartUpdate
+from app.services.part_service import PartService
 from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[VenueResponse])
-async def get_venues(
+@router.get("/", response_model=List[PartResponse])
+async def get_parts(
     current_user: Dict[str, Any] = Depends(get_current_user),
-    venue_service: VenueService = Depends(get_venue_service),
+    part_service: PartService = Depends(get_part_service),
 ):
     """
-    会場の全情報を取得
+    パートの全情報を取得
 
     Args:
         get_current_user:
-        venue_service: supabaseサービス
+        part_service: supabaseサービス
 
     Returns:
-        listですべての会場情報
+        listですべてのパート情報
     """
-    all_venue_data = await venue_service.get_all_venues()
-    return all_venue_data
+    all_part_data = await part_service.get_all_parts()
+    return all_part_data
 
 
-@router.get("/{venue_id}", response_model=VenueResponse)
-async def get_venue(
-    venue_id: UUID,
+@router.get("/{part_id}", response_model=PartResponse)
+async def get_part(
+    part_id: UUID,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    venue_service: VenueService = Depends(get_venue_service),
+    part_service: PartService = Depends(get_part_service),
 ):
     """
-    指定した会場情報を取得
+    指定したパート情報を取得
 
     Args:
-        venue_id: 会場を指定するuuid
-        venue_service: supabaseサービス
+        part_id: パートを指定するuuid
+        part_service: supabaseサービス
 
     Returns
-        スキーマを通して辞書型とした会場情報
+        スキーマを通して辞書型としたパート情報
     """
 
-    venue_data = await venue_service.get_venue(venue_id)
-    return VenueResponse(**venue_data)
+    part_data = await part_service.get_part(part_id)
+    return PartResponse(**part_data)
 
 
-@router.post("/", response_model=VenueResponse)
-async def create_venue(
-    venue_data: VenueCreate,
+@router.post("/", response_model=PartResponse)
+async def create_part(
+    part_data: PartCreate,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    venue_service: VenueService = Depends(get_venue_service),
+    part_service: PartService = Depends(get_part_service),
 ):
     """
-    新しく会場情報を生成
+    新しくパート情報を作成
+    """
+    created_part = await part_service.create_part(part_data.dict())
+    return PartResponse(**created_part)
+
+
+@router.put("/{part_id}", response_model=PartResponse)
+async def update_part(
+    part_id: UUID,
+    part_data: PartUpdate,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    part_service: PartService = Depends(get_part_service),
+):
+    """
+    指定したパート情報を更新
 
     Args:
-        venue_data: 生成する会場情報
-        venue_service: supabaseサービス
+        part_id: パートを指定するuuid
+        part_data: 更新後のパート情報
+        part_service: supabaseサービス
 
     Returns
-        スキーマを通して辞書型とした会場情報
+        スキーマを通して辞書型としたパート情報
     """
-    created_venue = await venue_service.create_venue(venue_data.dict())
-    return VenueResponse(**created_venue)
+    updated_part = await part_service.update_part(part_id, part_data.dict())
+    return PartResponse(**updated_part)
 
 
-@router.put("/{venue_id}", response_model=VenueResponse)
-async def update_venue(
-    venue_id: UUID,
-    venue_data: VenueUpdate,
+@router.delete("/{part_id}")
+async def delete_part(
+    part_id: UUID,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    venue_service: VenueService = Depends(get_venue_service),
+    part_service: PartService = Depends(get_part_service),
 ):
     """
-    指定した会場情報を更新
+    指定したパート情報を削除
 
     Args:
-        venue_id: 会場を指定するuuid
-        venue_data: 更新後の会場情報
-        venue_service: supabaseサービス
-
-    Returns
-        スキーマを通して辞書型とした会場情報
-    """
-    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict())
-    return VenueResponse(**updated_venue)
-
-
-@router.delete("/{venue_id}")
-async def delete_venue(
-    venue_id: UUID,
-    # venue_name: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    venue_service: VenueService = Depends(get_venue_service),
-):
-    """
-    指定した会場情報を削除
-
-    Args:
-        venue_id: 会場を指定するuuid
-        venue_service: supabaseサービス
+        part_id: パートを指定するuuid
+        part_service: supabaseサービス
 
     Returns
         確認メッセージ
     """
-    await venue_service.remove_venue(venue_id)
+    await part_service.remove_part(part_id)
