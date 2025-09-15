@@ -83,6 +83,9 @@
 ### データベース構造図
 ```mermaid
 erDiagram
+    %% -------------------------
+    %% Core tables
+    %% -------------------------
     practice_schedules {
         uuid id PK
         date schedule_date
@@ -130,29 +133,53 @@ erDiagram
         timestamp updated_at
     }
 
-    session_attendances {
+    %% 新規：ユーザー出欠（auth.usersにひも付く）
+    practice_user_attendance {
         uuid id PK
-        uuid session_id FK
-        uuid member_assignment_id FK
-        varchar attendance_status
-        timestamp check_in_time
-        timestamp check_out_time
-        timestamp created_at
-        timestamp updated_at
+        uuid practice_schedule_id FK
+        uuid user_id FK
+        text status  %% present / absent / late / no_show
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+        uuid created_by FK
+        uuid updated_by FK
     }
 
-    %% リレーション
-    venues ||--o{ schedule_available_venues : "selected venue"
-    
-    practice_schedules ||--o{ schedule_available_venues : "has available venues"
+    %% 図示用の最小テーブル（実DBは既存想定）
+    venues {
+        uuid id PK
+        varchar name
+    }
+
+    parts {
+        uuid id PK
+        varchar name
+    }
+
+    %% Mermaid上の表現用エイリアス（実DBは auth.users）
+    auth_users {
+        uuid id PK
+    }
+
+    %% -------------------------
+    %% Relations
+    %% -------------------------
+    venues ||--o{ schedule_available_venues : "candidate"
+    practice_schedules ||--o{ schedule_available_venues : "has"
+
     practice_schedules ||--o{ sessions : "contains"
-    
+    parts ||--o{ sessions : "assigned to"
+
     sessions ||--o{ session_instructors : "taught by"
-    sessions ||--o{ session_attendances : "attended by members"
-    session_attendances ||--o{ session_instructors : "selected as instructor"
-    
-    parts ||--o{ sessions : "assigned to sessions"
-    member_assignments ||--o{ session_attendances : "attends"
+    auth_users ||--o{ session_instructors : "instructor"
+
+    %% 新規出欠：スケジュール×ユーザー
+    practice_schedules ||--o{ practice_user_attendance : "attendance"
+    auth_users ||--o{ practice_user_attendance : "user"
+
+    %% ※削除：session_attendances / member_assignments は廃止
+
 ```
 
 ### 会場利用可能性管理の設計方針
