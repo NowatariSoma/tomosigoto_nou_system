@@ -126,6 +126,14 @@ class PracticeScheduleRepository:
             logger.warning(f"Error fetching practice schedule for date {target_date}: {e}")
             return None
 
+    @handle_supabase_errors("find_by_dates")
+    async def find_by_dates(self, target_date: date) -> Optional[List[Dict[str, Any]]]:
+        """
+        日付で練習スケジュールを取得
+        """
+        response = self.client.table(self.table_name).select("*").eq("schedule_date", target_date.isoformat()).execute()
+        return response.data
+
     @handle_supabase_errors("find_with_sessions")
     async def find_with_sessions(self, schedule_id: str) -> Optional[Dict[str, Any]]:
         """

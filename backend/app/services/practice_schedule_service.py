@@ -102,6 +102,16 @@ class PracticeScheduleService:
             logger.error(f"Error retrieving practice schedule for date {target_date}: {str(e)}")
             raise e
 
+    async def get_practice_schedule_by_dates(self, target_date: date) -> Optional[List[Dict[str, Any]]]:
+        """
+        日付で練習スケジュールを取得
+        """
+        schedules = await self.repository.find_by_dates(target_date)
+        if not schedules:
+            raise ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND
+        return schedules
+
+
     async def get_practice_schedule_with_sessions(self, schedule_id: str) -> Dict[str, Any]:
         """
         練習スケジュールとセッションを一緒に取得

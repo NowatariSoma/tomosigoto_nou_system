@@ -75,6 +75,19 @@ async def get_practice_slot_by_date(
         logger.error(f"Error fetching practice slot for date {target_date}: {str(e)}")
         return create_error_response("Failed to fetch practice slot", e)
 
+@router.get("/dates/{target_date}", response_model=Dict[str, Any])
+async def get_practice_slot_by_dates(
+    target_date: date,
+    service: PracticeScheduleService = Depends(get_practice_slot_service),
+):
+    """日付で練習表を取得"""
+    try:
+        practice_schedule = await service.get_practice_schedule_by_dates(target_date)
+        return create_success_response(practice_schedule, "Practice schedule found")
+    except Exception as e:
+        logger.error(f"Error fetching practice slot for dates {target_date}: {str(e)}")
+        return create_error_response("Failed to fetch practice slot", e)
+
 
 @router.get("/{practice_slot_id}/with-items", response_model=Dict[str, Any])
 async def get_practice_slot_with_schedule_items(
