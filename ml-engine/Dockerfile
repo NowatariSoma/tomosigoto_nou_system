@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python依存関係のインストール
+# 非rootユーザーを作成
+RUN groupadd -r mluser && useradd -r -g mluser mluser
+
+# Python依存関係のインストール（rootユーザーで実行）
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -23,7 +26,11 @@ RUN mkdir -p models/scene_based_system/best \
     && mkdir -p outputs/assignments \
     && mkdir -p outputs/visualizations \
     && mkdir -p logs \
-    && mkdir -p result
+    && mkdir -p result \
+    && chown -R mluser:mluser /app
+
+# 非rootユーザーに切り替え
+USER mluser
 
 # ポート8001を公開
 EXPOSE 8001
