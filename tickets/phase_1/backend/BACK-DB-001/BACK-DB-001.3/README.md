@@ -83,6 +83,9 @@
 ### データベース構造図
 ```mermaid
 erDiagram
+    %% -------------------------
+    %% Core tables
+    %% -------------------------
     practice_schedules {
         uuid id PK
         date schedule_date
@@ -91,7 +94,6 @@ erDiagram
         text description
         varchar schedule_type
         varchar status
-        uuid selected_venue_id FK
         timestamp created_at
         timestamp updated_at
         uuid created_by FK
@@ -116,7 +118,7 @@ erDiagram
         varchar title
         time start_time
         time end_time
-        varchar location_in_venue
+        uuid schedule_available_venues FK
         int priority
         timestamp created_at
         timestamp updated_at
@@ -130,29 +132,32 @@ erDiagram
         timestamp updated_at
     }
 
-    session_attendances {
+    practice_user_attendance {
         uuid id PK
-        uuid session_id FK
-        uuid member_assignment_id FK
-        varchar attendance_status
-        timestamp check_in_time
-        timestamp check_out_time
-        timestamp created_at
-        timestamp updated_at
+        uuid practice_schedule_id FK
+        uuid user_id FK
+        text status
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+        uuid created_by FK
+        uuid updated_by FK
     }
 
-    %% リレーション
-    venues ||--o{ schedule_available_venues : "selected venue"
-    
-    practice_schedules ||--o{ schedule_available_venues : "has available venues"
+    %% -------------------------
+    %% Relations
+    %% -------------------------
+    practice_schedules ||--o{ schedule_available_venues : "has"
     practice_schedules ||--o{ sessions : "contains"
-    
+    practice_schedules ||--o{ practice_user_attendance : "attendance"
+
+    schedule_available_venues }o--|| venues : "candidate"
+    sessions }o--|| schedule_available_venues : "uses"
+    sessions }o--|| parts : "assigned to"
     sessions ||--o{ session_instructors : "taught by"
-    sessions ||--o{ session_attendances : "attended by members"
-    session_attendances ||--o{ session_instructors : "selected as instructor"
-    
-    parts ||--o{ sessions : "assigned to sessions"
-    member_assignments ||--o{ session_attendances : "attends"
+
+    practice_user_attendance ||--o{ session_instructors : "if instructor"
+    practice_user_attendance }o--|| users : "user"
 ```
 
 ### 会場利用可能性管理の設計方針
