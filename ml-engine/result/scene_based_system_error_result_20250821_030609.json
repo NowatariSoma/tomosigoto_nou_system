@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": "[Errno 32] Broken pipe",
+  "training_time": "2025-08-21T03:06:09.322474",
+  "metadata": {
+    "config_name": "scene_based_system",
+    "training_duration": "0:00:00.104777",
+    "start_time": "2025-08-21T03:06:09.217720",
+    "end_time": "2025-08-21T03:06:09.322505"
+  }
+}

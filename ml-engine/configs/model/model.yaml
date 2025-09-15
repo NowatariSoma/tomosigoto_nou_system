@@ -1,0 +1,38 @@
+# 能の練習表作成システム モデル設定
+# 追加学習
+#resume_from_model: "models/base_model/base_model10000000.zip"
+reset_num_timesteps: true
+tb_log_name: "ppo_20M_run"
+
+# 再現性のためのシード設定
+seed: 42                     # 固定シード値（再現性確保）
+
+# 基本設定
+policy: "MultiInputPolicy"
+learning_rate: 0.0003                  # SB3既定の学習率
+total_timesteps: 20000000       
+n_steps: 512       
+batch_size: 2048  
+n_epochs: 6 
+n_envs: 32
+device: "cuda"
+#device: "cpu"                 # CPUを明示的に指定
+
+# PPO設定
+gamma: 0.99
+gae_lambda: 0.95
+clip_range: 0.2
+ent_coef: 0.01
+vf_coef: 0.5
+target_kl: 0.1                  # KL早期停止をやや緩和
+
+# 保存・評価設定
+save_freq: 250000                      # 25万ステップ毎に保存
+eval_freq: 250000                      # 25万ステップ毎に評価
+n_eval_episodes: 5                    # 評価エピソード数
+
+# ネットワーク構造（問題の複雑さに適合）
+policy_kwargs:
+  net_arch:
+    pi: [256, 128]            # 適切なサイズのポリシーネットワーク
+    vf: [256, 128]            # 適切なサイズの価値関数ネットワーク
