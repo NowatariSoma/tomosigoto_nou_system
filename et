@@ -1,0 +1,15 @@
+* [33mdc67d6e7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Update README.md
+* [33m4eefafe4[m Update README.md
+[31m|[m * [33med8bdd0b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbackend-ai-takuya[m[33m, [m[1;31morigin/backend-ai-takuya[m[33m)[m [FIX]どっかー立ち上げ権限修正
+[31m|[m * [33m01d7cc55[m [FIX]rootユーザーでドッカーをビルドするのを修正
+[31m|[m * [33me7b9d456[m [FEAT]どっかーファイルとgit ignoreを追加
+[31m|[m * [33mac6431a9[m [FEAT]機械学習を初期結合
+[31m|[m[31m/[m  
+*   [33ma5580d9b[m Merge pull request #71 from NowatariSoma/backend-attendance-takuya
+[33m|[m[34m\[m  
+[33m|[m * [33m7750e8c3[m[33m ([m[1;31morigin/backend-attendance-takuya[m[33m)[m [FEAT] 出欠管理バックエンドのテスト完了
+[33m|[m *   [33m2208d0ed[m Merge branch 'main' into backend-attendance-takuya
+[33m|[m [35m|[m[33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+* [35m|[m [33ma47f834d[m[33m ([m[1;32mmain[m[33m)[m [FEAT] バックエンドのエンドポイントに合わせてフロントエンド修正
