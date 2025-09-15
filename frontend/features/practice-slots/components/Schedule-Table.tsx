@@ -86,9 +86,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   {formatCellContent(item.activity)}
                 </td>
                 {groups.map((group, colIndex) => {
+                  if (!group.id) return null;
+
                   const cellContent = getCellContent(item.time, group.id);
                   const assignment = getAssignmentForCell(item.time, group.id);
-                  
+
                   return (
                     <td
                       key={group.id}
@@ -97,7 +99,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                         "cursor-pointer hover:bg-blue-50 transition-colors",
                         assignment && "bg-blue-50"
                       )}
-                      onClick={() => onCellClick?.(item.time, group.id, group.display_name, group.color)}
+                      onClick={() => onCellClick?.(item.time, group.id!, group.display_name, group.color)}
                     >
                       {cellContent ? (
                         <div className="text-center">

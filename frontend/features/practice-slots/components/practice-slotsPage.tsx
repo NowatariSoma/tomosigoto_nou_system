@@ -7,104 +7,33 @@ import { DateButton } from '@/features/practice-slots/components/date-button';
 import { EditGroupsParts } from '@/features/practice-slots/components/EditGroupsParts';
 import { ScheduleAssignmentModal } from '@/features/practice-slots/components/ScheduleAssignmentModal';
 import { practiceSlotsAPI } from '@/lib/api/practice-slots';
-import { scheduleAssignmentsAPI } from '@/lib/api/schedule-assignments';
 import { PracticeSlot, ScheduleItem } from '@/features/practice-slots/types/schedule';
 import { ScheduleAssignmentWithDetails } from '@/features/practice-slots/types/schedule-assignments';
 import { Group } from '@/features/practice-slots/types/groups';
 import { Part } from '@/features/practice-slots/types/parts';
+import { usePracticeSlotIntegrated } from '../hooks';
 
-// 初期モックデータ
-const initialMockData: ScheduleItem[] = [
-  {
-    id: '1',
-    time: '19:00',
-    duration: '(5)',
-    activity: '集合・挨拶',
-    columns: ['', '', '', '', '']
-  },
-  {
-    id: '2',
-    time: '19:05',
-    duration: '(10)',
-    activity: '女子準備',
-    columns: ['', '男子準備', '', '', '']
-  },
-  {
-    id: '3',
-    time: '19:15',
-    duration: '(20)',
-    activity: '○○パート\n××パート\n△△パート',
-    columns: [
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート'
-    ]
-  },
-  {
-    id: '4',
-    time: '19:35',
-    duration: '(15)',
-    activity: '○○パート\n××パート\n△△パート',
-    columns: [
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート'
-    ]
-  },
-  {
-    id: '5',
-    time: '19:50',
-    duration: '(20)',
-    activity: '○○パート\n××パート\n△△パート',
-    columns: [
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート'
-    ]
-  },
-  {
-    id: '6',
-    time: '20:10',
-    duration: '(15)',
-    activity: '○○パート\n××パート\n△△パート',
-    columns: [
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート'
-    ]
-  },
-  {
-    id: '7',
-    time: '20:25',
-    duration: '(20)',
-    activity: '○○パート\n××パート\n△△パート',
-    columns: [
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート',
-      '○○パート\n××パート\n△△パート'
-    ]
-  },
-  {
-    id: '8',
-    time: '20:45',
-    duration: '',
-    activity: '集合・整上坊・挨拶',
-    columns: ['', '', '', '', '']
-  }
-];
 
 export const PracticeSlotsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date('2024-05-26')); // May 26, 2024
+  const [useNewAPI, setUseNewAPI] = useState(false);
+
+  // 新しいAPIのデータを管理
+  const {
+    practiceSlot: newApiPracticeSlot,
+    scheduleData: newApiScheduleData,
+    displaySchedule,
+    loading: newApiLoading,
+    error: newApiError,
+    fetchPracticeSlotByDate
+  } = usePracticeSlotIntegrated();
+
+  // 既存APIのデータを管理
   const [practiceSlot, setPracticeSlot] = useState<PracticeSlot | null>(null);
-  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>(initialMockData); // 初期データを設定
+  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 編集機能用の状態
   const [groups, setGroups] = useState<Group[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
@@ -121,77 +50,132 @@ export const PracticeSlotsPage: React.FC = () => {
     newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
     setCurrentDate(newDate);
   };
-  
+
   // グループとパートのデータを取得
   const fetchGroupsAndParts = async () => {
     try {
-      console.log('Fetching groups and parts...');
-      
-      // グループデータを取得
-      try {
-        const groupsResponse = await fetch('http://localhost:8000/api/v1/groups/', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      // practice-slotsエンドポイントからパート情報を抽出
+      if (useNewAPI && newApiScheduleData) {
+        // 新APIからパート情報を抽出
+        const uniqueParts = new Set<string>();
+        newApiScheduleData.forEach(item => {
+          if (item.activity) {
+            uniqueParts.add(item.activity);
+          }
         });
-        
-        console.log('Groups response status:', groupsResponse.status);
-        console.log('Groups response headers:', groupsResponse.headers);
-        
-        if (groupsResponse.ok) {
-          const groupsData = await groupsResponse.json();
-          console.log('Groups data:', groupsData);
-          setGroups(groupsData);
-        } else {
-          console.error('Groups response not ok:', groupsResponse.status, groupsResponse.statusText);
-          const errorText = await groupsResponse.text();
-          console.error('Groups error response:', errorText);
-        }
-      } catch (groupsErr) {
-        console.error('Error fetching groups:', groupsErr);
+
+        const partsFromSchedule = Array.from(uniqueParts).map((name, index) => ({
+          id: `part-${index}`,
+          name,
+          display_name: name,
+          description: name,
+          is_active: true,
+          sort_order: index,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        setParts(partsFromSchedule);
+      } else if (scheduleData) {
+        // 既存APIからパート情報を抽出
+        const uniqueParts = new Set<string>();
+        scheduleData.forEach(item => {
+          if (item.activity) {
+            uniqueParts.add(item.activity);
+          }
+        });
+
+        const partsFromSchedule = Array.from(uniqueParts).map((name, index) => ({
+          id: `part-${index}`,
+          name,
+          display_name: name,
+          description: name,
+          is_active: true,
+          sort_order: index,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        setParts(partsFromSchedule);
       }
 
-      // パートデータを取得
-      try {
-        const partsResponse = await fetch('http://localhost:8000/api/v1/parts/', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('Parts response status:', partsResponse.status);
-        console.log('Parts response headers:', partsResponse.headers);
-        
-        if (partsResponse.ok) {
-          const partsData = await partsResponse.json();
-          console.log('Parts data:', partsData);
-          setParts(partsData);
-        } else {
-          console.error('Parts response not ok:', partsResponse.status, partsResponse.statusText);
-          const errorText = await partsResponse.text();
-          console.error('Parts error response:', errorText);
-        }
-      } catch (partsErr) {
-        console.error('Error fetching parts:', partsErr);
+      // スケジュールデータからグループ情報を抽出（カラム数ベース）
+      if (useNewAPI && newApiScheduleData) {
+        const maxColumns = Math.max(...newApiScheduleData.map(item => item.columns?.length || 0));
+        const generatedGroups = Array.from({ length: maxColumns }, (_, index) => ({
+          id: `group-${index}`,
+          name: `グループ${index + 1}`,
+          display_name: `グループ${index + 1}`,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+          is_active: true,
+          sort_order: index,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+        setGroups(generatedGroups);
+      } else if (scheduleData) {
+        const maxColumns = Math.max(...scheduleData.map(item => item.columns?.length || 0));
+        const generatedGroups = Array.from({ length: maxColumns }, (_, index) => ({
+          id: `group-${index}`,
+          name: `グループ${index + 1}`,
+          display_name: `グループ${index + 1}`,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+          is_active: true,
+          sort_order: index,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+        setGroups(generatedGroups);
+      } else {
+        setGroups([]);
       }
     } catch (err) {
-      console.error('Error fetching groups and parts:', err);
+      console.error('Error extracting parts from practice-slots:', err);
+      setGroups([]);
+      setParts([]);
     }
   };
 
   // 割り当てデータを取得
   const fetchAssignments = async () => {
-    if (!practiceSlot?.id) return;
-    
     try {
-      const response = await scheduleAssignmentsAPI.getAssignmentsByPracticeSlot(practiceSlot.id);
-      if (response.success && response.data) {
-        setAssignments(response.data);
+      // practice-slotsエンドポイントから割り当て情報を抽出
+      if (useNewAPI && newApiScheduleData) {
+        // 新APIからセッション情報を基に割り当てデータを作成
+        const assignmentsFromSchedule: ScheduleAssignmentWithDetails[] = [];
+
+        newApiScheduleData.forEach(item => {
+          if (item.columns) {
+            item.columns.forEach((column, index) => {
+              if (column && column.trim() !== '') {
+                assignmentsFromSchedule.push({
+                  id: `assignment-${item.time}-${index}`,
+                  practice_slot_id: currentPracticeSlot?.id || '',
+                  time_slot: item.time,
+                  group_id: `group-${index}`,
+                  part_id: `part-${item.activity}`,
+                  notes: column,
+                  is_active: true,
+                  sort_order: index,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  group_name: `グループ${index + 1}`,
+                  group_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                  part_name: item.activity || ''
+                });
+              }
+            });
+          }
+        });
+
+        setAssignments(assignmentsFromSchedule);
+      } else {
+        // 現在practice-slotsに割り当て情報が含まれていないため空配列
+        setAssignments([]);
       }
     } catch (err) {
-      console.error('Error fetching assignments:', err);
+      console.error('Error extracting assignments from practice-slots:', err);
+      setAssignments([]);
     }
   };
 
@@ -201,14 +185,14 @@ export const PracticeSlotsPage: React.FC = () => {
     setSelectedGroupId(groupId);
     setSelectedGroupName(groupName);
     setSelectedGroupColor(groupColor);
-    
+
     // 既存の割り当てを確認（複数パート対応）
     const existingAssignments = assignments.filter(
-      assignment => 
-        assignment.time_slot === timeSlot && 
+      assignment =>
+        assignment.time_slot === timeSlot &&
         assignment.group_id === groupId
     );
-    
+
     setSelectedAssignment(existingAssignments);
     setIsModalOpen(true);
   };
@@ -217,80 +201,77 @@ export const PracticeSlotsPage: React.FC = () => {
   const handleModalSave = () => {
     fetchAssignments();
   };
+  
+
 
   const fetchPracticeSlot = async (date: Date) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // タイムゾーンの問題を回避するため、ローカル日付を直接使用
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`; // YYYY-MM-DD format
-      
-      console.log('Fetching practice slot for date:', dateString);
-      console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
-      
-      // 実際のAPIから練習表を取得
-      const response = await practiceSlotsAPI.getPracticeSlotByDate(dateString);
-      
-      if (response.success && response.data) {
-        setPracticeSlot(response.data);
-        setScheduleData(response.data.sessions || response.data.schedule_items || []);
-      } else {
-        // 練習表が見つからない場合はサンプルデータを作成
-        console.log('Practice slot not found, creating sample data...');
-        const sampleResponse = await practiceSlotsAPI.createPracticeSlotWithSampleData(dateString);
-        if (sampleResponse.success && sampleResponse.data) {
-          setPracticeSlot(sampleResponse.data);
-          setScheduleData(sampleResponse.data.sessions || sampleResponse.data.schedule_items || []);
+    // タイムゾーンの問題を回避するため、ローカル日付を直接使用
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`; // YYYY-MM-DD format
+
+    console.log('Fetching practice slot for date:', dateString, 'useNewAPI:', useNewAPI);
+
+    if (useNewAPI) {
+      // 新しいAPIを使用
+      await fetchPracticeSlotByDate(dateString);
+    } else {
+      // 既存のAPIを使用
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await practiceSlotsAPI.getPracticeSlotByDate(dateString);
+
+        if (response.success && response.data) {
+          setPracticeSlot(response.data);
+          setScheduleData(response.data.schedule_items || []);
         } else {
-          console.log('Failed to create sample data, using mock data');
-          // サンプルデータの作成に失敗した場合はモックデータを使用
+          setScheduleData([]);
           setPracticeSlot({
-            id: 'mock-id',
+            id: 'no-data',
             date: dateString,
             title: `${dateString}の練習表`,
-            description: 'モックデータ',
-            is_active: true
+            description: 'データなし',
+            is_active: false
           });
-          setScheduleData(initialMockData);
         }
+      } catch (err) {
+        console.error('Error fetching practice slot:', err);
+        setScheduleData([]);
+        setPracticeSlot(null);
+        setError(err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました');
+      } finally {
+        setLoading(false);
       }
-      
-      // グループとパートのデータを取得
-      await fetchGroupsAndParts();
-      
-      // 割り当てデータを取得
-      await fetchAssignments();
-      
-    } catch (err) {
-      console.error('Error fetching practice slot:', err);
-      console.log('Using mock data due to error');
-      // エラーが発生した場合はモックデータを使用
-      setPracticeSlot({
-        id: 'mock-id',
-        date: date.toISOString().split('T')[0],
-        title: `${date.toISOString().split('T')[0]}の練習表`,
-        description: 'モックデータ',
-        is_active: true
-      });
-      setScheduleData(initialMockData);
-    } finally {
-      setLoading(false);
     }
-  };
 
-  useEffect(() => {
-    fetchPracticeSlot(currentDate);
-  }, [currentDate]);
+  };
 
   const handleDateChange = (direction: 'prev' | 'next') => {
     navigateDate(direction);
   };
 
-  if (loading) {
+  // 適切なロード状態とエラー状態を選択
+  const currentLoading = useNewAPI ? newApiLoading : loading;
+  const currentError = useNewAPI ? newApiError : error;
+  const currentPracticeSlot = useNewAPI ? newApiPracticeSlot : practiceSlot;
+  const currentScheduleData = useNewAPI ? newApiScheduleData : scheduleData;
+
+  useEffect(() => {
+    fetchPracticeSlot(currentDate);
+  }, [currentDate, useNewAPI]);
+
+  // データが取得された後にグループとパート、割り当てデータを抽出
+  useEffect(() => {
+    if (currentScheduleData && currentScheduleData.length > 0) {
+      fetchGroupsAndParts();
+      fetchAssignments();
+    }
+  }, [currentScheduleData, useNewAPI]);
+
+  if (currentLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">読み込み中...</div>
@@ -298,25 +279,49 @@ export const PracticeSlotsPage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (currentError) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-600 text-lg">{error}</div>
+        <div className="text-red-600 text-lg">{currentError}</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* API切り替えボタン */}
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">
+            表示方式:
+          </label>
+          <button
+            onClick={() => setUseNewAPI(!useNewAPI)}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+              useNewAPI
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {useNewAPI ? '新API表示' : '既存表示'}
+          </button>
+          {displaySchedule && useNewAPI && (
+            <div className="text-sm text-gray-600">
+              {displaySchedule.description}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Date Navigation */}
-      <DateButton 
+      <DateButton
         currentDate={currentDate}
         onDateChange={handleDateChange}
       />
       
       {/* Schedule Table */}
-      <ScheduleTable 
-        scheduleData={scheduleData}
+      <ScheduleTable
+        scheduleData={currentScheduleData}
         groups={groups}
         assignments={assignments}
         onCellClick={handleCellClick}

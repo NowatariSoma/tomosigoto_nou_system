@@ -25,12 +25,6 @@ export interface PartUpdate {
   sort_order?: number;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-}
 
 
 

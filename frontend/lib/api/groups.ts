@@ -1,6 +1,13 @@
-import { Group, GroupCreate, GroupUpdate, ApiResponse } from '@/features/practice-slots/types/groups';
+import { Group, GroupCreate, GroupUpdate } from '@/features/practice-slots/types/groups';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = 'http://localhost:8000/api/v1/practice_slots';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
 
 export class GroupsAPI {
   private baseUrl: string;
