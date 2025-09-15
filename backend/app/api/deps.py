@@ -67,3 +67,7 @@ def get_venue_service(
     venue_repository: VenueRepository = Depends(get_venue_repository),
 ) -> VenueService:
     return VenueService(venue_repository, supabase_client.auth)
+
+
+# エイリアス
+get_supabase_client = get_supabase

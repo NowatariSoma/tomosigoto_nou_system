@@ -68,3 +68,69 @@ class ErrorMessage:
     class VALIDATION_ERROR(BaseMessage):
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         text = "入力値が正しくありません: {}"
+    
+    # 練習表関連
+    class PRACTICE_SLOT_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "練習表が見つかりません"
+    
+    class PRACTICE_SLOT_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "この日付の練習表は既に存在します"
+    
+    class SCHEDULE_ITEM_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "スケジュールアイテムが見つかりません"
+    
+    # グループ関連
+    class GROUP_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "グループが見つかりません"
+    
+    class GROUP_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "この名前のグループは既に存在します"
+    
+    # パート関連
+    class PART_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "パートが見つかりません"
+    
+    class PART_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "この名前のパートは既に存在します"
+    
+    # 練習スケジュール関連
+    class PRACTICE_SCHEDULE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "練習スケジュールが見つかりません"
+    
+    class PRACTICE_SCHEDULE_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "この日付の練習スケジュールは既に存在します"
+    
+    class PRACTICE_SCHEDULE_CREATION_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "練習スケジュールの作成に失敗しました"
+    
+    class PRACTICE_SCHEDULE_DELETION_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "練習スケジュールの削除に失敗しました"
+    
+    # セッション関連
+    class SESSION_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "セッションが見つかりません"
+    
+    class SESSION_CREATION_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "セッションの作成に失敗しました"
+    
+    class SESSION_DELETION_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "セッションの削除に失敗しました"
+    
+    # 共通エラー
+    class INVALID_UPDATE_DATA(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "有効な更新データが提供されていません"

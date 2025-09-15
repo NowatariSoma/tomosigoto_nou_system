@@ -20,7 +20,17 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Tomosigoto API"
     
     # CORS設定
-    BACKEND_CORS_ORIGINS: List[str] = []
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://localhost:3000/",
+        "http://localhost:3001/",
+        "http://127.0.0.1:3000/",
+        "http://127.0.0.1:3001/",
+        "*"  # 開発環境用：すべてのオリジンを許可
+    ]
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
