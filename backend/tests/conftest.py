@@ -173,3 +173,157 @@ def setup_test_env(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
     monkeypatch.setenv("SECRET_KEY", "test-secret-key")
+
+
+@pytest.fixture
+def sample_practice_schedule():
+    """Sample practice schedule data for testing"""
+    return {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "schedule_date": "2024-02-15",
+        "start_time": "09:00:00",
+        "end_time": "17:00:00",
+        "description": "練習セッション",
+        "schedule_type": "regular",
+        "status": "active",
+        "created_at": "2024-01-01T00:00:00.000Z",
+        "updated_at": "2024-01-01T00:00:00.000Z",
+        "created_by": "550e8400-e29b-41d4-a716-446655440002",
+        "updated_by": "550e8400-e29b-41d4-a716-446655440002"
+    }
+
+
+@pytest.fixture
+def sample_practice_schedules():
+    """Sample practice schedules list for testing"""
+    return [
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440001",
+            "schedule_date": "2024-02-15",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "description": "練習セッション1",
+            "schedule_type": "regular",
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "updated_at": "2024-01-01T00:00:00.000Z",
+            "created_by": "550e8400-e29b-41d4-a716-446655440003",
+            "updated_by": "550e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440002",
+            "schedule_date": "2024-02-16",
+            "start_time": "10:00:00",
+            "end_time": "18:00:00",
+            "description": "練習セッション2",
+            "schedule_type": "special",
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "updated_at": "2024-01-01T00:00:00.000Z",
+            "created_by": "550e8400-e29b-41d4-a716-446655440003",
+            "updated_by": "550e8400-e29b-41d4-a716-446655440003"
+        }
+    ]
+
+
+@pytest.fixture
+def sample_practice_schedule_with_details():
+    """Sample practice schedule with detailed information for testing"""
+    return {
+        "id": "schedule-1",
+        "schedule_date": "2024-02-15",
+        "start_time": "09:00:00",
+        "end_time": "17:00:00",
+        "description": "練習セッション",
+        "schedule_type": "regular",
+        "status": "active",
+        "created_at": "2024-01-01T00:00:00.000Z",
+        "updated_at": "2024-01-01T00:00:00.000Z",
+        "created_by": "user-1",
+        "updated_by": "user-1",
+        "available_venues": [
+            {
+                "id": "venue-schedule-1",
+                "schedule_id": "schedule-1",
+                "venue_id": "venue-1",
+                "is_preferred": True,
+                "priority": 1,
+                "notes": "メイン会場",
+                "created_at": "2024-01-01T00:00:00.000Z",
+                "updated_at": "2024-01-01T00:00:00.000Z"
+            }
+        ],
+        "sessions": [
+            {
+                "id": "session-1",
+                "schedule_id": "schedule-1",
+                "part_id": "part-1",
+                "title": "セッション1",
+                "start_time": "09:00:00",
+                "end_time": "12:00:00",
+                "schedule_available_venues": "venue-schedule-1",
+                "priority": 1,
+                "created_at": "2024-01-01T00:00:00.000Z",
+                "updated_at": "2024-01-01T00:00:00.000Z",
+                "instructors": [
+                    {
+                        "id": "instructor-1",
+                        "session_id": "session-1",
+                        "user_id": "user-1",
+                        "created_at": "2024-01-01T00:00:00.000Z",
+                        "updated_at": "2024-01-01T00:00:00.000Z"
+                    }
+                ]
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def sample_session():
+    """Sample session data for testing"""
+    return {
+        "id": "session-1",
+        "schedule_id": "schedule-1",
+        "part_id": "part-1",
+        "title": "セッション1",
+        "start_time": "09:00:00",
+        "end_time": "12:00:00",
+        "schedule_available_venues": "venue-schedule-1",
+        "priority": 1,
+        "created_at": "2024-01-01T00:00:00.000Z",
+        "updated_at": "2024-01-01T00:00:00.000Z"
+    }
+
+
+@pytest.fixture
+def sample_sessions():
+    """Sample sessions list for testing"""
+    return [
+        {
+            "id": "session-1",
+            "schedule_id": "schedule-1",
+            "part_id": "part-1",
+            "title": "セッション1",
+            "start_time": "09:00:00",
+            "end_time": "12:00:00",
+            "schedule_available_venues": "venue-schedule-1",
+            "priority": 1,
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "updated_at": "2024-01-01T00:00:00.000Z",
+            "instructors": []
+        },
+        {
+            "id": "session-2",
+            "schedule_id": "schedule-1",
+            "part_id": "part-2",
+            "title": "セッション2",
+            "start_time": "13:00:00",
+            "end_time": "17:00:00",
+            "schedule_available_venues": "venue-schedule-1",
+            "priority": 2,
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "updated_at": "2024-01-01T00:00:00.000Z",
+            "instructors": []
+        }
+    ]

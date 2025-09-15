@@ -1,1 +1,1 @@
-export * from './schedule-data'; 
+export * from './practice-display-service'; 

@@ -43,7 +43,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
   const handleCampusChange = (campus: string) => {
     setFormData(prev => ({
       ...prev,
-      campus
+      campus: campus as "今出川" | "京田辺"
     }));
   };
 

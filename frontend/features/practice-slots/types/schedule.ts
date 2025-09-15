@@ -1,3 +1,6 @@
+import type { Group } from './groups';
+import type { ScheduleAssignmentWithDetails } from './schedule-assignments';
+
 export interface ScheduleItem {
   id?: string;
   practice_slot_id?: string;

@@ -78,17 +78,17 @@ export class PracticeSlotsAPI {
   // 練習表関連のメソッド
 
   async getAllPracticeSlots(): Promise<ApiResponse<PracticeSlot[]>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/`);
+    const response = await fetch(`${this.baseUrl}/practice_slots/`);
     return this.handleResponse<PracticeSlot[]>(response);
   }
 
   async getPracticeSlotById(practiceSlotId: string): Promise<ApiResponse<PracticeSlot>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/${practiceSlotId}`);
+    const response = await fetch(`${this.baseUrl}/practice_slots/${practiceSlotId}`);
     return this.handleResponse<PracticeSlot>(response);
   }
 
   async getPracticeSlotByDate(targetDate: string): Promise<ApiResponse<PracticeSlot>> {
-    const url = `${this.baseUrl}/practice-slots/date/${targetDate}`;
+    const url = `${this.baseUrl}/practice_slots/date/${targetDate}`;
     console.log('API Call - getPracticeSlotByDate:', url);
     const response = await fetch(url);
     console.log('API Response status:', response.status);
@@ -96,12 +96,12 @@ export class PracticeSlotsAPI {
   }
 
   async getPracticeSlotWithScheduleItems(practiceSlotId: string): Promise<ApiResponse<PracticeSlot>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/${practiceSlotId}/with-items`);
+    const response = await fetch(`${this.baseUrl}/practice_slots/${practiceSlotId}/with-items`);
     return this.handleResponse<PracticeSlot>(response);
   }
 
   async createPracticeSlot(practiceSlotData: PracticeSlotCreate): Promise<ApiResponse<PracticeSlot>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,14 +112,14 @@ export class PracticeSlotsAPI {
   }
 
   async createPracticeSlotWithSampleData(targetDate: string): Promise<ApiResponse<PracticeSlot>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/with-sample-data?target_date=${targetDate}`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/with-sample-data?target_date=${targetDate}`, {
       method: 'POST',
     });
     return this.handleResponse<PracticeSlot>(response);
   }
 
   async updatePracticeSlot(practiceSlotId: string, practiceSlotData: PracticeSlotUpdate): Promise<ApiResponse<PracticeSlot>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/${practiceSlotId}`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/${practiceSlotId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export class PracticeSlotsAPI {
   }
 
   async deletePracticeSlot(practiceSlotId: string): Promise<ApiResponse<null>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/${practiceSlotId}`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/${practiceSlotId}`, {
       method: 'DELETE',
     });
     return this.handleResponse<null>(response);
@@ -139,7 +139,7 @@ export class PracticeSlotsAPI {
   // スケジュールアイテム関連のメソッド
 
   async createScheduleItem(practiceSlotId: string, scheduleItemData: ScheduleItemCreate): Promise<ApiResponse<ScheduleItem>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/${practiceSlotId}/schedule-items`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/${practiceSlotId}/schedule-items`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ export class PracticeSlotsAPI {
   }
 
   async updateScheduleItem(scheduleItemId: string, scheduleItemData: ScheduleItemUpdate): Promise<ApiResponse<ScheduleItem>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/schedule-items/${scheduleItemId}`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/schedule-items/${scheduleItemId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ export class PracticeSlotsAPI {
   }
 
   async deleteScheduleItem(scheduleItemId: string): Promise<ApiResponse<null>> {
-    const response = await fetch(`${this.baseUrl}/practice-slots/schedule-items/${scheduleItemId}`, {
+    const response = await fetch(`${this.baseUrl}/practice_slots/schedule-items/${scheduleItemId}`, {
       method: 'DELETE',
     });
     return this.handleResponse<null>(response);

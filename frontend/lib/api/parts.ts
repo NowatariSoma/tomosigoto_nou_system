@@ -1,6 +1,13 @@
-import { Part, PartCreate, PartUpdate, ApiResponse } from '@/features/practice-slots/types/parts';
+import { Part, PartCreate, PartUpdate } from '@/features/practice-slots/types/parts';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = 'http://localhost:8000/api/v1/practice_slots';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
 
 export class PartsAPI {
   private baseUrl: string;
