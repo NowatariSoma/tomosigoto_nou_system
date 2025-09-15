@@ -11,15 +11,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 非rootユーザーを作成
-RUN groupadd -r mluser && useradd -r -g mluser mluser
+# 非rootユーザーを作成（ホームディレクトリ付き）
+RUN groupadd -r mluser && useradd -r -g mluser -m mluser
 
-# Python依存関係のインストール（rootユーザーで実行）
+# requirements.txtをコピー（rootユーザーで実行）
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# アプリケーションファイルをコピー
-COPY . .
 
 # 必要なディレクトリを作成
 RUN mkdir -p models/scene_based_system/best \
@@ -29,8 +25,23 @@ RUN mkdir -p models/scene_based_system/best \
     && mkdir -p result \
     && chown -R mluser:mluser /app
 
+# 仮想環境を作成（rootユーザーで実行）
+RUN python -m venv /opt/venv && \
+    chown -R mluser:mluser /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # 非rootユーザーに切り替え
 USER mluser
+
+# pipの警告を抑制する環境変数を設定
+ENV PIP_NO_WARN_SCRIPT_LOCATION=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Python依存関係のインストール（仮想環境内で実行）
+RUN pip install --no-cache-dir -r requirements.txt
+
+# アプリケーションファイルをコピー（非rootユーザーで実行）
+COPY --chown=mluser:mluser . .
 
 # ポート8001を公開
 EXPOSE 8001
