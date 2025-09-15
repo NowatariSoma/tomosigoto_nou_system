@@ -12,11 +12,16 @@ services:
       - .env
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SUPABASE_URL=${SUPABASE_URL:-http://127.0.0.1:54321}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - ML_ENGINE_URL=http://ml-engine:8001
     volumes:
       # env.exampleと.envファイルをマウント
       - ./env.example:/env.example:ro
       - ./.env:/.env
     restart: unless-stopped
+    networks:
+      - app-network
     command: >
       sh -c "
       cp /env.example /.env &&
@@ -47,6 +52,8 @@ services:
       - .env
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_ML_ENGINE_URL=http://localhost:8001
     volumes:
       - /app/node_modules
       - /app/.next
@@ -55,7 +62,10 @@ services:
       - ./.env:/.env
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
     command: >
       sh -c "
       cp /env.example /.env &&
@@ -73,6 +83,53 @@ services:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
 
+  # ML-Engine サービス
+  ml-engine:
+    build:
+      context: ./ml-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SUPABASE_URL=${SUPABASE_URL:-http://127.0.0.1:54321}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - PYTHONPATH=/app/src
+    volumes:
+      # モデルファイルと出力ファイルをマウント
+      - ./ml-engine/models:/app/models
+      - ./ml-engine/outputs:/app/outputs
+      - ./ml-engine/logs:/app/logs
+      - ./ml-engine/result:/app/result
+      # 開発時のソースコードマウント（開発モードのみ）
+      - ./ml-engine/src:/app/src
+      - ./ml-engine/configs:/app/configs
+      - ./ml-engine/scripts:/app/scripts
+      # env.exampleと.envファイルをマウント
+      - ./env.example:/env.example:ro
+      - ./.env:/.env
+    restart: unless-stopped
+    networks:
+      - app-network
+    command: >
+      sh -c "
+      cp /env.example /.env &&
+      if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+      else
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 2
+      fi"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/ml/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=ML-Engine for schedule optimization"
+
   # Optional: PostgreSQL for future database features
   postgres:
     image: postgres:15
@@ -85,7 +142,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - slidehub-network
+      - app-network
     restart: unless-stopped
 
   # Optional: Redis for caching
@@ -96,7 +153,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - slidehub-network
+      - app-network
     restart: unless-stopped
 
 volumes:
@@ -106,7 +163,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
-  slidehub-network:
-    driver: bridge
-  default:
     name: tomosigoto-network
