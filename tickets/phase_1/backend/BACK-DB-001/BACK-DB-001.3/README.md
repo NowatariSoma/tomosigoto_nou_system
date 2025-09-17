@@ -97,8 +97,6 @@ erDiagram
         varchar status
         timestamp created_at
         timestamp updated_at
-        uuid created_by FK
-        uuid updated_by FK
     }
 
     schedule_available_venues {
@@ -140,8 +138,6 @@ erDiagram
         text notes
         timestamptz created_at
         timestamptz updated_at
-        uuid created_by FK
-        uuid updated_by FK
     }
 
     %% -------------------------
