@@ -110,6 +110,24 @@ class ScheduleRepository:
             logger.error(f"メンバー情報取得エラー: {str(e)}, schedule_id={schedule_id}")
             raise
     
+    async def get_all_members_with_parts(self) -> List[Dict[str, Any]]:
+        """
+        全メンバーとパート情報を取得
+        
+        Returns:
+            メンバー・パート情報リスト
+        """
+        try:
+            response = self.supabase.table("member_assignments").select(
+                "*, users(*), parts(*)"
+            ).execute()
+            
+            return response.data or []
+            
+        except Exception as e:
+            logger.error(f"全メンバー・パート情報取得エラー: {str(e)}")
+            raise
+    
     async def get_all_parts(self) -> List[Dict[str, Any]]:
         """
         全パート情報を取得

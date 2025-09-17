@@ -32,6 +32,10 @@ class Constraints(BaseModel):
     """制約条件"""
     max_practice_hours_per_week: int = 10
     min_members_per_session: int = 3
+    # 時間とパートの制約を追加
+    max_concurrent_sessions_per_time_slot: int = 1  # 1つの時間に1つのセッション
+    allow_part_overlap_in_same_venue: bool = False  # 同じ会場で複数パートの同時練習を禁止
+    enforce_venue_capacity: bool = True  # 会場収容人数制限を強制
 
 class ScheduleOptimizationRequest(BaseModel):
     """

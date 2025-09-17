@@ -113,9 +113,12 @@ class SceneBasedOptimizerService:
             # 報酬を計算
             reward = self._calculate_reward(base_env, schedule)
             
+            # 制約チェックと修正を実行
+            validated_sessions = self._validate_time_and_part_constraints(optimized_sessions, request)
+            
             return {
                 "optimized_schedule": {
-                    "sessions": optimized_sessions
+                    "sessions": validated_sessions
                 },
                 "reward": float(reward),
                 "assignments": {
@@ -126,9 +129,106 @@ class SceneBasedOptimizerService:
         except Exception as e:
             raise PredictionException(f"スケジュール最適化に失敗しました: {str(e)}")
     
+    def _validate_time_and_part_constraints(self, sessions: List[Dict], request) -> List[Dict]:
+        """
+        時間とパートの制約をチェックして修正
+        
+        Args:
+            sessions: セッションリスト
+            request: リクエストオブジェクト
+            
+        Returns:
+            制約を満たすように修正されたセッションリスト
+        """
+        try:
+            constraints = getattr(request, 'constraints', {}) or {}
+            validated_sessions = []
+            time_venue_usage = {}  # {time: {venue: part}}
+            
+            for session in sessions:
+                time_slot = session.get("time", "")
+                venue = session.get("venue", "")
+                part = session.get("part", "")
+                
+                # 時間・会場の組み合わせをキーとして使用
+                time_venue_key = f"{time_slot}_{venue}"
+                
+                # 制約1: 1つの時間に1つの会場では1つのパートのみ
+                max_concurrent = constraints.get("max_concurrent_sessions_per_time_slot", 1)
+                allow_overlap = constraints.get("allow_part_overlap_in_same_venue", False)
+                
+                if time_venue_key in time_venue_usage:
+                    if not allow_overlap:
+                        # 重複を避けるため、時間を調整
+                        session = self._adjust_session_time(session, time_venue_usage)
+                    else:
+                        # 重複を許可する場合でも、最大同時セッション数をチェック
+                        current_count = len([k for k in time_venue_usage.keys() if k.startswith(time_slot)])
+                        if current_count >= max_concurrent:
+                            session = self._adjust_session_time(session, time_venue_usage)
+                
+                # 更新されたセッション情報で使用状況を記録
+                updated_time_venue_key = f"{session.get('time', '')}_{session.get('venue', '')}"
+                time_venue_usage[updated_time_venue_key] = part
+                
+                validated_sessions.append(session)
+            
+            return validated_sessions
+            
+        except Exception as e:
+            # 制約チェックに失敗した場合は、元のセッションをそのまま返す
+            return sessions
+    
+    def _adjust_session_time(self, session: Dict, time_venue_usage: Dict) -> Dict:
+        """
+        セッションの時間を調整して制約違反を回避
+        
+        Args:
+            session: 調整対象のセッション
+            time_venue_usage: 時間・会場使用状況
+            
+        Returns:
+            時間が調整されたセッション
+        """
+        try:
+            # 利用可能な時間スロット（コマの時間）
+            available_times = [
+                "09:00-10:30",  # 1限
+                "10:45-12:15",  # 2限
+                "13:15-14:45",  # 3限
+                "15:00-16:30",  # 4限
+                "16:45-18:15"   # 5限
+            ]
+            
+            venue = session.get("venue", "")
+            
+            # 空いている時間スロットを探す
+            for time_slot in available_times:
+                time_venue_key = f"{time_slot}_{venue}"
+                if time_venue_key not in time_venue_usage:
+                    # 空いている時間スロットが見つかった
+                    session["time"] = time_slot
+                    break
+            
+            return session
+            
+        except Exception:
+            # 調整に失敗した場合は元のセッションを返す
+            return session
+    
     async def _apply_request_data_to_env(self, base_env, request):
         """受け取ったデータを環境に適用"""
         try:
+            # 制約条件を環境に設定
+            if hasattr(request, 'constraints') and request.constraints:
+                constraints = request.constraints
+                # 制約を環境に適用
+                if hasattr(base_env, 'constraints'):
+                    base_env.constraints = constraints
+                else:
+                    # 制約属性を動的に追加
+                    base_env.constraints = constraints
+            
             # メンバー情報を環境に適用
             if hasattr(base_env, 'people_scene_participation'):
                 # メンバー数を設定
