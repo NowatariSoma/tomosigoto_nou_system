@@ -18,23 +18,6 @@ export interface PracticeSchedule {
 }
 
 /**
- * バックエンドAPIからの基本レスポンス型 (PracticeScheduleResponse)
- */
-export interface PracticeScheduleResponse {
-  id: string;
-  schedule_date: string;
-  start_time: string;
-  end_time: string;
-  description?: string;
-  schedule_type?: string;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
-}
-
-/**
  * 会場表示用情報
  */
 export interface VenueDisplayInfo {
@@ -191,6 +174,40 @@ export interface ScheduleTableData {
   timeSlots: TimeSlot[];
   venues: VenueTableInfo[];
   cells: Record<string, Record<string, TableCellSession[]>>; // [venue_id][time] = sessions[]
+}
+
+/**
+ * 理想的なスケジュール構造用の型定義
+ */
+export interface IdealScheduleInfo {
+  id: string;
+  schedule_date: string;
+  start_time: string;
+  end_time: string;
+  description: string;
+}
+
+export interface IdealVenue {
+  id: string;
+  name: string;
+  priority: number;
+  color: string;
+}
+
+export interface IdealPartInfo {
+  part_id: string;
+  part_name: string;
+  part_color: string;
+  session_title: string;
+  instructors: string[];
+  participants: number;
+  status: string;
+}
+
+export interface IdealScheduleData {
+  schedule_info: IdealScheduleInfo;
+  venues: IdealVenue[];
+  time_schedule: Record<string, Record<string, IdealPartInfo[]>>; // [time][venue_id] = parts[]
 }
 
 /**

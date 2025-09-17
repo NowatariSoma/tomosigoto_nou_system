@@ -5,34 +5,22 @@ import { Information } from '@/features/practice-slots/components/Information';
 import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
 import { DateButton } from '@/features/practice-slots/components/DateButton';
 
-import { useDateNavigation, usePracticeSchedule } from '../hooks';
+import { useDateNavigation } from '../hooks';
 
 export const PracticeSlotsPage: React.FC = () => {
 
-  // 日付ナビゲーション
+  // 日付ナビゲーション（モックデータの日付に合わせる）
   const {
     currentDate,
     handleDateChange,
     getCurrentDateString
   } = useDateNavigation(new Date('2024-05-26'));
-  
-  // 練習スケジュール管理
-  const { scheduleData, loading, error, fetchPracticeScheduleByDate } = usePracticeSchedule();
-
-  // 日付が変更されたときにAPI呼び出しを実行
-  useEffect(() => {
-    const dateString = currentDate.toISOString().split('T')[0];
-    console.log('PracticeSlotsPage - 日付変更:', dateString);
-    fetchPracticeScheduleByDate(dateString);
-  }, [currentDate, fetchPracticeScheduleByDate]);
 
   // ページ全体のログ出力
   useEffect(() => {
     console.log('PracticeSlotsPage - 現在の日付:', getCurrentDateString());
-    console.log('PracticeSlotsPage - スケジュールデータ:', scheduleData);
-    console.log('PracticeSlotsPage - ローディング状態:', loading);
-    console.log('PracticeSlotsPage - エラー状態:', error);
-  }, [getCurrentDateString, scheduleData, loading, error]);
+    console.log('PracticeSlotsPage - モックデータを使用したスケジュール表を表示中');
+  }, [getCurrentDateString]);
 
   return (
     <div className="space-y-6">

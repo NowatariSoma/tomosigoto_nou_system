@@ -2,7 +2,7 @@
  * 練習スケジュールのAPIサービス
  */
 
-import { PracticeScheduleDisplayResponse, PracticeScheduleResponse, PracticeScheduleWithDetailsResponse } from '../types/schedule';
+import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/schedule';
 import { ApiResponse } from '../types/api';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
@@ -37,7 +37,7 @@ export class PracticeScheduleService {
    * @param date - 対象日付 (YYYY-MM-DD形式)
    * @returns 練習スケジュール情報
    */
-  static async getPracticeScheduleByDate(date: string): Promise<PracticeScheduleResponse | null> {
+  static async getPracticeScheduleByDate(date: string): Promise<PracticeScheduleDisplayResponse | null> {
     try {
       const response = await fetch(`${API_BASE_URL}/practice_slots/date/${date}`);
       
@@ -49,7 +49,7 @@ export class PracticeScheduleService {
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
       }
       
-      const data: PracticeScheduleResponse = await response.json();
+      const data: PracticeScheduleDisplayResponse = await response.json();
       return data;
     } catch (error) {
       console.error('Error fetching practice schedule by date:', error);
@@ -103,6 +103,31 @@ export class PracticeScheduleService {
       return data;
     } catch (error) {
       console.error('Error fetching practice schedule display by date:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 理想的な形式の練習スケジュール情報を取得
+   * @param date - 対象日付 (YYYY-MM-DD形式)
+   * @returns 理想的な形式の練習スケジュール情報
+   */
+  static async getPracticeScheduleIdealFormat(date: string): Promise<IdealScheduleData | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/practice_slots/date/${date}/ideal`);
+      
+      if (response.status === 404) {
+        return null;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data: IdealScheduleData = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching ideal format practice schedule:', error);
       throw error;
     }
   }
