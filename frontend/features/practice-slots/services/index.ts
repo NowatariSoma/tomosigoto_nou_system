@@ -1,1 +1,5 @@
-export * from './practice-display-service'; 
+/**
+ * サービス関連のエクスポート
+ */
+
+export { PracticeScheduleService } from './practice-schedule-service';
