@@ -3,14 +3,14 @@
  */
 
 import { useState, useCallback } from 'react';
-import { PracticeScheduleDisplayResponse, PracticeScheduleResponse, PracticeScheduleWithDetailsResponse } from '../types/schedule';
+import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/schedule';
 import { PracticeScheduleService } from '../services';
 
 /**
  * 練習スケジュール管理フック
  */
 export const usePracticeSchedule = () => {
-  const [scheduleData, setScheduleData] = useState<PracticeScheduleResponse | null>(null);
+  const [scheduleData, setScheduleData] = useState<PracticeScheduleDisplayResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +23,8 @@ export const usePracticeSchedule = () => {
     setError(null);
     
     try {
-      const data = await PracticeScheduleService.getPracticeScheduleDetails(scheduleId);
-      setScheduleData(data);
+      // 詳細データは別のstateで管理するため、ここでは基本データのみ取得
+      console.log('詳細データ取得:', scheduleId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました';
       setError(errorMessage);
@@ -114,5 +114,50 @@ export const usePracticeScheduleDetails = () => {
     error,
     fetchPracticeScheduleDetailsByDate,
     clearDetailsData,
+  };
+};
+
+/**
+ * 理想的な形式のスケジュール管理フック
+ */
+export const useIdealSchedule = () => {
+  const [idealData, setIdealData] = useState<IdealScheduleData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * 指定した日付の理想的な形式のスケジュールを取得
+   * @param date - 対象日付 (YYYY-MM-DD形式)
+   */
+  const fetchIdealScheduleByDate = useCallback(async (date: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await PracticeScheduleService.getPracticeScheduleIdealFormat(date);
+      setIdealData(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '理想形式スケジュールの取得に失敗しました';
+      setError(errorMessage);
+      setIdealData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * 理想データをクリア
+   */
+  const clearIdealData = useCallback(() => {
+    setIdealData(null);
+    setError(null);
+  }, []);
+
+  return {
+    idealData,
+    loading,
+    error,
+    fetchIdealScheduleByDate,
+    clearIdealData,
   };
 };
