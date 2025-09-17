@@ -250,7 +250,7 @@ class SessionRepository:
             self.client.table(self.table_name)
             .select("*")
             .eq("schedule_id", schedule_id)
-            .order("priority", desc=False)
+            .order("slot_order", desc=False)
             .execute()
         )
         return response.data
