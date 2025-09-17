@@ -17,7 +17,14 @@ export const PracticeSlotsPage: React.FC = () => {
   } = useDateNavigation(new Date('2024-05-26'));
   
   // 練習スケジュール管理
-  const { scheduleData, loading, error } = usePracticeSchedule();
+  const { scheduleData, loading, error, fetchPracticeScheduleByDate } = usePracticeSchedule();
+
+  // 日付が変更されたときにAPI呼び出しを実行
+  useEffect(() => {
+    const dateString = currentDate.toISOString().split('T')[0];
+    console.log('PracticeSlotsPage - 日付変更:', dateString);
+    fetchPracticeScheduleByDate(dateString);
+  }, [currentDate, fetchPracticeScheduleByDate]);
 
   // ページ全体のログ出力
   useEffect(() => {

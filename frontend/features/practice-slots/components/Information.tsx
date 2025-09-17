@@ -1,11 +1,26 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { InformationProps } from '@/features/practice-slots/types/schedule';
+import { useEffect } from 'react';
+import { usePracticeSchedule } from '../hooks';
 
 const Information: React.FC<InformationProps> = ({ 
   className,
   currentDate = new Date()
 }) => {
+  
+  // 練習スケジュール管理フック
+  const { fetchPracticeScheduleByDate } = usePracticeSchedule();
+
+  // 日付が変更されたときにスケジュールデータを取得
+  useEffect(() => {
+    const dateString = currentDate.toISOString().split('T')[0];
+    console.log('ScheduleTable - 日付変更:', dateString);
+    fetchPracticeScheduleByDate(dateString);
+  }, [currentDate, fetchPracticeScheduleByDate]);
+
+  
+  // 練習スケジュール管理フック
   // 日付をフォーマットする関数
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('ja-JP', {
@@ -20,6 +35,7 @@ const Information: React.FC<InformationProps> = ({
     const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
     return weekdays[date.getDay()];
   };
+
 
   return (
     <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6", className)}>

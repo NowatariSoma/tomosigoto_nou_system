@@ -12,29 +12,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   className,
   currentDate
 }) => {
-  
-  // 練習スケジュール管理フック
-  const { scheduleData, loading, error, fetchPracticeScheduleByDate } = usePracticeSchedule();
-
-  // 日付が変更されたときにスケジュールデータを取得
-  useEffect(() => {
-    const dateString = currentDate.toISOString().split('T')[0];
-    console.log('ScheduleTable - 日付変更:', dateString);
-    fetchPracticeScheduleByDate(dateString);
-  }, [currentDate, fetchPracticeScheduleByDate]);
-
-  // APIレスポンスをログ出力
-  useEffect(() => {
-    if (scheduleData) {
-      console.log('ScheduleTable - API取得成功:', scheduleData);
-    }
-    if (error) {
-      console.log('ScheduleTable - API取得エラー:', error);
-    }
-    if (loading) {
-      console.log('ScheduleTable - API取得中...');
-    }
-  }, [scheduleData, error, loading]);
 
   // 仮のスケジュールデータ（見た目維持用）
   const mockScheduleData = [
@@ -121,19 +98,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           </tbody>
         </table>
       </div>
-      
-      {/* ローディング・エラー状態の表示 */}
-      {loading && (
-        <div className="p-4 text-center text-gray-500">
-          データを読み込み中...
-        </div>
-      )}
-      
-      {error && (
-        <div className="p-4 text-center text-red-500">
-          エラー: {error}
-        </div>
-      )}
     </div>
   );
 };
@@ -141,3 +105,5 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 ScheduleTable.displayName = 'ScheduleTable';
 
 export { ScheduleTable };
+
+
