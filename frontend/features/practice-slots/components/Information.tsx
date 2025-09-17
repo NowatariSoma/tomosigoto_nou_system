@@ -10,17 +10,14 @@ const Information: React.FC<InformationProps> = ({
 }) => {
   
   // 練習スケジュール管理フック
-  const { fetchPracticeScheduleByDate } = usePracticeSchedule();
+  const { scheduleData, loading, error, fetchPracticeScheduleByDate } = usePracticeSchedule();
 
   // 日付が変更されたときにスケジュールデータを取得
   useEffect(() => {
     const dateString = currentDate.toISOString().split('T')[0];
-    console.log('ScheduleTable - 日付変更:', dateString);
+    console.log('Information - 日付変更:', dateString);
     fetchPracticeScheduleByDate(dateString);
   }, [currentDate, fetchPracticeScheduleByDate]);
-
-  
-  // 練習スケジュール管理フック
   // 日付をフォーマットする関数
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('ja-JP', {
@@ -37,32 +34,57 @@ const Information: React.FC<InformationProps> = ({
   };
 
 
+  // ローディング状態の表示
+  if (loading) {
+    return (
+      <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6 text-center", className)}>
+        <div className="text-gray-500">スケジュール情報を読み込み中...</div>
+      </div>
+    );
+  }
+
+  // エラー状態の表示
+  if (error) {
+    return (
+      <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6 text-center", className)}>
+        <div className="text-red-500">エラー: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6", className)}>
       <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
         正規練習 {formatDate(currentDate)}（{getWeekday(currentDate)}）
       </h2>
       
-      <div className="space-y-3 text-sm text-gray-600 max-w-4xl mx-auto">
-        <p className="leading-relaxed">
-          <span className="font-medium">大会：</span>
-          川端康成記念 ◯◯パート：◯◯練習ミーティング　要記録パート：◯◯指導、去川◯◯優勝パート：◯◯平泳ぎ◯◯キック　要記録パート：◯◯指導、山東◯◯　
-          ◯◯練習営業
-        </p>
-        
+      {scheduleData && (
+        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-medium text-gray-800 mb-2">スケジュール詳細:</h3>
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">時間:</span> {scheduleData.start_time} - {scheduleData.end_time}
+          </p>
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">内容:</span> {scheduleData.description || '練習'}
+          </p>
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">タイプ:</span> {scheduleData.schedule_type || '通常'}
+          </p>
+        </div>
+      )}
+      
+      <div className="space-y-3 text-sm text-gray-600 max-w-4xl mx-auto">        
         <div className="mt-4">
-          <h3 className="font-medium text-gray-800 mb-2">今日の練習:</h3>
-          <ul className="space-y-1 text-xs">
-            <li>・4/30,5/3,7月-◯◯競泳ことばかりをやり切り◯◯開始山口の練習</li>
-            <li>・6/8こう◯◯日～◯◯練習◯◯要塞と◯◯こと◯◯開始山口の練習</li>
-            <li>・◯◯DG各種時間を2交代制の山口の、設備、◯◯練習</li>
-            <li>・山口7-◯◯練習◯◯パート　◯◯春～◯◯練習記録◯◯パート　◯◯-◯◯練習パート　◯◯未定を◯◯練習を進めてください</li>
-            <li>・◯◯練習の練習の記録「◯◯上場」を◯◯そう◯◯練習の山口先を◯◯春てください</li>
-            <li>・◯◯練習山口指導◯◯の練習、◯◯フリップ◯◯サブハーション◯◯フリップ、◯◯こう</li>
-            <li className="text-red-600">
-              ◯◯◯◯サブ→◯◯春→◯◯練習そうそう→◯◯こう◯◯フリップ練習◯◯に◯◯こう◯◯練習営業です。◯◯てください
-            </li>
-          </ul>
+          <h3 className="font-medium text-gray-800 mb-2">練習内容:</h3>
+          {scheduleData ? (
+            <ul className="space-y-1 text-xs">
+              <li>・{scheduleData.description || '練習内容が登録されていません'}</li>
+              <li>・練習タイプ: {scheduleData.schedule_type || '未設定'}</li>
+              <li>・ステータス: {scheduleData.status || '未設定'}</li>
+            </ul>
+          ) : (
+            <p className="text-gray-500">スケジュールデータがありません</p>
+          )}
         </div>
       </div>
     </div>
