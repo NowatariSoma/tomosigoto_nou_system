@@ -1,1 +1,5 @@
-export * from './practice-display-mapper';
+/**
+ * マッパー関連のエクスポート
+ */
+
+export { scheduleDataMapper } from './schedule-data-mapper';
