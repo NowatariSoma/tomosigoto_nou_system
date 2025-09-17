@@ -75,7 +75,7 @@ async def get_practice_schedule(
     return PracticeScheduleResponse(**schedule)
 
 
-@router.get("/{schedule_id}/details", response_model=PracticeScheduleWithDetailsResponse)
+@router.get("/{schedule_id}/details", response_model=Dict[str, Any])
 async def get_practice_schedule_with_details(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -90,8 +90,10 @@ async def get_practice_schedule_with_details(
     Returns:
         練習スケジュールの詳細情報
     """
-    schedule_with_details = await practice_schedule_service.get_practice_schedule_with_details(schedule_id)
-    return PracticeScheduleWithDetailsResponse(**schedule_with_details)
+    details_data = await practice_schedule_service.get_practice_schedule_details_by_id(schedule_id)
+    if not details_data:
+        raise HTTPException(status_code=404, detail=f"Practice schedule not found for id: {schedule_id}")
+    return details_data
 
 
 @router.get("/{schedule_id}/display", response_model=PracticeScheduleDisplayResponse)
@@ -128,110 +130,10 @@ async def get_practice_schedule_ideal_format(
     Returns:
         理想的な形式の練習スケジュール情報
     """
-    # モックデータを返す（将来的には実データから変換）
-    return {
-        "schedule_info": {
-            "id": "0471df8a-950a-459b-ab12-f31e000cbb3f",
-            "schedule_date": target_date,
-            "start_time": "09:00:00",
-            "end_time": "17:00:00",
-            "description": "定期公演「高砂」総練習"
-        },
-        "venues": [
-            {
-                "id": "venue-1",
-                "name": "今出川キャンパス 良心館ｄ",
-                "priority": 1,
-                "color": "#FF6B6B"
-            },
-            {
-                "id": "venue-2", 
-                "name": "今出川キャンパス 至誠館",
-                "priority": 2,
-                "color": "#4ECDC4"
-            }
-        ],
-        "time_schedule": {
-            "09:00": {
-                "venue-1": [
-                    {
-                        "part_id": "part-1",
-                        "part_name": "前シテパート",
-                        "part_color": "#FFD700",
-                        "session_title": "前シテ（老翁）個人練習",
-                        "instructors": ["山田太郎"],
-                        "participants": 5,
-                        "status": "confirmed"
-                    }
-                ],
-                "venue-2": [
-                    {
-                        "part_id": "part-2",
-                        "part_name": "地謡パート", 
-                        "part_color": "#87CEEB",
-                        "session_title": "地謡基礎練習",
-                        "instructors": ["鈴木花子"],
-                        "participants": 8,
-                        "status": "confirmed"
-                    }
-                ]
-            },
-            "09:30": {
-                "venue-1": [
-                    {
-                        "part_id": "part-3",
-                        "part_name": "後シテパート",
-                        "part_color": "#98FB98", 
-                        "session_title": "後シテ（住吉明神）個人練習",
-                        "instructors": ["田中次郎"],
-                        "participants": 3,
-                        "status": "confirmed"
-                    }
-                ],
-                "venue-2": [
-                    {
-                        "part_id": "part-2",
-                        "part_name": "地謡パート",
-                        "part_color": "#87CEEB",
-                        "session_title": "地謡合わせ",
-                        "instructors": ["鈴木花子", "佐藤三郎"],
-                        "participants": 12,
-                        "status": "confirmed"
-                    }
-                ]
-            },
-            "10:00": {
-                "venue-1": [],
-                "venue-2": [
-                    {
-                        "part_id": "part-4",
-                        "part_name": "囃子パート",
-                        "part_color": "#DDA0DD",
-                        "session_title": "囃子練習",
-                        "instructors": ["高橋四郎"],
-                        "participants": 6,
-                        "status": "confirmed"
-                    }
-                ]
-            },
-            "10:30": {
-                "venue-1": [],
-                "venue-2": []
-            },
-            "11:00": {
-                "venue-1": [],
-                "venue-2": []
-            },
-            "11:30": {
-                "venue-1": [],
-                "venue-2": []
-            },
-            "12:00": {
-                "venue-1": [],
-                "venue-2": []
-            }
-        }
-    }
+    ideal_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
+    if not ideal_data:
+        raise HTTPException(status_code=404, detail=f"Practice schedule not found for date: {target_date}")
+    return ideal_data
 
 
 @router.post("/", response_model=PracticeScheduleResponse)

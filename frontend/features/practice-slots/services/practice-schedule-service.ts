@@ -16,7 +16,7 @@ export class PracticeScheduleService {
    * @param scheduleId - 練習スケジュールID
    * @returns 練習スケジュールの詳細情報
    */
-  static async getPracticeScheduleDetails(scheduleId: string): Promise<PracticeScheduleWithDetailsResponse> {
+  static async getPracticeScheduleDetails(scheduleId: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE_URL}/practice_slots/${scheduleId}/details`);
       
@@ -24,7 +24,7 @@ export class PracticeScheduleService {
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
       }
       
-      const data: PracticeScheduleWithDetailsResponse = await response.json();
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error('Error fetching practice schedule details:', error);
@@ -57,27 +57,7 @@ export class PracticeScheduleService {
     }
   }
 
-  /**
-   * 指定した日付の練習スケジュール詳細情報を取得
-   * @param date - 対象日付 (YYYY-MM-DD形式)
-   * @returns 練習スケジュールの詳細情報
-   */
-  static async getPracticeScheduleDetailsByDate(date: string): Promise<PracticeScheduleWithDetailsResponse | null> {
-    try {
-      // まず基本情報を取得してスケジュールIDを取得
-      const basicSchedule = await this.getPracticeScheduleByDate(date);
-      if (!basicSchedule) {
-        return null;
-      }
-      
-      // スケジュールIDを使って詳細情報を取得
-      const detailsData = await this.getPracticeScheduleDetails(basicSchedule.id);
-      return detailsData;
-    } catch (error) {
-      console.error('Error fetching practice schedule details by date:', error);
-      throw error;
-    }
-  }
+  // getPracticeScheduleDetailsByDate メソッドは削除 - idealエンドポイントを使用
 
   /**
    * 指定した日付の練習スケジュール表示用情報を取得

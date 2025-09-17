@@ -76,20 +76,20 @@ export const usePracticeSchedule = () => {
  * 練習スケジュール詳細管理フック
  */
 export const usePracticeScheduleDetails = () => {
-  const [detailsData, setDetailsData] = useState<PracticeScheduleWithDetailsResponse | null>(null);
+  const [detailsData, setDetailsData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * 指定した日付の練習スケジュール詳細を取得
-   * @param date - 対象日付 (YYYY-MM-DD形式)
+   * 指定したスケジュールIDの詳細を取得
+   * @param scheduleId - 練習スケジュールID
    */
-  const fetchPracticeScheduleDetailsByDate = useCallback(async (date: string) => {
+  const fetchPracticeScheduleDetails = useCallback(async (scheduleId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const data = await PracticeScheduleService.getPracticeScheduleDetailsByDate(date);
+      const data = await PracticeScheduleService.getPracticeScheduleDetails(scheduleId);
       setDetailsData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '練習スケジュール詳細の取得に失敗しました';
@@ -112,7 +112,7 @@ export const usePracticeScheduleDetails = () => {
     detailsData,
     loading,
     error,
-    fetchPracticeScheduleDetailsByDate,
+    fetchPracticeScheduleDetails,
     clearDetailsData,
   };
 };

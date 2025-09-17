@@ -9,17 +9,17 @@ import { useDateNavigation } from '../hooks';
 
 export const PracticeSlotsPage: React.FC = () => {
 
-  // 日付ナビゲーション（モックデータの日付に合わせる）
+  // 日付ナビゲーション（実データの日付に合わせる）
   const {
     currentDate,
     handleDateChange,
     getCurrentDateString
-  } = useDateNavigation(new Date('2024-05-26'));
+  } = useDateNavigation(new Date('2025-02-15'));
 
   // ページ全体のログ出力
   useEffect(() => {
     console.log('PracticeSlotsPage - 現在の日付:', getCurrentDateString());
-    console.log('PracticeSlotsPage - モックデータを使用したスケジュール表を表示中');
+    console.log('PracticeSlotsPage - 実データを使用したスケジュール表を表示中');
   }, [getCurrentDateString]);
 
   return (
