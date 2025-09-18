@@ -11,7 +11,6 @@ router = APIRouter()
 
 @router.get("/", response_model=List[PartResponse])
 async def get_parts(
-    current_user: Dict[str, Any] = Depends(get_current_user),
     part_service: PartService = Depends(get_part_service),
 ):
     """
@@ -31,7 +30,6 @@ async def get_parts(
 @router.get("/{part_id}", response_model=PartResponse)
 async def get_part(
     part_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     part_service: PartService = Depends(get_part_service),
 ):
     """
@@ -52,13 +50,18 @@ async def get_part(
 @router.post("/", response_model=PartResponse)
 async def create_part(
     part_data: PartCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     part_service: PartService = Depends(get_part_service),
 ):
     """
     新しくパート情報を作成
     """
-    created_part = await part_service.create_part(part_data.dict())
+    # UUIDを文字列に変換してからサービスに渡す
+    part_dict = part_data.dict()
+    for key, value in part_dict.items():
+        if isinstance(value, UUID):
+            part_dict[key] = str(value)
+    
+    created_part = await part_service.create_part(part_dict)
     return PartResponse(**created_part)
 
 
@@ -66,7 +69,6 @@ async def create_part(
 async def update_part(
     part_id: UUID,
     part_data: PartUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     part_service: PartService = Depends(get_part_service),
 ):
     """
@@ -80,14 +82,19 @@ async def update_part(
     Returns
         スキーマを通して辞書型としたパート情報
     """
-    updated_part = await part_service.update_part(part_id, part_data.dict())
+    # UUIDを文字列に変換してからサービスに渡す
+    part_dict = part_data.dict()
+    for key, value in part_dict.items():
+        if isinstance(value, UUID):
+            part_dict[key] = str(value)
+    
+    updated_part = await part_service.update_part(part_id, part_dict)
     return PartResponse(**updated_part)
 
 
 @router.delete("/{part_id}")
 async def delete_part(
     part_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     part_service: PartService = Depends(get_part_service),
 ):
     """

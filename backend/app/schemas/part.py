@@ -2,25 +2,29 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_serializer
 
 
 class PartBase(BaseModel):
     """パートの基本情報"""
 
-    part_name: str
+    name: str
     description: Optional[str] = None
-    is_active: bool = True
+    status: str = 'active'
 
 
 class PartCreate(PartBase):
-    priority: Optional[int] = None
+    stage_id: UUID
+    
+    @field_serializer('stage_id')
+    def serialize_stage_id(self, value: UUID) -> str:
+        return str(value)
 
 
 class PartUpdate(BaseModel):
-    part_name: Optional[str] = None
+    name: Optional[str] = None
     description: Optional[str] = None
-    priority: Optional[int] = None
+    status: Optional[str] = None
 
 class PartResponse(PartCreate):
     """パートレスポンス用スキーマ"""
@@ -30,3 +34,7 @@ class PartResponse(PartCreate):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+    
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
