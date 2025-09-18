@@ -1,8 +1,8 @@
 "use client";
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { ReceiptText } from 'lucide-react';
-import FloraDisplay from '@/features/performances-list/app/components/FloraDisplay';
-import { mockFloraData } from '@/features/performances-list/app/data/mockFlora';
+import FloraDisplay from '@/features/performances-list/components/FloraDisplay';
+import { mockFloraData } from '@/features/performances-list/data/mockFlora';
 
 export default function Home() {
   return (
