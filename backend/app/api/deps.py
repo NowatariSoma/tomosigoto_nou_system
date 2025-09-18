@@ -3,8 +3,13 @@ from typing import Any, Dict, Optional
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.core.supabase import get_supabase
+from app.repositories.member_assignment_repository import MemberAssignmentRepository
+from app.repositories.part_repository import PartRepository
+from app.repositories.stage_repository import StageRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.venue_repository import VenueRepository
+from app.services.member_assignment_service import MemberAssignmentService
+from app.services.part_service import PartService
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from fastapi import Depends, HTTPException, status
@@ -67,3 +72,45 @@ def get_venue_service(
     venue_repository: VenueRepository = Depends(get_venue_repository),
 ) -> VenueService:
     return VenueService(venue_repository, supabase_client.auth)
+
+
+def get_part_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> PartRepository:
+    """PartRepositoryのインスタンスを取得"""
+    return PartRepository(supabase_client)
+
+
+def get_stage_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> StageRepository:
+    """StageRepositoryのインスタンスを取得"""
+    return StageRepository(supabase_client)
+
+
+def get_part_service(
+    supabase_client: Client = Depends(get_supabase),
+    part_repository: PartRepository = Depends(get_part_repository),
+    stage_repository: StageRepository = Depends(get_stage_repository),
+) -> PartService:
+    """PartServiceのインスタンスを依存性注入で取得"""
+    return PartService(part_repository, stage_repository, supabase_client.auth)
+
+
+def get_member_assignment_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MemberAssignmentRepository:
+    """MemberAssignmentRepositoryのインスタンスを取得"""
+    return MemberAssignmentRepository(supabase_client)
+
+
+def get_member_assignment_service(
+    supabase_client: Client = Depends(get_supabase),
+    member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
+    part_repository: PartRepository = Depends(get_part_repository),
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> MemberAssignmentService:
+    """MemberAssignmentServiceのインスタンスを依存性注入で取得"""
+    return MemberAssignmentService(
+        member_assignment_repository, part_repository, user_repository, supabase_client.auth
+    )
