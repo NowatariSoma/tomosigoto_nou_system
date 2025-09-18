@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import Select, { SelectOption } from '../../../components/ui/inputs/select';
 
 interface FormData {
   studentId: string;
@@ -26,9 +26,7 @@ const AccountSettings: React.FC = () => {
     email: ''
   });
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const faculties = [
+  const faculties: SelectOption[] = [
     { value: '神', label: '神学部' },
     { value: '文', label: '文学部' },
     { value: '社会', label: '社会学部' },
@@ -48,7 +46,6 @@ const AccountSettings: React.FC = () => {
 
   const handleFacultySelect = (faculty: string) => {
     handleInputChange('faculty', faculty);
-    setIsDropdownOpen(false);
   };
 
   return (
@@ -126,37 +123,12 @@ const AccountSettings: React.FC = () => {
         {/* Faculty Dropdown */}
         <div className="flex items-center">
             <label className="w-32 text-gray-700 font-medium">学部</label>
-            <div className="relative">
-            <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-40 px-4 py-2 border border-gray-300 rounded-md bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors flex items-center justify-between"
-            >
-                <span>{formData.faculty}</span>
-                <ChevronDown 
-                className={`w-4 h-4 text-gray-500 transition-transform ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                }`} 
-                />
-            </button>
-            
-            {isDropdownOpen && (
-                <div className="absolute z-10 w-40 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                <div className="max-h-60 overflow-y-auto">
-                    {faculties.map((faculty) => (
-                    <button
-                        key={faculty.value}
-                        type="button"
-                        onClick={() => handleFacultySelect(faculty.value)}
-                        className="w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none transition-colors"
-                    >
-                        {faculty.value}
-                    </button>
-                    ))}
-                </div>
-                </div>
-            )}
-            </div>
+            <Select
+                options={faculties}
+                value={formData.faculty}
+                onChange={handleFacultySelect}
+                width="w-40"
+            />
         </div>
 
         {/* Email */}

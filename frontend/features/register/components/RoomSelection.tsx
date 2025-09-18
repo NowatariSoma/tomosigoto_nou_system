@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { Badge } from '@/components/ui/feedback/badge';
 import { Users, X, Plus } from 'lucide-react';
 import { Room } from '../types';
+import RoomSelectionModal from './RoomSelectionModal';
+import { mockRooms } from '../data/mockRooms';
 
 interface RoomSelectionProps {
   selectedRooms: Room[];
-  onAddRoom: () => void;
+  onAddRoom: (rooms: Room[]) => void;
   onRemoveRoom: (roomId: string) => void;
 }
 
@@ -16,6 +18,20 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
   onAddRoom,
   onRemoveRoom,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleConfirmSelection = (newSelectedRooms: Room[]) => {
+    onAddRoom(newSelectedRooms);
+  };
+
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
       <CardHeader className="pb-4">
@@ -42,7 +58,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
             </Badge>
           ))}
           <Button
-            onClick={onAddRoom}
+            onClick={handleOpenModal}
             variant="outline"
             size="sm"
             className="border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-100 transition-all"
@@ -51,6 +67,14 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
           </Button>
         </div>
       </CardContent>
+
+      <RoomSelectionModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmSelection}
+        availableRooms={mockRooms}
+        currentlySelectedRooms={selectedRooms}
+      />
     </Card>
   );
 };

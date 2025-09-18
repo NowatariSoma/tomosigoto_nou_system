@@ -36,9 +36,8 @@ export default function RegisterPage() {
     setSelectedRooms(selectedRooms.filter(room => room.id !== roomId));
   };
 
-  const addRoom = () => {
-    const newRoomNumber = Math.floor(Math.random() * 900) + 100;
-    setSelectedRooms([...selectedRooms, { id: newRoomNumber.toString(), name: newRoomNumber.toString() }]);
+  const addRoom = (newRooms: Room[]) => {
+    setSelectedRooms(newRooms);
   };
 
   return (
