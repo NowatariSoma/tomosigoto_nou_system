@@ -61,31 +61,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
-      {/* スケジュール情報表示 */}
-      <div className="p-4 bg-blue-50 border-b border-gray-200">
-        <h3 className="font-medium text-gray-800">
-          {idealData.schedule_info.schedule_date} の練習スケジュール
-        </h3>
-        <p className="text-sm text-gray-600">
-          {idealData.schedule_info.start_time.substring(0, 5)} - {idealData.schedule_info.end_time.substring(0, 5)}
-          {idealData.schedule_info.description && ` | ${idealData.schedule_info.description}`}
-        </p>
-        <p className="text-xs text-gray-500">
-          会場数: {idealData.venues.length} | 
-          時間スロット: {Object.keys(idealData.time_schedule).length}コマ
-          <span className="text-green-600"> (実データ)</span>
-        </p>
-      </div>
       
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px] border-collapse">
           <thead>
             <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="px-4 py-3 text-left font-medium text-gray-800 border-r border-gray-300 w-20">
+              <th className="px-4 py-3 text-left font-medium text-white border-r border-gray-300 w-20">
                 時間
               </th>
               {idealData.venues.map((venue) => (
-                <th key={venue.id} className="px-4 py-3 text-center font-medium border-r border-gray-300 text-gray-800">
+                <th key={venue.id} className="px-4 py-3 text-center font-medium border-r border-gray-300 text-white">
                   <div className="flex items-center justify-center space-x-2">
                     <div 
                       className="w-4 h-4 rounded-full"
@@ -94,7 +79,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                     <span>{venue.name}</span>
                     {venue.priority === 1 && <span className="text-xs">⭐</span>}
                   </div>
-                  <div className="text-xs text-gray-500 font-normal">
+                  <div className="text-xs text-white font-normal">
                     優先度: {venue.priority}
                   </div>
                 </th>
@@ -107,7 +92,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 key={time}
                 className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150"
               >
-                <td className="px-4 py-4 font-bold text-gray-800 bg-gray-100 border-r border-gray-300 text-center">
+                <td className="px-4 py-4 font-bold text-white bg-gray-100 border-r border-gray-300 text-center">
                   <div className="text-sm">{time}</div>
                 </td>
                 {idealData.venues.map((venue) => {
@@ -158,7 +143,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       </div>
       
       {/* 統計情報 */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
+      <div className="p-4 bg-gray-10 border-t border-gray-200">
         <div className="flex justify-between text-sm text-gray-600">
           <div>
             <span className="font-medium">総パート数:</span> {
