@@ -377,30 +377,71 @@ class PracticeScheduleService:
 
     async def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> Dict[str, Any]:
         """指定した日付の練習スケジュールを理想的な形式で取得"""
+        debug_logs = [f"Searching for schedule with date: {target_date}"]
+
         # 基本スケジュール情報を取得
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         if not schedule:
-            return None
+            debug_logs.append("No schedule found for the specified date")
+            return {
+                "error": "Schedule not found",
+                "debug_info": {
+                    "fetch_logs": debug_logs
+                }
+            }
+
+        debug_logs.append(f"Schedule found: {schedule.get('id', 'unknown_id')}")
 
         # セッション情報を安全に取得（エラーが発生した場合は空のリストを使用）
         sessions = []
         venues = []
         instructors = []
+
+        # セッション情報を個別に安全に取得
+        debug_logs.append(f"Schedule ID: {schedule['id']}")
+
+        # Sessions
         try:
+            debug_logs.append("Attempting to fetch sessions...")
             sessions = await self.session_repository.find_by_schedule(schedule["id"])
-            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
-            instructors = await self.session_instructor_repository.find_by_schedule(schedule["id"])
+            debug_logs.append(f"Sessions fetched: {len(sessions)} items")
         except Exception as e:
-            print(f"Warning: Could not fetch sessions for schedule {schedule['id']}: {e}")
+            debug_logs.append(f"ERROR fetching sessions: {e}")
             sessions = []
+
+        # Venues
+        try:
+            debug_logs.append("Attempting to fetch venues...")
+            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            debug_logs.append(f"Venues fetched: {len(venues)} items")
+        except Exception as e:
+            debug_logs.append(f"ERROR fetching venues: {e}")
             venues = []
+
+        # Instructors（これが問題を起こしているが、他のデータは保持）
+        try:
+            debug_logs.append("Attempting to fetch instructors...")
+            instructors = await self.session_instructor_repository.find_by_schedule(schedule["id"])
+            debug_logs.append(f"Instructors fetched: {len(instructors)} items")
+        except Exception as e:
+            debug_logs.append(f"ERROR fetching instructors: {e}")
+            debug_logs.append(f"Error type: {type(e).__name__}")
+            debug_logs.append(f"Error details: {str(e)}")
+            # インストラクター取得エラーは無視して続行
             instructors = []
 
         # データベースからdivision_countを取得
         division_count = schedule.get("division_count", 6)
 
         # 基本スケジュール情報とセッション情報から理想形式を生成
-        return await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, instructors, division_count)
+        result = await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, instructors, division_count)
+
+        # デバッグログを追加
+        if "debug_info" not in result:
+            result["debug_info"] = {}
+        result["debug_info"]["fetch_logs"] = debug_logs
+
+        return result
 
     def _convert_to_ideal_format(self, display_data: Dict[str, Any]) -> Dict[str, Any]:
         """表示用データを理想的な形式に変換"""
@@ -614,42 +655,93 @@ class PracticeScheduleService:
 
         # 実際のセッションデータを配置（slot_order順）
         part_colors = settings.DEFAULT_PART_COLORS
-        
+        processing_details = []
+
         if sessions:
             # slot_orderでソート済みのセッションを処理
             for session in sessions:
                 slot_order = session.get("slot_order", 1)
                 session_title = session.get("title", "練習")
-                
-                # slot_orderに基づいて時間スロットを決定
-                # slot_order 1 = 09:00, 2 = 09:30, 3 = 10:00, etc.
-                start_hour = settings.SCHEDULE_START_HOUR + ((slot_order - 1) // 2)
-                start_minute = settings.SCHEDULE_SLOT_MINUTES * ((slot_order - 1) % 2)
-                time_str = f"{start_hour:02d}:{start_minute:02d}"
+                processing_detail = {
+                    "session_id": session.get("id"),
+                    "slot_order": slot_order,
+                    "title": session_title,
+                    "schedule_available_venue_id": session.get("schedule_available_venue_id")
+                }
+
+                # slot_orderに基づいて時間スロットを決定（division_count対応）
+                from datetime import datetime, timedelta
+
+                start_time = datetime.strptime(str(schedule["start_time"]), "%H:%M:%S")
+                end_time = datetime.strptime(str(schedule["end_time"]), "%H:%M:%S")
+                total_minutes = int((end_time - start_time).total_seconds() / 60)
+                slot_duration = total_minutes / division_count
+
+                slot_start_minutes = int((slot_order - 1) * slot_duration)
+                slot_time = start_time + timedelta(minutes=slot_start_minutes)
+                time_str = slot_time.strftime("%H:%M")
+
+                processing_detail["calculated_time"] = time_str
+                processing_detail["time_slot_exists"] = time_str in time_schedule
 
                 if time_str in time_schedule:
-                    # 会場を循環的に割り当て
-                    venue_index = (slot_order - 1) % len(venues)
-                    venue_id = venues[venue_index]["id"]
-                    
-                    session_info = {
-                        "part_id": str(session.get("id", f"part-{slot_order}")),
-                        "part_name": session_title,
-                        "part_color": part_colors[(slot_order - 1) % len(part_colors)],
-                        "session_title": session_title,
-                        "instructors": await self._get_session_instructors(session.get("id")),
-                        "participants": await self._get_session_participants_count(schedule["id"]),
-                        "status": "confirmed",
-                        "slot_order": slot_order
-                    }
-                    
-                    time_schedule[time_str][venue_id].append(session_info)
+                    # セッションの会場情報を使用（schedule_available_venue_idフィールド）
+                    venue_id = None
+                    schedule_available_venue_id = session.get("schedule_available_venue_id")
+
+                    if schedule_available_venue_id:
+                        # schedule_available_venue_idに対応する会場IDを検索
+                        # venue["id"]は "venue-{schedule_available_venue.id}" の形式
+                        expected_venue_id = f"venue-{schedule_available_venue_id}"
+                        for venue in venues:
+                            if venue.get("id") == expected_venue_id:
+                                venue_id = expected_venue_id
+                                break
+                        processing_detail["expected_venue_id"] = expected_venue_id
+                        processing_detail["venue_found"] = venue_id is not None
+
+                    # 会場が見つからない場合はslot_orderベースでフォールバック
+                    if not venue_id and venues:
+                        venue_index = (slot_order - 1) % len(venues)
+                        venue_id = venues[venue_index]["id"]
+                        processing_detail["fallback_venue_id"] = venue_id
+
+                    processing_detail["final_venue_id"] = venue_id
+
+                    if venue_id:
+                        session_info = {
+                            "part_id": str(session.get("id", f"part-{slot_order}")),
+                            "part_name": session_title,
+                            "part_color": part_colors[(slot_order - 1) % len(part_colors)],
+                            "session_title": session_title,
+                            "instructors": await self._get_session_instructors(session.get("id")),
+                            "participants": await self._get_session_participants_count(schedule["id"]),
+                            "status": "confirmed",
+                            "slot_order": slot_order,
+                            "schedule_available_venue_id": schedule_available_venue_id
+                        }
+
+                        time_schedule[time_str][venue_id].append(session_info)
+                        processing_detail["session_added"] = True
+                    else:
+                        processing_detail["session_added"] = False
+                else:
+                    processing_detail["session_added"] = False
+
+                processing_details.append(processing_detail)
         # セッションデータがない場合は空のスケジュールを返す（推測データは生成しない）
 
         return {
             "schedule_info": schedule_info,
             "venues": venues,
-            "time_schedule": time_schedule
+            "time_schedule": time_schedule,
+            "debug_info": {
+                "sessions_count": len(sessions),
+                "sessions_data": sessions,
+                "venues_count": len(venues),
+                "division_count": division_count,
+                "session_processing_details": processing_details
+            }
         }
 
     async def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> Dict[str, Any]:

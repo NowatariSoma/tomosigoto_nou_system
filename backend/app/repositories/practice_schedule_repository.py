@@ -344,3 +344,28 @@ class SessionInstructorRepository:
             self.client.table(self.table_name).delete().in_("session_id", session_ids).execute()
 
         return True
+
+    @handle_supabase_errors("find_by_schedule")
+    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+        """指定されたスケジュールの全セッションの指導者を取得"""
+        # セッションIDを取得してから指導者情報を取得
+        sessions_response = (
+            self.client.table("sessions")
+            .select("id")
+            .eq("schedule_id", schedule_id)
+            .execute()
+        )
+
+        session_ids = [session["id"] for session in sessions_response.data]
+
+        if not session_ids:
+            return []
+
+        # 指導者情報を取得
+        response = (
+            self.client.table(self.table_name)
+            .select("*, users(*)")
+            .in_("session_id", session_ids)
+            .execute()
+        )
+        return response.data
