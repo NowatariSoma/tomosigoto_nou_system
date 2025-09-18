@@ -10,6 +10,7 @@ import {
   ChevronRight, 
   FileText,
   Users,
+  User,
   X,
   Home,
   Settings,
@@ -225,7 +226,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <NavTitle label="その他" />
 
               <NavItem
-                icon={<Users className="w-4 h-4" />}
+                icon={<User className="w-4 h-4" />}
+                label="アカウント設定"
+                active={pathname === '/account-setting'}
+                onClick={() => handleNavigateAndClose('/account-setting')}
+              />
+
+              <NavItem
+                icon={<Settings className="w-4 h-4" />}
                 label="設定"
                 active={pathname === '/settings'}
                 onClick={() => handleNavigateAndClose('/settings')}
@@ -316,7 +324,15 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           {!isCollapsed && <NavTitle label="その他" />}
 
           <NavItem
-            icon={<Users className="w-4 h-4" />}
+            icon={<User className="w-4 h-4" />}
+            label={isCollapsed ? "" : "アカウント設定"}
+            active={pathname === '/account-setting'}
+            href="/account-setting"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Settings className="w-4 h-4" />}
             label={isCollapsed ? "" : "設定"}
             active={pathname === '/settings'}
             href="/settings"
