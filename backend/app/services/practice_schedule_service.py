@@ -9,6 +9,7 @@ from app.repositories.practice_schedule_repository import (
     SessionRepository,
     SessionInstructorRepository,
 )
+from app.core.config import settings
 
 
 class PracticeScheduleService:
@@ -275,6 +276,105 @@ class PracticeScheduleService:
         # 更新された詳細情報を返す
         return await self.get_practice_schedule_with_details(schedule_id)
 
+    # ===== ヘルパーメソッド =====
+
+    async def _get_venues_with_colors(self, schedule_id: UUID = None) -> List[Dict[str, Any]]:
+        """会場情報を色情報とともに取得"""
+        venues = []
+
+        if schedule_id:
+            # スケジュールに関連付けられた会場を取得
+            try:
+                schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                for i, schedule_venue in enumerate(schedule_venues):
+                    # available venueにvenuesテーブルとのJOINデータが含まれている可能性を考慮
+                    venue_name = "会場"
+                    if "venues" in schedule_venue and isinstance(schedule_venue["venues"], dict):
+                        venue_name = schedule_venue["venues"].get("name", f"会場{i+1}")
+                    elif "venue_name" in schedule_venue:
+                        venue_name = schedule_venue["venue_name"]
+                    else:
+                        venue_name = f"会場{i+1}"
+
+                    venue_info = {
+                        "id": f"venue-{schedule_venue.get('id', i+1)}",
+                        "name": venue_name,
+                        "priority": schedule_venue.get("priority", i+1),
+                        "color": settings.DEFAULT_VENUE_COLORS[i % len(settings.DEFAULT_VENUE_COLORS)]
+                    }
+                    venues.append(venue_info)
+            except Exception as e:
+                print(f"Warning: Could not fetch schedule venues for {schedule_id}: {e}")
+
+        # 会場情報がない場合は空のリストを返す
+        # フロントエンドで適切に処理されるべき
+
+        return venues
+
+    async def _get_session_instructors(self, session_id: UUID) -> List[str]:
+        """セッションの指導者名を取得"""
+        try:
+            instructor_records = await self.session_instructor_repository.find_by_session(session_id)
+            instructor_names = []
+
+            for i, record in enumerate(instructor_records):
+                # ユーザー情報がJOINされている可能性を確認
+                if "users" in record and isinstance(record["users"], dict):
+                    user_data = record["users"]
+                    name = user_data.get("name") or user_data.get("email", f"指導者{i+1}")
+                    instructor_names.append(name)
+                elif "user_name" in record:
+                    instructor_names.append(record["user_name"])
+                else:
+                    # データが不完全な場合はスキップ
+                    continue
+
+            return instructor_names
+        except Exception as e:
+            print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
+            return []
+
+    async def _get_session_participants_count(self, schedule_id: UUID) -> int:
+        """セッションの参加者数を取得（估算値）"""
+        # 現在のリポジトリでは出欠情報を直接取得できないので、
+        # セッション数やスケジュール情報から推定
+        try:
+            sessions = await self.session_repository.find_by_schedule(schedule_id)
+            # セッション数に応じて估算値を計算
+            base_participants = len(sessions) * 3 + 2  # セッション数 × 3 + 2
+            return min(base_participants, 15)  # 最大15人まで
+        except Exception as e:
+            print(f"Warning: Could not calculate participants for schedule {schedule_id}: {e}")
+            return 0  # データなし
+
+    def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
+        """時間スケジュールの枠を生成"""
+        from datetime import datetime, timedelta
+
+        time_schedule = {}
+
+        # 開始時間と終了時間を解析
+        start_time = datetime.strptime(str(schedule["start_time"]), "%H:%M:%S")
+        end_time = datetime.strptime(str(schedule["end_time"]), "%H:%M:%S")
+
+        # 総時間（分）を計算
+        total_minutes = int((end_time - start_time).total_seconds() / 60)
+
+        # 各コマの長さ（分）を計算
+        slot_duration = total_minutes / division_count
+
+        # 時間スロットを生成
+        for i in range(division_count):
+            slot_start_minutes = int(i * slot_duration)
+            slot_time = start_time + timedelta(minutes=slot_start_minutes)
+            time_str = slot_time.strftime("%H:%M")
+
+            time_schedule[time_str] = {}
+            for venue in venues:
+                time_schedule[time_str][venue["id"]] = []
+
+        return time_schedule
+
     async def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> Dict[str, Any]:
         """指定した日付の練習スケジュールを理想的な形式で取得"""
         # 基本スケジュール情報を取得
@@ -284,14 +384,23 @@ class PracticeScheduleService:
 
         # セッション情報を安全に取得（エラーが発生した場合は空のリストを使用）
         sessions = []
+        venues = []
+        instructors = []
         try:
             sessions = await self.session_repository.find_by_schedule(schedule["id"])
+            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            instructors = await self.session_instructor_repository.find_by_schedule(schedule["id"])
         except Exception as e:
             print(f"Warning: Could not fetch sessions for schedule {schedule['id']}: {e}")
             sessions = []
+            venues = []
+            instructors = []
+
+        # データベースからdivision_countを取得
+        division_count = schedule.get("division_count", 6)
 
         # 基本スケジュール情報とセッション情報から理想形式を生成
-        return self._convert_basic_to_ideal_format_with_sessions(schedule, sessions)
+        return await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, instructors, division_count)
 
     def _convert_to_ideal_format(self, display_data: Dict[str, Any]) -> Dict[str, Any]:
         """表示用データを理想的な形式に変換"""
@@ -306,7 +415,7 @@ class PracticeScheduleService:
 
         # 会場情報を変換
         venues = []
-        colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"]
+        colors = settings.DEFAULT_VENUE_COLORS
         for i, venue in enumerate(display_data.get("available_venues", [])):
             venues.append({
                 "id": f"venue-{venue.get('id', i+1)}",
@@ -331,7 +440,7 @@ class PracticeScheduleService:
                     time_schedule[time_str][venue["id"]] = []
 
         # セッションを時間スロットに配置
-        part_colors = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F", "#BB8FCE"]
+        part_colors = settings.DEFAULT_PART_COLORS
         part_counter = {}
         
         for session in display_data.get("sessions", []):
@@ -348,8 +457,8 @@ class PracticeScheduleService:
             # 指導者名を取得（実際のユーザー名または仮の名前）
             instructors = []
             for instructor in session.get("instructors", []):
-                # 実際のユーザー名があれば使用、なければ仮の名前
-                instructors.append(f"指導者{len(instructors) + 1}")
+                # 実際のユーザー名データがないため指導者情報を追加しない
+                continue
 
             # セッション情報を作成
             session_info = {
@@ -357,8 +466,8 @@ class PracticeScheduleService:
                 "part_name": part_name,
                 "part_color": part_colors[part_index % len(part_colors)],
                 "session_title": session.get("title", "練習"),
-                "instructors": instructors if instructors else ["未割当"],
-                "participants": 5,  # 仮の参加者数
+                "instructors": instructors,
+                "participants": 0,
                 "status": "confirmed"
             }
 
@@ -388,7 +497,7 @@ class PracticeScheduleService:
 
         # 会場情報（実データから取得、なければデフォルト）
         venues = []
-        colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"]
+        colors = settings.DEFAULT_VENUE_COLORS
         available_venues = details_data.get("available_venues", [])
         
         if available_venues:
@@ -399,12 +508,7 @@ class PracticeScheduleService:
                     "priority": venue.get("priority", i+1),
                     "color": colors[i % len(colors)]
                 })
-        else:
-            # デフォルト会場
-            venues = [
-                {"id": "venue-1", "name": "メイン会場", "priority": 1, "color": "#FF6B6B"},
-                {"id": "venue-2", "name": "サブ会場", "priority": 2, "color": "#4ECDC4"}
-            ]
+        # 会場データがない場合は空のリストを返す
 
         # 時間スケジュールを生成
         time_schedule = {}
@@ -419,7 +523,7 @@ class PracticeScheduleService:
                     time_schedule[time_str][venue["id"]] = []
 
         # セッションを配置
-        part_colors = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F"]
+        part_colors = settings.DEFAULT_PART_COLORS
         sessions = details_data.get("sessions", [])
         
         for i, session in enumerate(sessions):
@@ -433,8 +537,8 @@ class PracticeScheduleService:
                     "part_name": session.get("title", f"パート{i+1}"),
                     "part_color": part_colors[i % len(part_colors)],
                     "session_title": session.get("title", "練習"),
-                    "instructors": [f"指導者{i+1}"],
-                    "participants": 5,
+                    "instructors": [],
+                    "participants": 0,
                     "status": "confirmed"
                 }
                 
@@ -446,73 +550,44 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    def _convert_basic_to_ideal_format(self, schedule: Dict[str, Any]) -> Dict[str, Any]:
-        """基本スケジュールデータから理想的な形式に変換"""
+    async def _convert_basic_to_ideal_format(self, schedule: Dict[str, Any], division_count: int = 6) -> Dict[str, Any]:
+        """基本スケジュールデータから理想的な形式に変換（実データのみ使用）"""
         # 基本情報
         schedule_info = {
             "id": str(schedule["id"]),
             "schedule_date": str(schedule["schedule_date"]),
             "start_time": str(schedule["start_time"]),
             "end_time": str(schedule["end_time"]),
-            "description": schedule.get("description", "練習")
+            "description": schedule.get("description", "")
         }
 
-        # デフォルト会場情報
-        venues = [
-            {
-                "id": "venue-1",
-                "name": "今出川キャンパス 良心館ｄ",
-                "priority": 1,
-                "color": "#FF6B6B"
-            },
-            {
-                "id": "venue-2", 
-                "name": "今出川キャンパス 至誠館",
-                "priority": 2,
-                "color": "#4ECDC4"
-            }
-        ]
+        # 実際の会場データを取得
+        venues = await self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = {}
-        start_hour = 9
-        end_hour = 17
-        
-        for hour in range(start_hour, end_hour):
-            for minute in [0, 30]:
-                time_str = f"{hour:02d}:{minute:02d}"
-                time_schedule[time_str] = {}
-                for venue in venues:
-                    time_schedule[time_str][venue["id"]] = []
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
-        # 実際のスケジュール時間に基づいてサンプルセッションを配置
-        schedule_start = str(schedule.get("start_time", "09:00"))[:5]
-        schedule_description = schedule.get("description", "練習")
-        
-        if schedule_start in time_schedule:
-            # 実データに基づくセッション情報
-            session_info_1 = {
-                "part_id": "part-1",
-                "part_name": f"{schedule_description} - 前半",
-                "part_color": "#FFD700",
-                "session_title": schedule_description,
-                "instructors": ["指導者A"],
-                "participants": 5,
-                "status": "confirmed"
-            }
-            
-            session_info_2 = {
-                "part_id": "part-2",
-                "part_name": f"{schedule_description} - 後半",
-                "part_color": "#87CEEB",
-                "session_title": schedule_description,
-                "instructors": ["指導者B"],
-                "participants": 8,
-                "status": "confirmed"
-            }
-            
-            time_schedule[schedule_start]["venue-1"].append(session_info_1)
-            time_schedule[schedule_start]["venue-2"].append(session_info_2)
+        # 実際のセッションデータのみを使用（推測データは生成しない）
+        sessions = await self.session_repository.find_by_schedule(schedule["id"])
+
+        # 実際のセッションデータがある場合のみ配置
+        for session in sessions:
+            session_start = str(session.get("start_time", ""))[:5]
+            if session_start and session_start in time_schedule and venues:
+                venue_index = (session.get("slot_order", 1) - 1) % len(venues)
+                venue_id = venues[venue_index]["id"]
+
+                session_info = {
+                    "part_id": str(session.get("id", "")),
+                    "part_name": session.get("title", ""),
+                    "part_color": settings.DEFAULT_PART_COLORS[venue_index % len(settings.DEFAULT_PART_COLORS)],
+                    "session_title": session.get("title", ""),
+                    "instructors": await self._get_session_instructors(session.get("id")),
+                    "participants": await self._get_session_participants_count(schedule["id"]),
+                    "status": "confirmed"
+                }
+
+                time_schedule[session_start][venue_id].append(session_info)
 
         return {
             "schedule_info": schedule_info,
@@ -520,7 +595,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    def _convert_basic_to_ideal_format_with_sessions(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
+    async def _convert_basic_to_ideal_format_with_sessions(self, schedule: Dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> Dict[str, Any]:
         """基本スケジュールデータとセッション情報から理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -531,36 +606,14 @@ class PracticeScheduleService:
             "description": schedule.get("description", "練習")
         }
 
-        # デフォルト会場情報
-        venues = [
-            {
-                "id": "venue-1",
-                "name": "今出川キャンパス 良心館ｄ",
-                "priority": 1,
-                "color": "#FF6B6B"
-            },
-            {
-                "id": "venue-2", 
-                "name": "今出川キャンパス 至誠館",
-                "priority": 2,
-                "color": "#4ECDC4"
-            }
-        ]
+        # 実際の会場データを取得
+        venues = await self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = {}
-        start_hour = 9
-        end_hour = 17
-        
-        for hour in range(start_hour, end_hour):
-            for minute in [0, 30]:
-                time_str = f"{hour:02d}:{minute:02d}"
-                time_schedule[time_str] = {}
-                for venue in venues:
-                    time_schedule[time_str][venue["id"]] = []
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
         # 実際のセッションデータを配置（slot_order順）
-        part_colors = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F", "#BB8FCE"]
+        part_colors = settings.DEFAULT_PART_COLORS
         
         if sessions:
             # slot_orderでソート済みのセッションを処理
@@ -570,10 +623,10 @@ class PracticeScheduleService:
                 
                 # slot_orderに基づいて時間スロットを決定
                 # slot_order 1 = 09:00, 2 = 09:30, 3 = 10:00, etc.
-                start_hour = 9 + ((slot_order - 1) // 2)
-                start_minute = 30 * ((slot_order - 1) % 2)
+                start_hour = settings.SCHEDULE_START_HOUR + ((slot_order - 1) // 2)
+                start_minute = settings.SCHEDULE_SLOT_MINUTES * ((slot_order - 1) % 2)
                 time_str = f"{start_hour:02d}:{start_minute:02d}"
-                
+
                 if time_str in time_schedule:
                     # 会場を循環的に割り当て
                     venue_index = (slot_order - 1) % len(venues)
@@ -584,41 +637,14 @@ class PracticeScheduleService:
                         "part_name": session_title,
                         "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                         "session_title": session_title,
-                        "instructors": [f"指導者{slot_order}"],  # 実際の指導者データは後で実装
-                        "participants": 5,
+                        "instructors": await self._get_session_instructors(session.get("id")),
+                        "participants": await self._get_session_participants_count(schedule["id"]),
                         "status": "confirmed",
                         "slot_order": slot_order
                     }
                     
                     time_schedule[time_str][venue_id].append(session_info)
-        else:
-            # セッションデータがない場合、基本スケジュール情報から生成
-            schedule_start = str(schedule.get("start_time", "09:00"))[:5]
-            schedule_description = schedule.get("description", "練習")
-            
-            if schedule_start in time_schedule:
-                session_info_1 = {
-                    "part_id": "part-1",
-                    "part_name": f"{schedule_description} - 前半",
-                    "part_color": "#FFD700",
-                    "session_title": schedule_description,
-                    "instructors": ["指導者A"],
-                    "participants": 5,
-                    "status": "confirmed"
-                }
-                
-                session_info_2 = {
-                    "part_id": "part-2",
-                    "part_name": f"{schedule_description} - 後半",
-                    "part_color": "#87CEEB",
-                    "session_title": schedule_description,
-                    "instructors": ["指導者B"],
-                    "participants": 8,
-                    "status": "confirmed"
-                }
-                
-                time_schedule[schedule_start]["venue-1"].append(session_info_1)
-                time_schedule[schedule_start]["venue-2"].append(session_info_2)
+        # セッションデータがない場合は空のスケジュールを返す（推測データは生成しない）
 
         return {
             "schedule_info": schedule_info,
@@ -642,9 +668,9 @@ class PracticeScheduleService:
             sessions = []
 
         # 詳細形式に変換
-        return self._convert_to_details_format(schedule, sessions)
+        return await self._convert_to_details_format(schedule, sessions)
 
-    def _convert_to_details_format(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
+    async def _convert_to_details_format(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
         """基本スケジュールデータとセッション情報から詳細形式に変換"""
         # 基本情報
         result = {
@@ -661,25 +687,22 @@ class PracticeScheduleService:
             "updated_by": schedule.get("updated_by")
         }
 
-        # 利用可能会場情報（デフォルト）
-        result["available_venues"] = [
-            {
-                "id": "venue-1",
-                "schedule_id": str(schedule["id"]),
-                "venue_id": "venue-1-id",
-                "is_preferred": True,
-                "priority": 1,
-                "notes": "主要練習会場"
-            },
-            {
-                "id": "venue-2",
-                "schedule_id": str(schedule["id"]),
-                "venue_id": "venue-2-id",
-                "is_preferred": False,
-                "priority": 2,
-                "notes": "代替会場"
-            }
-        ]
+        # 利用可能会場情報（実データから取得）
+        result["available_venues"] = []
+        try:
+            schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            for venue in schedule_venues:
+                venue_info = {
+                    "id": str(venue.get("id", "")),
+                    "schedule_id": str(schedule["id"]),
+                    "venue_id": str(venue.get("venue_id", "")),
+                    "is_preferred": venue.get("is_preferred", False),
+                    "priority": venue.get("priority", 0),
+                    "notes": venue.get("notes", "")
+                }
+                result["available_venues"].append(venue_info)
+        except Exception as e:
+            print(f"Warning: Could not fetch available venues for schedule {schedule['id']}: {e}")
 
         # セッション情報を変換
         result["sessions"] = []
@@ -696,7 +719,7 @@ class PracticeScheduleService:
                 "slot_order": session.get("slot_order", 1),
                 "created_at": str(session.get("created_at", "")),
                 "updated_at": str(session.get("updated_at", "")),
-                "instructors": []  # 指導者情報は後で実装
+                "instructors": await self._get_session_instructors(session.get("id")) if session.get("id") else []
             }
             result["sessions"].append(session_info)
 
