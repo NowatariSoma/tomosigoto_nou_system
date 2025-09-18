@@ -11,11 +11,11 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config, { dev, isServer }) => {
-    // Disable CSS optimization in production to avoid build errors
-    if (!dev && !isServer) {
-      config.optimization.minimize = false;
-      config.optimization.minimizer = [];
-    }
+    // CSS optimization settings - temporarily enabled for development
+    // if (!dev && !isServer) {
+    //   config.optimization.minimize = false;
+    //   config.optimization.minimizer = [];
+    // }
     return config;
   },
   async rewrites() {
