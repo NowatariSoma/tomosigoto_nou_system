@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   // 認証チェックを無効化 - すべてのルートにアクセス可能
-  return NextResponse.next();
+  return NextResponse.next()
 }
 
 export const config = {
@@ -20,4 +20,4 @@ export const config = {
      */
     '/((?!api|_next/static|_next/image|favicon.ico|favicon.png|images|icons).*)',
   ],
-}; 
+} 
