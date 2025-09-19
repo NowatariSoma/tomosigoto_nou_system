@@ -77,7 +77,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 
         {schedule.description && (
           <div className="mt-3">
-            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+            <p className="text-sm text-slate-700 bg-slate-100 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed">
               {schedule.description}
             </p>
           </div>

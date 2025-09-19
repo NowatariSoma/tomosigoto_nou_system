@@ -233,14 +233,14 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            className="px-6 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 hover:border-slate-400 rounded-lg transition-all duration-200 font-medium"
           >
             {UI_TEXT.CANCEL}
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
           >
             <Save className="h-4 w-4" />
             <span>{loading ? '保存中...' : UI_TEXT.SAVE}</span>
