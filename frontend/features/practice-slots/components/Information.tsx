@@ -15,7 +15,6 @@ const Information: React.FC<InformationProps> = ({
   // 日付が変更されたときにスケジュールデータを取得
   useEffect(() => {
     const dateString = currentDate.toISOString().split('T')[0];
-    console.log('Information - 日付変更:', dateString);
     fetchPracticeScheduleByDate(dateString);
   }, [currentDate, fetchPracticeScheduleByDate]);
   // 日付をフォーマットする関数

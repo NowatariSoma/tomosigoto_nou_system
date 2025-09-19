@@ -87,7 +87,7 @@ class PracticeScheduleRepository:
         for session in sessions:
             instructors_response = (
                 self.client.table("session_instructors")
-                .select("*, users(*)")
+                .select("*, practice_user_attendance(*, users(*))")
                 .eq("session_id", session["id"])
                 .execute()
             )
@@ -139,8 +139,11 @@ class PracticeScheduleRepository:
                 schedule_available_venues,
                 parts(id, name),
                 session_instructors(
-                    id, user_id,
-                    users(id, name, email)
+                    id, attendance_id,
+                    practice_user_attendance(
+                        user_id,
+                        users(id, name, email)
+                    )
                 )
             """)
             .eq("schedule_id", schedule_id)
@@ -166,9 +169,11 @@ class PracticeScheduleRepository:
             # 指導者情報を整形
             instructors = []
             for instructor_data in session_data.get("session_instructors", []):
-                user_info = instructor_data.get("users", {})
+                attendance_info = instructor_data.get("practice_user_attendance", {})
+                user_info = attendance_info.get("users", {}) if attendance_info else {}
+                user_id = attendance_info.get("user_id") if attendance_info else None
                 instructors.append({
-                    "id": instructor_data["user_id"],
+                    "id": user_id,
                     "name": user_info.get("name", "不明なユーザー"),
                     "email": user_info.get("email")
                 })
@@ -303,7 +308,7 @@ class SessionInstructorRepository:
         """指定されたセッションの指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, users(*)")
+            .select("*, practice_user_attendance(*, users(*))")
             .eq("session_id", session_id)
             .execute()
         )
@@ -364,7 +369,7 @@ class SessionInstructorRepository:
         # 指導者情報を取得
         response = (
             self.client.table(self.table_name)
-            .select("*, users(*)")
+            .select("*, practice_user_attendance(*, users(*))")
             .in_("session_id", session_ids)
             .execute()
         )

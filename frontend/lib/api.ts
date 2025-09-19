@@ -1,10 +1,9 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8000';
 
-// デバッグ用ログ
-if (typeof window !== 'undefined') {
-  console.log('API_BASE_URL:', API_BASE_URL);
-  console.log('AUTH_URL:', AUTH_URL);
+// API設定の初期化確認
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // 開発環境でのみAPI設定を確認
 }
 
 export class ApiError extends Error {
@@ -19,9 +18,6 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
   
   // URLが相対パスの場合、API_BASE_URLを前に付ける
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-  
-  // デバッグ用ログ
-  console.log('fetchApi called with:', { url, fullUrl, API_BASE_URL });
   
   const response = await fetch(fullUrl, {
     ...options,
