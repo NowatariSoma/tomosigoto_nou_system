@@ -347,28 +347,26 @@ class PracticeScheduleService:
             print(f"Warning: Could not calculate participants for schedule {schedule_id}: {e}")
             return 0  # データなし
 
-    def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
-        """時間スケジュールの枠を生成"""
+    def _calculate_slot_time(self, schedule: Dict[str, Any], slot_order: int, division_count: int) -> str:
+        """slot_orderに基づいて時間スロットを計算"""
         from datetime import datetime, timedelta
 
-        time_schedule = {}
-
-        # 開始時間と終了時間を解析
         start_time = datetime.strptime(str(schedule["start_time"]), "%H:%M:%S")
         end_time = datetime.strptime(str(schedule["end_time"]), "%H:%M:%S")
-
-        # 総時間（分）を計算
         total_minutes = int((end_time - start_time).total_seconds() / 60)
-
-        # 各コマの長さ（分）を計算
         slot_duration = total_minutes / division_count
+
+        slot_start_minutes = int((slot_order - 1) * slot_duration)
+        slot_time = start_time + timedelta(minutes=slot_start_minutes)
+        return slot_time.strftime("%H:%M")
+
+    def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
+        """時間スケジュールの枠を生成"""
+        time_schedule = {}
 
         # 時間スロットを生成
         for i in range(division_count):
-            slot_start_minutes = int(i * slot_duration)
-            slot_time = start_time + timedelta(minutes=slot_start_minutes)
-            time_str = slot_time.strftime("%H:%M")
-
+            time_str = self._calculate_slot_time(schedule, i + 1, division_count)
             time_schedule[time_str] = {}
             for venue in venues:
                 time_schedule[time_str][venue["id"]] = []
@@ -390,15 +388,10 @@ class PracticeScheduleService:
                 }
             }
 
-        debug_logs.append(f"Schedule found: {schedule.get('id', 'unknown_id')}")
-
         # セッション情報を安全に取得（エラーが発生した場合は空のリストを使用）
         sessions = []
         venues = []
         instructors = []
-
-        # セッション情報を個別に安全に取得
-        debug_logs.append(f"Schedule ID: {schedule['id']}")
 
         # Sessions
         try:
@@ -413,22 +406,14 @@ class PracticeScheduleService:
         try:
             debug_logs.append("Attempting to fetch venues...")
             venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            print(f"Venues fetched: {venues}")
             debug_logs.append(f"Venues fetched: {len(venues)} items")
         except Exception as e:
             debug_logs.append(f"ERROR fetching venues: {e}")
             venues = []
 
-        # Instructors（これが問題を起こしているが、他のデータは保持）
-        try:
-            debug_logs.append("Attempting to fetch instructors...")
-            instructors = await self.session_instructor_repository.find_by_schedule(schedule["id"])
-            debug_logs.append(f"Instructors fetched: {len(instructors)} items")
-        except Exception as e:
-            debug_logs.append(f"ERROR fetching instructors: {e}")
-            debug_logs.append(f"Error type: {type(e).__name__}")
-            debug_logs.append(f"Error details: {str(e)}")
-            # インストラクター取得エラーは無視して続行
-            instructors = []
+        # Instructors　TODO: 指導者情報を取得
+        instructors = []
 
         # データベースからdivision_countを取得
         division_count = schedule.get("division_count", 6)
@@ -670,16 +655,7 @@ class PracticeScheduleService:
                 }
 
                 # slot_orderに基づいて時間スロットを決定（division_count対応）
-                from datetime import datetime, timedelta
-
-                start_time = datetime.strptime(str(schedule["start_time"]), "%H:%M:%S")
-                end_time = datetime.strptime(str(schedule["end_time"]), "%H:%M:%S")
-                total_minutes = int((end_time - start_time).total_seconds() / 60)
-                slot_duration = total_minutes / division_count
-
-                slot_start_minutes = int((slot_order - 1) * slot_duration)
-                slot_time = start_time + timedelta(minutes=slot_start_minutes)
-                time_str = slot_time.strftime("%H:%M")
+                time_str = self._calculate_slot_time(schedule, slot_order, division_count)
 
                 processing_detail["calculated_time"] = time_str
                 processing_detail["time_slot_exists"] = time_str in time_schedule
