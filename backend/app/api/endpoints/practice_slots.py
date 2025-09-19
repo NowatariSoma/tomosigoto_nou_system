@@ -8,7 +8,6 @@ from app.schemas.practice_schedules import (
     PracticeScheduleCreate,
     PracticeScheduleResponse,
     PracticeScheduleUpdate,
-    PracticeScheduleWithDetailsResponse,
     PracticeScheduleDisplayResponse,
     SessionCreate,
     SessionResponse,
@@ -154,37 +153,29 @@ async def create_practice_schedule(
     Returns:
         作成された練習スケジュール
     """
-    # 作成者と更新者を設定（仮の値）
-    schedule_dict = schedule_data.model_dump()
-    schedule_dict["created_by"] = "system"
-    schedule_dict["updated_by"] = "system"
+    try:
+        # デバッグログ: リクエストデータの構造を確認
+        print(f"DEBUG POST /: schedule_data: {schedule_data}")
+        print(f"DEBUG POST /: schedule_data type: {type(schedule_data)}")
+        
+        # 作成者と更新者を設定（仮の値）
+        schedule_dict = schedule_data.model_dump()
+        print(f"DEBUG POST /: schedule_dict after model_dump: {schedule_dict}")
+        
+        schedule_dict["created_by"] = "system"
+        schedule_dict["updated_by"] = "system"
+        
+        print(f"DEBUG POST /: schedule_dict before service call: {schedule_dict}")
 
-    created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
-    return PracticeScheduleResponse(**created_schedule)
-
-
-@router.post("/with-details", response_model=PracticeScheduleWithDetailsResponse)
-async def create_practice_schedule_with_details(
-    schedule_data: Dict[str, Any],
-    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-):
-    """
-    練習スケジュールを関連データと一緒に作成
-
-    Args:
-        schedule_data: 作成する練習スケジュールと関連データ
-        current_user: 現在のユーザー
-        practice_schedule_service: 練習スケジュール管理サービス
-
-    Returns:
-        作成された練習スケジュールの詳細情報
-    """
-    # 作成者と更新者を設定（仮の値）
-    schedule_data["created_by"] = "system"
-    schedule_data["updated_by"] = "system"
-
-    created_schedule = await practice_schedule_service.create_practice_schedule_with_details(schedule_data)
-    return PracticeScheduleWithDetailsResponse(**created_schedule)
+        created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
+        print(f"DEBUG POST /: created_schedule: {created_schedule}")
+        
+        return PracticeScheduleResponse(**created_schedule)
+    except Exception as e:
+        print(f"DEBUG POST /: エラー発生: {e}")
+        print(f"DEBUG POST /: エラータイプ: {type(e)}")
+        print(f"DEBUG POST /: エラーの詳細: {str(e)}")
+        raise
 
 
 @router.put("/{schedule_id}", response_model=PracticeScheduleResponse)
