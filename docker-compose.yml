@@ -19,7 +19,9 @@ services:
     restart: unless-stopped
     command: >
       sh -c "
-      cp /env.example /.env &&
+      if [ ! -f /.env ]; then
+        cp /env.example /.env
+      fi &&
       if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       else
@@ -48,22 +50,14 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     volumes:
+      # ソースコードをマウント（開発時のホットリロード用）
+      - ./frontend:/app
+      # node_modulesは除外（コンテナ内のものを使用）
       - /app/node_modules
       - /app/.next
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
-      - ./.env:/.env
     restart: unless-stopped
     depends_on:
       - backend
-    command: >
-      sh -c "
-      cp /env.example /.env &&
-      if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
-        yarn dev
-      else
-        yarn start
-      fi"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
