@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/schedule';
-import { PracticeScheduleService } from '../services';
+import { practiceScheduleService } from '../services';
 
 /**
  * 練習スケジュール管理フック
@@ -24,7 +24,8 @@ export const usePracticeSchedule = () => {
     
     try {
       // 詳細データは別のstateで管理するため、ここでは基本データのみ取得
-      console.log('詳細データ取得:', scheduleId);
+      const data = await practiceScheduleService.getPracticeScheduleDetails(scheduleId);
+      // TODO: 詳細データの状態管理を実装
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました';
       setError(errorMessage);
@@ -43,7 +44,7 @@ export const usePracticeSchedule = () => {
     setError(null);
     
     try {
-      const data = await PracticeScheduleService.getPracticeScheduleByDate(date);
+      const data = await practiceScheduleService.getPracticeScheduleByDate(date);
       setScheduleData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました';
@@ -89,7 +90,7 @@ export const usePracticeScheduleDetails = () => {
     setError(null);
     
     try {
-      const data = await PracticeScheduleService.getPracticeScheduleDetails(scheduleId);
+      const data = await practiceScheduleService.getPracticeScheduleDetails(scheduleId);
       setDetailsData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '練習スケジュール詳細の取得に失敗しました';
@@ -134,7 +135,7 @@ export const useIdealSchedule = () => {
     setError(null);
     
     try {
-      const data = await PracticeScheduleService.getPracticeScheduleIdealFormat(date);
+      const data = await practiceScheduleService.getPracticeScheduleIdealFormat(date);
       setIdealData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '理想形式スケジュールの取得に失敗しました';

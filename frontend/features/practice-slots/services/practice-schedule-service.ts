@@ -1,35 +1,50 @@
 /**
  * 練習スケジュールのAPIサービス
+ * room-settingsパターンに合わせて統一的なAPIアプローチを採用
  */
 
 import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/schedule';
 import { ApiResponse } from '../types/api';
+import { API_ENDPOINTS } from '../constants';
+import { fetchApi } from '../../../lib/api';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// practice-slots.tsから移行された型定義
+export interface ScheduleItem {
+  id?: string;
+  practice_slot_id?: string;
+  time: string;
+  duration: string;
+  activity: string;
+  columns: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PracticeSlot {
+  id?: string;
+  date: string;
+  title?: string;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  schedule_items?: ScheduleItem[];
+}
 
 /**
  * 練習スケジュールAPIサービス
  */
 export class PracticeScheduleService {
+  private readonly basePath = API_ENDPOINTS.PRACTICE_SLOTS;
+
   /**
    * 指定した練習スケジュールの詳細情報を取得
    * @param scheduleId - 練習スケジュールID
    * @returns 練習スケジュールの詳細情報
    */
-  static async getPracticeScheduleDetails(scheduleId: string): Promise<any> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/practice_slots/${scheduleId}/details`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching practice schedule details:', error);
-      throw error;
-    }
+  async getPracticeScheduleDetails(scheduleId: string): Promise<any> {
+    const response = await fetchApi(`${this.basePath}/${scheduleId}/details`);
+    return response.json();
   }
 
   /**
@@ -37,22 +52,15 @@ export class PracticeScheduleService {
    * @param date - 対象日付 (YYYY-MM-DD形式)
    * @returns 練習スケジュール情報
    */
-  static async getPracticeScheduleByDate(date: string): Promise<PracticeScheduleDisplayResponse | null> {
+  async getPracticeScheduleByDate(date: string): Promise<PracticeScheduleDisplayResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/practice_slots/date/${date}`);
-      
-      if (response.status === 404) {
-        return null; // スケジュールが存在しない場合
-      }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-      
+      const response = await fetchApi(`${this.basePath}/date/${date}`);
       const data: PracticeScheduleDisplayResponse = await response.json();
       return data;
-    } catch (error) {
-      console.error('Error fetching practice schedule by date:', error);
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null; // スケジュールが存在しない場合
+      }
       throw error;
     }
   }
@@ -64,27 +72,17 @@ export class PracticeScheduleService {
    * @param date - 対象日付 (YYYY-MM-DD形式)
    * @returns 練習スケジュールの表示用情報
    */
-  static async getPracticeScheduleDisplayByDate(date: string): Promise<PracticeScheduleDisplayResponse | null> {
-    try {
-      // まず基本情報を取得してスケジュールIDを取得
-      const basicSchedule = await this.getPracticeScheduleByDate(date);
-      if (!basicSchedule) {
-        return null;
-      }
-      
-      // スケジュールIDを使って表示用情報を取得
-      const response = await fetch(`${API_BASE_URL}/practice_slots/${basicSchedule.id}/display`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-      
-      const data: PracticeScheduleDisplayResponse = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching practice schedule display by date:', error);
-      throw error;
+  async getPracticeScheduleDisplayByDate(date: string): Promise<PracticeScheduleDisplayResponse | null> {
+    // まず基本情報を取得してスケジュールIDを取得
+    const basicSchedule = await this.getPracticeScheduleByDate(date);
+    if (!basicSchedule) {
+      return null;
     }
+    
+    // スケジュールIDを使って表示用情報を取得
+    const response = await fetchApi(`${this.basePath}/${basicSchedule.id}/display`);
+    const data: PracticeScheduleDisplayResponse = await response.json();
+    return data;
   }
 
   /**
@@ -92,22 +90,15 @@ export class PracticeScheduleService {
    * @param date - 対象日付 (YYYY-MM-DD形式)
    * @returns 理想的な形式の練習スケジュール情報
    */
-  static async getPracticeScheduleIdealFormat(date: string): Promise<IdealScheduleData | null> {
+  async getPracticeScheduleIdealFormat(date: string): Promise<IdealScheduleData | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/practice_slots/date/${date}/ideal`);
-      
-      if (response.status === 404) {
-        return null;
-      }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-      
+      const response = await fetchApi(`${this.basePath}/date/${date}/ideal`);
       const data: IdealScheduleData = await response.json();
       return data;
-    } catch (error) {
-      console.error('Error fetching ideal format practice schedule:', error);
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null;
+      }
       throw error;
     }
   }
@@ -116,19 +107,36 @@ export class PracticeScheduleService {
    * すべての練習スケジュールを取得
    * @returns 練習スケジュールの一覧
    */
-  static async getAllPracticeSchedules(): Promise<PracticeScheduleDisplayResponse[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/practice_slots/`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-      
-      const data: PracticeScheduleDisplayResponse[] = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching all practice schedules:', error);
-      throw error;
-    }
+  async getAllPracticeSchedules(): Promise<PracticeScheduleDisplayResponse[]> {
+    const response = await fetchApi(`${this.basePath}/`);
+    const data: PracticeScheduleDisplayResponse[] = await response.json();
+    return data;
+  }
+
+  // ===== practice-slots.tsから統合されたメソッド =====
+
+  /**
+   * 指定した日付のPracticeSlotを取得 (practice-slots.ts互換)
+   * @param targetDate - 対象日付 (YYYY-MM-DD形式)
+   * @returns PracticeSlot情報
+   */
+  async getPracticeSlotByDate(targetDate: string): Promise<ApiResponse<PracticeSlot>> {
+    const response = await fetchApi(`${this.basePath}/date/${targetDate}`);
+    return response.json();
+  }
+
+  /**
+   * サンプルデータ付きでPracticeSlotを作成 (practice-slots.ts互換)
+   * @param targetDate - 対象日付
+   * @returns 作成されたPracticeSlot
+   */
+  async createPracticeSlotWithSampleData(targetDate: string): Promise<ApiResponse<PracticeSlot>> {
+    const response = await fetchApi(`${this.basePath}/with-sample-data?target_date=${targetDate}`, {
+      method: 'POST',
+    });
+    return response.json();
   }
 }
+
+// room-settingsパターンに合わせてインスタンスをエクスポート
+export const practiceScheduleService = new PracticeScheduleService();

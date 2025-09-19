@@ -33,12 +33,32 @@ class PracticeScheduleRepository:
     @handle_supabase_errors("create")
     async def create(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しい練習スケジュールを作成"""
+        # dateとtimeオブジェクトを文字列に変換
+        if "schedule_date" in schedule_data:
+            schedule_data["schedule_date"] = str(schedule_data["schedule_date"])
+        if "start_time" in schedule_data:
+            schedule_data["start_time"] = str(schedule_data["start_time"])
+        if "end_time" in schedule_data:
+            schedule_data["end_time"] = str(schedule_data["end_time"])
+        
+        # created_byとupdated_byを除外（データベースで自動設定される）
+        schedule_data.pop("created_by", None)
+        schedule_data.pop("updated_by", None)
+        
         response = self.client.table(self.table_name).insert(schedule_data).execute()
         return response.data[0]
 
     @handle_supabase_errors("update")
     async def update(self, schedule_id: UUID, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
         """練習スケジュールを更新"""
+        # dateとtimeオブジェクトを文字列に変換
+        if "schedule_date" in schedule_data:
+            schedule_data["schedule_date"] = str(schedule_data["schedule_date"])
+        if "start_time" in schedule_data:
+            schedule_data["start_time"] = str(schedule_data["start_time"])
+        if "end_time" in schedule_data:
+            schedule_data["end_time"] = str(schedule_data["end_time"])
+        
         response = (
             self.client.table(self.table_name)
             .update(schedule_data)
@@ -87,7 +107,7 @@ class PracticeScheduleRepository:
         for session in sessions:
             instructors_response = (
                 self.client.table("session_instructors")
-                .select("*, users(*)")
+                .select("*, practice_user_attendance(*, users(*))")
                 .eq("session_id", session["id"])
                 .execute()
             )
@@ -135,16 +155,12 @@ class PracticeScheduleRepository:
         sessions_response = (
             self.client.table("sessions")
             .select("""
-                id, title, start_time, end_time, priority, part_id,
-                schedule_available_venues,
-                parts(id, name),
-                session_instructors(
-                    id, user_id,
-                    users(id, name, email)
-                )
+                id, title, slot_order, priority, part_id,
+                schedule_available_venue_id,
+                parts(id, name)
             """)
             .eq("schedule_id", schedule_id)
-            .order("priority")
+            .order("slot_order")
             .execute()
         )
 
@@ -155,29 +171,21 @@ class PracticeScheduleRepository:
             part_info = session_data.get("parts", {})
             part_name = part_info.get("name") if part_info else None
 
-            # 会場名を取得（schedule_available_venuesから）
+            # 会場名を取得（schedule_available_venue_idから）
             venue_name = None
-            if session_data.get("schedule_available_venues"):
+            if session_data.get("schedule_available_venue_id"):
                 for venue in available_venues:
-                    if venue["id"] == session_data["schedule_available_venues"]:
+                    if venue["id"] == session_data["schedule_available_venue_id"]:
                         venue_name = venue["name"]
                         break
 
-            # 指導者情報を整形
+            # 指導者情報は後で別途取得
             instructors = []
-            for instructor_data in session_data.get("session_instructors", []):
-                user_info = instructor_data.get("users", {})
-                instructors.append({
-                    "id": instructor_data["user_id"],
-                    "name": user_info.get("name", "不明なユーザー"),
-                    "email": user_info.get("email")
-                })
 
             sessions.append({
                 "id": session_data["id"],
                 "title": session_data["title"],
-                "start_time": session_data["start_time"],
-                "end_time": session_data["end_time"],
+                "slot_order": session_data["slot_order"],
                 "priority": session_data["priority"],
                 "part_name": part_name,
                 "venue_name": venue_name,
@@ -303,7 +311,7 @@ class SessionInstructorRepository:
         """指定されたセッションの指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, users(*)")
+            .select("*, practice_user_attendance(*, users(*))")
             .eq("session_id", session_id)
             .execute()
         )
