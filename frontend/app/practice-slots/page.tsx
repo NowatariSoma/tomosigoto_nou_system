@@ -2,7 +2,7 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Brain } from 'lucide-react';
-import { PracticeSlotsPage } from '@/features/practice-slots/components/practice-slotsPage';
+import { PracticeSlotsPage } from '@/features/practice-slots/components/PracticeSlotsPage';
 
 export default function Page() {
   return (
@@ -12,7 +12,7 @@ export default function Page() {
       icon={<Brain className="h-8 w-8 text-blue-600" />}
       developmentBadge={{
         level: 'alpha',
-        text: 'バックエンド作成、UI改善'
+        text: 'API使うように、UI改善'
       }}
       permissionBadge={{
         level: 'basic',

@@ -29,11 +29,11 @@ const DateButton: React.FC<DateNavigationProps> = ({
           className="p-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
           aria-label="前の日"
         >
-          <ChevronLeft className="w-5 h-5 text-blue-600" />
+          <ChevronLeft className="w-5 h-5 text-white" />
         </button>
         
         <div 
-          className="px-8 py-3 bg-gray-100 rounded-lg text-black font-bold text-xl shadow-sm min-w-[240px] text-center border border-gray-300"
+          className="px-8 py-3 bg-gray-100 rounded-lg text-white font-bold text-xl shadow-sm min-w-[240px] text-center border border-gray-300"
         >
           {formattedDateText}
         </div>
@@ -43,7 +43,7 @@ const DateButton: React.FC<DateNavigationProps> = ({
           className="p-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
           aria-label="次の日"
         >
-          <ChevronRight className="w-5 h-5 text-blue-600" />
+          <ChevronRight className="w-5 h-5 text-white" />
         </button>
       </div>
     </div>
