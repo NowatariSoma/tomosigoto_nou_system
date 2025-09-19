@@ -1,6 +1,6 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  PRACTICE_SLOTS: '/api/v1/practice_slots',
+  PRACTICE_SLOTS: '/practice_slots',
 } as const;
 
 // 日時フォーマット用

@@ -63,6 +63,9 @@ class PracticeScheduleService:
 
     async def create_practice_schedule(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
         """練習スケジュールを作成"""
+        # created_byとupdated_byを除外（データベースで自動設定される）
+        schedule_data.pop("created_by", None)
+        schedule_data.pop("updated_by", None)
         return await self.practice_schedule_repository.create(schedule_data)
 
     async def update_practice_schedule(
@@ -73,6 +76,9 @@ class PracticeScheduleService:
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
 
+        # created_byとupdated_byを除外（データベースで自動設定される）
+        schedule_data.pop("created_by", None)
+        schedule_data.pop("updated_by", None)
         return await self.practice_schedule_repository.update(schedule_id, schedule_data)
 
     async def remove_practice_schedule(self, schedule_id: UUID) -> bool:
@@ -118,31 +124,57 @@ class PracticeScheduleService:
 
     async def get_sessions_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定したスケジュールのセッション一覧を取得"""
-        sessions = await self.session_repository.find_by_schedule(schedule_id)
+        try:
+            sessions = await self.session_repository.find_by_schedule(schedule_id)
 
-        # 各セッションに指導者情報を追加
-        for session in sessions:
-            instructors = await self.session_instructor_repository.find_by_session(
-                session["id"]
-            )
-            session["instructors"] = instructors
+            # 各セッションに指導者情報を追加
+            for session in sessions:
+                try:
+                    instructors = await self.session_instructor_repository.find_by_session(
+                        session["id"]
+                    )
+                    session["instructors"] = instructors
+                except Exception as e:
+                    print(f"Warning: Could not fetch instructors for session {session['id']}: {e}")
+                    session["instructors"] = []
 
-        return sessions
+            return sessions
+        except Exception as e:
+            print(f"Error fetching sessions for schedule {schedule_id}: {e}")
+            raise APIException(ErrorMessage.DATABASE_ERROR)
 
     async def get_session(self, session_id: UUID) -> Dict[str, Any]:
         """指定したセッション情報を取得"""
-        session = await self.session_repository.find_by_id(session_id)
-        if not session:
-            raise APIException(ErrorMessage.SESSION_NOT_FOUND)
+        try:
+            session = await self.session_repository.find_by_id(session_id)
+            if not session:
+                raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-        # 指導者情報を追加
-        instructors = await self.session_instructor_repository.find_by_session(session_id)
-        session["instructors"] = instructors
+            # 指導者情報を追加
+            try:
+                instructors = await self.session_instructor_repository.find_by_session(session_id)
+                session["instructors"] = instructors
+            except Exception as e:
+                print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
+                session["instructors"] = []
 
-        return session
+            return session
+        except APIException:
+            raise
+        except Exception as e:
+            print(f"Error fetching session {session_id}: {e}")
+            raise APIException(ErrorMessage.DATABASE_ERROR)
 
     async def create_session(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """セッションを作成"""
+        # UUIDフィールドを文字列に変換
+        if "schedule_id" in session_data and isinstance(session_data["schedule_id"], UUID):
+            session_data["schedule_id"] = str(session_data["schedule_id"])
+        if "part_id" in session_data and isinstance(session_data["part_id"], UUID):
+            session_data["part_id"] = str(session_data["part_id"])
+        if "schedule_available_venue_id" in session_data and isinstance(session_data["schedule_available_venue_id"], UUID):
+            session_data["schedule_available_venue_id"] = str(session_data["schedule_available_venue_id"])
+        
         return await self.session_repository.create(session_data)
 
     async def update_session(
@@ -188,47 +220,6 @@ class PracticeScheduleService:
 
     # ===== 複合操作 =====
 
-    async def create_practice_schedule_with_details(
-        self, schedule_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """練習スケジュールを関連データと一緒に作成"""
-        # 練習スケジュール本体を作成
-        base_schedule_data = {
-            "schedule_date": schedule_data["schedule_date"],
-            "start_time": schedule_data["start_time"],
-            "end_time": schedule_data["end_time"],
-            "description": schedule_data.get("description"),
-            "schedule_type": schedule_data.get("schedule_type"),
-            "status": schedule_data.get("status", "active"),
-            "created_by": schedule_data.get("created_by"),
-            "updated_by": schedule_data.get("updated_by"),
-        }
-
-        created_schedule = await self.practice_schedule_repository.create(base_schedule_data)
-        schedule_id = created_schedule["id"]
-
-        # 利用可能会場を追加
-        if "available_venues" in schedule_data:
-            for venue_data in schedule_data["available_venues"]:
-                venue_data["schedule_id"] = schedule_id
-                await self.schedule_available_venue_repository.create(venue_data)
-
-        # セッションを追加
-        if "sessions" in schedule_data:
-            for session_data in schedule_data["sessions"]:
-                session_data["schedule_id"] = schedule_id
-                instructors_data = session_data.pop("instructors", [])
-
-                created_session = await self.session_repository.create(session_data)
-                session_id = created_session["id"]
-
-                # 指導者を追加
-                for instructor_data in instructors_data:
-                    instructor_data["session_id"] = session_id
-                    await self.session_instructor_repository.create(instructor_data)
-
-        # 作成された詳細情報を返す
-        return await self.get_practice_schedule_with_details(schedule_id)
 
     async def update_practice_schedule_with_details(
         self, schedule_id: UUID, schedule_data: Dict[str, Any]
@@ -470,7 +461,9 @@ class PracticeScheduleService:
         part_counter = {}
         
         for session in display_data.get("sessions", []):
-            session_start = str(session.get("start_time", "09:00"))[:5]  # HH:MM形式
+            # slot_orderから時間を計算
+            slot_order = session.get("slot_order", 1)
+            session_start = self._calculate_slot_time(display_data, slot_order)
             
             # パート名を生成（part_idベース）
             part_id = session.get("part_id", "unknown")
@@ -553,7 +546,8 @@ class PracticeScheduleService:
         sessions = details_data.get("sessions", [])
         
         for i, session in enumerate(sessions):
-            session_start = str(session.get("start_time", "09:00"))[:5]
+            slot_order = session.get("slot_order", i + 1)
+            session_start = self._calculate_slot_time(schedule, slot_order)
             
             if session_start in time_schedule:
                 venue_id = venues[i % len(venues)]["id"]
@@ -598,9 +592,10 @@ class PracticeScheduleService:
 
         # 実際のセッションデータがある場合のみ配置
         for session in sessions:
-            session_start = str(session.get("start_time", ""))[:5]
+            slot_order = session.get("slot_order", 1)
+            session_start = self._calculate_slot_time(schedule, slot_order)
             if session_start and session_start in time_schedule and venues:
-                venue_index = (session.get("slot_order", 1) - 1) % len(venues)
+                venue_index = (slot_order - 1) % len(venues)
                 venue_id = venues[venue_index]["id"]
 
                 session_info = {
@@ -780,11 +775,9 @@ class PracticeScheduleService:
                 "schedule_id": str(schedule["id"]),
                 "part_id": str(session.get("part_id", "")),
                 "title": session.get("title", "練習"),
-                "start_time": str(session.get("start_time", "09:00:00")),
-                "end_time": str(session.get("end_time", "10:00:00")),
-                "schedule_available_venues": None,
-                "priority": session.get("priority", 0),
                 "slot_order": session.get("slot_order", 1),
+                "schedule_available_venue_id": str(session.get("schedule_available_venue_id", "")),
+                "priority": session.get("priority", 0),
                 "created_at": str(session.get("created_at", "")),
                 "updated_at": str(session.get("updated_at", "")),
                 "instructors": await self._get_session_instructors(session.get("id")) if session.get("id") else []

@@ -11,6 +11,7 @@ class PracticeScheduleBase(BaseModel):
     schedule_date: date
     start_time: time
     end_time: time
+    division_count: int = 6
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = "active"
@@ -27,6 +28,7 @@ class PracticeScheduleUpdate(BaseModel):
     schedule_date: Optional[date] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
+    division_count: Optional[int] = None
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = None
@@ -41,7 +43,11 @@ class PracticeScheduleResponse(PracticeScheduleBase):
     created_by: Optional[UUID] = None
     updated_by: Optional[UUID] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, json_encoders={
+        date: lambda v: v.isoformat() if v else None,
+        time: lambda v: v.isoformat() if v else None,
+        datetime: lambda v: v.isoformat() if v else None
+    })
 
 
 class ScheduleAvailableVenueBase(BaseModel):
@@ -83,9 +89,8 @@ class SessionBase(BaseModel):
     schedule_id: UUID
     part_id: Optional[UUID] = None
     title: str
-    start_time: time
-    end_time: time
-    schedule_available_venues: Optional[UUID] = None
+    slot_order: int
+    schedule_available_venue_id: Optional[UUID] = None
     priority: int = 0
 
 
@@ -99,9 +104,8 @@ class SessionUpdate(BaseModel):
 
     part_id: Optional[UUID] = None
     title: Optional[str] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    schedule_available_venues: Optional[UUID] = None
+    slot_order: Optional[int] = None
+    schedule_available_venue_id: Optional[UUID] = None
     priority: Optional[int] = None
 
 
@@ -119,7 +123,7 @@ class SessionInstructorBase(BaseModel):
     """セッション指導者の基本情報"""
 
     session_id: UUID
-    user_id: UUID
+    attendance_id: UUID
 
 
 class SessionInstructorCreate(SessionInstructorBase):
@@ -175,8 +179,7 @@ class SessionDisplayInfo(BaseModel):
 
     id: UUID
     title: str
-    start_time: time
-    end_time: time
+    slot_order: int
     part_name: Optional[str] = None
     venue_name: Optional[str] = None
     priority: int = 0
@@ -188,8 +191,8 @@ class PracticeScheduleDisplayResponse(BaseModel):
 
     id: UUID
     schedule_date: date
-    start_time: time
-    end_time: time
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = None
