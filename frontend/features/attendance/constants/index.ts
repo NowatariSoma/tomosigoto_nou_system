@@ -1,8 +1,8 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  ATTENDANCE: '/api/v1/attendance/',
-  AUTH: '/api/v1/auth/',
-  PRACTICE_SCHEDULES: '/api/v1/practice-schedules/',
+  ATTENDANCE: '/attendance/',
+  AUTH: '/auth/',
+  PRACTICE_SCHEDULES: '/practice-schedules/',
 } as const;
 
 // 出席ステータス

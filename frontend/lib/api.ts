@@ -1,5 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8000';
+import { API_CONFIG, buildApiUrl, buildAuthUrl } from './api/config';
+
+const API_BASE_URL = API_CONFIG.BASE_URL;
+const AUTH_URL = API_CONFIG.AUTH_URL;
 
 // API設定の初期化確認
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -38,7 +40,7 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
 // Authentication
 export const auth = {
   async login(username: string, password: string) {
-    const response = await fetch(`${AUTH_URL}/auth/login`, {
+    const response = await fetch(buildAuthUrl('/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -69,7 +71,7 @@ export const auth = {
   },
 
   async getCurrentUser() {
-    return fetchApi(`${AUTH_URL}/auth/me`);
+    return fetchApi(buildAuthUrl('/auth/me'));
   },
 
   clearAuthData() {
@@ -82,7 +84,7 @@ export const auth = {
 
 export const historical = {
   async getHistoricalData(startDate: string, endDate: string) {
-    const response = await fetchApi(`${API_BASE_URL}/api/db/historical?start=${startDate}&end=${endDate}`);
+    const response = await fetchApi(buildApiUrl(`/db/historical?start=${startDate}&end=${endDate}`));
     return response.json();
   }
 };
@@ -90,10 +92,10 @@ export const historical = {
 // Settings
 export const settings = {
   async getProjectSettings() {
-    return fetchApi(`${API_BASE_URL}/settings/project`);
+    return fetchApi(buildApiUrl('/settings/project'));
   },
 
   async getUserSettings() {
-    return fetchApi(`${API_BASE_URL}/settings/user`);
+    return fetchApi(buildApiUrl('/settings/user'));
   }
 };
