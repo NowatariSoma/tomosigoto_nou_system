@@ -1,7 +1,7 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  PRACTICE_SCHEDULES: '/api/v1/practice-schedules/',
-  VENUES: '/api/v1/venues/',
+  PRACTICE_SCHEDULES: '/practice-schedules/',
+  VENUES: '/venues/',
 } as const;
 
 // 時間関連の定数

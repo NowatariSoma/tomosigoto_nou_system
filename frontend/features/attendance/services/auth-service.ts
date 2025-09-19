@@ -1,12 +1,12 @@
 import { AuthRequest, AuthResponse, User, TokenResponse } from '../types';
 import { API_ENDPOINTS } from '../constants';
-import { fetchApi } from '../../../lib/api';
+import { fetchApi, buildAuthUrl } from '../../../lib/api';
 
 export class AuthService {
   private readonly basePath = API_ENDPOINTS.AUTH;
 
   async signin(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${this.basePath}signin`, {
+    const response = await fetch(buildAuthUrl(`${this.basePath}signin`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export class AuthService {
       throw new Error('No authentication token');
     }
 
-    const response = await fetch(`${this.basePath}me`, {
+    const response = await fetch(buildAuthUrl(`${this.basePath}me`), {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export class AuthService {
       const token = this.getToken();
       if (!token) return false;
 
-      const response = await fetch(`${this.basePath}verify`, {
+      const response = await fetch(buildAuthUrl(`${this.basePath}verify`), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
