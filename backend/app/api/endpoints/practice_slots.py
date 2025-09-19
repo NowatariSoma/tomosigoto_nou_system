@@ -2,6 +2,8 @@ from typing import Any, Dict, List
 from uuid import UUID
 
 from app.api.deps import get_practice_schedule_service
+from app.core.exceptions import APIException
+from app.core.error_messages import ErrorMessage
 from app.schemas.practice_schedules import (
     PracticeScheduleCreate,
     PracticeScheduleResponse,
@@ -13,7 +15,7 @@ from app.schemas.practice_schedules import (
     SessionUpdate,
 )
 from app.services.practice_schedule_service import PracticeScheduleService
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 router = APIRouter()
 
@@ -52,7 +54,7 @@ async def get_practice_schedule_by_date(
     """
     schedule = await practice_schedule_service.get_practice_schedule_by_date(target_date)
     if not schedule:
-        raise HTTPException(status_code=404, detail=f"Practice schedule not found for date: {target_date}")
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return PracticeScheduleResponse(**schedule)
 
 
@@ -92,7 +94,7 @@ async def get_practice_schedule_with_details(
     """
     details_data = await practice_schedule_service.get_practice_schedule_details_by_id(schedule_id)
     if not details_data:
-        raise HTTPException(status_code=404, detail=f"Practice schedule not found for id: {schedule_id}")
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return details_data
 
 
@@ -132,7 +134,7 @@ async def get_practice_schedule_ideal_format(
     """
     ideal_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
     if not ideal_data:
-        raise HTTPException(status_code=404, detail=f"Practice schedule not found for date: {target_date}")
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return ideal_data
 
 
@@ -357,38 +359,7 @@ async def delete_session(
 
 
 # ===== Groups関連エンドポイント =====
-
-@router.get("/groups", response_model=List[dict])
-async def get_groups():
-    """
-    すべてのグループを取得（仮実装）
-    """
-    # 仮のデータ返却
-    return []
-
-
-@router.get("/groups/{group_id}")
-async def get_group(group_id: str):
-    """
-    指定したIDのグループを取得（仮実装）
-    """
-    return {"id": group_id, "name": f"Group {group_id}"}
-
+# TODO: 実装が必要になった際に適切なサービス層と共に実装する
 
 # ===== Parts関連エンドポイント =====
-
-@router.get("/parts", response_model=List[dict])
-async def get_parts():
-    """
-    すべてのパートを取得（仮実装）
-    """
-    # 仮のデータ返却
-    return []
-
-
-@router.get("/parts/{part_id}")
-async def get_part(part_id: str):
-    """
-    指定したIDのパートを取得（仮実装）
-    """
-    return {"id": part_id, "name": f"Part {part_id}"}
+# TODO: 実装が必要になった際に適切なサービス層と共に実装する

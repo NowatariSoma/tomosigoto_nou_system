@@ -119,7 +119,7 @@ class SessionInstructorBase(BaseModel):
     """セッション指導者の基本情報"""
 
     session_id: UUID
-    user_id: UUID
+    attendance_id: UUID
 
 
 class SessionInstructorCreate(SessionInstructorBase):

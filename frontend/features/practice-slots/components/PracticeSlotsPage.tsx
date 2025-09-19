@@ -16,10 +16,9 @@ export const PracticeSlotsPage: React.FC = () => {
     getCurrentDateString
   } = useDateNavigation(new Date('2025-02-15'));
 
-  // ページ全体のログ出力
+  // 日付変更時の副作用処理
   useEffect(() => {
-    console.log('PracticeSlotsPage - 現在の日付:', getCurrentDateString());
-    console.log('PracticeSlotsPage - 実データを使用したスケジュール表を表示中');
+    // 日付変更時に必要な処理があれば追加
   }, [getCurrentDateString]);
 
   return (
