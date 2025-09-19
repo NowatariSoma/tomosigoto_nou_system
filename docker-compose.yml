@@ -77,40 +77,6 @@ services:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
 
-  # Optional: PostgreSQL for future database features
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: slidehub
-      POSTGRES_USER: slidehub_user
-      POSTGRES_PASSWORD: slidehub_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - slidehub-network
-    restart: unless-stopped
-
-  # Optional: Redis for caching
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - slidehub-network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-  redis_data:
-
 networks:
-  app-network:
-    driver: bridge
-  slidehub-network:
-    driver: bridge
   default:
     name: tomosigoto-network
