@@ -1,62 +1,14 @@
-import { fetchApi } from '../../../lib/api';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
-export interface AccountSettingProfile {
-  id: string;
-  user_id: string;
-  student_id: string;
-  first_name_kanji: string;
-  first_name_katakana: string;
-  last_name_kanji: string;
-  last_name_katakana: string;
-  year: number;
-  faculty: string;
-  faculty_name?: string;
-  email: string;
-  avatar_url?: string;
-  preferences?: Record<string, any>;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface AccountSettingUpdateRequest {
-  student_id?: string;
-  first_name_kanji?: string;
-  first_name_katakana?: string;
-  last_name_kanji?: string;
-  last_name_katakana?: string;
-  year?: number;
-  faculty?: string;
-  email?: string;
-  avatar_url?: string;
-  change_reason?: string;
-}
-
-export interface Faculty {
-  id: string;
-  department_code: string;
-  department_name: string;
-  is_active: boolean;
-  campus?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ValidationError {
-  field: string;
-  message: string;
-  value?: string;
-}
-
-export interface ValidationResponse {
-  is_valid: boolean;
-  errors: ValidationError[];
-  warnings: string[];
-}
+import { fetchApi, ApiError } from '../../../lib/api';
+import { 
+  AccountSettingProfile, 
+  AccountSettingUpdateRequest, 
+  Department, 
+  ValidationResponse 
+} from '../types';
+import { API_ENDPOINTS } from '../constants';
 
 export class AccountSettingService {
-  private readonly basePath = '/api/v1/account-setting';
+  private readonly basePath = API_ENDPOINTS.ACCOUNT_SETTING;
 
   async getCurrentUserProfile(): Promise<AccountSettingProfile | null> {
     try {
@@ -122,13 +74,13 @@ export class AccountSettingService {
     });
   }
 
-  async getAllFaculties(): Promise<Faculty[]> {
-    const response = await fetchApi(`${this.basePath}/faculties`);
+  async getAllDepartments(): Promise<Department[]> {
+    const response = await fetchApi(`${this.basePath}/departments`);
     return response.json();
   }
 
-  async getFacultyByCode(facultyCode: string): Promise<Faculty> {
-    const response = await fetchApi(`${this.basePath}/faculties/${facultyCode}`);
+  async getDepartmentByCode(departmentCode: string): Promise<Department> {
+    const response = await fetchApi(`${this.basePath}/departments/${departmentCode}`);
     return response.json();
   }
 

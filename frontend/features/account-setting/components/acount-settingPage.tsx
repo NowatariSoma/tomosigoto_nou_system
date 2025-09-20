@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useAccountSetting } from '../hooks/useAccountSetting';
+import { AccountSettingProfile, Department } from '../types';
+import { INITIAL_ACCOUNT_FORM, UI_TEXT, VALIDATION } from '../constants';
+import { mapDepartmentsToOptions } from '../mappers';
 
 interface FormData {
   student_id: string;
@@ -11,54 +14,31 @@ interface FormData {
   last_name_katakana: string;
   first_name_katakana: string;
   year: number;
-  faculty: string;
+  department_code: string;
   email: string;
 }
 
 const AccountSettings: React.FC = () => {
   const {
     profile,
-    faculties,
+    departments,
     validation,
     isLoading,
     isSaving,
     error,
     loadProfile,
-    loadFaculties,
+    loadDepartments,
     saveProfile,
     clearError,
   } = useAccountSetting();
 
-  const [formData, setFormData] = useState<FormData>({
-    student_id: '1111111111',
-    last_name_kanji: '田中',
-    first_name_kanji: '太郎',
-    last_name_katakana: 'タナカ',
-    first_name_katakana: 'タロウ',
-    year: 3,
-    faculty: 'LIT',
-    email: ''
-  });
+  const [formData, setFormData] = useState<FormData>(INITIAL_ACCOUNT_FORM);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const facultyOptions = [
-    { value: 'LIT', label: '文学部' },
-    { value: 'LAW', label: '法学部' },
-    { value: 'ECO', label: '経済学部' },
-    { value: 'COM', label: '商学部' },
-    { value: 'ENG', label: '理工学部' },
-    { value: 'SPS', label: '社会学部' },
-    { value: 'PSY', label: '心理学部' },
-    { value: 'POL', label: '政策学部' },
-    { value: 'CUL', label: '文化情報学部' },
-    { value: 'GCS', label: 'グローバル・コミュニケーション学部' },
-    { value: 'GRM', label: 'グローバル地域文化学部' },
-    { value: 'LHS', label: '生命医科学部' },
-    { value: 'SHS', label: 'スポーツ健康科学部' }
-  ];
+  const departmentOptions = mapDepartmentsToOptions(departments);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({
@@ -75,16 +55,16 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  const handleFacultySelect = (faculty: string) => {
-    handleInputChange('faculty', faculty);
+  const handleDepartmentSelect = (department_code: string) => {
+    handleInputChange('department_code', department_code);
     setIsDropdownOpen(false);
   };
 
   // 初期データの読み込み
   useEffect(() => {
     loadProfile();
-    loadFaculties();
-  }, [loadProfile, loadFaculties]);
+    loadDepartments();
+  }, [loadProfile, loadDepartments]);
 
   // プロフィールデータが読み込まれたらフォームに反映
   useEffect(() => {
@@ -95,8 +75,8 @@ const AccountSettings: React.FC = () => {
         first_name_kanji: profile.first_name_kanji || '',
         last_name_katakana: profile.last_name_katakana || '',
         first_name_katakana: profile.first_name_katakana || '',
-        year: profile.year || 1,
-        faculty: profile.faculty || 'LIT',
+        year: profile.year || VALIDATION.MIN_YEAR,
+        department_code: profile.department_code || '',
         email: profile.email || ''
       });
     }
@@ -116,7 +96,14 @@ const AccountSettings: React.FC = () => {
       setSaveSuccess(false);
       setFieldErrors({});
       
-      const success = await saveProfile(formData);
+      // 必須フィールドのデフォルト値を設定
+      const dataToSave = {
+        ...formData,
+        department_code: formData.department_code || 'LIT', // デフォルト学部を設定
+        year: formData.year || 1, // デフォルト学年を設定
+      };
+      
+      const success = await saveProfile(dataToSave);
       if (success) {
         setSaveSuccess(true);
         // 3秒後に成功メッセージを非表示
@@ -154,7 +141,7 @@ const AccountSettings: React.FC = () => {
       {saveSuccess && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
           <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-          <span className="text-green-700">プロフィールが正常に保存されました</span>
+               <span className="text-green-700">{UI_TEXT.SUCCESS_MESSAGE}</span>
         </div>
       )}
 
@@ -163,7 +150,7 @@ const AccountSettings: React.FC = () => {
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <div className="flex items-center mb-2">
             <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-            <span className="text-yellow-700 font-medium">入力内容に問題があります</span>
+                 <span className="text-yellow-700 font-medium">{UI_TEXT.VALIDATION_ERROR}</span>
           </div>
           <ul className="list-disc list-inside text-yellow-700 text-sm">
             {validation.errors.map((error, index) => (
@@ -292,10 +279,10 @@ const AccountSettings: React.FC = () => {
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className={`w-40 px-4 py-2 border rounded-md bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors flex items-center justify-between ${
-                  fieldErrors.faculty ? 'border-red-500' : 'border-gray-300'
+                  fieldErrors.department_code ? 'border-red-500' : 'border-gray-300'
                 }`}
             >
-                <span>{facultyOptions.find(f => f.value === formData.faculty)?.label || formData.faculty}</span>
+                     <span>{departmentOptions.find(f => f.value === formData.department_code)?.label || '学部を選択してください'}</span>
                 <ChevronDown 
                 className={`w-4 h-4 text-gray-500 transition-transform ${
                     isDropdownOpen ? 'rotate-180' : ''
@@ -306,22 +293,22 @@ const AccountSettings: React.FC = () => {
             {isDropdownOpen && (
                 <div className="absolute z-10 w-40 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                 <div className="max-h-60 overflow-y-auto">
-                    {facultyOptions.map((faculty) => (
+                     {departmentOptions.map((department) => (
                     <button
-                        key={faculty.value}
+                        key={department.value}
                         type="button"
-                        onClick={() => handleFacultySelect(faculty.value)}
+                        onClick={() => handleDepartmentSelect(department.value)}
                         className="w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none transition-colors"
                     >
-                        {faculty.label}
+                        {department.label}
                     </button>
                     ))}
                 </div>
                 </div>
             )}
             </div>
-            {fieldErrors.faculty && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.faculty}</p>
+            {fieldErrors.department_code && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.department_code}</p>
             )}
         </div>
 
@@ -352,24 +339,24 @@ const AccountSettings: React.FC = () => {
             onClick={handleNewUser}
             className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
           >
-            新しいユーザーで開始
+            {UI_TEXT.NEW_USER_BUTTON}
           </button>
           <div>
-            <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                保存中...
-              </>
-            ) : (
-              '保存'
-            )}
-            </button>
+                 <button
+                 type="button"
+                 onClick={handleSave}
+                 disabled={isSaving || isLoading}
+                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                 >
+                 {isSaving ? (
+                   <>
+                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                     {UI_TEXT.SAVING_TEXT}
+                   </>
+                 ) : (
+                   UI_TEXT.SAVE_BUTTON
+                 )}
+                 </button>
           </div>
         </div>
       </div>

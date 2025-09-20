@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { accountSettingService, AccountSettingProfile, AccountSettingUpdateRequest, Faculty, ValidationResponse } from '../services/account-setting-service';
+import { accountSettingService } from '../services/account-setting-service';
+import { AccountSettingProfile, AccountSettingUpdateRequest, Department, ValidationResponse } from '../types';
 
 export interface UseAccountSettingReturn {
   // データ
   profile: AccountSettingProfile | null;
-  faculties: Faculty[];
+  departments: Department[];
   validation: ValidationResponse | null;
   
   // ローディング状態
@@ -19,7 +20,7 @@ export interface UseAccountSettingReturn {
   
   // アクション
   loadProfile: () => Promise<void>;
-  loadFaculties: () => Promise<void>;
+  loadDepartments: () => Promise<void>;
   saveProfile: (data: AccountSettingUpdateRequest) => Promise<boolean>;
   validateProfile: (data: Record<string, any>) => Promise<boolean>;
   clearError: () => void;
@@ -27,7 +28,7 @@ export interface UseAccountSettingReturn {
 
 export function useAccountSetting(): UseAccountSettingReturn {
   const [profile, setProfile] = useState<AccountSettingProfile | null>(null);
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,16 +54,16 @@ export function useAccountSetting(): UseAccountSettingReturn {
     }
   }, []);
 
-  const loadFaculties = useCallback(async () => {
+  const loadDepartments = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const facultiesData = await accountSettingService.getAllFaculties();
-      setFaculties(facultiesData);
+      const departmentsData = await accountSettingService.getAllDepartments();
+      setDepartments(departmentsData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '学部データの読み込みに失敗しました';
       setError(errorMessage);
-      console.error('Failed to load faculties:', err);
+      console.error('Failed to load departments:', err);
     } finally {
       setIsLoading(false);
     }
@@ -72,6 +73,17 @@ export function useAccountSetting(): UseAccountSettingReturn {
     try {
       setIsValidating(true);
       setError(null);
+      
+      // 必須フィールドのチェック
+      const requiredFields = ['student_id', 'first_name_kanji', 'last_name_kanji', 'first_name_katakana', 'last_name_katakana', 'year', 'department_code'];
+      const missingFields = requiredFields.filter(field => !data[field] || data[field] === '');
+      
+      if (missingFields.length > 0) {
+        const errorMessage = `必須フィールドが入力されていません: ${missingFields.join(', ')}`;
+        setError(errorMessage);
+        return false;
+      }
+      
       const validationResult = await accountSettingService.validateProfileData(data);
       setValidation(validationResult);
       return validationResult.is_valid;
@@ -114,14 +126,14 @@ export function useAccountSetting(): UseAccountSettingReturn {
 
   return {
     profile,
-    faculties,
+    departments,
     validation,
     isLoading,
     isSaving,
     isValidating,
     error,
     loadProfile,
-    loadFaculties,
+    loadDepartments,
     saveProfile,
     validateProfile,
     clearError,
