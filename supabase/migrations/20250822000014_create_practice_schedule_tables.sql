@@ -8,6 +8,7 @@ CREATE TABLE practice_schedules (
   start_time time NOT NULL,
   end_time time NOT NULL,
   division_count integer NOT NULL DEFAULT 1 CHECK (division_count > 0),
+  title varchar(100),
   description text,
   schedule_type varchar(20) NOT NULL,
   status varchar(20),
