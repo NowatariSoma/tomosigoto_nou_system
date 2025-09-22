@@ -6,6 +6,7 @@ export interface PracticeSchedule {
   venueId: string;
   venueName: string;
   campus: string;
+  title?: string;
   description?: string;
   createdAt: string;
   updatedAt: string;
@@ -16,6 +17,7 @@ export interface CreatePracticeScheduleRequest {
   startTime: string;
   endTime: string;
   venueId: string;
+  title?: string;
   description?: string;
 }
 
@@ -24,6 +26,7 @@ export interface UpdatePracticeScheduleRequest {
   startTime?: string;
   endTime?: string;
   venueId?: string;
+  title?: string;
   description?: string;
 }
 
@@ -37,5 +40,6 @@ export interface PracticeScheduleFormData {
   startTime: string;
   endTime: string;
   venueId: string;
+  title: string;
   description: string;
 }
