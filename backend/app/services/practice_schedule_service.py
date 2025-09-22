@@ -234,7 +234,7 @@ class PracticeScheduleService:
         base_schedule_data = {
             k: v
             for k, v in schedule_data.items()
-            if k in ["schedule_date", "start_time", "end_time", "description", "schedule_type", "status", "updated_by"]
+            if k in ["schedule_date", "start_time", "end_time", "title", "description", "schedule_type", "status", "updated_by"]
         }
 
         if base_schedule_data:
@@ -427,6 +427,7 @@ class PracticeScheduleService:
             "schedule_date": str(display_data["schedule_date"]),
             "start_time": str(display_data["start_time"]),
             "end_time": str(display_data["end_time"]),
+            "title": display_data.get("title", ""),
             "description": display_data.get("description", "")
         }
 
@@ -511,6 +512,7 @@ class PracticeScheduleService:
             "schedule_date": str(schedule["schedule_date"]),
             "start_time": str(schedule["start_time"]),
             "end_time": str(schedule["end_time"]),
+            "title": schedule.get("title", ""),
             "description": schedule.get("description", "練習")
         }
 
@@ -578,6 +580,7 @@ class PracticeScheduleService:
             "schedule_date": str(schedule["schedule_date"]),
             "start_time": str(schedule["start_time"]),
             "end_time": str(schedule["end_time"]),
+            "title": schedule.get("title", ""),
             "description": schedule.get("description", "")
         }
 
@@ -624,6 +627,7 @@ class PracticeScheduleService:
             "schedule_date": str(schedule["schedule_date"]),
             "start_time": str(schedule["start_time"]),
             "end_time": str(schedule["end_time"]),
+            "title": schedule.get("title", ""),
             "description": schedule.get("description", "練習")
         }
 
@@ -741,6 +745,7 @@ class PracticeScheduleService:
             "schedule_date": str(schedule["schedule_date"]),
             "start_time": str(schedule["start_time"]),
             "end_time": str(schedule["end_time"]),
+            "title": schedule.get("title", ""),
             "description": schedule.get("description", "練習"),
             "schedule_type": schedule.get("schedule_type", "regular"),
             "status": schedule.get("status", "active"),
