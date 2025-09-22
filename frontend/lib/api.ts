@@ -1,5 +1,8 @@
 import { API_CONFIG, buildApiUrl, buildAuthUrl } from './api/config';
 
+// エクスポート
+export { buildApiUrl, buildAuthUrl };
+
 const API_BASE_URL = API_CONFIG.BASE_URL;
 const AUTH_URL = API_CONFIG.AUTH_URL;
 
