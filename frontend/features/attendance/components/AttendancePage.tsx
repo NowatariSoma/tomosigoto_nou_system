@@ -13,33 +13,33 @@ import { Plus, User, Calendar } from 'lucide-react';
 const mockPracticeSchedules: PracticeSchedule[] = [
   {
     id: 'practice-1',
-    date: '2024-09-20',
+    schedule_date: '2024-09-20',
     start_time: '09:00',
     end_time: '11:00',
-    venue_id: 'venue-1',
-    venue_name: '体育館A',
-    campus: '今出川',
+    division_count: 1,
     description: 'バスケットボール練習',
+    schedule_type: 'regular_practice',
+    status: 'active',
   },
   {
     id: 'practice-2',
-    date: '2024-09-21',
+    schedule_date: '2024-09-21',
     start_time: '14:00',
     end_time: '16:00',
-    venue_id: 'venue-2',
-    venue_name: '体育館B',
-    campus: '京田辺',
+    division_count: 1,
     description: 'サッカー練習',
+    schedule_type: 'regular_practice',
+    status: 'active',
   },
   {
     id: 'practice-3',
-    date: '2024-09-22',
+    schedule_date: '2024-09-22',
     start_time: '10:00',
     end_time: '12:00',
-    venue_id: 'venue-3',
-    venue_name: 'グラウンド',
-    campus: '今出川',
+    division_count: 1,
     description: '陸上練習',
+    schedule_type: 'regular_practice',
+    status: 'active',
   },
 ];
 
@@ -196,14 +196,17 @@ export const AttendancePage: React.FC = () => {
       )}
 
       {/* 出席履歴一覧 */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-slate-900 flex items-center">
+            <div className="bg-blue-100 p-2 rounded-lg mr-3">
+              <Calendar className="h-5 w-5 text-blue-600" />
+            </div>
             {UI_TEXT.ATTENDANCE_HISTORY} ({attendances.length}件)
           </h2>
           <button
             onClick={handleCreateClick}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
           >
             <Plus className="h-4 w-4" />
             <span>出席登録</span>
