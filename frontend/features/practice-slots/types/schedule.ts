@@ -10,6 +10,7 @@ export interface PracticeSchedule {
   schedule_date: string;
   start_time: string;
   end_time: string;
+  title?: string;
   description?: string;
   schedule_type?: string;
   status?: string;
@@ -59,6 +60,7 @@ export interface PracticeScheduleDisplayResponse {
   schedule_date: string;
   start_time: string;
   end_time: string;
+  title?: string;
   description?: string;
   schedule_type?: string;
   status?: string;
@@ -116,6 +118,7 @@ export interface PracticeScheduleWithDetailsResponse {
   schedule_date: string;
   start_time: string;
   end_time: string;
+  title?: string;
   description?: string;
   schedule_type?: string;
   status?: string;
@@ -184,6 +187,7 @@ export interface IdealScheduleInfo {
   schedule_date: string;
   start_time: string;
   end_time: string;
+  title?: string;
   description: string;
 }
 
