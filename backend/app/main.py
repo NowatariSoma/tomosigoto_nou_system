@@ -5,7 +5,7 @@
 # Supabase連携を有効にする
 from app.api.api import api_router
 from app.core.config import settings
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -32,6 +32,16 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 async def root():
     return {"message": f"{settings.PROJECT_NAME} is running"}
+
+
+# favicon.ico エンドポイント（404エラーを防ぐため）
+@app.get("/favicon.ico")
+async def favicon():
+    """
+    ブラウザのfavicon要求に対応するエンドポイント
+    実際のfaviconファイルがない場合の404エラーを防ぐ
+    """
+    return Response(status_code=204)
 
 
 # Supabase接続テスト用エンドポイント（認証不要）

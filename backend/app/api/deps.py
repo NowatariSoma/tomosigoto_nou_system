@@ -10,6 +10,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.venue_repository import VenueRepository
 from app.services.member_assignment_service import MemberAssignmentService
 from app.services.part_service import PartService
+from app.services.stage_service import StageService
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from fastapi import Depends, HTTPException, status
@@ -102,6 +103,13 @@ def get_member_assignment_repository(
 ) -> MemberAssignmentRepository:
     """MemberAssignmentRepositoryのインスタンスを取得"""
     return MemberAssignmentRepository(supabase_client)
+
+
+def get_stage_service(
+    supabase_client: Client = Depends(get_supabase),
+) -> StageService:
+    """StageServiceのインスタンスを依存性注入で取得"""
+    return StageService(supabase_client)
 
 
 def get_member_assignment_service(

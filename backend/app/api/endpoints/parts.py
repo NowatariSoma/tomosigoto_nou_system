@@ -12,13 +12,14 @@ router = APIRouter()
 @router.get("/", response_model=List[PartResponse])
 async def get_parts(
     part_service: PartService = Depends(get_part_service),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     パートの全情報を取得
 
     Args:
-        get_current_user:
         part_service: supabaseサービス
+        current_user: 現在のユーザー（認証必須）
 
     Returns:
         listですべてのパート情報
@@ -31,6 +32,7 @@ async def get_parts(
 async def get_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を取得
@@ -38,6 +40,7 @@ async def get_part(
     Args:
         part_id: パートを指定するuuid
         part_service: supabaseサービス
+        current_user: 現在のユーザー（認証必須）
 
     Returns
         スキーマを通して辞書型としたパート情報
@@ -51,9 +54,18 @@ async def get_part(
 async def create_part(
     part_data: PartCreate,
     part_service: PartService = Depends(get_part_service),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     新しくパート情報を作成
+    
+    Args:
+        part_data: パート作成データ
+        part_service: supabaseサービス
+        current_user: 現在のユーザー（認証必須）
+    
+    Returns:
+        作成されたパート情報
     """
     # UUIDを文字列に変換してからサービスに渡す
     part_dict = part_data.dict()
@@ -70,6 +82,7 @@ async def update_part(
     part_id: UUID,
     part_data: PartUpdate,
     part_service: PartService = Depends(get_part_service),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を更新
@@ -78,6 +91,7 @@ async def update_part(
         part_id: パートを指定するuuid
         part_data: 更新後のパート情報
         part_service: supabaseサービス
+        current_user: 現在のユーザー（認証必須）
 
     Returns
         スキーマを通して辞書型としたパート情報
@@ -96,6 +110,7 @@ async def update_part(
 async def delete_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を削除
@@ -103,6 +118,7 @@ async def delete_part(
     Args:
         part_id: パートを指定するuuid
         part_service: supabaseサービス
+        current_user: 現在のユーザー（認証必須）
 
     Returns
         確認メッセージ
