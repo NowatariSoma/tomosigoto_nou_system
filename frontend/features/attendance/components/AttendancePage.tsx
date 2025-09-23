@@ -5,59 +5,47 @@ import { Attendance, AttendanceFormData, PracticeSchedule } from '../types';
 import { AttendanceList } from './AttendanceList';
 import { AttendanceForm } from './AttendanceForm';
 import { LoginForm } from './LoginForm';
-import { useAttendance } from '../hooks';
+import { useAttendance, usePracticeSchedule } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, User, Calendar } from 'lucide-react';
-
-// モック練習予定データ
-const mockPracticeSchedules: PracticeSchedule[] = [
-  {
-    id: 'practice-1',
-    date: '2024-09-20',
-    start_time: '09:00',
-    end_time: '11:00',
-    venue_id: 'venue-1',
-    venue_name: '体育館A',
-    campus: '今出川',
-    description: 'バスケットボール練習',
-  },
-  {
-    id: 'practice-2',
-    date: '2024-09-21',
-    start_time: '14:00',
-    end_time: '16:00',
-    venue_id: 'venue-2',
-    venue_name: '体育館B',
-    campus: '京田辺',
-    description: 'サッカー練習',
-  },
-  {
-    id: 'practice-3',
-    date: '2024-09-22',
-    start_time: '10:00',
-    end_time: '12:00',
-    venue_id: 'venue-3',
-    venue_name: 'グラウンド',
-    campus: '今出川',
-    description: '陸上練習',
-  },
-];
 
 export const AttendancePage: React.FC = () => {
   // TODO: 本番環境ではログイン認証を必要にする
   // const { user, loading: authLoading, signin, signout, isAuthenticated } = useAuth();
   
   // モックユーザーデータ（開発用）
-  const mockUser = {
-    id: 'mock-user-1',
-    email: 'test@example.com',
-    name: 'テストユーザー',
-    role: 'user',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  const mockUsers = [
+    {
+      id: '00000000-0000-0000-0000-000000000001',
+      email: 'user1@example.com',
+      name: 'ユーザー1',
+      role: 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000002',
+      email: 'user2@example.com',
+      name: 'ユーザー2',
+      role: 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000003',
+      email: 'user3@example.com',
+      name: 'ユーザー3',
+      role: 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
+  const [selectedUserId, setSelectedUserId] = useState(mockUsers[0].id);
+  const selectedUser = mockUsers.find(user => user.id === selectedUserId) || mockUsers[0];
   
   const { attendances, loading: attendanceLoading, upsertAttendance, deleteAttendance } = useAttendance();
+  const { practiceSchedules, loading: practiceLoading, error: practiceError } = usePracticeSchedule();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
@@ -108,7 +96,7 @@ export const AttendancePage: React.FC = () => {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: data.practice_schedule_id,
-        user_id: mockUser.id, // モックユーザーIDを使用
+        user_id: selectedUser.id, // 選択されたユーザーIDを使用
         status: data.status,
         notes: data.notes,
       });
@@ -148,11 +136,30 @@ export const AttendancePage: React.FC = () => {
   //   );
   // }
 
-  if (attendanceLoading) {
+  if (attendanceLoading || practiceLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
+      </div>
+    );
+  }
+
+  if (practiceError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">エラーが発生しました</h2>
+            <p className="text-red-600 mb-4">{practiceError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              再読み込み
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -170,7 +177,7 @@ export const AttendancePage: React.FC = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <User className="h-4 w-4" />
-            <span>{mockUser.name} (開発モード)</span>
+            <span>{selectedUser.name} (開発モード)</span>
           </div>
           {/* TODO: 本番環境ではログイン認証を必要にする */}
           {/* <button
@@ -183,12 +190,36 @@ export const AttendancePage: React.FC = () => {
         </div>
       </div>
 
+      {/* ユーザー選択 */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <div className="bg-blue-100 p-2 rounded-lg mr-3">
+            <User className="h-5 w-5 text-blue-600" />
+          </div>
+          ユーザー選択
+        </h2>
+        <select
+          value={selectedUserId}
+          onChange={(e) => setSelectedUserId(e.target.value)}
+          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {mockUsers.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.name} ({user.email})
+            </option>
+          ))}
+        </select>
+        <p className="mt-2 text-sm text-slate-600">
+          選択中のユーザー: <span className="font-medium">{selectedUser.name}</span>
+        </p>
+      </div>
+
       {/* フォーム */}
       {isFormOpen && (
         <AttendanceForm
           attendance={editingAttendance}
-          practiceSchedules={mockPracticeSchedules}
-          userId={mockUser.id} // モックユーザーIDを使用
+          practiceSchedules={practiceSchedules}
+          userId={selectedUser.id} // 選択されたユーザーIDを使用
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
@@ -196,14 +227,17 @@ export const AttendancePage: React.FC = () => {
       )}
 
       {/* 出席履歴一覧 */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-slate-900 flex items-center">
+            <div className="bg-blue-100 p-2 rounded-lg mr-3">
+              <Calendar className="h-5 w-5 text-blue-600" />
+            </div>
             {UI_TEXT.ATTENDANCE_HISTORY} ({attendances.length}件)
           </h2>
           <button
             onClick={handleCreateClick}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
           >
             <Plus className="h-4 w-4" />
             <span>出席登録</span>
@@ -211,7 +245,7 @@ export const AttendancePage: React.FC = () => {
         </div>
         <AttendanceList
           attendances={attendances}
-          practiceSchedules={mockPracticeSchedules}
+          practiceSchedules={practiceSchedules}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
           showUserInfo={false}

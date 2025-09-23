@@ -93,7 +93,6 @@ async def get_attendances_by_user(
 @router.post("/", response_model=AttendanceResponse)
 async def create_attendance(
     attendance_data: AttendanceCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     attendance_service: AttendanceService = Depends(get_attendance_service),
 ):
     """
@@ -120,7 +119,6 @@ async def create_attendance(
 async def update_attendance(
     attendance_id: UUID,
     attendance_data: AttendanceUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     attendance_service: AttendanceService = Depends(get_attendance_service),
 ):
     """
@@ -146,7 +144,6 @@ async def update_attendance(
 @router.post("/upsert", response_model=AttendanceResponse)
 async def upsert_attendance(
     attendance_data: AttendanceCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     attendance_service: AttendanceService = Depends(get_attendance_service),
 ):
     """
@@ -154,16 +151,15 @@ async def upsert_attendance(
 
     Args:
         attendance_data: 出欠記録のデータ
-        current_user: 現在のユーザー
         attendance_service: 出欠管理サービス
 
     Returns:
         作成または更新された出欠記録
     """
-    # 作成者と更新者を設定
+    # 作成者と更新者を設定（開発用）
     attendance_dict = attendance_data.model_dump()
-    attendance_dict["created_by"] = str(current_user["id"])
-    attendance_dict["updated_by"] = str(current_user["id"])
+    attendance_dict["created_by"] = attendance_dict["user_id"]  # ユーザーIDをそのまま使用
+    attendance_dict["updated_by"] = attendance_dict["user_id"]
     
     upserted_attendance = await attendance_service.upsert_attendance(attendance_dict)
     return AttendanceResponse(**upserted_attendance)
@@ -226,7 +222,6 @@ async def get_user_attendance_history(
 async def bulk_update_attendances(
     practice_schedule_id: UUID,
     attendances: List[AttendanceCreate],
-    current_user: Dict[str, Any] = Depends(get_current_user),
     attendance_service: AttendanceService = Depends(get_attendance_service),
 ):
     """
