@@ -207,8 +207,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <NavItem
                 icon={<Calendar className="w-4 h-4" />}
                 label="登録"
-                active={pathname === '/register'}
-                onClick={() => handleNavigateAndClose('/register')}
+                active={pathname === '/practice-schedule'}
+                onClick={() => handleNavigateAndClose('/practice-schedule')}
               />
 
               <NavItem
@@ -316,8 +316,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           <NavItem
             icon={<Calendar className="w-4 h-4" />}
             label={isCollapsed ? "" : "登録"}
-            active={pathname === '/register'}
-            href="/register"
+            active={pathname === '/practice-schedule'}
+            href="/practice-schedule"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

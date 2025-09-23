@@ -12,6 +12,7 @@ class PracticeScheduleBase(BaseModel):
     start_time: time
     end_time: time
     division_count: int = 6
+    title: Optional[str] = None
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = "active"
@@ -29,6 +30,7 @@ class PracticeScheduleUpdate(BaseModel):
     start_time: Optional[time] = None
     end_time: Optional[time] = None
     division_count: Optional[int] = None
+    title: Optional[str] = None
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = None

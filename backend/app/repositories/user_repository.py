@@ -1,49 +1,27 @@
-"""
-UserRepository - データアクセス層の実装
-Supabaseのusersテーブルに対するCRUD操作を提供
-"""
-
 import logging
 from typing import Any, Dict, List, Optional
-
-from app.core.exceptions import handle_supabase_errors
-
-from supabase import Client
+from app.core.supabase import handle_supabase_errors
 
 logger = logging.getLogger(__name__)
 
 
 class UserRepository:
     """
-    ユーザーデータへのアクセスを管理するリポジトリクラス
-    すべてのデータベース操作をカプセル化
+    ユーザー関連のデータアクセスを処理するリポジトリクラス
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, supabase_client):
         """
         Args:
-            client: Supabaseクライアントインスタンス
+            supabase_client: Supabaseクライアント
         """
-        self.client = client
+        self.client = supabase_client
         self.table_name = "users"
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    @handle_supabase_errors("get_user_by_id")
+    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
-        すべてのユーザーを取得
-
-        Returns:
-            ユーザー情報のリスト
-        """
-        response = self.client.table(self.table_name).select("*").execute()
-        data = response.data or []
-        logger.info(f"Found {len(data)} users in {self.table_name} table")
-        return data
-
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """
-        IDでユーザーを取得
+        ユーザーIDでユーザーを取得
 
         Args:
             user_id: ユーザーID
@@ -52,17 +30,21 @@ class UserRepository:
             ユーザー情報、見つからない場合はNone
         """
         response = (
-            self.client.table(self.table_name).select("*").eq("id", user_id).execute()
+            self.client.table(self.table_name)
+            .select("*")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
         )
         if response.data and len(response.data) > 0:
-            logger.info(f"Found user with id: {user_id}")
+            logger.info(f"Found user: {user_id}")
             return response.data[0]
 
-        logger.info(f"User not found with id: {user_id}")
+        logger.info(f"User not found: {user_id}")
         return None
 
-    @handle_supabase_errors("find_by_email")
-    async def find_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+    @handle_supabase_errors("get_user_by_email")
+    async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """
         メールアドレスでユーザーを取得
 
@@ -73,19 +55,23 @@ class UserRepository:
             ユーザー情報、見つからない場合はNone
         """
         response = (
-            self.client.table(self.table_name).select("*").eq("email", email).execute()
+            self.client.table(self.table_name)
+            .select("*")
+            .eq("email", email)
+            .limit(1)
+            .execute()
         )
         if response.data and len(response.data) > 0:
-            logger.info(f"Found user with email: {email}")
+            logger.info(f"Found user by email: {email}")
             return response.data[0]
 
-        logger.info(f"User not found with email: {email}")
+        logger.info(f"User not found by email: {email}")
         return None
 
-    @handle_supabase_errors("create")
-    async def create(self, user_data: dict) -> Dict[str, Any]:
+    @handle_supabase_errors("create_user")
+    async def create_user(self, user_data: dict) -> Dict[str, Any]:
         """
-        新しいユーザーをデータベースに作成
+        ユーザーを作成
 
         Args:
             user_data: ユーザー情報
@@ -95,18 +81,16 @@ class UserRepository:
         """
         response = self.client.table(self.table_name).insert(user_data).execute()
         if response.data:
-            logger.info(
-                f"User created successfully: {user_data.get('email', 'unknown')}"
-            )
+            logger.info(f"User created successfully: {user_data.get('id', 'unknown')}")
             return response.data[0]
 
-        logger.error(f"Failed to create user: {user_data.get('email', 'unknown')}")
+        logger.error(f"Failed to create user: {user_data.get('id', 'unknown')}")
         return {}
 
-    @handle_supabase_errors("update")
-    async def update(self, user_id: str, user_data: dict) -> Optional[Dict[str, Any]]:
+    @handle_supabase_errors("update_user")
+    async def update_user(self, user_id: str, user_data: dict) -> Optional[Dict[str, Any]]:
         """
-        ユーザー情報を更新
+        ユーザーを更新
 
         Args:
             user_id: ユーザーID
@@ -121,15 +105,15 @@ class UserRepository:
             .eq("id", user_id)
             .execute()
         )
-        if response.data and len(response.data) > 0:
+        if response.data:
             logger.info(f"User updated successfully: {user_id}")
             return response.data[0]
 
-        logger.warning(f"User not found for update: {user_id}")
+        logger.error(f"Failed to update user: {user_id}")
         return None
 
-    @handle_supabase_errors("delete")
-    async def delete(self, user_id: str) -> bool:
+    @handle_supabase_errors("delete_user")
+    async def delete_user(self, user_id: str) -> bool:
         """
         ユーザーを削除
 
@@ -137,23 +121,46 @@ class UserRepository:
             user_id: ユーザーID
 
         Returns:
-            削除成功時True
+            削除成功の場合はTrue
         """
-        self.client.table(self.table_name).delete().eq("id", user_id).execute()
-        logger.info(f"User deleted successfully: {user_id}")
-        return True
+        response = (
+            self.client.table(self.table_name)
+            .delete()
+            .eq("id", user_id)
+            .execute()
+        )
+        
+        if response.data:
+            logger.info(f"User deleted successfully: {user_id}")
+            return True
+        
+        logger.warning(f"No user found to delete: {user_id}")
+        return False
 
-    @handle_supabase_errors("count")
-    async def count(self) -> int:
+    @handle_supabase_errors("get_all_users")
+    async def get_all_users(self) -> List[Dict[str, Any]]:
+        """
+        すべてのユーザーを取得
+
+        Returns:
+            ユーザー情報のリスト
+        """
+        response = self.client.table(self.table_name).select("*").execute()
+        
+        if response.data:
+            logger.info(f"Found {len(response.data)} total users")
+            return response.data
+        
+        logger.info("No users found")
+        return []
+
+    @handle_supabase_errors("get_user_count")
+    async def get_user_count(self) -> int:
         """
         ユーザー数を取得
 
         Returns:
             ユーザー数
         """
-        response = (
-            self.client.table(self.table_name).select("id", count="exact").execute()
-        )
-        count = response.count if hasattr(response, "count") else 0
-        logger.info(f"Total users count: {count}")
-        return count
+        response = self.client.table(self.table_name).select("id", count="exact").execute()
+        return response.count or 0

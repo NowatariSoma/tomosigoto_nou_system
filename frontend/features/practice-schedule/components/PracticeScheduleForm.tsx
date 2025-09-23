@@ -27,6 +27,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
       startTime: schedule.startTime,
       endTime: schedule.endTime,
       venueId: schedule.venueId,
+      title: schedule.title || '',
       description: schedule.description || '',
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
@@ -60,6 +61,10 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
 
     if (!formData.venueId) {
       newErrors.venueId = '会場は必須です';
+    }
+
+    if (!formData.title) {
+      newErrors.title = 'タイトルは必須です';
     }
 
     if (formData.description && formData.description.length > VALIDATION.MAX_DESCRIPTION_LENGTH) {
@@ -205,6 +210,26 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           </select>
           {errors.venueId && (
             <p className="mt-1 text-sm text-red-600">{errors.venueId}</p>
+          )}
+        </div>
+
+        {/* タイトル */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <FileText className="h-4 w-4" />
+            <span>{UI_TEXT.TITLE} <span className="text-red-500">*</span></span>
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            placeholder="練習のタイトルを入力してください"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.title ? 'border-red-500' : 'border-gray-300'
+            }`}
+          />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
           )}
         </div>
 
