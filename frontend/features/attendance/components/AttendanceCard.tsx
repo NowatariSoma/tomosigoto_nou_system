@@ -91,6 +91,16 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
           <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
             <h4 className="text-sm font-semibold text-slate-700 mb-3">練習詳細</h4>
             <div className="space-y-2">
+              {/* タイトル */}
+              {practiceSchedule.title && (
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm font-medium text-slate-700">
+                    {practiceSchedule.title}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center space-x-3">
                 <Clock className="h-4 w-4 text-slate-500" />
                 <span className="text-sm text-slate-700">

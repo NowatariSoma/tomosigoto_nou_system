@@ -122,7 +122,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                   month: 'long',
                   day: 'numeric',
                   weekday: 'short',
-                })} {schedule.start_time}-{schedule.end_time} {schedule.description || '練習'}
+                })} {schedule.start_time}-{schedule.end_time} {schedule.title || schedule.description || '練習'}
               </option>
             ))}
           </select>
@@ -185,6 +185,16 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 </div>
               </div>
               
+              {/* タイトル */}
+              {selectedPractice.title && (
+                <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-2">練習タイトル</h4>
+                  <p className="text-slate-700 leading-relaxed font-medium">
+                    {selectedPractice.title}
+                  </p>
+                </div>
+              )}
+
               {/* 説明 */}
               {selectedPractice.description && (
                 <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
