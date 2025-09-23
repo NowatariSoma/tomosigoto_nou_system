@@ -46,11 +46,11 @@ export const mapCreateRequestToApiRequest = (
     schedule_date: request.date,
     start_time: request.startTime,
     end_time: request.endTime,
-    division_count: request.divisionCount || 6,
+    division_count: 6,
     title: request.title || '',
     description: request.description || '',
-    schedule_type: request.scheduleType || 'regular',
-    status: request.status || 'active',
+    schedule_type: 'regular',
+    status: 'active',
   };
 };
 
@@ -63,11 +63,8 @@ export const mapUpdateRequestToApiRequest = (
   if (request.date !== undefined) apiRequest.schedule_date = request.date;
   if (request.startTime !== undefined) apiRequest.start_time = request.startTime;
   if (request.endTime !== undefined) apiRequest.end_time = request.endTime;
-  if (request.divisionCount !== undefined) apiRequest.division_count = request.divisionCount;
   if (request.title !== undefined) apiRequest.title = request.title;
   if (request.description !== undefined) apiRequest.description = request.description;
-  if (request.scheduleType !== undefined) apiRequest.schedule_type = request.scheduleType;
-  if (request.status !== undefined) apiRequest.status = request.status;
   
   return apiRequest;
 };

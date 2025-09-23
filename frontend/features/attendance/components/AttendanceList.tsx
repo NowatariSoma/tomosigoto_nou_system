@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Calendar } from 'lucide-react';
 import { Attendance, PracticeSchedule } from '../types';
 import { AttendanceCard } from './AttendanceCard';
 import { UI_TEXT } from '../constants';
