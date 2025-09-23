@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PracticeSchedule } from '../types';
-import { Calendar, Clock, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Edit, Trash2, Link, Check } from 'lucide-react';
 
 interface PracticeScheduleCardProps {
   schedule: PracticeSchedule;
@@ -15,6 +15,8 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const [copied, setCopied] = useState(false);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
@@ -29,6 +31,17 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
     return timeString;
   };
 
+  const copyAttendanceLink = async () => {
+    const attendanceUrl = `${window.location.origin}/attendance?practice=${schedule.id}`;
+    try {
+      await navigator.clipboard.writeText(attendanceUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
@@ -39,6 +52,17 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
           </h3>
         </div>
         <div className="flex space-x-2">
+          <button
+            onClick={copyAttendanceLink}
+            className={`p-2 rounded-md transition-colors ${
+              copied
+                ? 'text-green-600 bg-green-50'
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+            }`}
+            title={copied ? 'コピーしました！' : '出席登録リンクをコピー'}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+          </button>
           {onEdit && (
             <button
               onClick={() => onEdit(schedule)}
