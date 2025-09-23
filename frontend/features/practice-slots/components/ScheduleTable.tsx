@@ -59,6 +59,25 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   }
 
+  // venuesが存在しない場合
+  if (!idealData.venues || !Array.isArray(idealData.venues)) {
+    return (
+      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
+        <div className="text-gray-500">会場情報が取得できませんでした</div>
+        {idealData.debug_info && (
+          <div className="mt-4 text-xs text-gray-400">
+            <details>
+              <summary>デバッグ情報</summary>
+              <pre className="mt-2 text-left">
+                {JSON.stringify(idealData.debug_info, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
       
@@ -92,7 +111,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 key={time}
                 className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150"
               >
-                <td className="px-4 py-4 font-bold text-white bg-gray-100 border-r border-gray-300 text-center">
+                <td className="px-4 py-4 font-bold text-gray-700 bg-gray-100 border-r border-gray-300 text-center">
                   <div className="text-sm">{time}</div>
                 </td>
                 {idealData.venues.map((venue) => {
@@ -123,8 +142,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                                 {part.part_name}
                               </div>
                               <div className="text-xs text-gray-700">
-                                👨‍🏫 {part.instructors.join(', ')}
+                                👨‍🏫 {part.instructors.length > 0 ? part.instructors.join(', ') : '指導者未定'}
                               </div>
+                              {part.slot_order && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  順序: {part.slot_order}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -143,7 +167,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       </div>
       
       {/* 統計情報 */}
-      <div className="p-4 bg-gray-10 border-t border-gray-200">
+      <div className="p-4 bg-gray-50 border-t border-gray-200">
         <div className="flex justify-between text-sm text-gray-600">
           <div>
             <span className="font-medium">総パート数:</span> {
@@ -153,7 +177,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             }件
           </div>
           <div>
-            <span className="font-medium">総監督者数:</span> {
+            <span className="font-medium">総指導者数:</span> {
               new Set(
                 Object.values(idealData.time_schedule).flatMap((timeSlot: any) =>
                   Object.values(timeSlot).flatMap((parts: any) =>
@@ -165,12 +189,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           </div>
           <div>
             <span className="font-medium">会場稼働率:</span> {
-              Math.round((Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
+              idealData.venues.length > 0 ? Math.round((Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
                 return total + Object.values(timeSlot).filter((parts: any) => parts.length > 0).length;
-              }, 0) / (Object.keys(idealData.time_schedule).length * idealData.venues.length)) * 100)
+              }, 0) / (Object.keys(idealData.time_schedule).length * idealData.venues.length)) * 100) : 0
             }%
           </div>
         </div>
+        {idealData.debug_info && (
+          <div className="mt-2 text-xs text-gray-500">
+            <span className="font-medium">デバッグ情報:</span> セッション数: {idealData.debug_info.sessions_count}, 
+            会場数: {idealData.debug_info.venues_count}, 
+            分割数: {idealData.debug_info.division_count}
+          </div>
+        )}
       </div>
     </div>
   );

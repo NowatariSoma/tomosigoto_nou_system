@@ -442,29 +442,18 @@ class PracticeScheduleService:
                 "color": colors[i % len(colors)]
             })
 
-        # 時間スケジュールを生成
-        time_schedule = {}
-        
-        # 9:00から17:00まで30分刻みで時間スロットを生成
-        start_hour = 9
-        end_hour = 17
-        for hour in range(start_hour, end_hour):
-            for minute in [0, 30]:
-                time_str = f"{hour:02d}:{minute:02d}"
-                time_schedule[time_str] = {}
-                
-                # 各会場を初期化
-                for venue in venues:
-                    time_schedule[time_str][venue["id"]] = []
+        # 時間スケジュールを生成（動的分割を使用）
+        division_count = display_data.get("division_count", 6)
+        time_schedule = self._generate_time_schedule(venues, display_data, division_count)
 
         # セッションを時間スロットに配置
         part_colors = settings.DEFAULT_PART_COLORS
         part_counter = {}
         
         for session in display_data.get("sessions", []):
-            # slot_orderから時間を計算
+            # slot_orderから時間を計算（division_count対応）
             slot_order = session.get("slot_order", 1)
-            session_start = self._calculate_slot_time(display_data, slot_order)
+            session_start = self._calculate_slot_time(display_data, slot_order, division_count)
             
             # パート名を生成（part_idベース）
             part_id = session.get("part_id", "unknown")
@@ -531,17 +520,9 @@ class PracticeScheduleService:
                 })
         # 会場データがない場合は空のリストを返す
 
-        # 時間スケジュールを生成
-        time_schedule = {}
-        start_hour = 9
-        end_hour = 17
-        
-        for hour in range(start_hour, end_hour):
-            for minute in [0, 30]:
-                time_str = f"{hour:02d}:{minute:02d}"
-                time_schedule[time_str] = {}
-                for venue in venues:
-                    time_schedule[time_str][venue["id"]] = []
+        # 時間スケジュールを生成（動的分割を使用）
+        division_count = schedule.get("division_count", 6)
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
         # セッションを配置
         part_colors = settings.DEFAULT_PART_COLORS
@@ -549,7 +530,7 @@ class PracticeScheduleService:
         
         for i, session in enumerate(sessions):
             slot_order = session.get("slot_order", i + 1)
-            session_start = self._calculate_slot_time(schedule, slot_order)
+            session_start = self._calculate_slot_time(schedule, slot_order, division_count)
             
             if session_start in time_schedule:
                 venue_id = venues[i % len(venues)]["id"]
@@ -596,7 +577,7 @@ class PracticeScheduleService:
         # 実際のセッションデータがある場合のみ配置
         for session in sessions:
             slot_order = session.get("slot_order", 1)
-            session_start = self._calculate_slot_time(schedule, slot_order)
+            session_start = self._calculate_slot_time(schedule, slot_order, division_count)
             if session_start and session_start in time_schedule and venues:
                 venue_index = (slot_order - 1) % len(venues)
                 venue_id = venues[venue_index]["id"]

@@ -206,12 +206,22 @@ export interface IdealPartInfo {
   instructors: string[];
   participants: number;
   status: string;
+  slot_order?: number;
+  schedule_available_venue_id?: string;
 }
 
 export interface IdealScheduleData {
   schedule_info: IdealScheduleInfo;
   venues: IdealVenue[];
   time_schedule: Record<string, Record<string, IdealPartInfo[]>>; // [time][venue_id] = parts[]
+  debug_info?: {
+    sessions_count: number;
+    sessions_data: any[];
+    venues_count: number;
+    division_count: number;
+    session_processing_details: any[];
+    fetch_logs?: string[];
+  };
 }
 
 /**

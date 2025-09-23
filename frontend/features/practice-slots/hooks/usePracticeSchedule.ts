@@ -136,9 +136,37 @@ export const useIdealSchedule = () => {
     
     try {
       const data = await practiceScheduleService.getPracticeScheduleIdealFormat(date);
-      setIdealData(data);
+      
+      // データの検証
+      if (data && typeof data === 'object') {
+        // エラーレスポンスのチェック
+        if (data.error) {
+          console.warn('理想形式スケジュール取得でエラー:', data.error, data.debug_info);
+          setError(data.error);
+          setIdealData(null);
+          return;
+        }
+
+        // venuesが存在し、配列であることを確認
+        if (!data.venues || !Array.isArray(data.venues)) {
+          console.warn('理想形式スケジュールのvenuesが無効です:', data);
+          // デバッグ情報があれば表示
+          if (data.debug_info) {
+            console.log('デバッグ情報:', data.debug_info);
+          }
+          setIdealData({
+            ...data,
+            venues: []
+          });
+        } else {
+          setIdealData(data);
+        }
+      } else {
+        setIdealData(null);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '理想形式スケジュールの取得に失敗しました';
+      console.error('理想形式スケジュール取得エラー:', err);
       setError(errorMessage);
       setIdealData(null);
     } finally {
