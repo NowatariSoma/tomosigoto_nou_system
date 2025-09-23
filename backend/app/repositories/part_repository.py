@@ -177,3 +177,25 @@ class PartRepository:
         data = response.data or []
         logger.info(f"Found {len(data)} active parts in {self.parts_table} table")
         return data
+
+    @handle_supabase_errors("find_by_stage_id")
+    async def find_by_stage_id(self, stage_id: str) -> List[Dict[str, Any]]:
+        """
+        指定されたstage_idに紐づくパートを取得
+
+        Args:
+            stage_id: 舞台ID
+
+        Returns:
+            指定された舞台に紐づくパート情報のリスト
+        """
+        response = (
+            self.client.table(self.parts_table)
+            .select("*")
+            .eq("stage_id", stage_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        data = response.data or []
+        logger.info(f"Found {len(data)} parts for stage_id: {stage_id}")
+        return data

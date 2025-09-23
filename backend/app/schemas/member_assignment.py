@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_serializer, Field
@@ -53,6 +53,56 @@ class MemberAssignmentResponse(MemberAssignmentBase):
     @field_serializer('part_id')
     def serialize_part_id(self, value: UUID) -> str:
         return str(value)
+
+
+class BulkAssignmentItem(BaseModel):
+    """一括所属用の個別アイテムスキーマ"""
+    
+    user_id: UUID = Field(..., description="所属させるユーザーのID")
+    category: str = Field(..., description="謡舞区分 (utai: 謡, mai: 舞)", pattern="^(utai|mai)$")
+    display_order: int = Field(default=0, description="表示順序", ge=0)
+    
+    @field_serializer('user_id')
+    def serialize_user_id(self, value: UUID) -> str:
+        return str(value)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "12345678-1234-5678-9012-123456789012",
+                "category": "utai",
+                "display_order": 1
+            }
+        }
+
+
+class BulkAssignmentRequest(BaseModel):
+    """一括所属リクエスト用スキーマ"""
+    
+    assignments: List[BulkAssignmentItem] = Field(
+        ..., 
+        description="所属させるユーザーのリスト",
+        min_items=1,
+        max_items=50
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "assignments": [
+                    {
+                        "user_id": "12345678-1234-5678-9012-123456789012",
+                        "category": "utai",
+                        "display_order": 1
+                    },
+                    {
+                        "user_id": "12345678-1234-5678-9012-123456789013",
+                        "category": "mai", 
+                        "display_order": 2
+                    }
+                ]
+            }
+        }
 
 
 class MemberAssignmentWithDetails(MemberAssignmentResponse):

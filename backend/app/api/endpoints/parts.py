@@ -1,10 +1,12 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_part_service
+from app.api.deps import get_current_user, get_member_assignment_service, get_part_service
+from app.schemas.member_assignment import MemberAssignmentWithDetails
 from app.schemas.part import PartBase, PartCreate, PartResponse, PartUpdate
+from app.services.member_assignment_service import MemberAssignmentService
 from app.services.part_service import PartService
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 router = APIRouter()
 
@@ -12,7 +14,6 @@ router = APIRouter()
 @router.get("/", response_model=List[PartResponse])
 async def get_parts(
     part_service: PartService = Depends(get_part_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     パートの全情報を取得
@@ -32,7 +33,6 @@ async def get_parts(
 async def get_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を取得
@@ -54,7 +54,6 @@ async def get_part(
 async def create_part(
     part_data: PartCreate,
     part_service: PartService = Depends(get_part_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     新しくパート情報を作成
@@ -82,7 +81,6 @@ async def update_part(
     part_id: UUID,
     part_data: PartUpdate,
     part_service: PartService = Depends(get_part_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を更新
@@ -110,7 +108,6 @@ async def update_part(
 async def delete_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     指定したパート情報を削除
@@ -124,3 +121,48 @@ async def delete_part(
         確認メッセージ
     """
     await part_service.remove_part(part_id)
+
+
+@router.get("/{part_id}/members", response_model=List[MemberAssignmentWithDetails])
+async def get_part_members(
+    part_id: UUID,
+    category: Optional[str] = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
+    part_service: PartService = Depends(get_part_service),
+    member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
+):
+    """
+    指定したパートに所属するメンバー一覧を取得
+    
+    Args:
+        part_id: パートを指定するUUID
+        category: カテゴリでフィルタリング（utai/mai）
+        part_service: PartServiceの依存性注入
+        member_assignment_service: MemberAssignmentServiceの依存性注入
+        current_user: 現在のユーザー（認証必須）
+    
+    Returns:
+        指定されたパートに所属するメンバー情報のリスト
+    
+    Raises:
+        HTTPException: パートが見つからない場合
+    """
+    # まずパートの存在確認
+    await part_service.get_part(part_id)
+    
+    # 指定されたパートに所属するメンバーを取得
+    members = await member_assignment_service.get_assignments_with_details(
+        part_id=part_id, assignment_id=None, user_id=None
+    )
+    
+    # カテゴリフィルタリング
+    if category:
+        if category not in ["utai", "mai"]:
+            raise HTTPException(
+                status_code=400, 
+                detail="カテゴリは 'utai' または 'mai' である必要があります"
+            )
+        members = [member for member in members if member.get("category") == category]
+    
+    return members
+
+
