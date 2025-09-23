@@ -1,0 +1,252 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Attendance, AttendanceFormData, PracticeSchedule } from '../types';
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION, INITIAL_ATTENDANCE_FORM } from '../constants';
+import { Calendar, Clock, MapPin, FileText, Save, X, User } from 'lucide-react';
+
+interface AttendanceFormProps {
+  attendance?: Attendance | null;
+  practiceSchedules: PracticeSchedule[];
+  userId: string;
+  onSubmit: (data: AttendanceFormData) => Promise<void>;
+  onCancel: () => void;
+  loading?: boolean;
+}
+
+export const AttendanceForm: React.FC<AttendanceFormProps> = ({
+  attendance,
+  practiceSchedules,
+  userId,
+  onSubmit,
+  onCancel,
+  loading = false,
+}) => {
+  const [formData, setFormData] = useState<AttendanceFormData>(
+    attendance ? {
+      practice_schedule_id: attendance.practice_schedule_id,
+      status: attendance.status,
+      notes: attendance.notes || '',
+    } : INITIAL_ATTENDANCE_FORM
+  );
+
+  const [errors, setErrors] = useState<Partial<AttendanceFormData>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<AttendanceFormData> = {};
+
+    if (!formData.practice_schedule_id) {
+      newErrors.practice_schedule_id = '練習予定は必須です';
+    }
+
+    if (!formData.status) {
+      newErrors.status = '出席状況は必須です';
+    }
+
+    if (formData.notes && formData.notes.length > VALIDATION.MAX_NOTES_LENGTH) {
+      newErrors.notes = `備考は${VALIDATION.MAX_NOTES_LENGTH}文字以内で入力してください`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      await onSubmit(formData);
+    }
+  };
+
+  const handleInputChange = (field: keyof AttendanceFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // エラーをクリア
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const selectedPractice = practiceSchedules.find(p => p.id === formData.practice_schedule_id);
+
+  return (
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">
+          {attendance ? '出席記録を編集' : '出席登録'}
+        </h2>
+        <button
+          onClick={onCancel}
+          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ユーザー情報 */}
+        <div className="bg-white border border-gray-200 p-5 rounded-lg shadow-sm">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+              <User className="h-4 w-4 text-blue-600" />
+            </div>
+            <span className="text-base font-semibold text-gray-900">ユーザー情報</span>
+          </div>
+          <div className="bg-white p-4 rounded-md border border-gray-200">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">ユーザーID:</span>
+              <span className="text-base font-mono text-gray-900 bg-white px-3 py-1 rounded border border-gray-300">
+                {userId}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 練習予定選択 */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <Calendar className="h-4 w-4" />
+            <span>{UI_TEXT.PRACTICE} <span className="text-red-500">*</span></span>
+          </label>
+          <select
+            value={formData.practice_schedule_id}
+            onChange={(e) => handleInputChange('practice_schedule_id', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.practice_schedule_id ? 'border-red-500' : 'border-gray-300'
+            }`}
+          >
+            <option value="">練習予定を選択してください</option>
+            {practiceSchedules.map((schedule) => (
+              <option key={schedule.id} value={schedule.id}>
+                {schedule.date} {schedule.start_time}-{schedule.end_time} {schedule.venue_name}
+              </option>
+            ))}
+          </select>
+          {errors.practice_schedule_id && (
+            <p className="mt-1 text-sm text-red-600">{errors.practice_schedule_id}</p>
+          )}
+        </div>
+
+        {/* 選択された練習予定の詳細 */}
+        {selectedPractice && (
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg shadow-sm">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              選択された練習予定
+            </h3>
+            <div className="space-y-4">
+              {/* 日付と時間 */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <span className="text-lg font-medium text-blue-900">
+                    {new Date(selectedPractice.date).toLocaleDateString('ja-JP', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      weekday: 'long',
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                  <span className="text-lg font-medium text-blue-900">
+                    {selectedPractice.start_time} - {selectedPractice.end_time}
+                  </span>
+                </div>
+              </div>
+              
+              {/* 会場情報 */}
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                <span className="text-lg font-medium text-blue-900">
+                  {selectedPractice.venue_name} ({selectedPractice.campus}キャンパス)
+                </span>
+              </div>
+              
+              {/* 説明 */}
+              {selectedPractice.description && (
+                <div className="bg-white bg-opacity-50 p-4 rounded-md border border-blue-100">
+                  <p className="text-base text-blue-800 leading-relaxed">
+                    {selectedPractice.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 出席状況選択 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            {UI_TEXT.STATUS} <span className="text-red-500">*</span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(ATTENDANCE_STATUS).map(([key, value]) => (
+              <label
+                key={key}
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                  formData.status === value
+                    ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value={value}
+                  checked={formData.status === value}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className="sr-only"
+                />
+                {ATTENDANCE_STATUS_LABELS[value as keyof typeof ATTENDANCE_STATUS_LABELS]}
+              </label>
+            ))}
+          </div>
+          {errors.status && (
+            <p className="mt-2 text-sm text-red-600">{errors.status}</p>
+          )}
+        </div>
+
+        {/* 備考 */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <FileText className="h-4 w-4" />
+            <span>{UI_TEXT.NOTES}</span>
+          </label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            rows={3}
+            placeholder="備考があれば入力してください（任意）"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.notes ? 'border-red-500' : 'border-gray-300'
+            }`}
+          />
+          {errors.notes && (
+            <p className="mt-1 text-sm text-red-600">{errors.notes}</p>
+          )}
+        </div>
+
+        {/* ボタン */}
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center space-x-2 px-6 py-3 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200 font-medium shadow-sm"
+          >
+            <X className="h-4 w-4" />
+            <span>{UI_TEXT.CANCEL}</span>
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-lg transition-all duration-200 font-medium shadow-sm disabled:cursor-not-allowed"
+          >
+            <Save className="h-4 w-4" />
+            <span>{loading ? '保存中...' : UI_TEXT.SAVE}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
