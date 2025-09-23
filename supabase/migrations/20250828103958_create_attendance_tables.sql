@@ -1,6 +1,10 @@
 -- BACK-DB-001.5: シンプルな出欠管理テーブル設計
 -- 1回の練習の出欠（出席、欠席、遅刻、無断欠席）を管理するためのデータベース構造
 
+-- 0. 既存のENUMとテーブルを削除
+DROP TABLE IF EXISTS practice_user_attendance CASCADE;
+DROP TYPE IF EXISTS attendance_status CASCADE;
+
 -- 1. practice_user_attendanceテーブル（出欠記録）
 CREATE TABLE practice_user_attendance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,7 +61,8 @@ SELECT
          NULLIF(COUNT(a.id), 0) * 100), 2
     ) as attendance_rate
 FROM public.practice_schedules ps
-LEFT JOIN public.venues v ON ps.selected_venue_id = v.id
+LEFT JOIN public.schedule_available_venues sav ON ps.id = sav.schedule_id
+LEFT JOIN public.venues v ON sav.venue_id = v.id
 LEFT JOIN practice_user_attendance a ON ps.id = a.practice_schedule_id
 GROUP BY ps.id, ps.schedule_date, ps.description, v.name;
 
@@ -78,7 +83,8 @@ FROM auth.users u
 LEFT JOIN public.user_profiles up ON u.id = up.user_id
 LEFT JOIN practice_user_attendance a ON u.id = a.user_id
 LEFT JOIN public.practice_schedules ps ON a.practice_schedule_id = ps.id
-LEFT JOIN public.venues v ON ps.selected_venue_id = v.id
+LEFT JOIN public.schedule_available_venues sav ON ps.id = sav.schedule_id
+LEFT JOIN public.venues v ON sav.venue_id = v.id
 ORDER BY u.id, ps.schedule_date DESC;
 
 -- 8. ビューのコメント

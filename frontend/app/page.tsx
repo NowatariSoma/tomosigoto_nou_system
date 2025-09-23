@@ -20,11 +20,11 @@ interface DashboardCard {
 
 const dashboardCards: DashboardCard[] = [
   {
-    id: 'register',
+    id: 'practice-schedule',
     title: '登録',
     description: '練習スケジュールと部屋の登録・管理',
     icon: 'Calendar',
-    route: '/register',
+    route: '/practice-schedule',
     difficulty: 'low',
     variant: 'default'
   },
@@ -135,7 +135,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">練習スケジュールと部屋の登録・管理機能</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dashboardCards.filter(card => ['register', 'practice-slots', 'room-settings'].includes(card.id)).map((card) => {
+                {dashboardCards.filter(card => ['practice-schedule', 'practice-slots', 'room-settings'].includes(card.id)).map((card) => {
                   const IconComponent = iconMap[card.icon as keyof typeof iconMap];
                   const iconColor = iconColors[card.icon as keyof typeof iconColors] || 'text-gray-600';
                   const isClickable = !!card.route;
@@ -157,7 +157,7 @@ export default function HomePage() {
                       </CardHeader>
                       <CardContent>
                         <Button className="w-full">
-                          {card.id === 'register' ? '登録画面を開く' : 
+                          {card.id === 'practice-schedule' ? '登録画面を開く' : 
                            card.id === 'practice-slots' ? '練習表を確認' :
                            card.id === 'room-settings' ? '部屋設定を開く' : 'スタート'}
                         </Button>
