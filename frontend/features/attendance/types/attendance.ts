@@ -63,6 +63,7 @@ export interface PracticeSchedule {
   start_time: string;
   end_time: string;
   division_count: number;
+  title?: string;
   description?: string;
   schedule_type?: string;
   status?: string;
