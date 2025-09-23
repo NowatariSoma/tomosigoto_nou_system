@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Calendar,
   BookOpen,
-  Building
+  Building,
+  ReceiptText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -223,6 +224,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleNavigateAndClose('/room-settings')}
               />
 
+              <NavItem
+                icon={<ReceiptText className="w-4 h-4" />}
+                label="演目一覧"
+                active={pathname === '/performances-list'}
+                onClick={() => handleNavigateAndClose('/performances-list')}
+              />
+
               <NavTitle label="その他" />
 
               <NavItem
@@ -318,6 +326,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "部屋設定"}
             active={pathname === '/room-settings'}
             href="/room-settings"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<ReceiptText className="w-4 h-4" />}
+            label={isCollapsed ? "" : "演目一覧"}
+            active={pathname === '/performances-list'}
+            href="/performances-list"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

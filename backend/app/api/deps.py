@@ -14,6 +14,16 @@ from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from app.services.attendance_service import AttendanceService
 from app.services.account_setting_service import AccountSettingService
+from app.repositories.practice_schedule_repository import (
+    PracticeScheduleRepository,
+    ScheduleAvailableVenueRepository,
+    SessionRepository,
+    SessionInstructorRepository,
+)
+from app.services.user_service import UserService
+from app.services.venue_service import VenueService
+from app.services.attendance_service import AttendanceService
+from app.services.practice_schedule_service import PracticeScheduleService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -126,3 +136,47 @@ def get_account_setting_service(
 ) -> AccountSettingService:
     """AccountSettingServiceのインスタンスを依存性注入で取得"""
     return AccountSettingService(user_profile_repository, department_repository, history_repository)
+
+def get_practice_schedule_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> PracticeScheduleRepository:
+    """PracticeScheduleRepositoryのインスタンスを取得"""
+    return PracticeScheduleRepository(supabase_client)
+
+
+def get_schedule_available_venue_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> ScheduleAvailableVenueRepository:
+    """ScheduleAvailableVenueRepositoryのインスタンスを取得"""
+    return ScheduleAvailableVenueRepository(supabase_client)
+
+
+def get_session_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> SessionRepository:
+    """SessionRepositoryのインスタンスを取得"""
+    return SessionRepository(supabase_client)
+
+
+def get_session_instructor_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> SessionInstructorRepository:
+    """SessionInstructorRepositoryのインスタンスを取得"""
+    return SessionInstructorRepository(supabase_client)
+
+
+def get_practice_schedule_service(
+    supabase_client: Client = Depends(get_supabase),
+    practice_schedule_repository: PracticeScheduleRepository = Depends(get_practice_schedule_repository),
+    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
+    session_repository: SessionRepository = Depends(get_session_repository),
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+) -> PracticeScheduleService:
+    """PracticeScheduleServiceのインスタンスを依存性注入で取得"""
+    return PracticeScheduleService(
+        practice_schedule_repository,
+        schedule_available_venue_repository,
+        session_repository,
+        session_instructor_repository,
+        supabase_client.auth,
+    )
