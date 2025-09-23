@@ -1,5 +1,9 @@
 from supabase import create_client, Client
 from app.core.config import settings
+from functools import wraps
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_supabase() -> Client:
@@ -22,3 +26,22 @@ def get_supabase() -> Client:
     
     client = create_client(settings.SUPABASE_URL, api_key)
     return client
+
+
+def handle_supabase_errors(operation_name: str):
+    """
+    Supabase操作のエラーハンドリングデコレータ
+    
+    Args:
+        operation_name: 操作名（ログ用）
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"Supabase operation '{operation_name}' failed: {e}")
+                raise
+        return wrapper
+    return decorator
