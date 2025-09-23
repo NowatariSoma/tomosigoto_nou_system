@@ -2,7 +2,7 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Calendar } from 'lucide-react';
-import { PracticeSchedulePage } from '@/features/register/components';
+import { RegisterPage } from '@/features/register/components';
 
 export default function Page() {
   return (
@@ -21,7 +21,7 @@ export default function Page() {
       // }}
       maxWidth="7xl"
     >
-      <PracticeSchedulePage />
+      <RegisterPage />
     </AppTemplate>
   );
 }

@@ -59,13 +59,18 @@ export interface UserAttendanceHistory {
 
 export interface PracticeSchedule {
   id: string;
-  date: string;
+  schedule_date: string;
   start_time: string;
   end_time: string;
-  venue_id: string;
-  venue_name: string;
-  campus: '今出川' | '京田辺';
+  division_count: number;
+  title?: string;
   description?: string;
+  schedule_type?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface AttendanceFormData {

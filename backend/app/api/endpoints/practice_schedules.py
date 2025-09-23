@@ -12,6 +12,7 @@ from app.schemas.practice_schedules import (
     SessionCreate,
     SessionResponse,
     SessionUpdate,
+    PracticeScheduleWithDetailsResponse,
 )
 from app.services.practice_schedule_service import PracticeScheduleService
 from fastapi import APIRouter, Depends
