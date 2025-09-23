@@ -12,28 +12,31 @@ router = APIRouter()
 
 @router.get("/", response_model=List[UserResponse])
 async def get_users(
-    current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
-    """すべてのユーザーを取得"""
+    """
+    すべてのユーザーを取得
+    """
     return await user_service.get_all_users()
 
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
-    """特定のユーザー情報を取得"""
+    """
+    特定のユーザー情報を取得
+    """
     return await user_service.get_user_by_id(user_id)
 
 
 @router.get("/me/", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """現在認証されているユーザーの情報を取得"""
+    """
+    現在認証されているユーザーの情報を取得
+    """
     return current_user
 
 
@@ -51,7 +54,6 @@ async def register_user(
 @router.post("/", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
     """
@@ -64,7 +66,6 @@ async def create_user(
 async def update_user(
     user_id: str,
     user_data: UserUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
     """
@@ -82,7 +83,6 @@ async def update_user(
 @router.delete("/{user_id}")
 async def delete_user(
     user_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
     """
