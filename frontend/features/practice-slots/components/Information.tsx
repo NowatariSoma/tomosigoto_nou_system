@@ -60,6 +60,11 @@ const Information: React.FC<InformationProps> = ({
       {scheduleData && (
         <div className="mb-4 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-medium text-gray-800 mb-2">スケジュール詳細:</h3>
+          {scheduleData.title && (
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">タイトル:</span> {scheduleData.title}
+            </p>
+          )}
           <p className="text-sm text-gray-600">
             <span className="font-medium">時間:</span> {scheduleData.start_time} - {scheduleData.end_time}
           </p>
@@ -77,6 +82,7 @@ const Information: React.FC<InformationProps> = ({
           <h3 className="font-medium text-gray-800 mb-2">練習内容:</h3>
           {scheduleData ? (
             <ul className="space-y-1 text-xs">
+              {scheduleData.title && <li>・タイトル: {scheduleData.title}</li>}
               <li>・{scheduleData.description || '練習内容が登録されていません'}</li>
               <li>・練習タイプ: {scheduleData.schedule_type || '未設定'}</li>
               <li>・ステータス: {scheduleData.status || '未設定'}</li>

@@ -1,64 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Room } from '../../room-settings/types';
+import { roomService } from '../../room-settings/services';
 
-// モック会場データ
-const mockVenues: Room[] = [
-  {
-    id: 'venue-1',
-    name: '体育館A',
-    campus: '今出川',
-    capacity: 50,
-    danceAllowed: true,
-    description: 'メイン体育館',
-    location: '1階',
-  },
-  {
-    id: 'venue-2',
-    name: '体育館B',
-    campus: '京田辺',
-    capacity: 30,
-    danceAllowed: false,
-    description: 'サブ体育館',
-    location: '2階',
-  },
-  {
-    id: 'venue-3',
-    name: 'グラウンド',
-    campus: '今出川',
-    capacity: 100,
-    danceAllowed: false,
-    description: '屋外グラウンド',
-    location: '屋外',
-  },
-];
+interface UseVenuesState {
+  venues: Room[];
+  loading: boolean;
+  error: string | null;
+}
 
 export const useVenues = () => {
-  const [venues, setVenues] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<UseVenuesState>({
+    venues: [],
+    loading: false,
+    error: null,
+  });
 
-  const fetchVenues = async () => {
+  const fetchVenues = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      setLoading(true);
-      setError(null);
-      // ネットワーク遅延をシミュレート
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setVenues(mockVenues);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '会場データの取得に失敗しました');
-    } finally {
-      setLoading(false);
+      const venues = await roomService.getRooms();
+      setState({
+        venues,
+        loading: false,
+        error: null,
+      });
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : '会場データの取得に失敗しました',
+      }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchVenues();
-  }, []);
+  }, [fetchVenues]);
 
   return {
-    venues,
-    loading,
-    error,
+    ...state,
     refetch: fetchVenues,
   };
 };
