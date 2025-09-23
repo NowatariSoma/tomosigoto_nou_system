@@ -19,7 +19,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
 
   // モックユーザーデータ（開発用）
   const mockUser = {
-    id: 'mock-user-1',
+    id: '00000000-0000-0000-0000-000000000001',
     email: 'test@example.com',
     name: 'テストユーザー',
   };

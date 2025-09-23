@@ -19,7 +19,8 @@ import {
   Calendar,
   BookOpen,
   Building,
-  ReceiptText
+  ReceiptText,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -231,6 +232,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleNavigateAndClose('/performances-list')}
               />
 
+              <NavItem
+                icon={<Clock className="w-4 h-4" />}
+                label="出席管理"
+                active={pathname === '/attendance'}
+                onClick={() => handleNavigateAndClose('/attendance')}
+              />
+
               <NavTitle label="その他" />
 
               <NavItem
@@ -334,6 +342,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "演目一覧"}
             active={pathname === '/performances-list'}
             href="/performances-list"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Clock className="w-4 h-4" />}
+            label={isCollapsed ? "" : "出席管理"}
+            active={pathname === '/attendance'}
+            href="/attendance"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

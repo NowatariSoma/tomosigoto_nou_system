@@ -117,7 +117,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             <option value="">練習予定を選択してください</option>
             {practiceSchedules.map((schedule) => (
               <option key={schedule.id} value={schedule.id}>
-                {schedule.date} {schedule.start_time}-{schedule.end_time} {schedule.venue_name}
+                {new Date(schedule.schedule_date).toLocaleDateString('ja-JP', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  weekday: 'short',
+                })} {schedule.start_time}-{schedule.end_time} {schedule.description || '練習'}
               </option>
             ))}
           </select>
@@ -128,45 +133,63 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 
         {/* 選択された練習予定の詳細 */}
         {selectedPractice && (
-          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
+          <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6 flex items-center">
+              <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
               選択された練習予定
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* 日付と時間 */}
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <span className="text-lg font-medium text-blue-900">
-                    {new Date(selectedPractice.date).toLocaleDateString('ja-JP', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long',
-                    })}
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-600 mb-1">日付</p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          weekday: 'long',
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  <span className="text-lg font-medium text-blue-900">
-                    {selectedPractice.start_time} - {selectedPractice.end_time}
-                  </span>
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-600 mb-1">時間</p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {selectedPractice.start_time} - {selectedPractice.end_time}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
               {/* 会場情報 */}
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-5 w-5 text-blue-600" />
-                <span className="text-lg font-medium text-blue-900">
-                  {selectedPractice.venue_name} ({selectedPractice.campus}キャンパス)
-                </span>
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">会場</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      練習会場（詳細は後日連絡）
+                    </p>
+                  </div>
+                </div>
               </div>
               
               {/* 説明 */}
               {selectedPractice.description && (
-                <div className="bg-white bg-opacity-50 p-4 rounded-md border border-blue-100">
-                  <p className="text-base text-blue-800 leading-relaxed">
+                <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-2">練習内容</h4>
+                  <p className="text-slate-700 leading-relaxed">
                     {selectedPractice.description}
                   </p>
                 </div>
