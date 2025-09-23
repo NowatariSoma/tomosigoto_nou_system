@@ -4,6 +4,7 @@ import { practiceScheduleService } from '../services';
 
 export const usePracticeSchedule = (practiceId?: string) => {
   const [practiceSchedule, setPracticeSchedule] = useState<PracticeSchedule | null>(null);
+  const [practiceSchedules, setPracticeSchedules] = useState<PracticeSchedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,16 +21,32 @@ export const usePracticeSchedule = (practiceId?: string) => {
     }
   };
 
+  const fetchPracticeSchedules = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await practiceScheduleService.getPracticeSchedules();
+      setPracticeSchedules(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '練習予定一覧の取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (practiceId) {
       fetchPracticeSchedule(practiceId);
+    } else {
+      fetchPracticeSchedules();
     }
   }, [practiceId]);
 
   return {
     practiceSchedule,
+    practiceSchedules,
     loading,
     error,
-    refetch: practiceId ? () => fetchPracticeSchedule(practiceId) : undefined,
+    refetch: practiceId ? () => fetchPracticeSchedule(practiceId) : fetchPracticeSchedules,
   };
 };
