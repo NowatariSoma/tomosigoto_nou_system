@@ -1,17 +1,18 @@
 'use client';
 
 import React from 'react';
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/forms/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/data-display/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/overlays/dropdown-menu';
-import { Settings } from 'lucide-react';
+import { Settings, LogOut } from 'lucide-react';
 import { MobileSidebarToggle } from './sidebar';
 
 interface HeaderProps {
@@ -20,19 +21,29 @@ interface HeaderProps {
 
 export function Header({ onMobileSidebarToggle }: HeaderProps) {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-
-  // 模擬ユーザーデータ
-  useEffect(() => {
-    const mockUser = {
-      username: 'ユーザー',
-      email: 'user@example.com'
-    };
-    setUser(mockUser);
-  }, []);
+  const { user, logout } = useAuth();
 
   const handleNavigation = (path: string) => {
     router.push(path);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.email?.split('@')[0] || 'ユーザー';
+  };
+
+  const getUserInitial = () => {
+    const displayName = getUserDisplayName();
+    return displayName.charAt(0).toUpperCase();
   };
 
   return (
@@ -51,14 +62,14 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="relative h-10 w-10 rounded-full hover-icon"
                   >
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="" alt={user.username} />
+                      <AvatarImage src="" alt={getUserDisplayName()} />
                       <AvatarFallback className="bg-blue-100 text-blue-700">
-                        {user.username.charAt(0).toUpperCase()}
+                        {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -70,23 +81,32 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                 >
                   <div className="flex items-center justify-start gap-3 p-3 border-b border-gray-200">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src="" alt={user.username} />
+                      <AvatarImage src="" alt={getUserDisplayName()} />
                       <AvatarFallback className="bg-blue-100 text-blue-700">
-                        {user.username.charAt(0).toUpperCase()}
+                        {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-1">
-                      <p className="font-medium text-gray-900">{user.username}</p>
+                      <p className="font-medium text-gray-900">{getUserDisplayName()}</p>
                       <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="text-xs text-gray-400">ID: {user.id}</p>
                     </div>
                   </div>
                   <div className="py-2">
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleNavigation('/settings')}
                       className="cursor-pointer hover-nav"
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       設定
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer hover-nav text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      ログアウト
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>
