@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Information } from '@/features/practice-slots/components/Information';
-import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
-import { DateButton } from '@/features/practice-slots/components/DateButton';
+import { Information } from './Information';
+import { ScheduleTable } from './ScheduleTable';
+import { DateButton } from './DateButton';
 
 import { useDateNavigation } from '../hooks';
 
