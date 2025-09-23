@@ -18,7 +18,9 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
-  Home
+  Home,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -127,6 +129,7 @@ function NavTitle({ label }: { label: string }) {
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(true);
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -136,6 +139,10 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
   const handleAnalysisClick = () => {
     setIsAnalysisExpanded(!isAnalysisExpanded);
+  };
+
+  const handleScheduleClick = () => {
+    setIsScheduleExpanded(!isScheduleExpanded);
   };
 
   const handleNavigateAndClose = (path: string) => {
@@ -204,6 +211,31 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 active={pathname === '/history'}
                 onClick={() => handleNavigateAndClose('/history')}
               />
+
+              <div className="pt-6">
+                <NavTitle label="練習管理" />
+                
+                <NavItem
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="練習セッション"
+                  active={pathname.startsWith('/practice-slots')}
+                  hasChildren={true}
+                  isExpanded={isScheduleExpanded}
+                  onToggleExpand={handleScheduleClick}
+                  onClick={() => handleNavigateAndClose('/practice-slots')}
+                />
+                
+                {isScheduleExpanded && (
+                  <div className="space-y-1">
+                    <SubNavItem
+                      icon={<Clock className="w-4 h-4" />}
+                      label="セッション編集"
+                      active={pathname.startsWith('/practice-slots')}
+                      onClick={() => handleNavigateAndClose('/practice-slots')}
+                    />
+                  </div>
+                )}
+              </div>
 
               <div className="pt-6">
                 <NavTitle label="分析・レビュー" />
@@ -322,6 +354,19 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             <History className="w-5 h-5" />
           </button>
 
+          <button
+            onClick={() => router.push('/practice-slots')}
+            className={cn(
+              "w-12 h-12 rounded-md flex items-center justify-center transition-colors hover-button",
+              pathname.startsWith('/practice-slots') 
+                ? "active-button" 
+                : ""
+            )}
+            title="練習セッション"
+          >
+            <Calendar className="w-5 h-5" />
+          </button>
+
           <div className="pt-2 border-t border-gray-200 space-y-2">
             <button
               onClick={() => router.push('/settings')}
@@ -402,6 +447,31 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           active={pathname === '/history'}
           href="/history"
         />
+
+        <div className="pt-6">
+          <NavTitle label="練習管理" />
+          
+          <NavItem
+            icon={<Calendar className="w-4 h-4" />}
+            label="練習セッション"
+            active={pathname.startsWith('/practice-slots')}
+            hasChildren={true}
+            isExpanded={isScheduleExpanded}
+            onToggleExpand={handleScheduleClick}
+            onClick={() => handleNavigateAndClose('/practice-slots')}
+          />
+          
+          {isScheduleExpanded && (
+            <div className="space-y-1">
+              <SubNavItem
+                icon={<Clock className="w-4 h-4" />}
+                label="セッション編集"
+                active={pathname.startsWith('/practice-slots')}
+                href="/practice-slots"
+              />
+            </div>
+          )}
+        </div>
 
         <div className="pt-6">
           <NavTitle label="分析・レビュー" />
