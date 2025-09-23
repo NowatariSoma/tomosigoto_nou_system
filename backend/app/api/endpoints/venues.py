@@ -11,7 +11,6 @@ router = APIRouter()
 
 @router.get("/", response_model=List[VenueResponse])
 async def get_venues(
-    current_user: Dict[str, Any] = Depends(get_current_user),
     venue_service: VenueService = Depends(get_venue_service),
 ):
     """
@@ -31,7 +30,6 @@ async def get_venues(
 @router.get("/{venue_id}", response_model=VenueResponse)
 async def get_venue(
     venue_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     venue_service: VenueService = Depends(get_venue_service),
 ):
     """
@@ -52,7 +50,6 @@ async def get_venue(
 @router.post("/", response_model=VenueResponse)
 async def create_venue(
     venue_data: VenueCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     venue_service: VenueService = Depends(get_venue_service),
 ):
     """
@@ -69,15 +66,15 @@ async def create_venue(
     return VenueResponse(**created_venue)
 
 
-@router.put("/{venue_id}", response_model=VenueResponse)
-async def update_venue(
+
+@router.patch("/{venue_id}", response_model=VenueResponse)
+async def patch_venue(
     venue_id: UUID,
     venue_data: VenueUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     venue_service: VenueService = Depends(get_venue_service),
 ):
     """
-    指定した会場情報を更新
+    指定した会場情報を部分更新
 
     Args:
         venue_id: 会場を指定するuuid
@@ -87,15 +84,13 @@ async def update_venue(
     Returns
         スキーマを通して辞書型とした会場情報
     """
-    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict())
+    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict(exclude_unset=True))
     return VenueResponse(**updated_venue)
 
 
 @router.delete("/{venue_id}")
 async def delete_venue(
     venue_id: UUID,
-    # venue_name: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
     venue_service: VenueService = Depends(get_venue_service),
 ):
     """

@@ -51,18 +51,34 @@ class UserService:
 
     async def create_user(self, user_data: dict) -> Dict[str, Any]:
         """ユーザーを作成（認証とDB両方）"""
-        # 既存ユーザーチェック
+        logger.info(f"Creating user with email: {user_data['email']}")
+
+        # 既存ユーザーチェック（メールアドレスベース）
         existing_user = await self.repository.find_by_email(user_data["email"])
         if existing_user:
+            logger.warning(f"User already exists in DB: {user_data['email']}")
             raise APIException(ErrorMessage.USER_ALREADY_EXISTS)
 
+        # パスワード強度チェック
+        password = user_data.get("password", "")
+        if len(password) < 6:
+            logger.warning(f"Password too weak for user: {user_data['email']}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Password does not meet requirements",
+            )
+
         # Supabase Authでユーザーを作成
+        logger.info(f"Creating user in Supabase Auth: {user_data['email']}")
         auth_response = self.auth_client.admin.create_user(
             {
                 "email": user_data["email"],
                 "password": user_data["password"],
                 "email_confirm": True,  # メール確認を自動で有効にする
             }
+        )
+        logger.info(
+            f"Supabase Auth user created with ID: {auth_response.user.id if auth_response.user else 'None'}"
         )
 
         if not auth_response.user:
@@ -72,6 +88,7 @@ class UserService:
         user_record = {
             "id": auth_response.user.id,
             "email": user_data["email"],
+            "name": user_data.get("name", None),
             "created_at": (
                 auth_response.user.created_at.isoformat()
                 if auth_response.user.created_at
@@ -85,6 +102,7 @@ class UserService:
         }
 
         # リポジトリを通してDBに保存
+        logger.info(f"Saving user to DB: {user_record}")
         created_user = await self.repository.create(user_record)
         logger.info(f"User created successfully: {user_data['email']}")
         return created_user

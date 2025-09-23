@@ -10,37 +10,34 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+    NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project-ref.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '***REMOVED***',
+  },
+  publicRuntimeConfig: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+    NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8000',
+  },
   webpack: (config, { dev, isServer }) => {
-    // Disable CSS optimization in production to avoid build errors
-    if (!dev && !isServer) {
-      config.optimization.minimize = false;
-      config.optimization.minimizer = [];
-    }
+    // CSS optimization settings - temporarily enabled for development
+    // if (!dev && !isServer) {
+    //   config.optimization.minimize = false;
+    //   config.optimization.minimizer = [];
+    // }
     return config;
   },
   async rewrites() {
-    const isDev = process.env.NODE_ENV === 'development';
     return [
       {
-        source: '/api/camera1/:path*',
-        destination: isDev 
-          ? 'http://localhost:8001/:path*'
-          : 'http://people-counter:8000/:path*',
-      },
-      {
-        source: '/api/camera2/:path*',
-        destination: isDev 
-          ? 'http://localhost:8002/:path*'
-          : 'http://people-counter2:8000/:path*',
-      },
-      {
-        source: '/api/db/:path*',
-        destination: isDev 
-          ? 'http://localhost:8003/:path*'
-          : 'http://db-access:8000/:path*',
+        source: '/api/:path*',
+        destination: 'http://localhost:8000/api/:path*',
       },
     ];
   },
+  // Skip trailing slash redirect for API routes
+  skipTrailingSlashRedirect: true,
 };
 
 module.exports = nextConfig;

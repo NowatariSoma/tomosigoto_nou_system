@@ -83,60 +83,106 @@
 ### データベース構造図
 ```mermaid
 erDiagram
-    practice_schedules ||--o{ sessions : "含む"
-    sessions ||--o{ session_instructors : "担当"
-    sessions ||--o{ session_attendances : "出欠管理"
-    session_instructors ||--o{ session_attendances : "担当する"
-    users ||--o{ session_attendances : "出席する"
-    parts ||--o{ session_attendances : "パート単位で"
-    
+    %% -------------------------
+    %% Core tables
+    %% -------------------------
     practice_schedules {
-        uuid id PK "スケジュールID"
-        uuid venue_id FK "会場ID参照"
-        date schedule_date "練習日"
-        time start_time "開始時間"
-        time end_time "終了時間"
-        string description "説明"
-        string schedule_type "練習種別(定期/特別等)"
-        string status "ステータス"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
-        uuid created_by "作成者ID"
-        uuid updated_by "更新者ID"
+        uuid id PK
+        date schedule_date
+        time start_time
+        time end_time
+        int division_count
+        varchar title
+        text description
+        varchar schedule_type
+        varchar status
+        timestamp created_at
+        timestamp updated_at
     }
-    
+
+    schedule_available_venues {
+        uuid id PK
+        uuid schedule_id FK
+        uuid venue_id FK
+        boolean is_preferred
+        int priority
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
     sessions {
-        uuid id PK "セッションID"
-        uuid schedule_id FK "スケジュールID参照"
-        string title "セッションタイトル"
-        time start_time "開始時間"
-        time end_time "終了時間"
-        string location_in_venue "会場内位置"
-        int priority "優先度"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+        uuid id PK
+        uuid schedule_id FK
+        uuid part_id FK
+        varchar title
+        int slot_order
+        uuid schedule_available_venues FK
+        int priority
+        timestamp created_at
+        timestamp updated_at
     }
-    
+
     session_instructors {
-        uuid id PK "担当者ID"
-        uuid session_id FK "セッションID参照"
-        uuid user_id FK "ユーザーID参照"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+        uuid id PK
+        uuid session_id FK
+        uuid user_id FK
+        timestamp created_at
+        timestamp updated_at
     }
-    
-    session_attendances {
-        uuid id PK "出欠ID"
-        uuid session_id FK "セッションID参照"
-        uuid member_id FK "メンバーID参照"
-        uuid part_id FK "パートID参照"
-        string attendance_status "出席状況"
-        timestamp check_in_time "チェックイン時間"
-        timestamp check_out_time "チェックアウト時間"
-        timestamp created_at "作成日時"
-        timestamp updated_at "更新日時"
+
+    practice_user_attendance {
+        uuid id PK
+        uuid practice_schedule_id FK
+        uuid user_id FK
+        text status
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
     }
+
+    %% -------------------------
+    %% Relations
+    %% -------------------------
+    practice_schedules ||--o{ schedule_available_venues : "has"
+    practice_schedules ||--o{ sessions : "contains"
+    practice_schedules ||--o{ practice_user_attendance : "attendance"
+
+    schedule_available_venues }o--|| venues : "candidate"
+    sessions }o--|| schedule_available_venues : "uses"
+    sessions }o--|| parts : "assigned to"
+    sessions ||--o{ session_instructors : "taught by"
+
+    practice_user_attendance ||--o{ session_instructors : "if instructor"
+    practice_user_attendance }o--|| users : "user"
 ```
+
+### 会場利用可能性管理の設計方針
+
+**1. 3層構造による柔軟な会場管理**
+- `venue_availability_rules`: 曜日・時間帯別の基本利用可能性
+- `venue_date_exceptions`: 特定日の例外（メンテナンス・イベント等）
+- `schedule_available_venues`: 練習スケジュール別の利用可能会場
+
+**2. 優先度管理**
+- 複数のルールが競合する場合の優先順位制御
+- 会場選択時の優先度設定
+
+**3. 履歴管理**
+- `selected_venue_id`で実際に選択された会場を記録
+- 意思決定の履歴を保持
+
+### 練習枠とセッション管理の設計方針
+
+**1. 練習枠（practice_slots）による時間管理**
+- 練習スケジュール全体の時間を複数の練習枠に分割
+- 各練習枠は`division_count`により、さらに細かいコマに分割可能
+- 例: 2時間の練習枠を4分割 = 30分のコマが4つ
+
+**2. セッション（sessions）のコマベース管理**
+- セッションは具体的な時間ではなく`slot_count`（コマ数）で管理
+- 実際の時間は所属する練習枠の分割数から計算
+- 柔軟なセッション配置と時間調整が可能
 
 ## 実装アプローチ
 ### データベース設計と実装

@@ -26,7 +26,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
         source venv/bin/activate
     else
         echo "Creating new virtual environment..."
-        python -m venv venv
+        python3 -m venv venv
         source venv/bin/activate
         echo "Installing dependencies..."
         pip install -r requirements.txt

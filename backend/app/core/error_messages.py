@@ -40,7 +40,7 @@ class ErrorMessage:
         text = "ユーザーが見つかりません"
     
     class USER_ALREADY_EXISTS(BaseMessage):
-        status_code = status.HTTP_400_BAD_REQUEST
+        status_code = status.HTTP_409_CONFLICT
         text = "このメールアドレスは既に使用されています"
     
     class INACTIVE_USER(BaseMessage):
@@ -99,3 +99,20 @@ class ErrorMessage:
     class VALIDATION_ERROR(BaseMessage):
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         text = "入力値が正しくありません: {}"
+
+    # 練習スケジュール関連
+    class PRACTICE_SCHEDULE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "練習スケジュールが見つかりません"
+
+    class SESSION_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "セッションが見つかりません"
+
+    class SCHEDULE_VENUE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "スケジュール利用可能会場が見つかりません"
+
+    class SESSION_INSTRUCTOR_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "セッション指導者が見つかりません"
