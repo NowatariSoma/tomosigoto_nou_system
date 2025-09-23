@@ -3,11 +3,16 @@ Stages API endpoints - 舞台情報の管理
 """
 
 from typing import List, Optional
+from uuid import UUID
 
-from app.api.deps import get_current_user, get_stage_service
+from app.api.deps import get_current_user, get_member_assignment_service, get_part_service, get_stage_service
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
+from app.schemas.member_assignment import MemberAssignmentWithDetails
+from app.schemas.part import PartResponse
 from app.schemas.stage import StageCreate, StageResponse, StageUpdate
+from app.services.member_assignment_service import MemberAssignmentService
+from app.services.part_service import PartService
 from app.services.stage_service import StageService
 from fastapi import APIRouter, Depends, Query, status
 
@@ -18,7 +23,6 @@ router = APIRouter()
 async def get_stages(
     status_filter: Optional[str] = Query(None, description="ステータスでフィルタリング (active/inactive)"),
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     舞台一覧を取得
@@ -33,7 +37,6 @@ async def get_stages(
 async def get_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     特定の舞台情報を取得
@@ -45,7 +48,6 @@ async def get_stage(
 async def create_stage(
     stage_data: StageCreate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     新しい舞台を作成
@@ -58,7 +60,6 @@ async def update_stage(
     stage_id: str,
     stage_data: StageUpdate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     舞台情報を更新
@@ -76,7 +77,6 @@ async def update_stage(
 async def delete_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     舞台を削除
@@ -84,11 +84,11 @@ async def delete_stage(
     await stage_service.delete_stage(stage_id)
 
 
-@router.get("/{stage_id}/parts", response_model=List[dict])
+@router.get("/{stage_id}/parts", response_model=List[PartResponse])
 async def get_stage_parts(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
+    part_service: PartService = Depends(get_part_service),
 ):
     """
     指定された舞台に紐づくパート一覧を取得
@@ -96,17 +96,18 @@ async def get_stage_parts(
     # まず舞台の存在確認
     await stage_service.get_stage_by_id(stage_id)
     
-    # パート一覧を取得（実装は後で追加予定）
-    # 現在はプレースホルダーとして空リストを返す
-    return []
+    # 指定された舞台に紐づくパート一覧を取得
+    parts = await part_service.get_parts_by_stage_id(stage_id)
+    return parts
 
 
-@router.get("/{stage_id}/members", response_model=List[dict])
+@router.get("/{stage_id}/members", response_model=List[MemberAssignmentWithDetails])
 async def get_stage_members(
     stage_id: str,
     category: Optional[str] = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
     stage_service: StageService = Depends(get_stage_service),
-    current_user: dict = Depends(get_current_user),
+    part_service: PartService = Depends(get_part_service),
+    member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
 ):
     """
     指定された舞台に所属するメンバー一覧を取得
@@ -114,6 +115,29 @@ async def get_stage_members(
     # まず舞台の存在確認
     await stage_service.get_stage_by_id(stage_id)
     
-    # メンバー一覧を取得（実装は後で追加予定）
-    # 現在はプレースホルダーとして空リストを返す
-    return []
+    # 指定された舞台に紐づくパート一覧を取得
+    parts = await part_service.get_parts_by_stage_id(stage_id)
+    
+    if not parts:
+        return []
+    
+    # 各パートのメンバー所属を取得
+    all_members = []
+    for part in parts:
+        try:
+            part_id = UUID(part["id"])
+            # パートに所属するメンバーを取得
+            members = await member_assignment_service.get_assignments_with_details(
+                part_id=part_id, assignment_id=None, user_id=None
+            )
+            
+            # カテゴリフィルタリング
+            if category:
+                members = [member for member in members if member.get("category") == category]
+            
+            all_members.extend(members)
+        except ValueError:
+            # UUIDが不正な場合はスキップ
+            continue
+    
+    return all_members

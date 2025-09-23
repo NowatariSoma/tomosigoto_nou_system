@@ -11,6 +11,7 @@ from uuid import UUID
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.repositories.stage_repository import StageRepository
+from app.repositories.part_repository import PartRepository
 from app.schemas.stage import StageCreate, StageResponse, StageUpdate
 from supabase import Client
 

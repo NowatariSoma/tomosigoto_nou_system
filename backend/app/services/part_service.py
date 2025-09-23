@@ -144,3 +144,19 @@ class PartService:
             
         logger.info(f"Part activated successfully: {part_id}")
         return updated_part
+
+    async def get_parts_by_stage_id(self, stage_id: str) -> List[Dict[str, Any]]:
+        """指定された舞台IDに紐づくパート一覧を取得"""
+        # 舞台の存在確認
+        try:
+            stage_uuid = UUID(stage_id)
+            stage_exists = await self.stage_repository.exists(stage_uuid)
+            if not stage_exists:
+                raise APIException(ErrorMessage.STAGE_NOT_FOUND)
+        except ValueError:
+            raise APIException(ErrorMessage.BAD_REQUEST)
+
+        # 指定された舞台に紐づくパートを取得
+        parts = await self.repository.find_by_stage_id(stage_id)
+        logger.info(f"Retrieved {len(parts)} parts for stage_id: {stage_id}")
+        return parts
