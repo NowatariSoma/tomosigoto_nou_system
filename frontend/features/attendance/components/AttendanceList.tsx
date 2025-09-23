@@ -22,11 +22,14 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({
 }) => {
   if (attendances.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 text-lg mb-2">
+      <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
+        <div className="bg-slate-50 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <Calendar className="h-8 w-8 text-slate-400" />
+        </div>
+        <div className="text-slate-600 text-lg font-medium mb-2">
           {UI_TEXT.NO_ATTENDANCE_DATA}
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-slate-400 text-sm">
           出席登録を行って表示します
         </p>
       </div>
@@ -40,8 +43,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({
     
     if (!practiceA || !practiceB) return 0;
     
-    const dateA = new Date(practiceA.date);
-    const dateB = new Date(practiceB.date);
+    const dateA = new Date(practiceA.schedule_date);
+    const dateB = new Date(practiceB.schedule_date);
     return dateB.getTime() - dateA.getTime();
   });
 

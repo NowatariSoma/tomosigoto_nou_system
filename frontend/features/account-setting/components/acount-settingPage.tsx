@@ -1,5 +1,6 @@
 'use client';
 
+import Select, { SelectOption } from '../../../components/ui/inputs/select';
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useAccountSetting } from '../hooks/useAccountSetting';
@@ -274,42 +275,12 @@ const AccountSettings: React.FC = () => {
         {/* Faculty Dropdown */}
         <div className="flex items-center">
             <label className="w-32 text-gray-700 font-medium">学部</label>
-            <div className="relative">
-            <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`w-40 px-4 py-2 border rounded-md bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors flex items-center justify-between ${
-                  fieldErrors.department_code ? 'border-red-500' : 'border-gray-300'
-                }`}
-            >
-                     <span>{departmentOptions.find(f => f.value === formData.department_code)?.label || '学部を選択してください'}</span>
-                <ChevronDown 
-                className={`w-4 h-4 text-gray-500 transition-transform ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                }`} 
-                />
-            </button>
-            
-            {isDropdownOpen && (
-                <div className="absolute z-10 w-40 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                <div className="max-h-60 overflow-y-auto">
-                     {departmentOptions.map((department) => (
-                    <button
-                        key={department.value}
-                        type="button"
-                        onClick={() => handleDepartmentSelect(department.value)}
-                        className="w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none transition-colors"
-                    >
-                        {department.label}
-                    </button>
-                    ))}
-                </div>
-                </div>
-            )}
-            </div>
-            {fieldErrors.department_code && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.department_code}</p>
-            )}
+            <Select
+                options={faculties}
+                value={formData.faculty}
+                onChange={handleFacultySelect}
+                width="w-40"
+            />
         </div>
 
         {/* Email */}
