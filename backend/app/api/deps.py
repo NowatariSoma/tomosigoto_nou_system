@@ -139,8 +139,7 @@ def get_member_assignment_service(
     user_repository: UserRepository = Depends(get_user_repository),
 ) -> MemberAssignmentService:
     """MemberAssignmentServiceのインスタンスを依存性注入で取得"""
-    return MemberAssignmentService(
-        member_assignment_repository, part_repository, user_repository, supabase_client.auth
+    return MemberAssignmentService(member_assignment_repository, part_repository, user_repository, supabase_client.auth)
 
 def get_attendance_repository(
     supabase_client: Client = Depends(get_supabase),
