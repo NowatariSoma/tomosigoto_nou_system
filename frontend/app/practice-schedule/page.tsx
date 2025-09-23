@@ -2,7 +2,7 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Calendar } from 'lucide-react';
-import { PracticeSchedulePage } from '@/features/register/components';
+import { PracticeSchedulePage } from '@/features/practice-schedule/components';
 
 export default function Page() {
   return (

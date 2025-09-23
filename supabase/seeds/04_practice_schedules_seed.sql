@@ -6,18 +6,19 @@ INSERT INTO practice_schedules (
     schedule_date, 
     start_time, 
     end_time, 
+    title,
     description, 
     schedule_type, 
     status
 ) 
 VALUES 
-    ('2025-02-15'::date, '09:00'::time, '12:00'::time, '定期公演「高砂」第1回練習', 'regular_practice', 'active'),
-    ('2025-02-22'::date, '09:00'::time, '12:00'::time, '定期公演「高砂」第2回練習', 'regular_practice', 'active'),
-    ('2025-03-01'::date, '09:00'::time, '15:00'::time, '定期公演「高砂」総練習', 'dress_rehearsal', 'active'),
-    ('2025-03-08'::date, '13:00'::time, '17:00'::time, '定期公演「高砂」ゲネプロ', 'final_rehearsal', 'active'),
-    ('2025-04-05'::date, '10:00'::time, '12:00'::time, '春季研究発表会「羽衣」第1回練習', 'regular_practice', 'active'),
-    ('2025-04-12'::date, '10:00'::time, '12:00'::time, '春季研究発表会「羽衣」第2回練習', 'regular_practice', 'active'),
-    ('2025-05-10'::date, '09:00'::time, '15:00'::time, '春季研究発表会「羽衣」総練習', 'dress_rehearsal', 'active');
+    ('2025-02-15'::date, '09:00'::time, '12:00'::time, '定期公演「高砂」第1回練習', '高砂の基本練習。謡い、舞い、囃子の基本を確認します。', 'regular_practice', 'active'),
+    ('2025-02-22'::date, '09:00'::time, '12:00'::time, '定期公演「高砂」第2回練習', '高砂の通し練習。全体の流れを確認し、細かい演技を磨きます。', 'regular_practice', 'active'),
+    ('2025-03-01'::date, '09:00'::time, '15:00'::time, '定期公演「高砂」総練習', '本番前の総練習。衣装を着けて通し練習を行います。', 'dress_rehearsal', 'active'),
+    ('2025-03-08'::date, '13:00'::time, '17:00'::time, '定期公演「高砂」ゲネプロ', '本番直前の最終リハーサル。照明、音響など本番環境での練習。', 'final_rehearsal', 'active'),
+    ('2025-04-05'::date, '10:00'::time, '12:00'::time, '春季研究発表会「羽衣」第1回練習', '羽衣の基本練習。新入部員も参加し、基本動作から練習します。', 'regular_practice', 'active'),
+    ('2025-04-12'::date, '10:00'::time, '12:00'::time, '春季研究発表会「羽衣」第2回練習', '羽衣の応用練習。個々の演技を磨き、全体のバランスを整えます。', 'regular_practice', 'active'),
+    ('2025-05-10'::date, '09:00'::time, '15:00'::time, '春季研究発表会「羽衣」総練習', '発表会前の総練習。衣装を着けて本番さながらの練習を行います。', 'dress_rehearsal', 'active');
 
 -- schedule_available_venues テーブル
 INSERT INTO schedule_available_venues (schedule_id, venue_id, is_preferred, priority, notes)
