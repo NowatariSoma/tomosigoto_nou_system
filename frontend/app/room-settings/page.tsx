@@ -1,45 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Header } from './components/Header';
-import { RoomList } from './components/RoomList';
-import { RoomModal } from './components/RoomModal';
-import { Room } from './types/room';
-import { rooms } from './data/rooms';
+import { AppTemplate } from '@/shared/components/layout/AppTemplate';
+import { RoomSettingsPage } from '@/features/room-settings/components/room-settingsPage';
+import { Activity } from 'lucide-react';
 
-export default function RoomSettingsPage() {
-  const [roomsData, setRoomsData] = useState<Room[]>(rooms);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleRoomClick = (room: Room) => {
-    setSelectedRoom(room);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRoom(null);
-  };
-
-  const handleSaveRoom = (updatedRoom: Room) => {
-    setRoomsData(prev => 
-      prev.map(room => 
-        room.id === updatedRoom.id ? updatedRoom : room
-      )
-    );
-  };
-
+export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Header />
-      <RoomList rooms={roomsData} onRoomClick={handleRoomClick} />
-      <RoomModal
-        room={selectedRoom}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveRoom}
-      />
-    </div>
+    <AppTemplate
+      title="部屋登録ページ"
+      description="使用する部屋を登録するページ"
+      icon={<Activity className="h-8 w-8 text-blue-600" />}
+      developmentBadge={{
+        level: 'beta',
+        text: 'バックエンド結合'
+      }}
+      permissionBadge={{
+        level: 'admin',
+        text: '管理者'
+      }}
+      maxWidth="7xl"
+    >
+      <RoomSettingsPage />
+    </AppTemplate>
   );
 } 

@@ -1,1 +1,0 @@
-export { useHearingAssistant } from './useHearingAssistant'; 

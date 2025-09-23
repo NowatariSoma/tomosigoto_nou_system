@@ -1,81 +1,104 @@
-// APIクライアントの雛形
-// 必要に応じてaxiosやfetchを使って実装してください
+import { API_CONFIG, buildApiUrl, buildAuthUrl } from './api/config';
 
-// APIクライアントの設定
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+// エクスポート
+export { buildApiUrl, buildAuthUrl };
 
-// 型定義
-interface User {
-  id: string
-  email: string
-  name?: string
-  created_at?: string
-  updated_at?: string
-  email_confirmed_at?: string
-  last_sign_in_at?: string
+const API_BASE_URL = API_CONFIG.BASE_URL;
+const AUTH_URL = API_CONFIG.AUTH_URL;
+
+// API設定の初期化確認
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // 開発環境でのみAPI設定を確認
 }
 
-// APIリクエストヘルパー
-const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
-  const url = `${API_BASE_URL}${endpoint}`
-  
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
   }
+}
+
+export async function fetchApi(url: string, options: RequestInit = {}) {
+  const token = localStorage.getItem('authToken');
   
-  const config: RequestInit = {
+  // URLが相対パスの場合、API_BASE_URLを前に付ける
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  
+  const response = await fetch(fullUrl, {
     ...options,
     headers: {
-      ...defaultHeaders,
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
-  }
-  
-  const response = await fetch(url, config)
-  
+  });
+
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`API Error: ${response.status} - ${error}`)
+    throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
   }
-  
-  return response.json()
+
+  return response;
 }
 
-// ユーザーAPI関数
-export const userApi = {
-  // すべてのユーザーを取得
-  getUsers: async (token: string): Promise<User[]> => {
-    return apiRequest('/api/users', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-  },
-  
-  // 特定のユーザーを取得
-  getUser: async (userId: string, token: string): Promise<User> => {
-    return apiRequest(`/api/users/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-  },
-  
-  // 現在のユーザー情報を取得
-  getCurrentUser: async (token: string): Promise<User> => {
-    return apiRequest('/api/users/me', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-  },
-}
+// Authentication
+export const auth = {
+  async login(username: string, password: string) {
+    const response = await fetch(buildAuthUrl('/auth/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
 
-// 既存のauth関数（互換性維持）
-export const auth = async (params?: unknown): Promise<{ success: boolean; message?: string }> => {
-  // 仮実装: 必要に応じてAPIリクエスト処理を追加
-  return { success: true, message: 'ダミー認証成功' };
-}; 
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Invalid credentials');
+    }
+
+    const data = await response.json();
+    
+    // Save token to both localStorage and cookie
+    localStorage.setItem('authToken', data.access_token);
+    
+    // Set cookie with secure options (session-only - expires when browser closes)
+    document.cookie = `authToken=${data.access_token}; path=/; samesite=strict${
+      window.location.protocol === 'https:' ? '; secure' : ''
+    }`;
+    
+    return data;
+  },
+
+  async logout() {
+    localStorage.removeItem('authToken');
+    
+    // Remove cookie
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  },
+
+  async getCurrentUser() {
+    return fetchApi(buildAuthUrl('/auth/me'));
+  },
+
+  clearAuthData() {
+    localStorage.removeItem('authToken');
+    localStorage.clear();
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  }
+};
+
+
+export const historical = {
+  async getHistoricalData(startDate: string, endDate: string) {
+    const response = await fetchApi(buildApiUrl(`/db/historical?start=${startDate}&end=${endDate}`));
+    return response.json();
+  }
+};
+
+// Settings
+export const settings = {
+  async getProjectSettings() {
+    return fetchApi(buildApiUrl('/settings/project'));
+  },
+
+  async getUserSettings() {
+    return fetchApi(buildApiUrl('/settings/user'));
+  }
+};

@@ -88,13 +88,10 @@ erDiagram
     users {
         uuid id PK "ユーザーID"
         string email UK "メールアドレス"
-        string auth_provider "認証プロバイダ"
-        string password_hash "パスワードハッシュ (Supabase管理)"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
-        timestamp last_login "最終ログイン日時"
-        boolean is_active "アクティブフラグ"
-        boolean email_verified "メール検証済みフラグ"
+        timestamp last_sign_in_at "最終ログイン日時"
+        jsonb raw_user_meta_data "ユーザメタデータ"
     }
     
     user_profiles {
