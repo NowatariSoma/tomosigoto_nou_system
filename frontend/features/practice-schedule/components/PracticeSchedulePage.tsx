@@ -58,6 +58,7 @@ export const PracticeSchedulePage: React.FC = () => {
     setEditingSchedule(null);
   };
 
+
   if (loading || venuesLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -138,6 +139,7 @@ export const PracticeSchedulePage: React.FC = () => {
           onDelete={handleDeleteClick}
         />
       </div>
+
     </div>
   );
 };

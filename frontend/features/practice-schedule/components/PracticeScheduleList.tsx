@@ -43,12 +43,12 @@ export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
   return (
     <div className="space-y-4">
       {sortedSchedules.map((schedule) => (
-        <PracticeScheduleCard
-          key={schedule.id}
-          schedule={schedule}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+          <PracticeScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
       ))}
     </div>
   );

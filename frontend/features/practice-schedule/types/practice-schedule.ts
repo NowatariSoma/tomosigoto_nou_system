@@ -1,3 +1,5 @@
+import { Room } from '../../room-settings/types';
+
 export interface PracticeSchedule {
   id: string;
   date: string;
@@ -55,9 +57,5 @@ export interface PracticeScheduleFormData {
   description: string;
   // 複数部屋選択対応
   venueIds: string[];
-  selectedVenues: {
-    id: string;
-    name: string;
-    campus: string;
-  }[];
+  selectedVenues: Room[];
 }

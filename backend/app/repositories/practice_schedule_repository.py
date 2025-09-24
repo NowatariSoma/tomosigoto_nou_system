@@ -206,10 +206,12 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールの利用可能会場を取得"""
+        # UUIDオブジェクトを文字列に変換
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
-            .select("*, venues(*)")
-            .eq("schedule_id", schedule_id)
+            .select("*")
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
         return response.data
@@ -217,6 +219,19 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("create")
     async def create(self, venue_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しいスケジュール利用可能会場を作成"""
+        # UUIDオブジェクトを文字列に変換
+        from uuid import UUID
+        print(f"DEBUG create venue_data before conversion: {venue_data}")
+        
+        if "schedule_id" in venue_data and isinstance(venue_data["schedule_id"], UUID):
+            print(f"DEBUG converting schedule_id from UUID to string: {venue_data['schedule_id']}")
+            venue_data["schedule_id"] = str(venue_data["schedule_id"])
+        if "venue_id" in venue_data and isinstance(venue_data["venue_id"], UUID):
+            print(f"DEBUG converting venue_id from UUID to string: {venue_data['venue_id']}")
+            venue_data["venue_id"] = str(venue_data["venue_id"])
+        
+        print(f"DEBUG create venue_data after conversion: {venue_data}")
+        
         response = self.client.table(self.table_name).insert(venue_data).execute()
         return response.data[0]
 
@@ -240,7 +255,9 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("delete_by_schedule")
     async def delete_by_schedule(self, schedule_id: UUID) -> bool:
         """指定されたスケジュールの利用可能会場をすべて削除"""
-        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id).execute()
+        # UUIDオブジェクトを文字列に変換
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id_str).execute()
         return True
 
 

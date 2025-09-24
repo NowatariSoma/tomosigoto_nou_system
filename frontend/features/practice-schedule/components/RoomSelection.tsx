@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { Badge } from '@/components/ui/feedback/badge';
-import { Users, X, Plus } from 'lucide-react';
+import { MapPin, X, Plus } from 'lucide-react';
 import { Room } from '../../room-settings/types';
 import RoomSelectionModal from './RoomSelectionModal';
 
@@ -34,40 +33,30 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
   };
 
   return (
-    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
-          <Users className="h-5 w-5 text-blue-600" />
-          部屋
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap gap-3">
-          {selectedRooms.map((room) => (
-            <Badge
-              key={room.id}
-              variant="outline"
-              className="px-4 py-2 text-base border-2 border-blue-200 bg-white transition-colors"
-            >
-              <button
-                onClick={() => onRemoveRoom(room.id)}
-                className="mr-2 hover:text-red-600 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              {room.name} ({room.campus}キャンパス)
-            </Badge>
-          ))}
-          <Button
-            onClick={handleOpenModal}
-            variant="outline"
-            size="sm"
-            className="border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-100 transition-all"
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {selectedRooms.map((room) => (
+          <span
+            key={room.id}
+            className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
           >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
+            <button
+              onClick={() => onRemoveRoom(room.id)}
+              className="hover:text-red-600 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+            {room.name}
+          </span>
+        ))}
+        <button
+          onClick={handleOpenModal}
+          className="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          部屋を追加
+        </button>
+      </div>
 
       <RoomSelectionModal
         isOpen={isModalOpen}
@@ -76,7 +65,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
         availableRooms={availableRooms}
         currentlySelectedRooms={selectedRooms}
       />
-    </Card>
+    </div>
   );
 };
 

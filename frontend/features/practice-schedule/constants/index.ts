@@ -20,9 +20,9 @@ export const INITIAL_PRACTICE_SCHEDULE_FORM = {
   title: '',
   description: '',
   // 複数部屋選択対応
-  venueIds: [],
-  selectedVenues: [],
-} as const;
+  venueIds: [] as string[],
+  selectedVenues: [] as any[],
+};
 
 // UI表示用テキスト
 export const UI_TEXT = {

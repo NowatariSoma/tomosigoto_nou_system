@@ -25,21 +25,62 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   const [formData, setFormData] = useState<PracticeScheduleFormData>(
     schedule ? {
       date: schedule.date,
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
+      startTime: schedule.startTime ? schedule.startTime.substring(0, 5) : '', // HH:MM:SS -> HH:MM
+      endTime: schedule.endTime ? schedule.endTime.substring(0, 5) : '', // HH:MM:SS -> HH:MM
       venueId: schedule.venueId,
       title: schedule.title || '',
       description: schedule.description || '',
       venueIds: schedule.venueIds || [schedule.venueId],
-      selectedVenues: schedule.venues || [{
-        id: schedule.venueId,
-        name: schedule.venueName,
-        campus: schedule.campus,
-      }],
+        selectedVenues: (schedule.venues as Room[]) || (schedule.venueId ? [{
+          id: schedule.venueId,
+          name: schedule.venueName,
+          campus: schedule.campus as '今出川' | '京田辺',
+          capacity: 0,
+          danceAllowed: false,
+        }] : []),
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
 
   const [errors, setErrors] = useState<Partial<PracticeScheduleFormData>>({});
+
+  // scheduleが変更された時にformDataを更新
+  useEffect(() => {
+    if (schedule) {
+      console.log('PracticeScheduleForm - schedule data:', {
+        id: schedule.id,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        date: schedule.date
+      });
+      setFormData({
+        date: schedule.date,
+        startTime: schedule.startTime ? schedule.startTime.substring(0, 5) : '', // HH:MM:SS -> HH:MM
+        endTime: schedule.endTime ? schedule.endTime.substring(0, 5) : '', // HH:MM:SS -> HH:MM
+        venueId: schedule.venueId,
+        title: schedule.title || '',
+        description: schedule.description || '',
+        venueIds: schedule.venueIds || [schedule.venueId],
+        selectedVenues: (schedule.venues as Room[]) || (schedule.venueId ? [{
+          id: schedule.venueId,
+          name: schedule.venueName,
+          campus: schedule.campus as '今出川' | '京田辺',
+          capacity: 0,
+          danceAllowed: false,
+        }] : []),
+      });
+    } else {
+      setFormData(INITIAL_PRACTICE_SCHEDULE_FORM);
+    }
+  }, [schedule]);
+
+  // formDataが変更された時にデバッグ出力
+  useEffect(() => {
+    console.log('PracticeScheduleForm - formData:', {
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      date: formData.date
+    });
+  }, [formData]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<PracticeScheduleFormData> = {};
@@ -99,16 +140,11 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
 
   const handleAddRooms = (rooms: Room[]) => {
     const newVenueIds = rooms.map(room => room.id);
-    const newSelectedVenues = rooms.map(room => ({
-      id: room.id,
-      name: room.name,
-      campus: room.campus,
-    }));
     
     setFormData(prev => ({
       ...prev,
       venueIds: newVenueIds,
-      selectedVenues: newSelectedVenues,
+      selectedVenues: rooms,
       // 最初の部屋をメインのvenueIdとして設定（後方互換性のため）
       venueId: newVenueIds[0] || '',
     }));
@@ -146,18 +182,19 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   const timeOptions = generateTimeOptions();
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {schedule ? UI_TEXT.UPDATE_SCHEDULE : UI_TEXT.CREATE_SCHEDULE}
-        </h2>
-        <button
-          onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {schedule ? UI_TEXT.UPDATE_SCHEDULE : UI_TEXT.CREATE_SCHEDULE}
+          </h2>
+          <button
+            onClick={onCancel}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 日付選択 */}
@@ -306,6 +343,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 };
