@@ -98,12 +98,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
           {/* Sign up link */}
           <div className="mx-4 text-center">
-            <p className="text-[#9a9a9a] text-[14px]" style={{ fontFamily: 'Crimson Text, serif' }}>
-              アカウントをお持ちでないですか？{' '}
+            <p className="text-[#9a9a9a] text-[14px]" style={{ fontFamily: 'Yu Gothic, YuGothic, sans-serif' }}>
+              アカウントをお持ちでないですか？<br />
               <a
                 href="/signup"
                 className="text-[#d5a641] hover:text-[#e0b94d] transition-colors underline"
-                style={{ fontFamily: 'Crimson Text, serif' }}
+                style={{ fontFamily: 'Yu Gothic, YuGothic, sans-serif' }}
               >
                 サインアップ
               </a>

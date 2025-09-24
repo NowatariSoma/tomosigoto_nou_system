@@ -14,13 +14,13 @@ export function LoginLogo() {
           className="text-[25px] text-[#d5a641] font-serif leading-tight"
           style={{ fontFamily: 'Crimson Text, serif', textShadow: '0px 2px 2px rgba(0,0,0,0.25)' }}
         >
-          トモシゴト
+          Tomosigoto
         </h1>
         <h2 
           className="text-[25px] text-[#d5a641] font-serif leading-tight ml-12"
           style={{ fontFamily: 'Crimson Text, serif', textShadow: '0px 2px 2px rgba(0,0,0,0.25)' }}
         >
-          能システム
+          能 system
         </h2>
       </div>
     </div>

@@ -155,12 +155,12 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
 
           {/* Sign in link */}
           <div className="mx-4 text-center">
-            <p className="text-[#9a9a9a] text-[14px]" style={{ fontFamily: 'Crimson Text, serif' }}>
-              すでにアカウントをお持ちですか？{' '}
+            <p className="text-[#9a9a9a] text-[14px]" style={{ fontFamily: 'Yu Gothic, YuGothic, sans-serif' }}>
+              すでにアカウントをお持ちですか？<br />
               <a
                 href="/login"
                 className="text-[#d5a641] hover:text-[#e0b94d] transition-colors underline"
-                style={{ fontFamily: 'Crimson Text, serif' }}
+                style={{ fontFamily: 'Yu Gothic, YuGothic, sans-serif' }}
               >
                 ログイン
               </a>
