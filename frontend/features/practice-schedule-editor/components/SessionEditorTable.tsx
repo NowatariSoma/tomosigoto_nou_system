@@ -43,29 +43,36 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
         const venueId = session.schedule_available_venue_id;
         if (groups[venueId]) {
           let timeSlot = '';
-          
-          // セッションにstart_timeが設定されている場合は、それに基づいて時間スロットを決定
+
+          // セッションにstart_timeが設定されている場合は、直接その時間スロットを使用
           if (session.start_time) {
-            // start_timeに最も近い時間スロットを探す
-            const sessionStartMinutes = timeToMinutes(session.start_time);
-            let closestSlot = time_slots[0];
-            let minDiff = Math.abs(timeToMinutes(time_slots[0].time) - sessionStartMinutes);
-            
-            for (const slot of time_slots) {
-              const diff = Math.abs(timeToMinutes(slot.time) - sessionStartMinutes);
-              if (diff < minDiff) {
-                minDiff = diff;
-                closestSlot = slot;
+            // start_timeがtime_slotsに存在するか確認
+            const matchingSlot = time_slots.find(slot => slot.time === session.start_time);
+            if (matchingSlot) {
+              timeSlot = matchingSlot.time;
+            } else {
+              // 存在しない場合は最も近い時間スロットを探す
+              const sessionStartMinutes = timeToMinutes(session.start_time);
+              let closestSlot = time_slots[0];
+              let minDiff = Math.abs(timeToMinutes(time_slots[0].time) - sessionStartMinutes);
+
+              for (const slot of time_slots) {
+                const diff = Math.abs(timeToMinutes(slot.time) - sessionStartMinutes);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  closestSlot = slot;
+                }
               }
+              timeSlot = closestSlot?.time || '';
             }
-            timeSlot = closestSlot.time;
-          } else {
+          } else if (time_slots.length > 0) {
             // start_timeが設定されていない場合は、slot_orderから時間スロットを決定
             const timeSlotIndex = Math.min(session.slot_order, time_slots.length - 1);
             timeSlot = time_slots[timeSlotIndex]?.time || time_slots[0]?.time || '';
           }
-          
-          if (groups[venueId][timeSlot]) {
+
+          // 該当する時間スロットが存在する場合のみセッションを追加
+          if (timeSlot && groups[venueId][timeSlot]) {
             groups[venueId][timeSlot].push(session);
           }
         }
