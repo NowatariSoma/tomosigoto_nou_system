@@ -235,3 +235,20 @@ def get_practice_schedule_service(
         session_instructor_repository,
         supabase_client.auth,
     )
+
+
+async def require_admin(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+) -> Dict[str, Any]:
+    """管理者権限チェック"""
+    user_id = current_user.get("id")
+    role = await user_role_repository.get_role_by_user_id(user_id)
+
+    if not role or role.get("role_type") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="管理者権限が必要です"
+        )
+
+    return current_user

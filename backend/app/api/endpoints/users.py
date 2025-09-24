@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from app.api.deps import get_current_user, get_user_service
+from app.api.deps import get_current_user, get_user_service, get_user_role_repository
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -31,13 +31,33 @@ async def get_user(
     return await user_service.get_user_by_id(user_id)
 
 
-@router.get("/me/", response_model=UserResponse)
+@router.get("/me")
 async def get_current_user_info(
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     現在認証されているユーザーの情報を取得
     """
     return current_user
+
+@router.get("/me/role")
+async def get_current_user_role(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_role_repository = Depends(get_user_role_repository),
+):
+    """
+    現在認証されているユーザーのロール情報を取得
+    """
+    user_id = current_user.get("id")
+    role = await user_role_repository.get_role_by_user_id(user_id)
+
+    if not role:
+        return {
+            "role_type": "general",
+            "is_visible_to_general": True
+        }
+
+    return role
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
