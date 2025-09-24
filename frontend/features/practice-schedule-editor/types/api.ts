@@ -22,6 +22,8 @@ export interface SessionApiResponse {
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
+  start_time?: string;
+  end_time?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -36,6 +38,8 @@ export interface SessionApiCreateRequest {
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
+  start_time?: string;
+  end_time?: string;
 }
 
 /**
@@ -47,6 +51,8 @@ export interface SessionApiUpdateRequest {
   slot_order?: number;
   schedule_available_venue_id?: string;
   priority?: number;
+  start_time?: string;
+  end_time?: string;
 }
 
 /**

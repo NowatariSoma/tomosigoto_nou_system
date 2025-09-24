@@ -140,9 +140,9 @@ export const useIdealSchedule = () => {
       // データの検証
       if (data && typeof data === 'object') {
         // エラーレスポンスのチェック
-        if (data.error) {
-          console.warn('理想形式スケジュール取得でエラー:', data.error, data.debug_info);
-          setError(data.error);
+        if ('error' in data && data.error) {
+          console.warn('理想形式スケジュール取得でエラー:', data.error, 'debug_info' in data ? data.debug_info : '');
+          setError(data.error as string);
           setIdealData(null);
           return;
         }

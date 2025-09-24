@@ -20,7 +20,8 @@ import {
   BookOpen,
   Building,
   ReceiptText,
-  Clock
+  Clock,
+  Edit3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -219,6 +220,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
+                icon={<Edit3 className="w-4 h-4" />}
+                label="練習表編集"
+                active={pathname.startsWith('/practice-schedule-editor')}
+                onClick={() => handleNavigateAndClose('/practice-schedule-editor')}
+              />
+
+              <NavItem
                 icon={<Building className="w-4 h-4" />}
                 label="部屋設定"
                 active={pathname === '/room-settings'}
@@ -326,6 +334,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "練習表"}
             active={pathname === '/practice-slots'}
             href="/practice-slots"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Edit3 className="w-4 h-4" />}
+            label={isCollapsed ? "" : "練習表編集"}
+            active={pathname.startsWith('/practice-schedule-editor')}
+            href="/practice-schedule-editor"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

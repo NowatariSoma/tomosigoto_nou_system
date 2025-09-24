@@ -30,10 +30,18 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     } : INITIAL_ATTENDANCE_FORM
   );
 
-  const [errors, setErrors] = useState<Partial<AttendanceFormData>>({});
+  const [errors, setErrors] = useState<{
+    practice_schedule_id?: string;
+    status?: string;
+    notes?: string;
+  }>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<AttendanceFormData> = {};
+    const newErrors: {
+      practice_schedule_id?: string;
+      status?: string;
+      notes?: string;
+    } = {};
 
     if (!formData.practice_schedule_id) {
       newErrors.practice_schedule_id = '練習予定は必須です';

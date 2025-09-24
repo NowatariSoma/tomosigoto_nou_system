@@ -13,6 +13,8 @@ export interface Session {
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
+  start_time?: string; // セッションの開始時間
+  end_time?: string;   // セッションの終了時間
   created_at?: string;
   updated_at?: string;
 }
@@ -27,6 +29,8 @@ export interface CreateSessionRequest {
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
+  start_time?: string;
+  end_time?: string;
 }
 
 /**
@@ -38,6 +42,8 @@ export interface UpdateSessionRequest {
   slot_order?: number;
   schedule_available_venue_id?: string;
   priority?: number;
+  start_time?: string;
+  end_time?: string;
 }
 
 /**
@@ -51,6 +57,8 @@ export interface SessionFormData {
   time_slot: string;
   priority: number;
   notes: string;
+  start_time?: string;
+  end_time?: string;
 }
 
 /**
