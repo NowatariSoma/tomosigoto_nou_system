@@ -90,15 +90,25 @@ export class SessionService {
    * @param slotOrder - 新しいスロット順序
    */
   async moveSession(
-    sessionId: string, 
-    venueId: string, 
-    timeSlot: string, 
+    sessionId: string,
+    venueId: string,
+    timeSlot: string,
     slotOrder: number
   ): Promise<Session> {
+    console.log('SessionService.moveSession called with:', {
+      sessionId,
+      venueId,
+      timeSlot,
+      slotOrder
+    });
+
     const data: UpdateSessionRequest = {
       schedule_available_venue_id: venueId,
       slot_order: slotOrder,
     };
+
+    console.log('Sending update request with data:', data);
+
     return this.updateSession(sessionId, data);
   }
 

@@ -340,14 +340,8 @@ class PracticeScheduleService:
 
             # 各セッションに指導者情報を追加
             for session in sessions:
-                try:
-                    instructors = await self.session_instructor_repository.find_by_session(
-                        session["id"]
-                    )
-                    session["instructors"] = instructors
-                except Exception as e:
-                    print(f"Warning: Could not fetch instructors for session {session['id']}: {e}")
-                    session["instructors"] = []
+                # 指導者機能は一旦実装しない
+                session["instructors"] = []
 
             return sessions
         except Exception as e:
@@ -361,13 +355,8 @@ class PracticeScheduleService:
             if not session:
                 raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-            # 指導者情報を追加
-            try:
-                instructors = await self.session_instructor_repository.find_by_session(session_id)
-                session["instructors"] = instructors
-            except Exception as e:
-                print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
-                session["instructors"] = []
+            # 指導者機能は一旦実装しない
+            session["instructors"] = []
 
             return session
         except APIException:
@@ -514,27 +503,8 @@ class PracticeScheduleService:
         return venues
 
     async def _get_session_instructors(self, session_id: UUID) -> List[str]:
-        """セッションの指導者名を取得"""
-        try:
-            instructor_records = await self.session_instructor_repository.find_by_session(session_id)
-            instructor_names = []
-
-            for i, record in enumerate(instructor_records):
-                # ユーザー情報がJOINされている可能性を確認
-                if "users" in record and isinstance(record["users"], dict):
-                    user_data = record["users"]
-                    name = user_data.get("name") or user_data.get("email", f"指導者{i+1}")
-                    instructor_names.append(name)
-                elif "user_name" in record:
-                    instructor_names.append(record["user_name"])
-                else:
-                    # データが不完全な場合はスキップ
-                    continue
-
-            return instructor_names
-        except Exception as e:
-            print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
-            return []
+        """セッションの指導者名を取得（一旦実装しない）"""
+        return []
 
     async def _get_session_participants_count(self, schedule_id: UUID) -> int:
         """セッションの参加者数を取得（估算値）"""
@@ -928,6 +898,35 @@ class PracticeScheduleService:
 
         # 詳細形式に変換
         return await self._convert_to_details_format(schedule, sessions)
+
+    async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
+        """指定したIDの練習スケジュールのidealフォーマット詳細情報を取得"""
+        # 基本スケジュール情報を取得
+        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        if not schedule:
+            return None
+
+        # セッション情報を安全に取得
+        sessions = []
+        try:
+            sessions = await self.session_repository.find_by_schedule(schedule_id)
+        except Exception as e:
+            print(f"Warning: Could not fetch sessions for schedule {schedule_id}: {e}")
+            sessions = []
+
+        # 会場情報を安全に取得
+        venues = []
+        try:
+            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+        except Exception as e:
+            print(f"Warning: Could not fetch venues for schedule {schedule_id}: {e}")
+            venues = []
+
+        # データベースからdivision_countを取得
+        division_count = schedule.get("division_count", 6)
+
+        # 理想形式を生成（日付指定と同じメソッドを使用）
+        return await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, [], division_count)
 
     async def _convert_to_details_format(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
         """基本スケジュールデータとセッション情報から詳細形式に変換"""

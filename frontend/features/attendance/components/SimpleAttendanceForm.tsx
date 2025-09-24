@@ -131,13 +131,26 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
           
           {/* 会場情報 */}
           <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-            <div className="flex items-center space-x-3">
-              <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">会場</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  練習会場（詳細は後日連絡）
-                </p>
+            <div className="flex items-start space-x-3">
+              <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-600 mb-2">会場</p>
+                {practiceSchedule.venues && practiceSchedule.venues.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {practiceSchedule.venues.map(venue => (
+                      <span
+                        key={venue.id}
+                        className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold text-sm"
+                      >
+                        {venue.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-lg font-semibold text-slate-900">
+                    会場未設定
+                  </p>
+                )}
               </div>
             </div>
           </div>

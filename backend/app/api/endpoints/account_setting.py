@@ -42,39 +42,12 @@ async def get_public_profile(
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを取得（テスト用）"""
-    try:
-        print(f"Getting profile for user_id: {user_id}")
-        profile = await account_setting_service.get_profile_by_user_id(user_id)
-        
-        if not profile:
-            # プロフィールが存在しない場合は404エラーを返す
-            print(f"Profile not found for user_id: {user_id}, returning 404")
-            raise APIException(ErrorMessage.USER_NOT_FOUND)
-        
-        return profile
-    except APIException:
-        # APIExceptionの場合は再発生させる
-        raise
-    except Exception as e:
-        # その他のエラーが発生した場合はログを出力してデフォルト値を返す
-        print(f"Error getting profile: {e}")
-        return AccountSettingProfileResponse(
-            id="default-id",
-            user_id=user_id,
-            student_id="",
-            first_name_kanji="",
-            first_name_katakana="",
-            last_name_kanji="",
-            last_name_katakana="",
-            year=1,
-            department_code="LIT",
-            department_name="文学部",
-            email="",
-            avatar_url=None,
-            preferences=None,
-            created_at=None,
-            updated_at=None
-        )
+    profile = await account_setting_service.get_profile_by_user_id(user_id)
+
+    if not profile:
+        raise APIException(ErrorMessage.USER_NOT_FOUND)
+
+    return profile
 
 
 @router.get("/profile/{user_id}", response_model=AccountSettingProfileResponse)
