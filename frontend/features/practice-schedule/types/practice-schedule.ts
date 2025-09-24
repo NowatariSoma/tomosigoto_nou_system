@@ -1,3 +1,5 @@
+import { Room } from '../../room-settings/types';
+
 export interface PracticeSchedule {
   id: string;
   date: string;
@@ -10,6 +12,13 @@ export interface PracticeSchedule {
   description?: string;
   createdAt: string;
   updatedAt: string;
+  // 複数部屋選択対応
+  venueIds?: string[];
+  venues?: {
+    id: string;
+    name: string;
+    campus: string;
+  }[];
 }
 
 export interface CreatePracticeScheduleRequest {
@@ -19,6 +28,8 @@ export interface CreatePracticeScheduleRequest {
   venueId: string;
   title?: string;
   description?: string;
+  // 複数部屋選択対応
+  venueIds?: string[];
 }
 
 export interface UpdatePracticeScheduleRequest {
@@ -28,6 +39,8 @@ export interface UpdatePracticeScheduleRequest {
   venueId?: string;
   title?: string;
   description?: string;
+  // 複数部屋選択対応
+  venueIds?: string[];
 }
 
 export interface PracticeScheduleListResponse {
@@ -42,4 +55,7 @@ export interface PracticeScheduleFormData {
   venueId: string;
   title: string;
   description: string;
+  // 複数部屋選択対応
+  venueIds: string[];
+  selectedVenues: Room[];
 }

@@ -2,7 +2,7 @@
 export const API_ENDPOINTS = {
   ATTENDANCE: '/attendance/',
   AUTH: '/auth/',
-  PRACTICE_SCHEDULES: '/practice_slots/',
+  PRACTICE_SCHEDULES: '/practice_schedules/',
 } as const;
 
 // 出席ステータス

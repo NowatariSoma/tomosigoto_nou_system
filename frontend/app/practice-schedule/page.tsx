@@ -2,7 +2,7 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Calendar } from 'lucide-react';
-import { PracticeSlotsPage } from '@/features/practice-slots/components';
+import { PracticeSchedulePage } from '@/features/practice-schedule/components';
 
 export default function Page() {
   return (
@@ -11,8 +11,8 @@ export default function Page() {
       description="練習スケジュールの作成・編集・削除"
       icon={<Calendar className="h-8 w-8 text-blue-600" />}
       developmentBadge={{
-        level: 'alpha',
-        text: 'バックエンド作成、UI改善'
+        level: 'beta',
+        text: '機能完成、最終テスト中'
       }}
       permissionBadge={{
         level: 'basic',
@@ -20,7 +20,7 @@ export default function Page() {
       }}
       maxWidth="7xl"
     >
-      <PracticeSlotsPage />
+      <PracticeSchedulePage />
     </AppTemplate>
   );
 }

@@ -20,7 +20,8 @@ class PracticeScheduleBase(BaseModel):
 
 class PracticeScheduleCreate(PracticeScheduleBase):
     """練習スケジュール作成用スキーマ"""
-    pass
+    # 複数部屋選択対応
+    venue_ids: Optional[List[UUID]] = None
 
 
 class PracticeScheduleUpdate(BaseModel):
@@ -34,6 +35,8 @@ class PracticeScheduleUpdate(BaseModel):
     description: Optional[str] = None
     schedule_type: Optional[str] = None
     status: Optional[str] = None
+    # 複数部屋選択対応
+    venue_ids: Optional[List[UUID]] = None
 
 
 class PracticeScheduleResponse(PracticeScheduleBase):
@@ -44,6 +47,9 @@ class PracticeScheduleResponse(PracticeScheduleBase):
     updated_at: Optional[datetime] = None
     created_by: Optional[UUID] = None
     updated_by: Optional[UUID] = None
+    # 複数部屋選択対応
+    venue_ids: Optional[List[UUID]] = None
+    venues: Optional[List[dict]] = None
 
     model_config = ConfigDict(from_attributes=True, json_encoders={
         date: lambda v: v.isoformat() if v else None,

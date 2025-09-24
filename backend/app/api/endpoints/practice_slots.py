@@ -83,16 +83,16 @@ async def get_practice_schedule_with_details(
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
 ):
     """
-    指定した練習スケジュールの詳細情報（利用可能会場、セッション含む）を取得
+    指定した練習スケジュールの詳細情報（idealフォーマット）を取得
 
     Args:
         schedule_id: 練習スケジュールID
         practice_schedule_service: 練習スケジュール管理サービス
 
     Returns:
-        練習スケジュールの詳細情報
+        理想的な形式の練習スケジュール詳細情報
     """
-    details_data = await practice_schedule_service.get_practice_schedule_details_by_id(schedule_id)
+    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_id(schedule_id)
     if not details_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return details_data
@@ -115,6 +115,27 @@ async def get_practice_schedule_for_display(
     """
     schedule_display = await practice_schedule_service.get_practice_schedule_for_display(schedule_id)
     return PracticeScheduleDisplayResponse(**schedule_display)
+
+
+@router.get("/date/{target_date}/details", response_model=Dict[str, Any])
+async def get_practice_schedule_details_by_date(
+    target_date: str,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+):
+    """
+    指定した日付の練習スケジュール詳細情報（idealフォーマット）を取得
+
+    Args:
+        target_date: 対象日付 (YYYY-MM-DD形式)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        理想的な形式の練習スケジュール詳細情報
+    """
+    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
+    if not details_data:
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+    return details_data
 
 
 @router.get("/date/{target_date}/ideal", response_model=Dict[str, Any])
@@ -163,6 +184,10 @@ async def create_practice_schedule(
         schedule_dict = schedule_data.model_dump()
         print(f"DEBUG POST /: schedule_dict after model_dump: {schedule_dict}")
         
+        # 複数部屋選択対応: venue_idsの確認
+        if "venue_ids" in schedule_dict:
+            print(f"DEBUG POST /: venue_ids: {schedule_dict['venue_ids']}")
+        
         schedule_dict["created_by"] = "system"
         schedule_dict["updated_by"] = "system"
         
@@ -197,12 +222,34 @@ async def update_practice_schedule(
     Returns:
         更新された練習スケジュール
     """
-    # 更新者を設定（仮の値）
-    schedule_dict = schedule_data.model_dump(exclude_unset=True)
-    schedule_dict["updated_by"] = "system"
+    try:
+        # デバッグログ: リクエストデータの構造を確認
+        print(f"DEBUG PUT /{schedule_id}: schedule_data: {schedule_data}")
+        print(f"DEBUG PUT /{schedule_id}: schedule_data type: {type(schedule_data)}")
+        
+        # 更新者を設定（仮の値）
+        schedule_dict = schedule_data.model_dump(exclude_unset=True)
+        print(f"DEBUG PUT /{schedule_id}: schedule_dict after model_dump: {schedule_dict}")
+        
+        # 複数部屋選択対応: venue_idsの確認
+        if "venue_ids" in schedule_dict:
+            print(f"DEBUG PUT /{schedule_id}: venue_ids: {schedule_dict['venue_ids']}")
+        
+        schedule_dict["updated_by"] = "system"
+        
+        print(f"DEBUG PUT /{schedule_id}: schedule_dict before service call: {schedule_dict}")
 
-    updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
-    return PracticeScheduleResponse(**updated_schedule)
+        updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
+        print(f"DEBUG PUT /{schedule_id}: updated_schedule: {updated_schedule}")
+        
+        return PracticeScheduleResponse(**updated_schedule)
+    except Exception as e:
+        print(f"DEBUG PUT /{schedule_id}: エラー発生: {e}")
+        print(f"DEBUG PUT /{schedule_id}: エラータイプ: {type(e)}")
+        print(f"DEBUG PUT /{schedule_id}: エラーの詳細: {str(e)}")
+        import traceback
+        print(f"DEBUG PUT /{schedule_id}: スタックトレース: {traceback.format_exc()}")
+        raise
 
 
 @router.put("/{schedule_id}/with-details", response_model=PracticeScheduleWithDetailsResponse)
@@ -328,6 +375,31 @@ async def update_session(
     """
     session_dict = session_data.model_dump(exclude_unset=True)
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
+    return SessionResponse(**updated_session)
+
+
+@router.put("/sessions/{session_id}/move", response_model=SessionResponse)
+async def move_session(
+    session_id: UUID,
+    target_venue_id: UUID,
+    target_slot_order: int,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+):
+    """
+    セッションを別の会場・時限に移動
+
+    Args:
+        session_id: セッションID
+        target_venue_id: 移動先会場ID
+        target_slot_order: 移動先時限番号
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        更新されたセッション
+    """
+    updated_session = await practice_schedule_service.move_session(
+        session_id, target_venue_id, target_slot_order
+    )
     return SessionResponse(**updated_session)
 
 

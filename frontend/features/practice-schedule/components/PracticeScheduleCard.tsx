@@ -17,6 +17,16 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  // デバッグ用: 会場情報をコンソールに出力
+  React.useEffect(() => {
+    console.log('PracticeScheduleCard - schedule data:', {
+      id: schedule.id,
+      venueName: schedule.venueName,
+      venues: schedule.venues,
+      venueIds: schedule.venueIds
+    });
+  }, [schedule]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
@@ -45,11 +55,18 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            {formatDate(schedule.date)}
-          </h3>
+        <div className="flex-1">
+          {schedule.title && (
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {schedule.title}
+            </h3>
+          )}
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4 text-blue-600" />
+            <h4 className="text-md font-medium text-gray-800">
+              {formatDate(schedule.date)}
+            </h4>
+          </div>
         </div>
         <div className="flex space-x-2">
           <button
@@ -94,9 +111,28 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 
         <div className="flex items-center space-x-2">
           <MapPin className="h-4 w-4 text-gray-500" />
-          <span className="text-sm text-gray-700">
-            {schedule.venueName} ({schedule.campus}キャンパス)
-          </span>
+          <div className="text-sm text-gray-700">
+            {schedule.venues && schedule.venues.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {schedule.venues.map(venue => (
+                  <span
+                    key={venue.id}
+                    className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
+                  >
+                    {venue.name}
+                  </span>
+                ))}
+              </div>
+            ) : schedule.venueName ? (
+              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                {schedule.venueName}
+              </span>
+            ) : (
+              <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">
+                会場未設定
+              </span>
+            )}
+          </div>
         </div>
 
         {schedule.description && (

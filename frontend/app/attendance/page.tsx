@@ -2,9 +2,17 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { UserCheck } from 'lucide-react';
-import { AttendancePage } from '@/features/attendance/components';
+import { AttendancePage, PracticeAttendancePage } from '@/features/attendance/components';
+import { useSearchParams } from 'next/navigation';
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const practiceId = searchParams.get('practice');
+
+  if (practiceId) {
+    return <PracticeAttendancePage practiceId={practiceId} />;
+  }
+
   return (
     <AppTemplate
       title="出席登録"

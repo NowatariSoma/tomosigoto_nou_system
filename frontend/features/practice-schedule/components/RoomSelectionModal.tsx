@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/overlays/dialog';
 import { Button } from '@/components/ui/forms/button';
-import { X } from 'lucide-react';
-import { Room } from '../types';
+import { Room } from '../../room-settings/types';
 
 interface RoomSelectionModalProps {
   isOpen: boolean;
@@ -22,6 +21,13 @@ const RoomSelectionModal: React.FC<RoomSelectionModalProps> = ({
   currentlySelectedRooms,
 }) => {
   const [tempSelectedRooms, setTempSelectedRooms] = useState<Room[]>(currentlySelectedRooms);
+
+  // モーダルが開かれるたびに現在の選択状態を更新
+  React.useEffect(() => {
+    if (isOpen) {
+      setTempSelectedRooms(currentlySelectedRooms);
+    }
+  }, [isOpen, currentlySelectedRooms]);
 
   const handleRoomToggle = (room: Room) => {
     const isCurrentlySelected = tempSelectedRooms.some(r => r.id === room.id);
@@ -50,18 +56,10 @@ const RoomSelectionModal: React.FC<RoomSelectionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
-        <DialogHeader className="flex flex-row items-center justify-between pb-4">
+        <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-semibold text-gray-800">
             部屋を選択
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            className="p-1 h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
@@ -81,6 +79,9 @@ const RoomSelectionModal: React.FC<RoomSelectionModalProps> = ({
               >
                 <div className="truncate">
                   {room.name}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {room.campus}キャンパス
                 </div>
                 {isRoomSelected(room.id) && (
                   <div className="absolute top-2 right-2 w-3 h-3 bg-blue-600 rounded-full"></div>

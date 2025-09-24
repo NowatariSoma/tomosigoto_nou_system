@@ -21,7 +21,10 @@ class PracticeScheduleRepository:
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
         """指定されたIDの練習スケジュールを取得"""
-        response = self.client.table(self.table_name).select("*").eq("id", schedule_id).execute()
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        print(f"DEBUG find_by_id: schedule_id={schedule_id}, schedule_id_str={schedule_id_str}")
+        response = self.client.table(self.table_name).select("*").eq("id", schedule_id_str).execute()
+        print(f"DEBUG find_by_id: response.data={response.data}")
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_by_date")
@@ -58,11 +61,12 @@ class PracticeScheduleRepository:
             schedule_data["start_time"] = str(schedule_data["start_time"])
         if "end_time" in schedule_data:
             schedule_data["end_time"] = str(schedule_data["end_time"])
-        
+
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
             .update(schedule_data)
-            .eq("id", schedule_id)
+            .eq("id", schedule_id_str)
             .execute()
         )
         return response.data[0]
@@ -70,14 +74,16 @@ class PracticeScheduleRepository:
     @handle_supabase_errors("delete")
     async def delete(self, schedule_id: UUID) -> bool:
         """練習スケジュールを削除"""
-        self.client.table(self.table_name).delete().eq("id", schedule_id).execute()
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        self.client.table(self.table_name).delete().eq("id", schedule_id_str).execute()
         return True
 
     @handle_supabase_errors("find_with_details")
     async def find_with_details(self, schedule_id: UUID) -> Dict[str, Any]:
         """スケジュール詳細（利用可能会場、セッション含む）を取得"""
         # 練習スケジュール本体
-        schedule_response = self.client.table(self.table_name).select("*").eq("id", schedule_id).execute()
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        schedule_response = self.client.table(self.table_name).select("*").eq("id", schedule_id_str).execute()
 
         if not schedule_response.data:
             return None
@@ -88,7 +94,7 @@ class PracticeScheduleRepository:
         venues_response = (
             self.client.table("schedule_available_venues")
             .select("*, venues(*)")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
         schedule["available_venues"] = venues_response.data
@@ -97,7 +103,7 @@ class PracticeScheduleRepository:
         sessions_response = (
             self.client.table("sessions")
             .select("*")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
 
@@ -120,7 +126,8 @@ class PracticeScheduleRepository:
     async def find_for_display(self, schedule_id: UUID) -> Dict[str, Any]:
         """練習表表示用の詳細データを取得（名前情報を含む）"""
         # 練習スケジュール本体
-        schedule_response = self.client.table(self.table_name).select("*").eq("id", schedule_id).execute()
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        schedule_response = self.client.table(self.table_name).select("*").eq("id", schedule_id_str).execute()
 
         if not schedule_response.data:
             return None
@@ -131,7 +138,7 @@ class PracticeScheduleRepository:
         venues_response = (
             self.client.table("schedule_available_venues")
             .select("id, is_preferred, priority, notes, venues(id, name)")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .order("priority")
             .execute()
         )
@@ -159,7 +166,7 @@ class PracticeScheduleRepository:
                 schedule_available_venue_id,
                 parts(id, name)
             """)
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .order("slot_order")
             .execute()
         )
@@ -205,11 +212,13 @@ class ScheduleAvailableVenueRepository:
 
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたスケジュールの利用可能会場を取得"""
+        """指定されたスケジュールの利用可能会場を取得（会場名も含む）"""
+        # UUIDオブジェクトを文字列に変換
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
-            .select("*, venues(*)")
-            .eq("schedule_id", schedule_id)
+            .select("*, venues(name, campus)")
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
         return response.data
@@ -217,16 +226,30 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("create")
     async def create(self, venue_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しいスケジュール利用可能会場を作成"""
+        # UUIDオブジェクトを文字列に変換
+        from uuid import UUID
+        print(f"DEBUG create venue_data before conversion: {venue_data}")
+        
+        if "schedule_id" in venue_data and isinstance(venue_data["schedule_id"], UUID):
+            print(f"DEBUG converting schedule_id from UUID to string: {venue_data['schedule_id']}")
+            venue_data["schedule_id"] = str(venue_data["schedule_id"])
+        if "venue_id" in venue_data and isinstance(venue_data["venue_id"], UUID):
+            print(f"DEBUG converting venue_id from UUID to string: {venue_data['venue_id']}")
+            venue_data["venue_id"] = str(venue_data["venue_id"])
+        
+        print(f"DEBUG create venue_data after conversion: {venue_data}")
+        
         response = self.client.table(self.table_name).insert(venue_data).execute()
         return response.data[0]
 
     @handle_supabase_errors("update")
     async def update(self, venue_id: UUID, venue_data: Dict[str, Any]) -> Dict[str, Any]:
         """スケジュール利用可能会場を更新"""
+        venue_id_str = str(venue_id) if isinstance(venue_id, UUID) else venue_id
         response = (
             self.client.table(self.table_name)
             .update(venue_data)
-            .eq("id", venue_id)
+            .eq("id", venue_id_str)
             .execute()
         )
         return response.data[0]
@@ -234,13 +257,16 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("delete")
     async def delete(self, venue_id: UUID) -> bool:
         """スケジュール利用可能会場を削除"""
-        self.client.table(self.table_name).delete().eq("id", venue_id).execute()
+        venue_id_str = str(venue_id) if isinstance(venue_id, UUID) else venue_id
+        self.client.table(self.table_name).delete().eq("id", venue_id_str).execute()
         return True
 
     @handle_supabase_errors("delete_by_schedule")
     async def delete_by_schedule(self, schedule_id: UUID) -> bool:
         """指定されたスケジュールの利用可能会場をすべて削除"""
-        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id).execute()
+        # UUIDオブジェクトを文字列に変換
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id_str).execute()
         return True
 
 
@@ -254,10 +280,11 @@ class SessionRepository:
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールのセッションを取得"""
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
             .select("*")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .order("slot_order", desc=False)
             .execute()
         )
@@ -266,7 +293,8 @@ class SessionRepository:
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, session_id: UUID) -> Dict[str, Any]:
         """指定されたIDのセッションを取得"""
-        response = self.client.table(self.table_name).select("*").eq("id", session_id).execute()
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
+        response = self.client.table(self.table_name).select("*").eq("id", session_id_str).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("create")
@@ -278,10 +306,16 @@ class SessionRepository:
     @handle_supabase_errors("update")
     async def update(self, session_id: UUID, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """セッションを更新"""
+        if "schedule_available_venue_id" in session_data and session_data["schedule_available_venue_id"] is not None:
+            session_data["schedule_available_venue_id"] = str(session_data["schedule_available_venue_id"])
+        if "part_id" in session_data and session_data["part_id"] is not None:
+            session_data["part_id"] = str(session_data["part_id"])
+
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = (
             self.client.table(self.table_name)
             .update(session_data)
-            .eq("id", session_id)
+            .eq("id", session_id_str)
             .execute()
         )
         return response.data[0]
@@ -289,13 +323,15 @@ class SessionRepository:
     @handle_supabase_errors("delete")
     async def delete(self, session_id: UUID) -> bool:
         """セッションを削除"""
-        self.client.table(self.table_name).delete().eq("id", session_id).execute()
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
+        self.client.table(self.table_name).delete().eq("id", session_id_str).execute()
         return True
 
     @handle_supabase_errors("delete_by_schedule")
     async def delete_by_schedule(self, schedule_id: UUID) -> bool:
         """指定されたスケジュールのセッションをすべて削除"""
-        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id).execute()
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id_str).execute()
         return True
 
 
@@ -309,10 +345,11 @@ class SessionInstructorRepository:
     @handle_supabase_errors("find_by_session")
     async def find_by_session(self, session_id: UUID) -> List[Dict[str, Any]]:
         """指定されたセッションの指導者を取得"""
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = (
             self.client.table(self.table_name)
             .select("*, practice_user_attendance(*, users(*))")
-            .eq("session_id", session_id)
+            .eq("session_id", session_id_str)
             .execute()
         )
         return response.data
@@ -326,23 +363,26 @@ class SessionInstructorRepository:
     @handle_supabase_errors("delete")
     async def delete(self, instructor_id: UUID) -> bool:
         """セッション指導者を削除"""
-        self.client.table(self.table_name).delete().eq("id", instructor_id).execute()
+        instructor_id_str = str(instructor_id) if isinstance(instructor_id, UUID) else instructor_id
+        self.client.table(self.table_name).delete().eq("id", instructor_id_str).execute()
         return True
 
     @handle_supabase_errors("delete_by_session")
     async def delete_by_session(self, session_id: UUID) -> bool:
         """指定されたセッションの指導者をすべて削除"""
-        self.client.table(self.table_name).delete().eq("session_id", session_id).execute()
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
+        self.client.table(self.table_name).delete().eq("session_id", session_id_str).execute()
         return True
 
     @handle_supabase_errors("delete_by_schedule")
     async def delete_by_schedule(self, schedule_id: UUID) -> bool:
         """指定されたスケジュールの全セッションの指導者を削除"""
         # セッションIDを取得してから削除
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         sessions_response = (
             self.client.table("sessions")
             .select("id")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
 
@@ -357,10 +397,11 @@ class SessionInstructorRepository:
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールの全セッションの指導者を取得"""
         # セッションIDを取得してから指導者情報を取得
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         sessions_response = (
             self.client.table("sessions")
             .select("id")
-            .eq("schedule_id", schedule_id)
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
 
