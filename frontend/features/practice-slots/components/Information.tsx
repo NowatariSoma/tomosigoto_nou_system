@@ -57,26 +57,6 @@ const Information: React.FC<InformationProps> = ({
         正規練習 {formatDate(currentDate)}（{getWeekday(currentDate)}）
       </h2>
       
-      {scheduleData && (
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-gray-800 mb-2">スケジュール詳細:</h3>
-          {scheduleData.title && (
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">タイトル:</span> {scheduleData.title}
-            </p>
-          )}
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">時間:</span> {scheduleData.start_time} - {scheduleData.end_time}
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">内容:</span> {scheduleData.description || '練習'}
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">タイプ:</span> {scheduleData.schedule_type || '通常'}
-          </p>
-        </div>
-      )}
-      
       <div className="space-y-3 text-sm text-gray-600 max-w-4xl mx-auto">        
         <div className="mt-4">
           <h3 className="font-medium text-gray-800 mb-2">練習内容:</h3>
