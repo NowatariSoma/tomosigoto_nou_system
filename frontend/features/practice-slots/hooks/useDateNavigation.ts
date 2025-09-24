@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import { DateDirection, DateChangeHandler } from '../types/modal-state';
 import { scheduleDataMapper } from '../mappers/schedule-data-mapper';
+import { practiceScheduleService } from '../services/practice-schedule-service';
 
 /**
  * 日付ナビゲーション機能を管理するカスタムフック
@@ -68,13 +69,67 @@ export const useDateNavigation = (initialDate?: Date) => {
     setCurrentDate(new Date());
   }, []);
 
+  /**
+   * 次の練習日程に移動する
+   */
+  const navigateToNextPractice = useCallback(async () => {
+    try {
+      const currentDateString = scheduleDataMapper.formatDateToString(currentDate);
+      const nextPracticeDate = await practiceScheduleService.getNextPracticeScheduleDate(currentDateString);
+      
+      if (nextPracticeDate) {
+        const nextDate = new Date(nextPracticeDate);
+        setCurrentDate(nextDate);
+      } else {
+        console.warn('次の練習日程が見つかりませんでした');
+      }
+    } catch (error) {
+      console.error('次の練習日程の取得に失敗しました:', error);
+    }
+  }, [currentDate]);
+
+  /**
+   * 前の練習日程に移動する
+   */
+  const navigateToPreviousPractice = useCallback(async () => {
+    try {
+      const currentDateString = scheduleDataMapper.formatDateToString(currentDate);
+      const previousPracticeDate = await practiceScheduleService.getPreviousPracticeScheduleDate(currentDateString);
+      
+      if (previousPracticeDate) {
+        const prevDate = new Date(previousPracticeDate);
+        setCurrentDate(prevDate);
+      } else {
+        console.warn('前の練習日程が見つかりませんでした');
+      }
+    } catch (error) {
+      console.error('前の練習日程の取得に失敗しました:', error);
+    }
+  }, [currentDate]);
+
+  /**
+   * 日付変更ハンドラー（練習日移動用）
+   */
+  const handlePracticeNavigation = useCallback(async (direction: DateDirection) => {
+    if (direction === 'next') {
+      await navigateToNextPractice();
+    } else if (direction === 'prev') {
+      await navigateToPreviousPractice();
+    } else {
+      navigateDate(direction);
+    }
+  }, [navigateToNextPractice, navigateToPreviousPractice, navigateDate]);
+
   return {
     currentDate,
     navigateDate,
     handleDateChange,
+    handlePracticeNavigation,
     setDate,
     getCurrentDateString,
     addDays,
     resetToToday,
+    navigateToNextPractice,
+    navigateToPreviousPractice,
   };
 };

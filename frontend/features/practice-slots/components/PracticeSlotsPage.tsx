@@ -13,8 +13,9 @@ export const PracticeSlotsPage: React.FC = () => {
   const {
     currentDate,
     handleDateChange,
+    handlePracticeNavigation,
     getCurrentDateString
-  } = useDateNavigation(new Date('2025-02-15'));
+  } = useDateNavigation(new Date('2025-03-01'));
 
   // 日付変更時の副作用処理
   useEffect(() => {
@@ -28,6 +29,7 @@ export const PracticeSlotsPage: React.FC = () => {
       <DateButton
         currentDate={currentDate}
         onDateChange={handleDateChange}
+        onNextPractice={handlePracticeNavigation}
       />
       
       {/* Schedule Table */}
