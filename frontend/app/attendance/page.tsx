@@ -14,11 +14,10 @@ export default function Page() {
         level: 'alpha',
         text: '認証システム統合、UI改善'
       }}
-      // TODO: ユーザー権限を一時的に無効化 - 本番環境では有効にする必要がある
-      // permissionBadge={{
-      //   level: 'basic',
-      //   text: 'ユーザー'
-      // }}
+      permissionBadge={{
+        level: 'admin',
+        text: '管理者'
+      }}
       maxWidth="7xl"
     >
       <AttendancePage />
