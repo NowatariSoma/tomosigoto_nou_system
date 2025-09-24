@@ -1,6 +1,6 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  PRACTICE_SCHEDULES: '/practice_slots/',
+  PRACTICE_SCHEDULES: '/practice_schedules/',
   VENUES: '/venues/',
 } as const;
 
@@ -19,7 +19,10 @@ export const INITIAL_PRACTICE_SCHEDULE_FORM = {
   venueId: '',
   title: '',
   description: '',
-} as const;
+  // 複数部屋選択対応
+  venueIds: [] as string[],
+  selectedVenues: [] as any[],
+};
 
 // UI表示用テキスト
 export const UI_TEXT = {

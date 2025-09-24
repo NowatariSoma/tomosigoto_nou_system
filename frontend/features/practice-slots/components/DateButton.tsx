@@ -5,7 +5,8 @@ import { DateNavigationProps } from '@/features/practice-slots/types/schedule';
 
 const DateButton: React.FC<DateNavigationProps> = ({ 
   currentDate,
-  onDateChange
+  onDateChange,
+  onNextPractice
 }) => {
   // 日付をフォーマットする関数
   const formatDate = (date: Date): string => {
@@ -25,9 +26,9 @@ const DateButton: React.FC<DateNavigationProps> = ({
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-center gap-12">
         <button
-          onClick={() => onDateChange('prev')}
+          onClick={() => onNextPractice ? onNextPractice('prev') : onDateChange('prev')}
           className="p-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
-          aria-label="前の日"
+          aria-label="前の練習日"
         >
           <ChevronLeft className="w-5 h-5 text-white" />
         </button>
@@ -39,9 +40,9 @@ const DateButton: React.FC<DateNavigationProps> = ({
         </div>
         
         <button
-          onClick={() => onDateChange('next')}
+          onClick={() => onNextPractice ? onNextPractice('next') : onDateChange('next')}
           className="p-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
-          aria-label="次の日"
+          aria-label="次の練習日"
         >
           <ChevronRight className="w-5 h-5 text-white" />
         </button>

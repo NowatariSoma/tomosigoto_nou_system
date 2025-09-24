@@ -166,28 +166,20 @@ export const AttendancePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">出席登録</h1>
-          <p className="text-gray-600 mt-1">
-            練習への出席状況を登録・管理します
-          </p>
+      {/* ユーザー情報表示 */}
+      <div className="flex justify-end items-center">
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <User className="h-4 w-4" />
+          <span>{selectedUser.name} (開発モード)</span>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <User className="h-4 w-4" />
-            <span>{selectedUser.name} (開発モード)</span>
-          </div>
-          {/* TODO: 本番環境ではログイン認証を必要にする */}
-          {/* <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>{UI_TEXT.LOGOUT}</span>
-          </button> */}
-        </div>
+        {/* TODO: 本番環境ではログイン認証を必要にする */}
+        {/* <button
+          onClick={handleLogout}
+          className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>{UI_TEXT.LOGOUT}</span>
+        </button> */}
       </div>
 
       {/* ユーザー選択 */}

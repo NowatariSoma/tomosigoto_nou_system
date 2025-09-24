@@ -1,0 +1,72 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/forms/button';
+import { Badge } from '@/components/ui/feedback/badge';
+import { MapPin, X, Plus } from 'lucide-react';
+import { Room } from '../../room-settings/types';
+import RoomSelectionModal from './RoomSelectionModal';
+
+interface RoomSelectionProps {
+  selectedRooms: Room[];
+  onAddRoom: (rooms: Room[]) => void;
+  onRemoveRoom: (roomId: string) => void;
+  availableRooms: Room[];
+}
+
+const RoomSelection: React.FC<RoomSelectionProps> = ({
+  selectedRooms,
+  onAddRoom,
+  onRemoveRoom,
+  availableRooms,
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleConfirmSelection = (newSelectedRooms: Room[]) => {
+    onAddRoom(newSelectedRooms);
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {selectedRooms.map((room) => (
+          <span
+            key={room.id}
+            className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
+          >
+            <button
+              onClick={() => onRemoveRoom(room.id)}
+              className="hover:text-red-600 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+            {room.name}
+          </span>
+        ))}
+        <button
+          onClick={handleOpenModal}
+          className="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          部屋を追加
+        </button>
+      </div>
+
+      <RoomSelectionModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmSelection}
+        availableRooms={availableRooms}
+        currentlySelectedRooms={selectedRooms}
+      />
+    </div>
+  );
+};
+
+export default RoomSelection;

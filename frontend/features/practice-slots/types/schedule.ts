@@ -230,6 +230,7 @@ export interface IdealScheduleData {
 export interface DateNavigationProps {
   currentDate: Date;
   onDateChange: (direction: 'prev' | 'next') => void;
+  onNextPractice?: (direction: 'prev' | 'next') => void;
 }
 
 /**

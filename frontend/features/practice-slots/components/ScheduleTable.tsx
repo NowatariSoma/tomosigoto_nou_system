@@ -50,107 +50,68 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   }
 
-  // データなしの場合
+  // データがない場合の表示
   if (!idealData) {
     return (
       <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-gray-500">この日のスケジュールはありません</div>
+        <div className="text-gray-500">スケジュールデータがありません</div>
       </div>
     );
   }
 
-  // venuesが存在しない場合
-  if (!idealData.venues || !Array.isArray(idealData.venues)) {
-    return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-gray-500">会場情報が取得できませんでした</div>
-        {idealData.debug_info && (
-          <div className="mt-4 text-xs text-gray-400">
-            <details>
-              <summary>デバッグ情報</summary>
-              <pre className="mt-2 text-left">
-                {JSON.stringify(idealData.debug_info, null, 2)}
-              </pre>
-            </details>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // 時間スロットを取得
+  const timeSlots = Object.keys(idealData.time_schedule).sort();
+  
+  // デバッグ: 会場データを確認
+  console.log('会場データ:', idealData.venues);
+  console.log('会場の詳細:', idealData.venues.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
 
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
-      
+      {/* テーブルヘッダー */}
+      <div className="flex">
+        <div className="w-24 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
+        <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
+          {idealData.venues.map((venue) => (
+            <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
+              {venue.name || `会場${venue.id.slice(-4)}`}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="px-4 py-3 text-left font-medium text-white border-r border-gray-300 w-20">
-                時間
-              </th>
-              {idealData.venues.map((venue) => (
-                <th key={venue.id} className="px-4 py-3 text-center font-medium border-r border-gray-300 text-white">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: venue.color }}
-                    ></div>
-                    <span>{venue.name}</span>
-                    {venue.priority === 1 && <span className="text-xs">⭐</span>}
-                  </div>
-                  <div className="text-xs text-white font-normal">
-                    優先度: {venue.priority}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
+        <table className="w-full table-fixed">
           <tbody>
-            {Object.entries(idealData.time_schedule).map(([time, venueSchedule]) => (
-              <tr
-                key={time}
-                className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150"
-              >
-                <td className="px-4 py-4 font-bold text-gray-700 bg-gray-100 border-r border-gray-300 text-center">
-                  <div className="text-sm">{time}</div>
+            {timeSlots.map((time) => (
+              <tr key={time} className="border-b border-gray-100">
+                <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-gray-900 align-top border-r border-gray-600 hover:bg-gray-800 transition-colors">
+                  {time}
                 </td>
                 {idealData.venues.map((venue) => {
-                  const parts = venueSchedule[venue.id] || [];
+                  const parts = idealData.time_schedule[time]?.[venue.id] || [];
                   return (
                     <td
-                      key={venue.id}
+                      key={`${time}-${venue.id}`}
                       className={cn(
                         "px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top",
-                        "cursor-pointer transition-colors",
-                        parts.length > 0 ? "bg-blue-25" : "hover:bg-blue-50"
+                        "cursor-pointer transition-colors bg-white",
+                        parts.length > 0 ? "hover:bg-blue-50" : "hover:bg-gray-50"
                       )}
                       onClick={() => handleCellClick(time, venue.id, parts)}
                     >
                       {parts.length > 0 ? (
-                        <div className="space-y-1">
-                          {parts.map((part, partIndex) => (
-                            <div 
-                              key={`${part.part_id}-${partIndex}`}
-                              className="rounded-lg p-3 shadow-sm border border-opacity-30 cursor-pointer hover:shadow-md transition-shadow"
-                              style={{ 
-                                backgroundColor: part.part_color,
-                                borderColor: part.part_color 
-                              }}
-                              onClick={(e) => handlePartClick(e, part)}
-                            >
-                              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-                                {part.part_name}
-                              </div>
-                              <div className="text-xs text-gray-700">
-                                👨‍🏫 {part.instructors.length > 0 ? part.instructors.join(', ') : '指導者未定'}
-                              </div>
-                              {part.slot_order && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  順序: {part.slot_order}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                        <div 
+                          className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
+                          onClick={(e) => handlePartClick(e, parts[0])}
+                        >
+                          <div className="text-sm font-medium text-gray-900 mb-1">
+                            {parts[0].part_name}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            🎭 {parts[0].instructors.length > 0 ? parts[0].instructors.join(', ') : '指導者未定'}
+                          </div>
                         </div>
                       ) : (
                         <div className="text-center text-gray-400 py-6">
@@ -166,18 +127,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         </table>
       </div>
       
-      {/* 統計情報 */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
-        <div className="flex justify-between text-sm text-gray-600">
-          <div>
-            <span className="font-medium">総パート数:</span> {
+      {/* 統計情報 - 目立たないデザイン */}
+      <div className="px-4 py-2 bg-white border-t border-gray-100">
+        <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex items-center space-x-4">
+            <span>パート: {
               Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
                 return total + Object.values(timeSlot).reduce((venueTotal: number, parts: any) => venueTotal + parts.length, 0);
               }, 0)
-            }件
-          </div>
-          <div>
-            <span className="font-medium">総指導者数:</span> {
+            }</span>
+            <span>指導者: {
               new Set(
                 Object.values(idealData.time_schedule).flatMap((timeSlot: any) =>
                   Object.values(timeSlot).flatMap((parts: any) =>
@@ -185,23 +144,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   )
                 )
               ).size
-            }名
-          </div>
-          <div>
-            <span className="font-medium">会場稼働率:</span> {
+            }</span>
+            <span>稼働率: {
               idealData.venues.length > 0 ? Math.round((Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
                 return total + Object.values(timeSlot).filter((parts: any) => parts.length > 0).length;
               }, 0) / (Object.keys(idealData.time_schedule).length * idealData.venues.length)) * 100) : 0
-            }%
+            }%</span>
           </div>
+          {idealData.debug_info && (
+            <div className="text-gray-400">
+              セッション: {idealData.debug_info.sessions_count}, 会場: {idealData.debug_info.venues_count}, 分割: {idealData.debug_info.division_count}
+            </div>
+          )}
         </div>
-        {idealData.debug_info && (
-          <div className="mt-2 text-xs text-gray-500">
-            <span className="font-medium">デバッグ情報:</span> セッション数: {idealData.debug_info.sessions_count}, 
-            会場数: {idealData.debug_info.venues_count}, 
-            分割数: {idealData.debug_info.division_count}
-          </div>
-        )}
       </div>
     </div>
   );
