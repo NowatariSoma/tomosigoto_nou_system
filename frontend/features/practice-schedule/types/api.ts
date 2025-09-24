@@ -19,6 +19,13 @@ export interface PracticeScheduleApiResponse {
   updated_at?: string;
   created_by?: string;
   updated_by?: string;
+  // 複数部屋選択対応
+  venue_ids?: string[];
+  venues?: {
+    id: string;
+    name: string;
+    campus: string;
+  }[];
 }
 
 // バックエンドのPracticeScheduleCreate型（推測）
@@ -31,6 +38,8 @@ export interface PracticeScheduleApiRequest {
   description?: string;
   schedule_type?: string;
   status?: string;
+  // 複数部屋選択対応
+  venue_ids?: string[];
 }
 
 // バックエンドのPracticeScheduleUpdate型（推測）
@@ -43,4 +52,6 @@ export interface PracticeScheduleApiUpdateRequest {
   description?: string;
   schedule_type?: string;
   status?: string;
+  // 複数部屋選択対応
+  venue_ids?: string[];
 }
