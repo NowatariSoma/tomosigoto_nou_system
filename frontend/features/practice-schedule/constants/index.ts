@@ -1,6 +1,6 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  PRACTICE_SCHEDULES: '/practice_slots/',
+  PRACTICE_SCHEDULES: '/practice_schedules/',
   VENUES: '/venues/',
 } as const;
 
