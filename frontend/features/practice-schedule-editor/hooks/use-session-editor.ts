@@ -105,8 +105,8 @@ export const useSessionEditor = (scheduleId: string) => {
       Object.entries(timeSchedule).forEach(([time, venueSessions]) => {
         Object.entries(venueSessions).forEach(([venueId, parts]) => {
           parts.forEach((part: IdealPartInfo, index: number) => {
-            // セッションIDは一意になるように生成
-            const sessionId = `${scheduleId}_${venueId}_${time}_${part.part_id || index}`;
+            // part_idがあればそれを使用、なければセッションIDを生成
+            const sessionId = part.part_id || `temp_${scheduleId}_${venueId}_${time}_${index}`;
 
             // 終了時刻を30分後に設定（時間スロットの間隔と一致させる）
             const [hours, minutes] = time.split(':').map(Number);
@@ -274,11 +274,16 @@ export const useSessionEditor = (scheduleId: string) => {
    * セッションを移動（ドラッグ&ドロップ用）
    */
   const moveSession = useCallback(async (
-    sessionId: string, 
-    venueId: string, 
-    timeSlot: string, 
+    sessionId: string,
+    venueId: string,
+    timeSlot: string,
     slotOrder: number
   ) => {
+    console.warn('セッション移動機能は現在実装中です');
+    alert('セッション移動機能は現在実装中です。しばらくお待ちください。');
+    return;
+
+    // 以下、実装予定のコード
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 

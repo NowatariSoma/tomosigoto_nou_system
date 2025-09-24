@@ -337,14 +337,8 @@ class PracticeScheduleService:
 
             # 各セッションに指導者情報を追加
             for session in sessions:
-                try:
-                    instructors = await self.session_instructor_repository.find_by_session(
-                        session["id"]
-                    )
-                    session["instructors"] = instructors
-                except Exception as e:
-                    print(f"Warning: Could not fetch instructors for session {session['id']}: {e}")
-                    session["instructors"] = []
+                # 指導者機能は一旦実装しない
+                session["instructors"] = []
 
             return sessions
         except Exception as e:
@@ -358,13 +352,8 @@ class PracticeScheduleService:
             if not session:
                 raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-            # 指導者情報を追加
-            try:
-                instructors = await self.session_instructor_repository.find_by_session(session_id)
-                session["instructors"] = instructors
-            except Exception as e:
-                print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
-                session["instructors"] = []
+            # 指導者機能は一旦実装しない
+            session["instructors"] = []
 
             return session
         except APIException:
@@ -511,27 +500,8 @@ class PracticeScheduleService:
         return venues
 
     async def _get_session_instructors(self, session_id: UUID) -> List[str]:
-        """セッションの指導者名を取得"""
-        try:
-            instructor_records = await self.session_instructor_repository.find_by_session(session_id)
-            instructor_names = []
-
-            for i, record in enumerate(instructor_records):
-                # ユーザー情報がJOINされている可能性を確認
-                if "users" in record and isinstance(record["users"], dict):
-                    user_data = record["users"]
-                    name = user_data.get("name") or user_data.get("email", f"指導者{i+1}")
-                    instructor_names.append(name)
-                elif "user_name" in record:
-                    instructor_names.append(record["user_name"])
-                else:
-                    # データが不完全な場合はスキップ
-                    continue
-
-            return instructor_names
-        except Exception as e:
-            print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
-            return []
+        """セッションの指導者名を取得（一旦実装しない）"""
+        return []
 
     async def _get_session_participants_count(self, schedule_id: UUID) -> int:
         """セッションの参加者数を取得（估算値）"""
