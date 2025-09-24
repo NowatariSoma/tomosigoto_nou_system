@@ -12,6 +12,11 @@ import {
   SessionEditorAction,
   EditMode 
 } from '../types/session-editor';
+import { 
+  IdealFormatApiResponse,
+  IdealVenueInfo,
+  IdealPartInfo
+} from '../types/api';
 import { sessionService, practiceScheduleEditorService } from '../services';
 import { generateTimeSlots } from '../mappers/time-slot-mapper';
 
@@ -89,37 +94,104 @@ export const useSessionEditor = (scheduleId: string) => {
         throw new Error('スケジュールが見つかりません');
       }
 
-      // 詳細情報を取得
-      const details = await practiceScheduleEditorService.getScheduleDetails(scheduleId);
+      // 詳細情報を取得（idealフォーマット）
+      const details: IdealFormatApiResponse = await practiceScheduleEditorService.getScheduleDetails(scheduleId);
       
-      // セッション情報を設定
-      const sessions = details.sessions.map(session => ({
-        id: session.id,
-        schedule_id: session.schedule_id,
-        part_id: session.part_id,
-        title: session.title,
-        slot_order: session.slot_order,
-        schedule_available_venue_id: session.schedule_available_venue_id,
-        priority: session.priority,
-        start_time: session.start_time,
-        end_time: session.end_time,
-        created_at: session.created_at,
-        updated_at: session.updated_at,
-      }));
+      // idealフォーマットからセッション情報を抽出
+      const sessions: Session[] = [];
+      const timeSchedule = details.time_schedule;
+
+      // time_scheduleからセッション情報を抽出
+      Object.entries(timeSchedule).forEach(([time, venueSessions]) => {
+        Object.entries(venueSessions).forEach(([venueId, parts]) => {
+          parts.forEach((part: IdealPartInfo, index: number) => {
+            // セッションIDは一意になるように生成
+            const sessionId = `${scheduleId}_${venueId}_${time}_${part.part_id || index}`;
+
+            // 終了時刻を30分後に設定（時間スロットの間隔と一致させる）
+            const [hours, minutes] = time.split(':').map(Number);
+            const endHours = minutes >= 30 ? hours + 1 : hours;
+            const endMinutes = minutes >= 30 ? 0 : 30;
+            const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+
+            sessions.push({
+              id: sessionId,
+              schedule_id: details.schedule_info.id,
+              part_id: part.part_id,
+              title: part.session_title || part.part_name || 'セッション',
+              slot_order: part.slot_order || 0,
+              schedule_available_venue_id: venueId, // 実際の会場IDを使用
+              priority: 1, // デフォルトの優先度
+              start_time: time,
+              end_time: endTime,
+              created_at: '',
+              updated_at: '',
+            });
+          });
+        });
+      });
+      
       dispatch({ type: 'SET_SESSIONS', payload: sessions });
 
-      // 会場情報を設定
-      const venues = details.available_venues.map(venue => ({
+      // 会場情報を設定（idealフォーマットから変換）
+      const venues: VenueInfo[] = details.venues.map(venue => ({
         id: venue.id,
         name: venue.name,
-        is_preferred: venue.is_preferred,
+        is_preferred: false, // デフォルト値
         priority: venue.priority,
-        notes: venue.notes,
+        notes: '',
       }));
+
+      // 会場が空の場合、デフォルト会場を設定
+      if (venues.length === 0 && basicSchedule) {
+        console.warn('会場情報が空です。デフォルト会場を設定します。');
+        venues.push({
+          id: 'default-venue-1',
+          name: 'メイン会場',
+          is_preferred: false,
+          priority: 1,
+          notes: '',
+        });
+      }
+
       dispatch({ type: 'SET_VENUES', payload: venues });
 
-      // 時間スロットを生成
-      const timeSlots = generateTimeSlots(details.start_time, details.end_time);
+      // 時間スロットの生成
+      let timeSlots: TimeSlot[] = [];
+
+      if (Object.keys(timeSchedule).length > 0) {
+        // 実際のセッションがある時間スロットのみを生成
+        const usedTimeSlots = new Set<string>();
+        Object.keys(timeSchedule).forEach(time => {
+          const hasSessions = Object.values(timeSchedule[time]).some(parts => parts.length > 0);
+          if (hasSessions) {
+            usedTimeSlots.add(time);
+          }
+        });
+
+        // 使用されている時間スロットからTimeSlotオブジェクトを生成
+        timeSlots = Array.from(usedTimeSlots).sort().map(time => {
+          // 終了時刻を30分後に設定
+          const [hours, minutes] = time.split(':').map(Number);
+          const endHours = minutes >= 30 ? hours + 1 : hours;
+          const endMinutes = minutes >= 30 ? 0 : 30;
+          const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+
+          return {
+            time: time,
+            start_time: time,
+            end_time: endTime,
+            display_time: `${time}-${endTime}`,
+          };
+        });
+      } else if (basicSchedule) {
+        // セッションがない場合は、スケジュールの開始・終了時間から時間スロットを生成
+        console.log('セッションがないため、デフォルトの時間スロットを生成します。');
+        const startTime = basicSchedule.start_time || '09:00';
+        const endTime = basicSchedule.end_time || '17:00';
+        timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime);
+      }
+
       dispatch({ type: 'SET_TIME_SLOTS', payload: timeSlots });
 
     } catch (error) {
