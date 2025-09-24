@@ -28,8 +28,6 @@ export interface CreatePracticeScheduleRequest {
   venueId: string;
   title?: string;
   description?: string;
-  scheduleType?: string;
-  status?: string;
   // 複数部屋選択対応
   venueIds?: string[];
 }
@@ -41,8 +39,6 @@ export interface UpdatePracticeScheduleRequest {
   venueId?: string;
   title?: string;
   description?: string;
-  scheduleType?: string;
-  status?: string;
   // 複数部屋選択対応
   venueIds?: string[];
 }
