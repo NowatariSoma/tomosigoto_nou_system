@@ -11,8 +11,8 @@ export default function Page() {
       description="練習スケジュールの作成・編集・削除"
       icon={<Calendar className="h-8 w-8 text-blue-600" />}
       developmentBadge={{
-        level: 'alpha',
-        text: 'バックエンド作成、UI改善'
+        level: 'beta',
+        text: '機能完成、最終テスト中'
       }}
       // TODO: 管理者権限を一時的に無効化 - 本番環境では有効にする必要がある
       // permissionBadge={{
