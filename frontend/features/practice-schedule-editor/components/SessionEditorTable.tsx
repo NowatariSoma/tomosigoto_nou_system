@@ -2,11 +2,8 @@
 
 import React from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
-import { DraggableSession } from './DraggableSession';
-import { SessionCell } from './SessionCell';
-import { TimeSlotHeader } from './TimeSlotHeader';
-import { VenueColumn } from './VenueColumn';
 import { UI_TEXT } from '../constants';
+import { timeToMinutes } from '../mappers/time-slot-mapper';
 import { Calendar } from 'lucide-react';
 
 interface SessionEditorTableProps {
@@ -45,9 +42,37 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
       if (session.schedule_available_venue_id) {
         const venueId = session.schedule_available_venue_id;
         if (groups[venueId]) {
-          // 時間スロットは仮で設定（実際の実装では適切にマッピング）
-          const timeSlot = time_slots[0]?.time || '';
-          if (groups[venueId][timeSlot]) {
+          let timeSlot = '';
+
+          // セッションにstart_timeが設定されている場合は、直接その時間スロットを使用
+          if (session.start_time) {
+            // start_timeがtime_slotsに存在するか確認
+            const matchingSlot = time_slots.find(slot => slot.time === session.start_time);
+            if (matchingSlot) {
+              timeSlot = matchingSlot.time;
+            } else {
+              // 存在しない場合は最も近い時間スロットを探す
+              const sessionStartMinutes = timeToMinutes(session.start_time);
+              let closestSlot = time_slots[0];
+              let minDiff = Math.abs(timeToMinutes(time_slots[0].time) - sessionStartMinutes);
+
+              for (const slot of time_slots) {
+                const diff = Math.abs(timeToMinutes(slot.time) - sessionStartMinutes);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  closestSlot = slot;
+                }
+              }
+              timeSlot = closestSlot?.time || '';
+            }
+          } else if (time_slots.length > 0) {
+            // start_timeが設定されていない場合は、slot_orderから時間スロットを決定
+            const timeSlotIndex = Math.min(session.slot_order, time_slots.length - 1);
+            timeSlot = time_slots[timeSlotIndex]?.time || time_slots[0]?.time || '';
+          }
+
+          // 該当する時間スロットが存在する場合のみセッションを追加
+          if (timeSlot && groups[venueId][timeSlot]) {
             groups[venueId][timeSlot].push(session);
           }
         }
@@ -73,41 +98,75 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* テーブルヘッダー */}
+      <div className="bg-white px-4 py-3 border-b border-gray-200">
+        <div className="flex">
+          <div className="w-24 text-sm font-medium text-gray-800">時間</div>
+          {venues.map((venue) => (
+            <div key={venue.id} className="flex-1 text-sm font-medium text-gray-800 text-center">
+              {venue.name || `会場${venue.id.slice(-4)}`}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="px-4 py-3 text-left font-medium text-gray-700 border-r border-gray-300 w-20">
-                時間
-              </th>
-              {venues.map((venue) => (
-                <VenueColumn
-                  key={venue.id}
-                  venue={venue}
-                />
-              ))}
-            </tr>
-          </thead>
+        <table className="w-full table-fixed">
           <tbody>
             {time_slots.map((timeSlot) => (
-              <tr
-                key={timeSlot.time}
-                className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150"
-              >
-                <TimeSlotHeader timeSlot={timeSlot} />
+              <tr key={timeSlot.time} className="border-b border-gray-100">
+                <td className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
+                  {timeSlot.display_time}
+                </td>
                 {venues.map((venue) => {
                   const venueSessions = groupedSessions[venue.id]?.[timeSlot.time] || [];
                   return (
-                    <SessionCell
+                    <td
                       key={`${venue.id}-${timeSlot.time}`}
-                      venue={venue}
-                      timeSlot={timeSlot}
-                      sessions={venueSessions}
-                      edit_mode={edit_mode}
-                      onEditSession={onEditSession}
-                      onDeleteSession={onDeleteSession}
-                      onMoveSession={onMoveSession}
-                    />
+                      className="px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top cursor-pointer transition-colors bg-white"
+                      onClick={() => {
+                        if (edit_mode === 'edit' && venueSessions.length === 0) {
+                          console.log('Empty cell clicked:', { venue: venue.id, timeSlot: timeSlot.time });
+                        }
+                      }}
+                    >
+                      {venueSessions.length > 0 ? (
+                        <div className="space-y-1">
+                          {venueSessions.map((session) => (
+                            <div
+                              key={session.id}
+                              className="rounded-lg p-3 bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:shadow-md transition-all"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditSession(session.id);
+                              }}
+                            >
+                              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+                                {session.title}
+                              </div>
+                              <div className="text-xs text-gray-700">
+                                優先度: {session.priority}
+                              </div>
+                              {session.start_time && session.end_time && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {session.start_time} - {session.end_time}
+                                </div>
+                              )}
+                              {session.part_id && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  パートID: {session.part_id}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-400 py-6">
+                          {edit_mode === 'edit' ? 'クリックしてセッションを追加' : '空き'}
+                        </div>
+                      )}
+                    </td>
                   );
                 })}
               </tr>
@@ -116,17 +175,16 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
         </table>
       </div>
       
-      {/* 統計情報 */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
-        <div className="flex justify-between text-sm text-gray-600">
-          <div>
-            <span className="font-medium">総セッション数:</span> {sessions.length}件
+      {/* 統計情報 - 目立たないデザイン */}
+      <div className="px-4 py-2 bg-white border-t border-gray-100">
+        <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex items-center space-x-4">
+            <span>セッション: {sessions.length}</span>
+            <span>会場: {venues.length}</span>
+            <span>時間スロット: {time_slots.length}</span>
           </div>
-          <div>
-            <span className="font-medium">会場数:</span> {venues.length}件
-          </div>
-          <div>
-            <span className="font-medium">時間スロット数:</span> {time_slots.length}件
+          <div className="text-gray-400">
+            稼働率: {venues.length > 0 ? Math.round((sessions.length / (time_slots.length * venues.length)) * 100) : 0}%
           </div>
         </div>
       </div>

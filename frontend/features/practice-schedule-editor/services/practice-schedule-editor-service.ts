@@ -3,7 +3,10 @@
  */
 
 import { 
-  PracticeScheduleDetailsApiResponse 
+  PracticeScheduleDetailsApiResponse,
+  IdealFormatApiResponse,
+  IdealVenueInfo,
+  IdealPartInfo
 } from '../types/api';
 import { 
   Session, 
@@ -34,11 +37,11 @@ export class PracticeScheduleEditorService {
   }
 
   /**
-   * 指定したスケジュールの詳細情報を取得
+   * 指定したスケジュールの詳細情報を取得（idealフォーマット）
    * @param scheduleId - スケジュールID
    * @returns スケジュール詳細情報
    */
-  async getScheduleDetails(scheduleId: string): Promise<PracticeScheduleDetailsApiResponse> {
+  async getScheduleDetails(scheduleId: string): Promise<IdealFormatApiResponse> {
     try {
       const response = await fetchApi(`${this.basePath}/${scheduleId}/details`);
       return response.json();
@@ -51,18 +54,16 @@ export class PracticeScheduleEditorService {
         }
         
         return {
-          id: basicSchedule.id,
-          schedule_date: basicSchedule.schedule_date,
-          start_time: basicSchedule.start_time,
-          end_time: basicSchedule.end_time,
-          title: basicSchedule.title,
-          description: basicSchedule.description,
-          schedule_type: basicSchedule.schedule_type,
-          status: basicSchedule.status,
-          created_at: basicSchedule.created_at,
-          updated_at: basicSchedule.updated_at,
-          available_venues: [],
-          sessions: [],
+          schedule_info: {
+            id: basicSchedule.id,
+            schedule_date: basicSchedule.schedule_date,
+            start_time: basicSchedule.start_time,
+            end_time: basicSchedule.end_time,
+            title: basicSchedule.title,
+            description: basicSchedule.description || '',
+          },
+          venues: [],
+          time_schedule: {},
         };
       }
       throw error;
@@ -70,22 +71,14 @@ export class PracticeScheduleEditorService {
   }
 
   /**
-   * 指定した日付のスケジュール詳細を取得
+   * 指定した日付のスケジュール詳細を取得（idealフォーマット）
    * @param date - 対象日付 (YYYY-MM-DD形式)
    * @returns スケジュール詳細情報
    */
-  async getScheduleDetailsByDate(date: string): Promise<PracticeScheduleDetailsApiResponse | null> {
+  async getScheduleDetailsByDate(date: string): Promise<IdealFormatApiResponse | null> {
     try {
-      // まず基本情報を取得してスケジュールIDを取得
-      const basicResponse = await fetchApi(`${this.basePath}/date/${date}`);
-      const basicSchedule = await basicResponse.json();
-      
-      if (!basicSchedule || !basicSchedule.id) {
-        return null;
-      }
-      
-      // スケジュールIDを使って詳細情報を取得
-      return this.getScheduleDetails(basicSchedule.id);
+      const response = await fetchApi(`${this.basePath}/date/${date}/details`);
+      return response.json();
     } catch (error: any) {
       if (error.status === 404) {
         return null;

@@ -69,11 +69,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
       {/* テーブルヘッダー */}
-      <div className="bg-white px-4 py-3 border-b border-gray-200">
-        <div className="flex">
-          <div className="w-24 text-sm font-medium text-gray-800">時間</div>
+      <div className="flex">
+        <div className="w-24 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
+        <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
           {idealData.venues.map((venue) => (
-            <div key={venue.id} className="flex-1 text-sm font-medium text-gray-800 text-center">
+            <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
               {venue.name || `会場${venue.id.slice(-4)}`}
             </div>
           ))}
@@ -86,7 +86,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <tbody>
             {timeSlots.map((time) => (
               <tr key={time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
+                <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-gray-900 align-top border-r border-gray-600 hover:bg-gray-800 transition-colors">
                   {time}
                 </td>
                 {idealData.venues.map((venue) => {

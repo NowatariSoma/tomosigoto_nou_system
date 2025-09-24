@@ -212,12 +212,12 @@ class ScheduleAvailableVenueRepository:
 
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたスケジュールの利用可能会場を取得"""
+        """指定されたスケジュールの利用可能会場を取得（会場名も含む）"""
         # UUIDオブジェクトを文字列に変換
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("*, venues(name, campus)")
             .eq("schedule_id", schedule_id_str)
             .execute()
         )

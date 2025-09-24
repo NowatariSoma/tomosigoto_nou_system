@@ -83,16 +83,16 @@ async def get_practice_schedule_with_details(
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
 ):
     """
-    指定した練習スケジュールの詳細情報（利用可能会場、セッション含む）を取得
+    指定した練習スケジュールの詳細情報（idealフォーマット）を取得
 
     Args:
         schedule_id: 練習スケジュールID
         practice_schedule_service: 練習スケジュール管理サービス
 
     Returns:
-        練習スケジュールの詳細情報
+        理想的な形式の練習スケジュール詳細情報
     """
-    details_data = await practice_schedule_service.get_practice_schedule_details_by_id(schedule_id)
+    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_id(schedule_id)
     if not details_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return details_data
@@ -115,6 +115,27 @@ async def get_practice_schedule_for_display(
     """
     schedule_display = await practice_schedule_service.get_practice_schedule_for_display(schedule_id)
     return PracticeScheduleDisplayResponse(**schedule_display)
+
+
+@router.get("/date/{target_date}/details", response_model=Dict[str, Any])
+async def get_practice_schedule_details_by_date(
+    target_date: str,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+):
+    """
+    指定した日付の練習スケジュール詳細情報（idealフォーマット）を取得
+
+    Args:
+        target_date: 対象日付 (YYYY-MM-DD形式)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        理想的な形式の練習スケジュール詳細情報
+    """
+    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
+    if not details_data:
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+    return details_data
 
 
 @router.get("/date/{target_date}/ideal", response_model=Dict[str, Any])
