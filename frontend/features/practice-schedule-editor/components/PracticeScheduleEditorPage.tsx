@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SessionEditorTable } from './SessionEditorTable';
+import { SessionEditorTableSimpleDnd } from './SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from './SessionEditorModal';
 import { ScheduleSelector } from './ScheduleSelector';
 import { useSessionEditor } from '../hooks/use-session-editor';
@@ -167,7 +167,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       </div>
 
       {/* 編集テーブル */}
-      <SessionEditorTable
+      <SessionEditorTableSimpleDnd
         sessions={sessions}
         venues={venues}
         time_slots={time_slots}
