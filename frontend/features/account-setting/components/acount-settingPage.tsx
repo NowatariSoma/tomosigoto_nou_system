@@ -276,9 +276,9 @@ const AccountSettings: React.FC = () => {
         <div className="flex items-center">
             <label className="w-32 text-gray-700 font-medium">学部</label>
             <Select
-                options={faculties}
-                value={formData.faculty}
-                onChange={handleFacultySelect}
+                options={departmentOptions}
+                value={formData.department_code}
+                onChange={handleDepartmentSelect}
                 width="w-40"
             />
         </div>

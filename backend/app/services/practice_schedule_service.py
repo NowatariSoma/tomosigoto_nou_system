@@ -486,14 +486,28 @@ class PracticeScheduleService:
             try:
                 schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 for i, schedule_venue in enumerate(schedule_venues):
-                    # available venueにvenuesテーブルとのJOINデータが含まれている可能性を考慮
+                    # venue_idを使って直接venuesテーブルから会場名を取得
                     venue_name = "会場"
-                    if "venues" in schedule_venue and isinstance(schedule_venue["venues"], dict):
-                        venue_name = schedule_venue["venues"].get("name", f"会場{i+1}")
-                    elif "venue_name" in schedule_venue:
-                        venue_name = schedule_venue["venue_name"]
+                    venue_id = schedule_venue.get("venue_id")
+                    print(f"Schedule venue data: {schedule_venue}")  # デバッグ用
+                    print(f"Venue ID: {venue_id}")  # デバッグ用
+                    
+                    if venue_id:
+                        try:
+                            # venuesテーブルから直接会場名を取得
+                            venue_response = await self.venue_repository.find_by_id(venue_id)
+                            if venue_response:
+                                venue_name = venue_response.get("name", f"会場{i+1}")
+                                print(f"Found venue name: {venue_name}")  # デバッグ用
+                            else:
+                                venue_name = f"会場{i+1}"
+                        except Exception as venue_error:
+                            print(f"Warning: Could not fetch venue {venue_id}: {venue_error}")
+                            venue_name = f"会場{i+1}"
                     else:
                         venue_name = f"会場{i+1}"
+                    
+                    print(f"Final venue name: {venue_name}")  # デバッグ用
 
                     venue_info = {
                         "id": f"venue-{schedule_venue.get('id', i+1)}",
@@ -821,7 +835,37 @@ class PracticeScheduleService:
         }
 
         # 実際の会場データを取得
-        venues = await self._get_venues_with_colors(schedule["id"])
+        if venues is None or len(venues) == 0:
+            venues = await self._get_venues_with_colors(schedule["id"])
+        else:
+            # 渡されたvenuesデータを色情報付きで変換
+            venues_with_colors = []
+            for i, venue in enumerate(venues):
+                venue_id = venue.get("venue_id")
+                venue_name = "会場"
+                
+                if venue_id:
+                    try:
+                        # venuesテーブルから直接会場名を取得
+                        venue_info = await self.venue_repository.find_by_id(venue_id)
+                        if venue_info:
+                            venue_name = venue_info.get("name", f"会場{i+1}")
+                        else:
+                            venue_name = f"会場{i+1}"
+                    except Exception as venue_error:
+                        print(f"Warning: Could not fetch venue {venue_id}: {venue_error}")
+                        venue_name = f"会場{i+1}"
+                else:
+                    venue_name = f"会場{i+1}"
+                
+                venue_with_color = {
+                    "id": f"venue-{venue.get('id', i+1)}",
+                    "name": venue_name,
+                    "priority": venue.get("priority", i+1),
+                    "color": settings.DEFAULT_VENUE_COLORS[i % len(settings.DEFAULT_VENUE_COLORS)]
+                }
+                venues_with_colors.append(venue_with_color)
+            venues = venues_with_colors
 
         # 時間スケジュールを生成
         time_schedule = self._generate_time_schedule(venues, schedule, division_count)
@@ -978,4 +1022,23 @@ class PracticeScheduleService:
             }
             result["sessions"].append(session_info)
 
+        return result
+
+    async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
+        """指定したIDの練習スケジュールの理想形式データを取得"""
+        print(f"DEBUG: get_practice_schedule_ideal_format_by_id called with schedule_id: {schedule_id}")
+        
+        # 基本スケジュール情報を取得
+        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        if not schedule:
+            print(f"DEBUG: No schedule found for ID: {schedule_id}")
+            return None
+
+        # 日付を取得して理想形式でデータを取得
+        schedule_date = str(schedule["schedule_date"])
+        print(f"DEBUG: Found schedule, date: {schedule_date}")
+        
+        result = await self.get_practice_schedule_ideal_format_by_date(schedule_date)
+        print(f"DEBUG: Ideal format result keys: {list(result.keys()) if result else 'None'}")
+        
         return result

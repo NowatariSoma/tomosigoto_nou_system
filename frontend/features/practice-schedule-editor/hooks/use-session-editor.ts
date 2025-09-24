@@ -101,6 +101,8 @@ export const useSessionEditor = (scheduleId: string) => {
         slot_order: session.slot_order,
         schedule_available_venue_id: session.schedule_available_venue_id,
         priority: session.priority,
+        start_time: session.start_time,
+        end_time: session.end_time,
         created_at: session.created_at,
         updated_at: session.updated_at,
       }));
