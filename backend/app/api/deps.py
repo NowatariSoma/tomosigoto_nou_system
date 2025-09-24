@@ -226,6 +226,7 @@ def get_practice_schedule_service(
     schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
     session_repository: SessionRepository = Depends(get_session_repository),
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+    venue_repository: VenueRepository = Depends(get_venue_repository),
 ) -> PracticeScheduleService:
     """PracticeScheduleServiceのインスタンスを依存性注入で取得"""
     return PracticeScheduleService(
@@ -233,5 +234,6 @@ def get_practice_schedule_service(
         schedule_available_venue_repository,
         session_repository,
         session_instructor_repository,
+        venue_repository,
         supabase_client.auth,
     )

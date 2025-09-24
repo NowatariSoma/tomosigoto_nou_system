@@ -8,14 +8,12 @@ interface PracticeScheduleCardProps {
   schedule: PracticeSchedule;
   onEdit?: (schedule: PracticeSchedule) => void;
   onDelete?: (schedule: PracticeSchedule) => void;
-  onEditDateTime?: (schedule: PracticeSchedule) => void;
 }
 
 export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   schedule,
   onEdit,
   onDelete,
-  onEditDateTime,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -63,10 +61,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
               {schedule.title}
             </h3>
           )}
-          <div 
-            className={`flex items-center space-x-2 ${onEditDateTime ? 'cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors' : ''}`}
-            onClick={onEditDateTime ? () => onEditDateTime(schedule) : undefined}
-          >
+          <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4 text-blue-600" />
             <h4 className="text-md font-medium text-gray-800">
               {formatDate(schedule.date)}
@@ -107,10 +102,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
       </div>
 
       <div className="space-y-3">
-        <div 
-          className={`flex items-center space-x-2 ${onEditDateTime ? 'cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors' : ''}`}
-          onClick={onEditDateTime ? () => onEditDateTime(schedule) : undefined}
-        >
+        <div className="flex items-center space-x-2">
           <Clock className="h-4 w-4 text-gray-500" />
           <span className="text-sm text-gray-700">
             {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}

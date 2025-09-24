@@ -9,6 +9,7 @@ from app.repositories.practice_schedule_repository import (
     SessionRepository,
     SessionInstructorRepository,
 )
+from app.repositories.venue_repository import VenueRepository
 from app.core.config import settings
 
 
@@ -21,25 +22,133 @@ class PracticeScheduleService:
         schedule_available_venue_repository: ScheduleAvailableVenueRepository,
         session_repository: SessionRepository,
         session_instructor_repository: SessionInstructorRepository,
+        venue_repository: VenueRepository,
         auth_client,
     ):
         self.practice_schedule_repository = practice_schedule_repository
         self.schedule_available_venue_repository = schedule_available_venue_repository
         self.session_repository = session_repository
         self.session_instructor_repository = session_instructor_repository
+        self.venue_repository = venue_repository
         self.auth_client = auth_client
 
     # ===== 練習スケジュール CRUD =====
 
     async def get_all_practice_schedules(self) -> List[Dict[str, Any]]:
         """すべての練習スケジュールを取得"""
-        return await self.practice_schedule_repository.find_all()
+        schedules = await self.practice_schedule_repository.find_all()
+        
+        # 各スケジュールに会場情報を追加
+        for schedule in schedules:
+            schedule_id = schedule.get("id")
+            if schedule_id:
+                try:
+                    # 複数部屋選択対応: 会場情報を追加
+                    venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                    print(f"DEBUG get_all_practice_schedules: schedule_id={schedule_id}, venues={venues}")
+                    schedule["venue_ids"] = [v["venue_id"] for v in venues]
+                    
+                    # 会場詳細情報を取得
+                    venue_details = []
+                    for venue in venues:
+                        try:
+                            # 会場詳細情報を取得
+                            venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
+                            if venue_info:
+                                venue_details.append({
+                                    "id": venue["venue_id"],
+                                    "name": venue_info.get("name", "不明な会場"),
+                                    "campus": venue_info.get("campus", "不明なキャンパス")
+                                })
+                        except Exception as e:
+                            print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
+                            # エラーの場合は基本的な情報のみ
+                            venue_details.append({
+                                "id": venue["venue_id"],
+                                "name": "不明な会場",
+                                "campus": "不明なキャンパス"
+                            })
+                    
+                    schedule["venues"] = venue_details
+                except Exception as e:
+                    print(f"DEBUG: スケジュール {schedule_id} の会場情報取得エラー: {e}")
+                    schedule["venue_ids"] = []
+                    schedule["venues"] = []
+                
+                # 会場情報が空の場合、デフォルトの会場情報を設定（一時的な解決策）
+                if not schedule.get("venue_ids") and not schedule.get("venues"):
+                    print(f"DEBUG: スケジュール {schedule_id} に会場情報がありません。デフォルト値を設定します。")
+                    schedule["venue_ids"] = []
+                    schedule["venues"] = []
+                    
+                    # 既存のスケジュールにデフォルトの会場情報を追加（マイグレーション処理）
+                    try:
+                        # 利用可能な会場を取得
+                        available_venues = await self.venue_repository.find_all()
+                        if available_venues:
+                            # 最初の会場をデフォルトとして設定
+                            default_venue = available_venues[0]
+                            venue_data = {
+                                "schedule_id": str(schedule_id),
+                                "venue_id": str(default_venue["id"]),
+                                "is_preferred": True,
+                                "priority": 0,
+                                "notes": "マイグレーション処理で追加"
+                            }
+                            await self.schedule_available_venue_repository.create(venue_data)
+                            print(f"DEBUG: スケジュール {schedule_id} にデフォルト会場 {default_venue['name']} を追加しました。")
+                            
+                            # 追加した会場情報を反映
+                            schedule["venue_ids"] = [default_venue["id"]]
+                            schedule["venues"] = [{
+                                "id": default_venue["id"],
+                                "name": default_venue.get("name", "不明な会場"),
+                                "campus": default_venue.get("campus", "不明なキャンパス")
+                            }]
+                    except Exception as migration_error:
+                        print(f"DEBUG: マイグレーション処理エラー: {migration_error}")
+                        schedule["venue_ids"] = []
+                        schedule["venues"] = []
+            else:
+                schedule["venue_ids"] = []
+                schedule["venues"] = []
+        
+        return schedules
 
     async def get_practice_schedule(self, schedule_id: UUID) -> Dict[str, Any]:
         """指定した練習スケジュール情報を取得"""
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+        
+        # 複数部屋選択対応: 会場情報を追加
+        venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+        schedule["venue_ids"] = [v["venue_id"] for v in venues]
+        
+        # 会場詳細情報を取得
+        venue_details = []
+        for venue in venues:
+            try:
+                # 会場詳細情報を取得
+                venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
+                if venue_info:
+                    venue_details.append({
+                        "id": venue["venue_id"],
+                        "name": venue_info.get("name", "不明な会場"),
+                        "campus": venue_info.get("campus", "不明なキャンパス")
+                    })
+            except Exception as e:
+                print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
+                # エラーの場合は基本的な情報のみ
+                venue_details.append({
+                    "id": venue["venue_id"],
+                    "name": "不明な会場",
+                    "campus": "不明なキャンパス"
+                })
+        
+        schedule["venues"] = venue_details
+        print(f"DEBUG get_practice_schedule: 最終的なschedule={schedule}")
+        
         return schedule
 
     async def get_practice_schedule_by_date(self, target_date: str) -> Dict[str, Any]:
@@ -66,20 +175,119 @@ class PracticeScheduleService:
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
         schedule_data.pop("updated_by", None)
-        return await self.practice_schedule_repository.create(schedule_data)
+        
+        # 複数部屋選択対応: venue_idsを抽出
+        venue_ids = schedule_data.pop("venue_ids", None)
+        
+        # 練習スケジュールを作成
+        created_schedule = await self.practice_schedule_repository.create(schedule_data)
+        
+        # 複数部屋選択対応: schedule_available_venuesテーブルに会場情報を保存
+        if venue_ids:
+            for i, venue_id in enumerate(venue_ids):
+                # UUIDオブジェクトを文字列に変換
+                from uuid import UUID
+                venue_data = {
+                    "schedule_id": str(created_schedule["id"]) if isinstance(created_schedule["id"], UUID) else created_schedule["id"],
+                    "venue_id": str(venue_id) if isinstance(venue_id, UUID) else venue_id,
+                    "is_preferred": i == 0,  # 最初の会場を優先会場とする
+                    "priority": i,
+                    "notes": None
+                }
+                await self.schedule_available_venue_repository.create(venue_data)
+        
+        # 作成されたスケジュールに会場情報を追加
+        created_schedule["venue_ids"] = venue_ids or []
+        created_schedule["venues"] = []  # 会場詳細情報は別途取得が必要
+        
+        return created_schedule
 
     async def update_practice_schedule(
         self, schedule_id: UUID, schedule_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """指定した練習スケジュール情報を更新"""
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
-        if not schedule:
-            raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+        try:
+            print(f"DEBUG update_practice_schedule: schedule_id={schedule_id}, schedule_data={schedule_data}")
+            
+            schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+            if not schedule:
+                raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
 
-        # created_byとupdated_byを除外（データベースで自動設定される）
-        schedule_data.pop("created_by", None)
-        schedule_data.pop("updated_by", None)
-        return await self.practice_schedule_repository.update(schedule_id, schedule_data)
+            # created_byとupdated_byを除外（データベースで自動設定される）
+            schedule_data.pop("created_by", None)
+            schedule_data.pop("updated_by", None)
+            
+            # 複数部屋選択対応: venue_idsを抽出
+            venue_ids = schedule_data.pop("venue_ids", None)
+            print(f"DEBUG update_practice_schedule: venue_ids={venue_ids}")
+            
+            # 練習スケジュールを更新
+            updated_schedule = await self.practice_schedule_repository.update(schedule_id, schedule_data)
+            print(f"DEBUG update_practice_schedule: updated_schedule={updated_schedule}")
+            
+            # 複数部屋選択対応: 会場情報を更新
+            if venue_ids is not None:
+                print(f"DEBUG update_practice_schedule: 会場情報を更新開始")
+                # 既存の会場情報を削除
+                await self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
+                print(f"DEBUG update_practice_schedule: 既存会場情報を削除完了")
+                
+                # 新しい会場情報を追加
+                for i, venue_id in enumerate(venue_ids):
+                    # UUIDオブジェクトを文字列に変換
+                    from uuid import UUID
+                    venue_data = {
+                        "schedule_id": str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id,
+                        "venue_id": str(venue_id) if isinstance(venue_id, UUID) else venue_id,
+                        "is_preferred": i == 0,  # 最初の会場を優先会場とする
+                        "priority": i,
+                        "notes": None
+                    }
+                    print(f"DEBUG update_practice_schedule: 会場データ作成 venue_data={venue_data}")
+                    await self.schedule_available_venue_repository.create(venue_data)
+                    print(f"DEBUG update_practice_schedule: 会場データ作成完了 venue_id={venue_id}")
+                
+                updated_schedule["venue_ids"] = venue_ids
+                print(f"DEBUG update_practice_schedule: 会場情報更新完了")
+                # 更新された会場情報を取得
+                venues_for_details = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+            else:
+                # venue_idsが指定されていない場合は既存の情報を保持
+                venues_for_details = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                updated_schedule["venue_ids"] = [v["venue_id"] for v in venues_for_details]
+                print(f"DEBUG update_practice_schedule: 既存会場情報を保持")
+            
+            # 会場詳細情報を取得
+            venue_details = []
+            for venue in venues_for_details:
+                try:
+                    # 会場詳細情報を取得
+                    venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
+                    if venue_info:
+                        venue_details.append({
+                            "id": venue["venue_id"],
+                            "name": venue_info.get("name", "不明な会場"),
+                            "campus": venue_info.get("campus", "不明なキャンパス")
+                        })
+                except Exception as e:
+                    print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
+                    # エラーの場合は基本的な情報のみ
+                    venue_details.append({
+                        "id": venue["venue_id"],
+                        "name": "不明な会場",
+                        "campus": "不明なキャンパス"
+                    })
+            
+            updated_schedule["venues"] = venue_details
+            print(f"DEBUG update_practice_schedule: 最終的なupdated_schedule={updated_schedule}")
+            
+            return updated_schedule
+        except Exception as e:
+            print(f"DEBUG update_practice_schedule: エラー発生: {e}")
+            print(f"DEBUG update_practice_schedule: エラータイプ: {type(e)}")
+            import traceback
+            print(f"DEBUG update_practice_schedule: スタックトレース: {traceback.format_exc()}")
+            raise
 
     async def remove_practice_schedule(self, schedule_id: UUID) -> bool:
         """指定した練習スケジュールを削除"""
