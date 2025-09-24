@@ -198,7 +198,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 key={session.id}
                                 draggable={edit_mode === 'edit'}
                                 onDragStart={(e) => handleDragStart(e, session)}
-                                className={`rounded-lg p-3 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:shadow-md transition-all ${
+                                className={`rounded-lg p-3 bg-blue-100 border border-blue-200 hover:bg-blue-200 hover:shadow-md transition-all ${
                                   edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
                                 } ${draggedSession?.id === session.id ? 'opacity-50' : ''}`}
                                 onClick={(e) => {

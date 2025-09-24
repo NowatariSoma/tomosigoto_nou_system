@@ -133,14 +133,17 @@ export class SessionService {
    * CreateSessionRequestをAPIリクエストにマッピング
    */
   private mapCreateRequestToApiRequest(request: CreateSessionRequest): SessionApiCreateRequest {
-    return {
+    const apiRequest: SessionApiCreateRequest = {
       schedule_id: request.schedule_id,
-      part_id: request.part_id,
       title: request.title,
       slot_order: request.slot_order,
-      schedule_available_venue_id: request.schedule_available_venue_id,
       priority: request.priority,
     };
+
+    if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
+    if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
+
+    return apiRequest;
   }
 
   /**

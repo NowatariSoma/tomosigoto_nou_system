@@ -51,7 +51,7 @@ export interface UpdateSessionRequest {
  */
 export interface SessionFormData {
   title: string;
-  part_name: string;
+  part_id: string;
   instructor_ids: string[];
   venue_id: string;
   time_slot: string;
