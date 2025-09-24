@@ -20,7 +20,7 @@ export default function Page({ params }: PracticeAttendancePageProps) {
       description="練習への出席状況を登録・管理"
       icon={<UserCheck className="h-8 w-8 text-blue-600" />}
       permissionBadge={{
-        level: 'admin',
+        level: 'basic',
         text: '管理者'
       }}
       maxWidth="7xl"

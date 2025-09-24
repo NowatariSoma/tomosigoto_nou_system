@@ -15,7 +15,7 @@ export default function Page() {
         text: '認証システム統合、UI改善'
       }}
       permissionBadge={{
-        level: 'admin',
+        level: 'basic',
         text: '管理者'
       }}
       maxWidth="7xl"

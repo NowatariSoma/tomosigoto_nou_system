@@ -14,11 +14,10 @@ export default function Page() {
         level: 'alpha',
         text: 'バックエンド作成、UI改善'
       }}
-      // TODO: 管理者権限を一時的に無効化 - 本番環境では有効にする必要がある
-      // permissionBadge={{
-      //   level: 'admin',
-      //   text: '管理者'
-      // }}
+      permissionBadge={{
+        level: 'basic',
+        text: '管理者'
+      }}
       maxWidth="7xl"
     >
       <PracticeSlotsPage />
