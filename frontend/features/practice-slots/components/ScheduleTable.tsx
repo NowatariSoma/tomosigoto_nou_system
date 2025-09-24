@@ -61,6 +61,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   // 時間スロットを取得
   const timeSlots = Object.keys(idealData.time_schedule).sort();
+  
+  // デバッグ: 会場データを確認
+  console.log('会場データ:', idealData.venues);
+  console.log('会場の詳細:', idealData.venues.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
 
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
@@ -70,7 +74,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <div className="w-24 text-sm font-medium text-gray-800">時間</div>
           {idealData.venues.map((venue) => (
             <div key={venue.id} className="flex-1 text-sm font-medium text-gray-800 text-center">
-              {venue.name}
+              {venue.name || `会場${venue.id.slice(-4)}`}
             </div>
           ))}
         </div>
@@ -78,11 +82,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
       {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <tbody>
             {timeSlots.map((time) => (
               <tr key={time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white">
+                <td className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
                   {time}
                 </td>
                 {idealData.venues.map((venue) => {
@@ -99,24 +103,15 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                     >
                       {parts.length > 0 ? (
                         <div 
-                          className="rounded-lg p-3 shadow-sm border border-opacity-30 cursor-pointer hover:shadow-md transition-shadow"
-                          style={{ 
-                            backgroundColor: parts[0].part_color,
-                            borderColor: parts[0].part_color 
-                          }}
+                          className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
-                          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+                          <div className="text-sm font-medium text-gray-900 mb-1">
                             {parts[0].part_name}
                           </div>
-                          <div className="text-xs text-gray-700">
-                            👨‍🏫 {parts[0].instructors.length > 0 ? parts[0].instructors.join(', ') : '指導者未定'}
+                          <div className="text-xs text-gray-600">
+                            🎭 {parts[0].instructors.length > 0 ? parts[0].instructors.join(', ') : '指導者未定'}
                           </div>
-                          {parts[0].slot_order && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              順序: {parts[0].slot_order}
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <div className="text-center text-gray-400 py-6">
