@@ -2,6 +2,7 @@
 
 import { useState, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Badge } from '@/components/ui/feedback/badge';
@@ -84,7 +85,15 @@ export function AppTemplate({
             <div className={`${getMaxWidthClass()} mx-auto ${className}`}>
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <ShieldAlert className="h-24 w-24 text-red-600 mx-auto mb-4" />
+                  <div className="mb-4">
+                    <Image
+                      src="/takuichi.png"
+                      alt="アクセス拒否"
+                      width={400}
+                      height={400}
+                      className="mx-auto"
+                    />
+                  </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">アクセス権限がありません</h2>
                   <p className="text-gray-600 mb-4">
                     この機能は管理者のみが利用できます。
