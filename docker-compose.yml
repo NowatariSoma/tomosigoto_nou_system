@@ -13,8 +13,9 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
+      # バックエンドのソースコードをマウント
+      - ./backend:/app
+      
       - ./.env:/.env
     restart: unless-stopped
     command: >
@@ -50,10 +51,11 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     volumes:
+      # フロントエンドのソースコードをマウント
+      - ./frontend:/app
+      # node_modulesと.nextは除外（コンテナ内のものを使用）
       - /app/node_modules
       - /app/.next
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
       - ./.env:/.env
     restart: unless-stopped
     depends_on:
@@ -64,9 +66,9 @@ services:
         cp /env.example /.env
       fi &&
       if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
-        yarn dev
+        npm run dev
       else
-        yarn start
+        npm start
       fi"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
