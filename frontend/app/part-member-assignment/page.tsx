@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { PartCard } from '@/components/PartCard';
-import { MemberRegistrationModal } from '@/components/MemberRegistrationModal';
-import { mockParts } from '@/data/mockData';
-import { Part, Member } from '@/types';
+import { PartCard } from '@/features/part-member-assignment/components/PartCard';
+import { MemberRegistrationModal } from '@/features/part-member-assignment/components/part-member-assignmentPage';
+import { mockParts } from '@/features/part-member-assignment/data/mockData';
+import { Part, Member } from '@/features/part-member-assignment/types';
 
 export default function Home() {
   const [parts, setParts] = useState<Part[]>(mockParts);
