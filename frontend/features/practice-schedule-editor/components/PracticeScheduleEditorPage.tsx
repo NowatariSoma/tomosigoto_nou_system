@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { SessionEditorTableSimpleDnd } from './SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from './SessionEditorModal';
 import { ScheduleSelector } from './ScheduleSelector';
+import { ScheduleTimeEditor } from './ScheduleTimeEditor';
 import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
 import { Edit, Eye, Plus, Calendar, ArrowLeft } from 'lucide-react';
@@ -20,6 +21,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   const [currentScheduleId, setCurrentScheduleId] = useState(initialScheduleId || '');
   const [currentScheduleDate, setCurrentScheduleDate] = useState(initialScheduleDate || '');
   const [isScheduleSelected, setIsScheduleSelected] = useState(!!initialScheduleId);
+  const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
+  const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
 
   const {
     sessions,
@@ -59,9 +62,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (window.confirm('このセッションを削除しますか？')) {
-      await deleteSession(sessionId);
-    }
+    await deleteSession(sessionId);
   };
 
   const handleSessionSubmit = async (formData: any) => {
@@ -85,6 +86,24 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     setCurrentScheduleId(scheduleId);
     setCurrentScheduleDate(scheduleDate);
     setIsScheduleSelected(true);
+  };
+
+  const handleScheduleTimeUpdate = async (startTime: string, endTime: string) => {
+    try {
+      const { practiceScheduleEditorService } = await import('../services');
+      await practiceScheduleEditorService.updateScheduleTime(
+        currentScheduleId,
+        `${startTime}:00`,
+        `${endTime}:00`
+      );
+      setScheduleStartTime(startTime);
+      setScheduleEndTime(endTime);
+
+      await fetchScheduleDetails();
+    } catch (error) {
+      console.error('スケジュール時間の更新に失敗しました:', error);
+      alert('スケジュール時間の更新に失敗しました');
+    }
   };
 
   const handleBackToSelection = () => {
@@ -132,6 +151,13 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             <p className="text-gray-600 mt-1">
               {currentScheduleDate} の練習スケジュールを編集します
             </p>
+            <div className="mt-2">
+              <ScheduleTimeEditor
+                startTime={scheduleStartTime}
+                endTime={scheduleEndTime}
+                onUpdate={handleScheduleTimeUpdate}
+              />
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-3">

@@ -177,12 +177,16 @@ export const useSessionEditor = (scheduleId: string) => {
         });
 
         // 使用されている時間スロットからTimeSlotオブジェクトを生成
-        timeSlots = Array.from(usedTimeSlots).sort().map(time => {
-          // 終了時刻を30分後に設定
-          const [hours, minutes] = time.split(':').map(Number);
-          const endHours = minutes >= 30 ? hours + 1 : hours;
-          const endMinutes = minutes >= 30 ? 0 : 30;
-          const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        const sortedSlots = Array.from(usedTimeSlots).sort();
+        timeSlots = sortedSlots.map((time, index) => {
+          let endTime: string;
+
+          if (index < sortedSlots.length - 1) {
+            endTime = sortedSlots[index + 1];
+          } else {
+            const scheduleEndTime = details.schedule_info.end_time || basicSchedule?.end_time || '17:00';
+            endTime = scheduleEndTime.substring(0, 5);
+          }
 
           return {
             time: time,
@@ -196,7 +200,8 @@ export const useSessionEditor = (scheduleId: string) => {
         console.log('セッションがないため、デフォルトの時間スロットを生成します。');
         const startTime = basicSchedule.start_time || '09:00';
         const endTime = basicSchedule.end_time || '17:00';
-        timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime);
+        const divisionCount = basicSchedule.division_count || 6;
+        timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
       }
 
       dispatch({ type: 'SET_TIME_SLOTS', payload: timeSlots });
@@ -217,16 +222,14 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const maxSlotOrder = state.sessions.reduce((max, session) =>
-        Math.max(max, session.slot_order || 0), 0
-      );
-      const nextSlotOrder = maxSlotOrder + 1;
+      const slotIndex = state.time_slots.findIndex(slot => slot.time === formData.time_slot);
+      const slotOrder = slotIndex !== -1 ? slotIndex + 1 : 1;
 
       const newSession = await sessionService.createSession({
         schedule_id: scheduleId,
         part_id: formData.part_id || undefined,
         title: formData.title,
-        slot_order: nextSlotOrder,
+        slot_order: slotOrder,
         schedule_available_venue_id: formData.venue_id || undefined,
         priority: formData.priority,
       });
@@ -239,7 +242,7 @@ export const useSessionEditor = (scheduleId: string) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [scheduleId, state.sessions]);
+  }, [scheduleId, state.time_slots]);
 
   /**
    * セッションを更新
@@ -292,16 +295,11 @@ export const useSessionEditor = (scheduleId: string) => {
     timeSlot: string,
     slotOrder: number
   ) => {
-    console.warn('セッション移動機能は現在実装中です');
-    alert('セッション移動機能は現在実装中です。しばらくお待ちください。');
-    return;
-
-    // 以下、実装予定のコード
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const updatedSession = await sessionService.moveSession(sessionId, venueId, timeSlot, slotOrder);
+      const updatedSession = await sessionService.moveSession(sessionId, venueId, slotOrder);
       dispatch({ type: 'UPDATE_SESSION', payload: updatedSession });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'セッションの移動に失敗しました';
