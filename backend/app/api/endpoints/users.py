@@ -20,17 +20,6 @@ async def get_users(
     return await user_service.get_all_users()
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user(
-    user_id: str,
-    user_service: UserService = Depends(get_user_service),
-):
-    """
-    特定のユーザー情報を取得
-    """
-    return await user_service.get_user_by_id(user_id)
-
-
 @router.get("/me")
 async def get_current_user_info(
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -58,6 +47,17 @@ async def get_current_user_role(
         }
 
     return role
+
+
+@router.get("/{user_id}", response_model=UserResponse)
+async def get_user(
+    user_id: str,
+    user_service: UserService = Depends(get_user_service),
+):
+    """
+    特定のユーザー情報を取得
+    """
+    return await user_service.get_user_by_id(user_id)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

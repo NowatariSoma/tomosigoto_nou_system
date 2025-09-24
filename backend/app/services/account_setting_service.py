@@ -74,13 +74,6 @@ class AccountSettingService:
 
     async def get_profile_by_user_id(self, user_id: str) -> Optional[AccountSettingProfileResponse]:
         """ユーザーIDでアカウント設定プロフィールを取得"""
-        # テスト用のユーザーIDをUUID形式に変換
-        if user_id.startswith('test-user-'):
-            import hashlib
-            hash_object = hashlib.md5(user_id.encode())
-            hex_dig = hash_object.hexdigest()
-            user_id = f"{hex_dig[:8]}-{hex_dig[8:12]}-{hex_dig[12:16]}-{hex_dig[16:20]}-{hex_dig[20:32]}"
-        
         profile_data = await self.user_profile_repo.get_profile_by_user_id(user_id)
         if not profile_data:
             return None
@@ -132,19 +125,6 @@ class AccountSettingService:
     async def create_profile(self, user_id: str, profile_data: AccountSettingProfileCreate) -> AccountSettingProfileResponse:
         """新しいアカウント設定プロフィールを作成"""
         logger.info(f"Creating account setting profile for user: {user_id}")
-
-        # テスト用のユーザーIDをUUID形式に変換してusersテーブルに挿入
-        if user_id.startswith('test-user-'):
-            # テスト用のユーザーIDをUUID形式に変換
-            import hashlib
-            hash_object = hashlib.md5(user_id.encode())
-            hex_dig = hash_object.hexdigest()
-            original_user_id = user_id
-            user_id = f"{hex_dig[:8]}-{hex_dig[8:12]}-{hex_dig[12:16]}-{hex_dig[16:20]}-{hex_dig[20:32]}"
-            logger.info(f"Converted test user ID from {original_user_id} to {user_id}")
-            
-            # テスト用のユーザーをusersテーブルに挿入（存在しない場合のみ）
-            await self._ensure_test_user_exists(user_id)
 
         # 学部の存在確認
         department = await self.department_repo.get_department_by_code(profile_data.department_code)
@@ -205,13 +185,6 @@ class AccountSettingService:
     async def update_profile(self, user_id: str, update_data: AccountSettingUpdateRequest) -> AccountSettingProfileResponse:
         """アカウント設定プロフィールを更新"""
         logger.info(f"Updating account setting profile for user: {user_id}")
-
-        # テスト用のユーザーIDをUUID形式に変換
-        if user_id.startswith('test-user-'):
-            import hashlib
-            hash_object = hashlib.md5(user_id.encode())
-            hex_dig = hash_object.hexdigest()
-            user_id = f"{hex_dig[:8]}-{hex_dig[8:12]}-{hex_dig[12:16]}-{hex_dig[16:20]}-{hex_dig[20:32]}"
 
         # 既存プロフィールの確認
         existing_profile = await self.user_profile_repo.get_profile_by_user_id(user_id)

@@ -26,11 +26,11 @@ class UserService:
 
     async def get_all_users(self) -> List[Dict[str, Any]]:
         """すべてのユーザーを取得"""
-        return await self.repository.find_all()
+        return await self.repository.get_all_users()
 
     async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """IDでユーザーを取得"""
-        user = await self.repository.find_by_id(user_id)
+        user = await self.repository.get_user_by_id(user_id)
         if not user:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return user
@@ -54,7 +54,7 @@ class UserService:
         logger.info(f"Creating user with email: {user_data['email']}")
 
         # 既存ユーザーチェック（メールアドレスベース）
-        existing_user = await self.repository.find_by_email(user_data["email"])
+        existing_user = await self.repository.get_user_by_email(user_data["email"])
         if existing_user:
             logger.warning(f"User already exists in DB: {user_data['email']}")
             raise APIException(ErrorMessage.USER_ALREADY_EXISTS)
@@ -103,19 +103,19 @@ class UserService:
 
         # リポジトリを通してDBに保存
         logger.info(f"Saving user to DB: {user_record}")
-        created_user = await self.repository.create(user_record)
+        created_user = await self.repository.create_user(user_record)
         logger.info(f"User created successfully: {user_data['email']}")
         return created_user
 
     async def delete_user(self, user_id: str) -> bool:
         """ユーザーを削除（DBと認証両方から）"""
         # ユーザーの存在確認
-        user = await self.repository.find_by_id(user_id)
+        user = await self.repository.get_user_by_id(user_id)
         if not user:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
 
         # まずDBから削除
-        await self.repository.delete(user_id)
+        await self.repository.delete_user(user_id)
 
         # 次にSupabase Authからも削除
         try:
@@ -132,7 +132,7 @@ class UserService:
     ) -> Optional[Dict[str, Any]]:
         """ユーザー情報を更新"""
         # ユーザーの存在確認
-        existing_user = await self.repository.find_by_id(user_id)
+        existing_user = await self.repository.get_user_by_id(user_id)
         if not existing_user:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
 
@@ -147,6 +147,6 @@ class UserService:
             return existing_user
 
         # リポジトリを通して更新
-        updated_user = await self.repository.update(user_id, update_data)
+        updated_user = await self.repository.update_user(user_id, update_data)
         logger.info(f"User updated successfully: {user_id}")
         return updated_user
