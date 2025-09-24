@@ -28,6 +28,7 @@ async def get_current_user_profile(
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
     user_id = current_user["id"]
+    print(f"Getting profile for user_id: {user_id}")
     profile = await account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:

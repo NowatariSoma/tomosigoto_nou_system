@@ -50,3 +50,21 @@ export interface ValidationResponse {
   errors: ValidationError[];
   warnings: string[];
 }
+
+export interface UserRole {
+  id?: string;
+  user_id?: string;
+  role_type: string;
+  is_visible_to_general: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  created_at?: string;
+  updated_at?: string;
+  last_sign_in_at?: string;
+  raw_user_meta_data?: Record<string, any>;
+}
