@@ -19,6 +19,9 @@ export const INITIAL_PRACTICE_SCHEDULE_FORM = {
   venueId: '',
   title: '',
   description: '',
+  // 複数部屋選択対応
+  venueIds: [],
+  selectedVenues: [],
 } as const;
 
 // UI表示用テキスト

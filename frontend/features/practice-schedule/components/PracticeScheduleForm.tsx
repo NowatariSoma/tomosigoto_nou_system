@@ -5,6 +5,7 @@ import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { Room } from '../../room-settings/types';
 import { UI_TEXT, VALIDATION, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
+import RoomSelection from './RoomSelection';
 
 interface PracticeScheduleFormProps {
   schedule?: PracticeSchedule | null;
@@ -29,6 +30,12 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
       venueId: schedule.venueId,
       title: schedule.title || '',
       description: schedule.description || '',
+      venueIds: schedule.venueIds || [schedule.venueId],
+      selectedVenues: schedule.venues || [{
+        id: schedule.venueId,
+        name: schedule.venueName,
+        campus: schedule.campus,
+      }],
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
 
@@ -59,7 +66,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
       newErrors.endTime = '終了時間は開始時間より後である必要があります';
     }
 
-    if (!formData.venueId) {
+    if (!formData.venueId && formData.venueIds.length === 0) {
       newErrors.venueId = '会場は必須です';
     }
 
@@ -88,6 +95,41 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  const handleAddRooms = (rooms: Room[]) => {
+    const newVenueIds = rooms.map(room => room.id);
+    const newSelectedVenues = rooms.map(room => ({
+      id: room.id,
+      name: room.name,
+      campus: room.campus,
+    }));
+    
+    setFormData(prev => ({
+      ...prev,
+      venueIds: newVenueIds,
+      selectedVenues: newSelectedVenues,
+      // 最初の部屋をメインのvenueIdとして設定（後方互換性のため）
+      venueId: newVenueIds[0] || '',
+    }));
+    
+    // エラーをクリア
+    if (errors.venueId) {
+      setErrors(prev => ({ ...prev, venueId: undefined }));
+    }
+  };
+
+  const handleRemoveRoom = (roomId: string) => {
+    const newSelectedVenues = formData.selectedVenues.filter(venue => venue.id !== roomId);
+    const newVenueIds = newSelectedVenues.map(venue => venue.id);
+    
+    setFormData(prev => ({
+      ...prev,
+      venueIds: newVenueIds,
+      selectedVenues: newSelectedVenues,
+      // 最初の部屋をメインのvenueIdとして設定（後方互換性のため）
+      venueId: newVenueIds[0] || '',
+    }));
   };
 
   const generateTimeOptions = () => {
@@ -188,26 +230,18 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           </div>
         </div>
 
-        {/* 会場選択 */}
+        {/* 会場選択（複数選択対応） */}
         <div>
           <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
             <MapPin className="h-4 w-4" />
             <span>{UI_TEXT.VENUE} <span className="text-red-500">*</span></span>
           </label>
-          <select
-            value={formData.venueId}
-            onChange={(e) => handleInputChange('venueId', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.venueId ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            <option value="">選択してください</option>
-            {venues.map((venue) => (
-              <option key={venue.id} value={venue.id}>
-                {venue.name} ({venue.campus}キャンパス)
-              </option>
-            ))}
-          </select>
+          <RoomSelection
+            selectedRooms={formData.selectedVenues}
+            onAddRoom={handleAddRooms}
+            onRemoveRoom={handleRemoveRoom}
+            availableRooms={venues}
+          />
           {errors.venueId && (
             <p className="mt-1 text-sm text-red-600">{errors.venueId}</p>
           )}
