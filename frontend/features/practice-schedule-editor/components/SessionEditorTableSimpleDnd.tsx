@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
-import { Calendar, GripVertical } from 'lucide-react';
+import { Calendar, GripVertical, Trash2 } from 'lucide-react';
 
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
@@ -52,25 +52,13 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
             const matchingSlot = time_slots.find(slot => slot.time === session.start_time);
             if (matchingSlot) {
               timeSlot = matchingSlot.time;
-            } else {
-              // 存在しない場合は最も近い時間スロットを探す
-              const sessionStartMinutes = timeToMinutes(session.start_time);
-              let closestSlot = time_slots[0];
-              let minDiff = Math.abs(timeToMinutes(time_slots[0].time) - sessionStartMinutes);
-
-              for (const slot of time_slots) {
-                const diff = Math.abs(timeToMinutes(slot.time) - sessionStartMinutes);
-                if (diff < minDiff) {
-                  minDiff = diff;
-                  closestSlot = slot;
-                }
-              }
-              timeSlot = closestSlot?.time || '';
             }
           } else if (time_slots.length > 0) {
             // start_timeが設定されていない場合は、slot_orderから時間スロットを決定
-            const timeSlotIndex = Math.min(session.slot_order, time_slots.length - 1);
-            timeSlot = time_slots[timeSlotIndex]?.time || time_slots[0]?.time || '';
+            const timeSlotIndex = (session.slot_order || 1) - 1;
+            if (timeSlotIndex >= 0 && timeSlotIndex < time_slots.length) {
+              timeSlot = time_slots[timeSlotIndex].time;
+            }
           }
 
           // 該当する時間スロットが存在する場合のみセッションを追加
@@ -83,6 +71,20 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
 
     return groups;
   }, [sessions, venues, time_slots]);
+
+  // 時間割外のセッションを抽出
+  const outOfScheduleSessions = React.useMemo(() => {
+    return sessions.filter(session => {
+      if (!session.schedule_available_venue_id) return true;
+
+      const timeSlotIndex = (session.slot_order || 1) - 1;
+      if (timeSlotIndex < 0 || timeSlotIndex >= time_slots.length) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [sessions, time_slots]);
 
   const handleDragStart = (e: React.DragEvent, session: Session) => {
     setDraggedSession(session);
@@ -105,34 +107,18 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
     setDragOverCell(null);
 
     if (draggedSession) {
-      const cellSessions = groupedSessions[venueId]?.[timeSlot] || [];
-      const slotOrder = cellSessions.length;
-
-      // セッションIDから実際のIDを抽出（temp_で始まる場合はそのまま使用）
-      let actualSessionId = draggedSession.id;
-      if (draggedSession.id.startsWith('temp_')) {
-        // 一時的なIDの場合はそのまま使用
-        actualSessionId = draggedSession.id;
-      } else if (draggedSession.id.includes('_')) {
-        // 複合IDの場合は最後の部分を使用
-        const parts = draggedSession.id.split('_');
-        actualSessionId = parts[parts.length - 1];
-      }
-
-      // part_idがある場合はそれを使用
-      if (draggedSession.part_id) {
-        actualSessionId = draggedSession.part_id;
-      }
+      const slotIndex = time_slots.findIndex(slot => slot.time === timeSlot);
+      const slotOrder = slotIndex + 1;
 
       console.log('Moving session:', {
-        originalId: draggedSession.id,
-        actualSessionId,
+        sessionId: draggedSession.id,
         venueId,
         timeSlot,
+        slotIndex,
         slotOrder
       });
 
-      onMoveSession(actualSessionId, venueId, timeSlot, slotOrder);
+      onMoveSession(draggedSession.id, venueId, timeSlot, slotOrder);
       setDraggedSession(null);
     }
   };
@@ -230,6 +216,18 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                       </div>
                                     )}
                                   </div>
+                                  {edit_mode === 'edit' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteSession(session.id);
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                      title="削除"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -262,6 +260,29 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
           </div>
         </div>
       </div>
+
+      {/* 時間割外セッション */}
+      {outOfScheduleSessions.length > 0 && (
+        <div className="px-4 py-3 bg-red-50 border-t border-red-200">
+          <div className="text-sm font-semibold text-red-700 mb-2">
+            ⚠️ 時間割外のセッション ({outOfScheduleSessions.length}件)
+          </div>
+          <div className="space-y-1">
+            {outOfScheduleSessions.map((session) => (
+              <div
+                key={session.id}
+                className="rounded-lg p-2 bg-red-100 border border-red-300 text-sm cursor-pointer hover:bg-red-200"
+                onClick={() => onEditSession(session.id)}
+              >
+                <div className="font-bold text-red-800">{session.title}</div>
+                <div className="text-xs text-red-600">
+                  slot_order: {session.slot_order} (時間割の範囲外)
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

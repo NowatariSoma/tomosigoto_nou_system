@@ -378,6 +378,31 @@ async def update_session(
     return SessionResponse(**updated_session)
 
 
+@router.put("/sessions/{session_id}/move", response_model=SessionResponse)
+async def move_session(
+    session_id: UUID,
+    target_venue_id: UUID,
+    target_slot_order: int,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+):
+    """
+    セッションを別の会場・時限に移動
+
+    Args:
+        session_id: セッションID
+        target_venue_id: 移動先会場ID
+        target_slot_order: 移動先時限番号
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        更新されたセッション
+    """
+    updated_session = await practice_schedule_service.move_session(
+        session_id, target_venue_id, target_slot_order
+    )
+    return SessionResponse(**updated_session)
+
+
 @router.delete("/sessions/{session_id}")
 async def delete_session(
     session_id: UUID,

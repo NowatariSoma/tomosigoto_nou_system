@@ -92,24 +92,13 @@ export class SessionService {
   async moveSession(
     sessionId: string,
     venueId: string,
-    timeSlot: string,
     slotOrder: number
   ): Promise<Session> {
-    console.log('SessionService.moveSession called with:', {
-      sessionId,
-      venueId,
-      timeSlot,
-      slotOrder
+    const response = await fetchApi(`${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`, {
+      method: 'PUT',
     });
-
-    const data: UpdateSessionRequest = {
-      schedule_available_venue_id: venueId,
-      slot_order: slotOrder,
-    };
-
-    console.log('Sending update request with data:', data);
-
-    return this.updateSession(sessionId, data);
+    const apiSession: SessionApiResponse = await response.json();
+    return this.mapApiResponseToSession(apiSession);
   }
 
   /**

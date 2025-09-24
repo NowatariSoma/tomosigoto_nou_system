@@ -91,21 +91,24 @@ export class PracticeScheduleEditorService {
    * 時間スロットを生成
    * @param startTime - 開始時間 (HH:MM形式)
    * @param endTime - 終了時間 (HH:MM形式)
+   * @param divisionCount - 分割数
    * @returns 時間スロット一覧
    */
-  generateTimeSlots(startTime: string, endTime: string): TimeSlot[] {
+  generateTimeSlots(startTime: string, endTime: string, divisionCount: number = 6): TimeSlot[] {
     const slots: TimeSlot[] = [];
-    
-    // 開始時間と終了時間を分に変換
+
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
-    
-    // 30分間隔で時間スロットを生成
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += TIME_SLOTS.INTERVAL_MINUTES) {
-      const timeString = this.minutesToTime(minutes);
-      const nextMinutes = Math.min(minutes + TIME_SLOTS.INTERVAL_MINUTES, endMinutes);
-      const nextTimeString = this.minutesToTime(nextMinutes);
-      
+    const totalMinutes = endMinutes - startMinutes;
+    const slotDuration = totalMinutes / divisionCount;
+
+    for (let i = 0; i < divisionCount; i++) {
+      const slotStartMinutes = startMinutes + Math.floor(i * slotDuration);
+      const slotEndMinutes = startMinutes + Math.floor((i + 1) * slotDuration);
+
+      const timeString = this.minutesToTime(slotStartMinutes);
+      const nextTimeString = this.minutesToTime(slotEndMinutes);
+
       slots.push({
         time: timeString,
         start_time: timeString,
@@ -113,8 +116,24 @@ export class PracticeScheduleEditorService {
         display_time: `${timeString}-${nextTimeString}`,
       });
     }
-    
+
     return slots;
+  }
+
+  /**
+   * 練習スケジュールの時間を更新
+   * @param scheduleId - スケジュールID
+   * @param startTime - 開始時間 (HH:MM:SS形式)
+   * @param endTime - 終了時間 (HH:MM:SS形式)
+   */
+  async updateScheduleTime(scheduleId: string, startTime: string, endTime: string): Promise<void> {
+    await fetchApi(`${this.basePath}/${scheduleId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        start_time: startTime,
+        end_time: endTime,
+      }),
+    });
   }
 
   /**
@@ -124,7 +143,7 @@ export class PracticeScheduleEditorService {
   async getVenues(): Promise<VenueInfo[]> {
     const response = await fetchApi(API_ENDPOINTS.VENUES);
     const venues = await response.json();
-    
+
     return venues.map((venue: any) => ({
       id: venue.id,
       name: venue.name,

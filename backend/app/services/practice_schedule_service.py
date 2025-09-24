@@ -386,6 +386,45 @@ class PracticeScheduleService:
 
         return await self.session_repository.update(session_id, session_data)
 
+    async def move_session(
+        self, session_id: UUID, target_venue_id: UUID, target_slot_order: int
+    ) -> Dict[str, Any]:
+        """セッションを別の会場・時限に移動"""
+        session = await self.session_repository.find_by_id(session_id)
+        if not session:
+            raise APIException(ErrorMessage.SESSION_NOT_FOUND)
+
+        old_venue_id = session.get("schedule_available_venue_id")
+        old_slot_order = session.get("slot_order")
+        schedule_id = session.get("schedule_id")
+
+        if str(old_venue_id) == str(target_venue_id) and old_slot_order == target_slot_order:
+            return session
+
+        sessions_in_old_venue = await self.session_repository.find_by_schedule(schedule_id)
+        sessions_in_old_venue = [
+            s for s in sessions_in_old_venue
+            if str(s.get("schedule_available_venue_id")) == str(old_venue_id)
+            and str(s.get("id")) != str(session_id)
+        ]
+
+        updated_session = await self.session_repository.update(
+            session_id,
+            {
+                "schedule_available_venue_id": str(target_venue_id),
+                "slot_order": target_slot_order
+            }
+        )
+
+        for s in sessions_in_old_venue:
+            if s.get("slot_order", 0) > old_slot_order:
+                await self.session_repository.update(
+                    s["id"],
+                    {"slot_order": s["slot_order"] - 1}
+                )
+
+        return updated_session
+
     async def remove_session(self, session_id: UUID) -> bool:
         """指定したセッションを削除"""
         session = await self.session_repository.find_by_id(session_id)

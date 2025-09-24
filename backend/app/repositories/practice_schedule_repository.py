@@ -306,6 +306,11 @@ class SessionRepository:
     @handle_supabase_errors("update")
     async def update(self, session_id: UUID, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """セッションを更新"""
+        if "schedule_available_venue_id" in session_data and session_data["schedule_available_venue_id"] is not None:
+            session_data["schedule_available_venue_id"] = str(session_data["schedule_available_venue_id"])
+        if "part_id" in session_data and session_data["part_id"] is not None:
+            session_data["part_id"] = str(session_data["part_id"])
+
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = (
             self.client.table(self.table_name)
