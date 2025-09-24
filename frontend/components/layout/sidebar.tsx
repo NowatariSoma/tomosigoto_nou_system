@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/forms/button';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Users,
   User,
@@ -20,7 +20,8 @@ import {
   BookOpen,
   Building,
   ReceiptText,
-  Clock
+  Clock,
+  Edit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -212,6 +213,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
+                icon={<Edit className="w-4 h-4" />}
+                label="練習表編集"
+                active={pathname === '/practice-schedule-editor'}
+                onClick={() => handleNavigateAndClose('/practice-schedule-editor')}
+              />
+
+              <NavItem
                 icon={<BookOpen className="w-4 h-4" />}
                 label="練習表"
                 active={pathname === '/practice-slots'}
@@ -318,6 +326,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "登録"}
             active={pathname === '/practice-schedule'}
             href="/practice-schedule"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Edit className="w-4 h-4" />}
+            label={isCollapsed ? "" : "練習表編集"}
+            active={pathname === '/practice-schedule-editor'}
+            href="/practice-schedule-editor"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

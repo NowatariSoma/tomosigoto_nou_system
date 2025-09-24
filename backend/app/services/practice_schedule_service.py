@@ -117,8 +117,11 @@ class PracticeScheduleService:
 
     async def get_practice_schedule(self, schedule_id: UUID) -> Dict[str, Any]:
         """指定した練習スケジュール情報を取得"""
+        print(f"DEBUG get_practice_schedule: schedule_id={schedule_id}, type={type(schedule_id)}")
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        print(f"DEBUG get_practice_schedule: schedule={schedule}")
         if not schedule:
+            print(f"DEBUG get_practice_schedule: Schedule not found for id={schedule_id}")
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         
         # 複数部屋選択対応: 会場情報を追加
