@@ -25,6 +25,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     sessions,
     venues,
     time_slots,
+    parts,
     selected_session,
     is_modal_open,
     edit_mode,
@@ -135,34 +136,12 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         </div>
         <div className="flex items-center space-x-3">
           <button
-            onClick={toggleEditMode}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-              edit_mode === 'edit'
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            onClick={handleCreateSession}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
           >
-            {edit_mode === 'edit' ? (
-              <>
-                <Eye className="h-4 w-4" />
-                <span>{UI_TEXT.VIEW_MODE}</span>
-              </>
-            ) : (
-              <>
-                <Edit className="h-4 w-4" />
-                <span>{UI_TEXT.EDIT_MODE}</span>
-              </>
-            )}
+            <Plus className="h-4 w-4" />
+            <span>{UI_TEXT.ADD_SESSION}</span>
           </button>
-          {edit_mode === 'edit' && (
-            <button
-              onClick={handleCreateSession}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{UI_TEXT.ADD_SESSION}</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -183,6 +162,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           session={selected_session}
           venues={venues}
           time_slots={time_slots}
+          parts={parts}
           is_creating={isCreating}
           onSubmit={handleSessionSubmit}
           onCancel={closeModal}

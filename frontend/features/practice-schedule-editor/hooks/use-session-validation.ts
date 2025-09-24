@@ -24,11 +24,9 @@ export const useSessionValidation = (venues: VenueInfo[]) => {
         errors.title = `タイトルは${VALIDATION.MAX_TITLE_LENGTH}文字以内で入力してください`;
       }
 
-      // パート名の検証
-      if (!formData.part_name || formData.part_name.trim().length < VALIDATION.MIN_PART_NAME_LENGTH) {
-        errors.part_name = 'パート名は必須です';
-      } else if (formData.part_name.length > VALIDATION.MAX_PART_NAME_LENGTH) {
-        errors.part_name = `パート名は${VALIDATION.MAX_PART_NAME_LENGTH}文字以内で入力してください`;
+      // パートの検証
+      if (!formData.part_id) {
+        errors.part_id = 'パートは必須です';
       }
 
       // 会場の検証

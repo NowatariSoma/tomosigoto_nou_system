@@ -3,21 +3,22 @@
  */
 
 import { useState, useCallback, useEffect, useReducer } from 'react';
-import { 
-  Session, 
-  VenueInfo, 
-  TimeSlot, 
-  SessionFormData, 
-  SessionEditorState, 
+import {
+  Session,
+  VenueInfo,
+  TimeSlot,
+  SessionFormData,
+  SessionEditorState,
   SessionEditorAction,
-  EditMode 
+  EditMode
 } from '../types/session-editor';
-import { 
+import {
   IdealFormatApiResponse,
   IdealVenueInfo,
   IdealPartInfo
 } from '../types/api';
 import { sessionService, practiceScheduleEditorService } from '../services';
+import { partService, Part } from '../services/part-service';
 import { generateTimeSlots } from '../mappers/time-slot-mapper';
 
 /**
@@ -75,10 +76,12 @@ export const useSessionEditor = (scheduleId: string) => {
     time_slots: [],
     selected_session: null,
     is_modal_open: false,
-    edit_mode: 'view',
+    edit_mode: 'edit',
     loading: false,
     error: null,
   });
+
+  const [parts, setParts] = useState<Part[]>([]);
 
   /**
    * スケジュール詳細を取得
@@ -88,14 +91,18 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      // まず基本情報を取得してスケジュールが存在するか確認
-      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(scheduleId);
+      // 並列でデータを取得
+      const [basicSchedule, details, allParts] = await Promise.all([
+        practiceScheduleEditorService.getBasicSchedule(scheduleId),
+        practiceScheduleEditorService.getScheduleDetails(scheduleId),
+        partService.getAllParts(),
+      ]);
+
       if (!basicSchedule) {
         throw new Error('スケジュールが見つかりません');
       }
 
-      // 詳細情報を取得（idealフォーマット）
-      const details: IdealFormatApiResponse = await practiceScheduleEditorService.getScheduleDetails(scheduleId);
+      setParts(allParts);
       
       // idealフォーマットからセッション情報を抽出
       const sessions: Session[] = [];
@@ -210,11 +217,17 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      const maxSlotOrder = state.sessions.reduce((max, session) =>
+        Math.max(max, session.slot_order || 0), 0
+      );
+      const nextSlotOrder = maxSlotOrder + 1;
+
       const newSession = await sessionService.createSession({
         schedule_id: scheduleId,
+        part_id: formData.part_id || undefined,
         title: formData.title,
-        slot_order: 0, // 後で計算
-        schedule_available_venue_id: formData.venue_id,
+        slot_order: nextSlotOrder,
+        schedule_available_venue_id: formData.venue_id || undefined,
         priority: formData.priority,
       });
 
@@ -226,7 +239,7 @@ export const useSessionEditor = (scheduleId: string) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [scheduleId]);
+  }, [scheduleId, state.sessions]);
 
   /**
    * セッションを更新
@@ -336,6 +349,7 @@ export const useSessionEditor = (scheduleId: string) => {
 
   return {
     ...state,
+    parts,
     fetchScheduleDetails,
     createSession,
     updateSession,

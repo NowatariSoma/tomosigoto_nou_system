@@ -45,7 +45,6 @@ class PracticeScheduleService:
                 try:
                     # 複数部屋選択対応: 会場情報を追加
                     venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
-                    print(f"DEBUG get_all_practice_schedules: schedule_id={schedule_id}, venues={venues}")
                     schedule["venue_ids"] = [v["venue_id"] for v in venues]
                     
                     # 会場詳細情報を取得
@@ -488,7 +487,7 @@ class PracticeScheduleService:
                         venue_name = f"会場{i+1}"
 
                     venue_info = {
-                        "id": f"venue-{schedule_venue.get('id', i+1)}",
+                        "id": str(schedule_venue.get('id')),
                         "name": venue_name,
                         "priority": schedule_venue.get("priority", i+1),
                         "color": settings.DEFAULT_VENUE_COLORS[i % len(settings.DEFAULT_VENUE_COLORS)]
@@ -617,7 +616,7 @@ class PracticeScheduleService:
         colors = settings.DEFAULT_VENUE_COLORS
         for i, venue in enumerate(display_data.get("available_venues", [])):
             venues.append({
-                "id": f"venue-{venue.get('id', i+1)}",
+                "id": str(venue.get('id')),
                 "name": venue.get("name", f"会場{i+1}"),
                 "priority": venue.get("priority", i+1),
                 "color": colors[i % len(colors)]
@@ -694,7 +693,7 @@ class PracticeScheduleService:
         if available_venues:
             for i, venue in enumerate(available_venues):
                 venues.append({
-                    "id": f"venue-{i+1}",
+                    "id": str(venue.get('id')),
                     "name": venue.get("venues", {}).get("name", f"会場{i+1}") if isinstance(venue.get("venues"), dict) else f"会場{i+1}",
                     "priority": venue.get("priority", i+1),
                     "color": colors[i % len(colors)]
@@ -828,8 +827,7 @@ class PracticeScheduleService:
 
                     if schedule_available_venue_id:
                         # schedule_available_venue_idに対応する会場IDを検索
-                        # venue["id"]は "venue-{schedule_available_venue.id}" の形式
-                        expected_venue_id = f"venue-{schedule_available_venue_id}"
+                        expected_venue_id = str(schedule_available_venue_id)
                         for venue in venues:
                             if venue.get("id") == expected_venue_id:
                                 venue_id = expected_venue_id

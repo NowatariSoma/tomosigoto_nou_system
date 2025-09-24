@@ -5,11 +5,13 @@ import { Session, VenueInfo, TimeSlot, SessionFormData } from '../types/session-
 import { UI_TEXT, INITIAL_SESSION_FORM, VALIDATION } from '../constants';
 import { useSessionValidation } from '../hooks/use-session-validation';
 import { Save, X, User, MapPin, Clock, Star, FileText } from 'lucide-react';
+import { Part } from '../services/part-service';
 
 interface SessionEditorModalProps {
   session?: Session | null;
   venues: VenueInfo[];
   time_slots: TimeSlot[];
+  parts: Part[];
   is_creating: boolean;
   onSubmit: (formData: SessionFormData) => Promise<void>;
   onCancel: () => void;
@@ -20,6 +22,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   session,
   venues,
   time_slots,
+  parts,
   is_creating,
   onSubmit,
   onCancel,
@@ -35,12 +38,12 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     if (session && !is_creating) {
       setFormData({
         title: session.title,
-        part_name: '', // パート名は別途取得が必要
-        instructor_ids: [], // 指導者IDは別途取得が必要
+        part_id: session.part_id || '',
+        instructor_ids: [],
         venue_id: session.schedule_available_venue_id || '',
-        time_slot: '', // 時間スロットは別途計算が必要
+        time_slot: '',
         priority: session.priority,
-        notes: '', // 備考は別途取得が必要
+        notes: '',
       });
     } else {
       setFormData(INITIAL_SESSION_FORM);
@@ -104,23 +107,28 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
             )}
           </div>
 
-          {/* パート名 */}
+          {/* パート選択 */}
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
               <User className="h-4 w-4" />
               <span>{UI_TEXT.PART_NAME} <span className="text-red-500">*</span></span>
             </label>
-            <input
-              type="text"
-              value={formData.part_name}
-              onChange={(e) => handleInputChange('part_name', e.target.value)}
-              placeholder="パート名を入力してください"
+            <select
+              value={formData.part_id}
+              onChange={(e) => handleInputChange('part_id', e.target.value)}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.part_name ? 'border-red-500' : 'border-gray-300'
+                errors.part_id ? 'border-red-500' : 'border-gray-300'
               }`}
-            />
-            {errors.part_name && (
-              <p className="mt-1 text-sm text-red-600">{errors.part_name}</p>
+            >
+              <option value="">選択してください</option>
+              {parts.map((part) => (
+                <option key={part.id} value={part.id}>
+                  {part.name}
+                </option>
+              ))}
+            </select>
+            {errors.part_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.part_id}</p>
             )}
           </div>
 

@@ -1,9 +1,9 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  PRACTICE_SCHEDULES: '/practice_slots',
-  SESSIONS: '/practice_slots/sessions',
+  PRACTICE_SCHEDULES: '/practice_schedules',
+  SESSIONS: '/practice_schedules/sessions',
   VENUES: '/venues',
-  PRACTICE_SCHEDULE_DETAILS: '/practice_slots',
+  PRACTICE_SCHEDULE_DETAILS: '/practice_schedules',
 } as const;
 
 // 時間関連の定数
@@ -53,7 +53,7 @@ export const VALIDATION = {
 // セッション編集用の初期値
 export const INITIAL_SESSION_FORM = {
   title: '',
-  part_name: '',
+  part_id: '',
   instructor_ids: [],
   venue_id: '',
   time_slot: '',
