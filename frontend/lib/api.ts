@@ -19,7 +19,12 @@ export class ApiError extends Error {
 }
 
 export async function fetchApi(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('authToken');
+  // Supabaseクライアントを動的にインポート
+  const { supabase } = await import('./supabase');
+  
+  // セッションからアクセストークンを取得
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
   
   // URLが相対パスの場合、API_BASE_URLを前に付ける
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;

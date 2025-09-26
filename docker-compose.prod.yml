@@ -1,48 +1,33 @@
 version: '3.8'
 
 services:
-  # # Cloudflare Tunnel
-  # cloudflared:
-  #   image: cloudflare/cloudflared:latest
-  #   restart: unless-stopped
-  #   command: tunnel --no-autoupdate run
-  #   environment:
-  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-  #   networks:
-  #     - tomosigoto-network
-  #   depends_on:
-  #     - nginx
-
-  # Nginx リバースプロキシ（内部通信のみ）
-  nginx:
-    image: nginx:alpine
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-    restart: unless-stopped
-    networks:
-      - tomosigoto-network
-    depends_on:
-      - backend
-      - frontend
-    labels:
-      - "project=tomosigoto-supabase"
-      - "description=Nginx Reverse Proxy for Cloudflare Tunnel"
-
   # FastAPI バックエンド
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
     env_file:
-      - .env.production
+      - .env
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
-      - ./.env.production:/.env:ro
+      # バックエンドのソースコードをマウント
+      - ./backend:/app
+      
+      - ./.env:/.env
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-    networks:
-      - tomosigoto-network
+    command: >
+      sh -c "
+      if [ ! -f /.env ]; then
+        cp /env.example /.env
+      fi &&
+      if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      else
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+      fi"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -58,19 +43,33 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=production
+        - NODE_ENV=${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
     env_file:
-      - .env.production
+      - .env
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-development}
     volumes:
-      - ./.env.production:/.env:ro
+      # フロントエンドのソースコードをマウント
+      - ./frontend:/app
+      # node_modulesと.nextは除外（コンテナ内のものを使用）
+      - /app/node_modules
+      - /app/.next
+      - ./.env:/.env
     restart: unless-stopped
     depends_on:
       - backend
-    command: npm start
-    networks:
-      - tomosigoto-network
+    command: >
+      sh -c "
+      if [ ! -f /.env ]; then
+        cp /env.example /.env
+      fi &&
+      if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
+        npm run dev
+      else
+        npm start
+      fi"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -81,5 +80,5 @@ services:
       - "description=Next.js Frontend with Supabase integration"
 
 networks:
-  tomosigoto-network:
-    driver: bridge
+  default:
+    name: tomosigoto-network

@@ -4,8 +4,8 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8000',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || '/api',  // プロキシ経由
+  AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || '/api',  // プロキシ経由
 } as const;
 
 /**

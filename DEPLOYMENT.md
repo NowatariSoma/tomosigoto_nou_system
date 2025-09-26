@@ -47,7 +47,7 @@ docker-compose -f docker-compose.prod.yml logs -f
 ### 4. 動作確認
 
 ブラウザで以下のURLにアクセス：
-- https://nou.fullweak.com
+- https://
 
 ※Cloudflare Tunnelを使用するため、SSL証明書の手動取得は不要です。
 

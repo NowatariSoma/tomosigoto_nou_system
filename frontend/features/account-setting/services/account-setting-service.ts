@@ -10,7 +10,7 @@ import { API_ENDPOINTS } from '../constants';
 
 export class AccountSettingService {
   private readonly basePath = API_ENDPOINTS.ACCOUNT_SETTING;
-  private readonly apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  private readonly apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://noh-api.fullweak.com/api/v1';
 
   private async getAuthHeaders(): Promise<HeadersInit> {
     const { data: { session } } = await supabase.auth.getSession();

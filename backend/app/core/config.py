@@ -19,8 +19,14 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Tomosigoto API"
     
-    # CORS設定
-    BACKEND_CORS_ORIGINS: List[str] = []
+    # CORS設定 - 本番環境用
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "https://noh.fullweak.com",  # フロントエンドドメイン
+        "https://www.noh.fullweak.com",
+        # 開発環境用（本番では環境変数で制御）
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
     # スケジュール表示設定
     DEFAULT_VENUE_COLORS: List[str] = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"]

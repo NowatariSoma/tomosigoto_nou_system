@@ -70,7 +70,7 @@ docker-compose -f docker-compose.prod.yml logs -f cloudflared
 
 ### 6. 動作確認
 
-1. ブラウザで https://nou.fullweak.com にアクセス
+1. ブラウザで https://noh.fullweak.com にアクセス
 2. アプリケーションが表示されることを確認
 
 ## トンネルの管理
