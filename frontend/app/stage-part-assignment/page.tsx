@@ -2,13 +2,13 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Brain } from 'lucide-react';
-import { PartMemberAssignmentPage } from '@/features/part-member-assignment/components/part-member-assignmentPage';
+import { StagePartAssignmentPage } from '@/features/stage-part-assignment/components/stage-part-assignmentPage';
 
 export default function Home() {
   return (
     <AppTemplate
-      title="メンバー割り当て"
-      description="パートに対してメンバーを割り当てるページ"
+      title="パート割り当て"
+      description="公演に対してパートを割り当てるページ"
       icon={<Brain className="h-8 w-8 text-blue-600" />}
       permissionBadge={{
         level: 'basic',
@@ -16,7 +16,7 @@ export default function Home() {
       }}
       maxWidth="7xl"
     >
-      <PartMemberAssignmentPage />
+      <StagePartAssignmentPage />
     </AppTemplate>
   );
 }
