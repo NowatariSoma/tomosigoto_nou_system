@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Performance } from '../../features/stage-member-assignment/types';
-import { mockPerformances } from '../../features/stage-member-assignment/data/mockData';
-import { PerformanceCard } from '../../features/stage-member-assignment/components/performance-card';
-import { PartRegistrationModal } from '../../features/stage-member-assignment/components/part-registration-modal';
+import { Performance } from '@/features/stage-part-assignment/types';
+import { mockPerformances } from '@/features/stage-part-assignment/data/mockData';
+import { PerformanceCard } from '@/features/stage-part-assignment/components/performance-card';
+import { PartRegistrationModal } from '@/features/stage-part-assignment/components/part-registration-modal';
 
-export default function Home() {
+export const StagePartAssignmentPage = () => {
   const [performances] = useState<Performance[]>(mockPerformances);
   const [selectedPerformance, setSelectedPerformance] = useState<Performance | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
