@@ -212,5 +212,115 @@ export const mockPerformances: Performance[] = [
         ]
       }
     ]
+  },
+  {
+    id: '5',
+    name: '公演名 5',
+    parts: ['パート 1', 'パート 2', 'パート 3', 'パート 4', 'パート 5'],
+    grades: [
+      {
+        id: 'grade-5-1',
+        name: '1回生',
+        expanded: false,
+        parts: [
+          { id: 'part-5-1-1', name: 'パート 1', selected: false },
+          { id: 'part-5-1-2', name: 'パート 2', selected: false },
+          { id: 'part-5-1-3', name: 'パート 3', selected: false },
+          { id: 'part-5-1-4', name: 'パート 4', selected: false },
+          { id: 'part-5-1-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-5-2',
+        name: '2回生',
+        expanded: false,
+        parts: [
+          { id: 'part-5-2-1', name: 'パート 1', selected: false },
+          { id: 'part-5-2-2', name: 'パート 2', selected: false },
+          { id: 'part-5-2-3', name: 'パート 3', selected: false },
+          { id: 'part-5-2-4', name: 'パート 4', selected: false },
+          { id: 'part-5-2-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-5-3',
+        name: '3回生',
+        expanded: false,
+        parts: [
+          { id: 'part-5-3-1', name: 'パート 1', selected: false },
+          { id: 'part-5-3-2', name: 'パート 2', selected: false },
+          { id: 'part-5-3-3', name: 'パート 3', selected: false },
+          { id: 'part-5-3-4', name: 'パート 4', selected: false },
+          { id: 'part-5-3-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-5-4',
+        name: '4回生',
+        expanded: false,
+        parts: [
+          { id: 'part-5-4-1', name: 'パート 1', selected: false },
+          { id: 'part-5-4-2', name: 'パート 2', selected: false },
+          { id: 'part-5-4-3', name: 'パート 3', selected: false },
+          { id: 'part-5-4-4', name: 'パート 4', selected: false },
+          { id: 'part-5-4-5', name: 'パート 5', selected: false },
+        ]
+      }
+    ]
+  },
+  {
+    id: '6',
+    name: '公演名 6',
+    parts: ['パート 1', 'パート 2', 'パート 3', 'パート 4', 'パート 5'],
+    grades: [
+      {
+        id: 'grade-6-1',
+        name: '1回生',
+        expanded: false,
+        parts: [
+          { id: 'part-6-1-1', name: 'パート 1', selected: false },
+          { id: 'part-6-1-2', name: 'パート 2', selected: false },
+          { id: 'part-6-1-3', name: 'パート 3', selected: false },
+          { id: 'part-6-1-4', name: 'パート 4', selected: false },
+          { id: 'part-6-1-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-6-2',
+        name: '2回生',
+        expanded: false,
+        parts: [
+          { id: 'part-6-2-1', name: 'パート 1', selected: false },
+          { id: 'part-6-2-2', name: 'パート 2', selected: false },
+          { id: 'part-6-2-3', name: 'パート 3', selected: false },
+          { id: 'part-6-2-4', name: 'パート 4', selected: false },
+          { id: 'part-6-2-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-6-3',
+        name: '3回生',
+        expanded: false,
+        parts: [
+          { id: 'part-6-3-1', name: 'パート 1', selected: false },
+          { id: 'part-6-3-2', name: 'パート 2', selected: false },
+          { id: 'part-6-3-3', name: 'パート 3', selected: false },
+          { id: 'part-6-3-4', name: 'パート 4', selected: false },
+          { id: 'part-6-3-5', name: 'パート 5', selected: false },
+        ]
+      },
+      {
+        id: 'grade-6-4',
+        name: '4回生',
+        expanded: false,
+        parts: [
+          { id: 'part-6-4-1', name: 'パート 1', selected: false },
+          { id: 'part-6-4-2', name: 'パート 2', selected: false },
+          { id: 'part-6-4-3', name: 'パート 3', selected: false },
+          { id: 'part-6-4-4', name: 'パート 4', selected: false },
+          { id: 'part-6-4-5', name: 'パート 5', selected: false },
+        ]
+      }
+    ]
   }
 ];
