@@ -19,6 +19,7 @@ router = APIRouter()
 @router.get("/", response_model=List[AttendanceResponse])
 async def get_attendances(
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     すべての出欠記録を取得
@@ -37,6 +38,7 @@ async def get_attendances(
 async def get_attendance(
     attendance_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したIDの出欠記録を取得
@@ -56,6 +58,7 @@ async def get_attendance(
 async def get_attendances_by_practice(
     practice_schedule_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールの出欠記録を取得
@@ -75,6 +78,7 @@ async def get_attendances_by_practice(
 async def get_attendances_by_user(
     user_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したユーザーの出欠記録を取得
@@ -191,6 +195,7 @@ async def delete_attendance(
 @router.get("/summary/practice", response_model=List[AttendanceSummary])
 async def get_attendance_summary(
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     練習別の出欠サマリーを取得
@@ -208,6 +213,7 @@ async def get_attendance_summary(
 @router.get("/summary/user", response_model=List[UserAttendanceHistory])
 async def get_user_attendance_history(
     attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     ユーザー別の出欠履歴を取得

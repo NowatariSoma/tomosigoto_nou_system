@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_practice_schedule_service
+from app.api.deps import get_current_user, get_practice_schedule_service
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
 from app.schemas.practice_schedules import (
@@ -23,6 +23,7 @@ router = APIRouter()
 @router.get("/", response_model=List[PracticeScheduleResponse])
 async def get_practice_schedules(
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     すべての練習スケジュールを取得
@@ -41,6 +42,7 @@ async def get_practice_schedules(
 async def get_practice_schedule_by_date(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した日付の練習スケジュールを取得
@@ -62,6 +64,7 @@ async def get_practice_schedule_by_date(
 async def get_practice_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したIDの練習スケジュールを取得
@@ -81,6 +84,7 @@ async def get_practice_schedule(
 async def get_practice_schedule_with_details(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールの詳細情報（idealフォーマット）を取得
@@ -102,6 +106,7 @@ async def get_practice_schedule_with_details(
 async def get_practice_schedule_for_display(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     練習表表示用の練習スケジュール情報を取得（名前情報含む）
@@ -121,6 +126,7 @@ async def get_practice_schedule_for_display(
 async def get_practice_schedule_details_by_date(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した日付の練習スケジュール詳細情報（idealフォーマット）を取得
@@ -142,6 +148,7 @@ async def get_practice_schedule_details_by_date(
 async def get_practice_schedule_ideal_format(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     フロントエンド理想形式の練習スケジュール情報を取得
@@ -163,6 +170,7 @@ async def get_practice_schedule_ideal_format(
 async def create_practice_schedule(
     schedule_data: PracticeScheduleCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しい練習スケジュールを作成
@@ -209,6 +217,7 @@ async def update_practice_schedule(
     schedule_id: UUID,
     schedule_data: PracticeScheduleUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールを更新
@@ -257,6 +266,7 @@ async def update_practice_schedule_with_details(
     schedule_id: UUID,
     schedule_data: Dict[str, Any],
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     練習スケジュールを関連データと一緒に更新
@@ -281,6 +291,7 @@ async def update_practice_schedule_with_details(
 async def delete_practice_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールを削除
@@ -302,6 +313,7 @@ async def delete_practice_schedule(
 async def get_sessions_by_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールのセッション一覧を取得
@@ -321,6 +333,7 @@ async def get_sessions_by_schedule(
 async def get_session(
     session_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したIDのセッションを取得
@@ -340,6 +353,7 @@ async def get_session(
 async def create_session(
     session_data: SessionCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しいセッションを作成
@@ -361,6 +375,7 @@ async def update_session(
     session_id: UUID,
     session_data: SessionUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したセッションを更新
@@ -384,6 +399,7 @@ async def move_session(
     target_venue_id: UUID,
     target_slot_order: int,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     セッションを別の会場・時限に移動
@@ -407,6 +423,7 @@ async def move_session(
 async def delete_session(
     session_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したセッションを削除
