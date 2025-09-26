@@ -184,31 +184,14 @@ async def create_practice_schedule(
         作成された練習スケジュール
     """
     try:
-        # デバッグログ: リクエストデータの構造を確認
-        print(f"DEBUG POST /: schedule_data: {schedule_data}")
-        print(f"DEBUG POST /: schedule_data type: {type(schedule_data)}")
-        
         # 作成者と更新者を設定（仮の値）
         schedule_dict = schedule_data.model_dump()
-        print(f"DEBUG POST /: schedule_dict after model_dump: {schedule_dict}")
-        
-        # 複数部屋選択対応: venue_idsの確認
-        if "venue_ids" in schedule_dict:
-            print(f"DEBUG POST /: venue_ids: {schedule_dict['venue_ids']}")
-        
         schedule_dict["created_by"] = "system"
         schedule_dict["updated_by"] = "system"
-        
-        print(f"DEBUG POST /: schedule_dict before service call: {schedule_dict}")
 
         created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
-        print(f"DEBUG POST /: created_schedule: {created_schedule}")
-        
         return PracticeScheduleResponse(**created_schedule)
     except Exception as e:
-        print(f"DEBUG POST /: エラー発生: {e}")
-        print(f"DEBUG POST /: エラータイプ: {type(e)}")
-        print(f"DEBUG POST /: エラーの詳細: {str(e)}")
         raise
 
 
@@ -232,32 +215,13 @@ async def update_practice_schedule(
         更新された練習スケジュール
     """
     try:
-        # デバッグログ: リクエストデータの構造を確認
-        print(f"DEBUG PUT /{schedule_id}: schedule_data: {schedule_data}")
-        print(f"DEBUG PUT /{schedule_id}: schedule_data type: {type(schedule_data)}")
-        
         # 更新者を設定（仮の値）
         schedule_dict = schedule_data.model_dump(exclude_unset=True)
-        print(f"DEBUG PUT /{schedule_id}: schedule_dict after model_dump: {schedule_dict}")
-        
-        # 複数部屋選択対応: venue_idsの確認
-        if "venue_ids" in schedule_dict:
-            print(f"DEBUG PUT /{schedule_id}: venue_ids: {schedule_dict['venue_ids']}")
-        
         schedule_dict["updated_by"] = "system"
-        
-        print(f"DEBUG PUT /{schedule_id}: schedule_dict before service call: {schedule_dict}")
 
         updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
-        print(f"DEBUG PUT /{schedule_id}: updated_schedule: {updated_schedule}")
-        
         return PracticeScheduleResponse(**updated_schedule)
     except Exception as e:
-        print(f"DEBUG PUT /{schedule_id}: エラー発生: {e}")
-        print(f"DEBUG PUT /{schedule_id}: エラータイプ: {type(e)}")
-        print(f"DEBUG PUT /{schedule_id}: エラーの詳細: {str(e)}")
-        import traceback
-        print(f"DEBUG PUT /{schedule_id}: スタックトレース: {traceback.format_exc()}")
         raise
 
 

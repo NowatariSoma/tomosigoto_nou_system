@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - tomosigoto-network
+    depends_on:
+      - nginx
+
+  # Nginx リバースプロキシ（内部通信のみ）
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    networks:
+      - tomosigoto-network
+    depends_on:
+      - backend
+      - frontend
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=Nginx Reverse Proxy for Cloudflare Tunnel"
+
+  # FastAPI バックエンド
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env.production
+    environment:
+      - ENVIRONMENT=production
+    volumes:
+      - ./.env.production:/.env:ro
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    networks:
+      - tomosigoto-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=FastAPI Backend with Supabase integration"
+
+  # Next.js フロントエンド
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./.env.production:/.env:ro
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command: npm start
+    networks:
+      - tomosigoto-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=Next.js Frontend with Supabase integration"
+
+networks:
+  tomosigoto-network:
+    driver: bridge
