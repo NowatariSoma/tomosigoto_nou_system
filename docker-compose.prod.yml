@@ -1,17 +1,17 @@
 version: '3.8'
 
 services:
-  # Cloudflare Tunnel
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    networks:
-      - tomosigoto-network
-    depends_on:
-      - nginx
+  # # Cloudflare Tunnel
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   networks:
+  #     - tomosigoto-network
+  #   depends_on:
+  #     - nginx
 
   # Nginx リバースプロキシ（内部通信のみ）
   nginx:
