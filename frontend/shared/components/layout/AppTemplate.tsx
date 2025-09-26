@@ -106,10 +106,10 @@ export function AppTemplate({
                   </div>
                   <div className="space-y-4 relative z-30">
                     <h2 className="text-5xl font-black bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] tracking-tight">
-                      アクセス権限がありません
+                      やっと会えたね（はあと）
                     </h2>
-                    <p className="text-purple-200/80 text-lg font-light tracking-wide">
-                      この機能は管理者のみが利用できます。
+                    <p className="text-purple-200/80 text-2xl font-light tracking-wide">
+                      君のこと、ずっと考えていたんだ。
                     </p>
                   </div>
                   <div className="mt-10 relative z-30">
