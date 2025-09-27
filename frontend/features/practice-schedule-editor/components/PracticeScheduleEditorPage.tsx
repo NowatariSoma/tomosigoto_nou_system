@@ -98,8 +98,6 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       );
       setScheduleStartTime(startTime);
       setScheduleEndTime(endTime);
-
-      await fetchScheduleDetails();
     } catch (error) {
       console.error('スケジュール時間の更新に失敗しました:', error);
       alert('スケジュール時間の更新に失敗しました');

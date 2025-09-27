@@ -34,6 +34,7 @@ export const MOCK_DATA: StageData[] = [
     id: '1',
     date: '2024-03-15',
     stageName: 'ハムレット',
+    status: 'active',
     parts: ['淡路パート', '佐藤花子', '鈴木次郎'],
     partCount: 3
   },
@@ -41,6 +42,7 @@ export const MOCK_DATA: StageData[] = [
     id: '2',
     date: '2024-03-22',
     stageName: 'ロミオとジュリエット',
+    status: 'active',
     parts: ['山田一郎', '高橋美咲', ''],
     partCount: 3
   },
@@ -48,6 +50,7 @@ export const MOCK_DATA: StageData[] = [
     id: '3',
     date: '2024-04-05',
     stageName: 'マクベス',
+    status: 'inactive',
     parts: ['伊藤健太', '', '渡辺真理'],
     partCount: 3
   },
@@ -55,6 +58,7 @@ export const MOCK_DATA: StageData[] = [
     id: '4',
     date: '2024-04-12',
     stageName: '夏の夜の夢',
+    status: 'active',
     parts: ['小林優子', '中村大輔', '松本さくら'],
     partCount: 3
   },
@@ -62,6 +66,7 @@ export const MOCK_DATA: StageData[] = [
     id: '5',
     date: '2024-04-20',
     stageName: 'オセロ',
+    status: 'active',
     parts: ['森田和也', '岡田麻衣', ''],
     partCount: 3
   }

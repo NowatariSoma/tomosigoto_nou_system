@@ -30,25 +30,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     } : INITIAL_ATTENDANCE_FORM
   );
 
-<<<<<<< HEAD
-  const [errors, setErrors] = useState<{
-    practice_schedule_id?: string;
-    status?: string;
-    notes?: string;
-  }>({});
-
-  const validateForm = (): boolean => {
-    const newErrors: {
-      practice_schedule_id?: string;
-      status?: string;
-      notes?: string;
-    } = {};
-=======
   const [errors, setErrors] = useState<AttendanceFormErrors>({});
 
   const validateForm = (): boolean => {
     const newErrors: AttendanceFormErrors = {};
->>>>>>> 62e0ad3c ([FEAT] bulidエラー解消。たくやの尻拭い)
 
     if (!formData.practice_schedule_id) {
       newErrors.practice_schedule_id = '練習予定は必須です';

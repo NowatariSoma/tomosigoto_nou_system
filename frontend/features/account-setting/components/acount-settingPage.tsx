@@ -111,7 +111,6 @@ const AccountSettings: React.FC = () => {
     }
   }, [profile]);
 
-<<<<<<< HEAD
   const handleEdit = () => {
     setEditMode(true);
   };
@@ -125,13 +124,15 @@ const AccountSettings: React.FC = () => {
         last_name_katakana: profile.last_name_katakana || '',
         first_name_katakana: profile.first_name_katakana || '',
         year: profile.year || VALIDATION.MIN_YEAR,
+        faculty: profile.faculty || '',
         department_code: profile.department_code || '',
         email: profile.email || ''
       });
     }
     setEditMode(false);
     setFieldErrors({});
-=======
+  };
+
   const handleFacultySelect = (value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -144,7 +145,6 @@ const AccountSettings: React.FC = () => {
     sessionStorage.removeItem('test-user-id');
     // ページをリロード
     window.location.reload();
->>>>>>> 62e0ad3c ([FEAT] bulidエラー解消。たくやの尻拭い)
   };
 
   const handleSave = async () => {

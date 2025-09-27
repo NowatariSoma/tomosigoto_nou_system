@@ -1,11 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { UserCheck } from 'lucide-react';
 import { AttendancePage, PracticeAttendancePage } from '@/features/attendance/components';
 import { useSearchParams } from 'next/navigation';
 
-export default function Page() {
+function AttendanceContent() {
   const searchParams = useSearchParams();
   const practiceId = searchParams.get('practice');
 
@@ -30,5 +31,13 @@ export default function Page() {
     >
       <AttendancePage />
     </AppTemplate>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AttendanceContent />
+    </Suspense>
   );
 }

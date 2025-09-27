@@ -101,7 +101,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
         >
           {practiceSchedules.map((schedule) => (
             <option key={schedule.id} value={schedule.id}>
-              {schedule.date} {schedule.startTime}-{schedule.endTime} {schedule.title || ''}
+              {schedule.schedule_date} {schedule.start_time}-{schedule.end_time} {schedule.title || ''}
             </option>
           ))}
         </select>
