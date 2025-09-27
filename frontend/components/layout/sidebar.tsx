@@ -17,6 +17,7 @@ import {
   ChevronUp,
   ChevronDown,
   Calendar,
+  Theater,
   BookOpen,
   Building,
   ReceiptText,
@@ -226,6 +227,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
+                icon={<Theater className="w-4 h-4" />}
+                label="舞台・パート登録"
+                active={pathname === '/parts-settings'}
+                onClick={() => handleNavigateAndClose('/parts-settings')}
+              />
+
+              <NavItem
                 icon={<ReceiptText className="w-4 h-4" />}
                 label="演目一覧"
                 active={pathname === '/performances-list'}
@@ -336,6 +344,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             href="/room-settings"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
+          <NavItem
+            icon={<Theater className="w-4 h-4" />}
+            label={isCollapsed ? "" : "舞台・パート登録画面"}
+            active={pathname === '/parts-setting'}
+            href="/parts-setting"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          /> 
 
           <NavItem
             icon={<ReceiptText className="w-4 h-4" />}
