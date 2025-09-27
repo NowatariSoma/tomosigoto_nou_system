@@ -25,7 +25,7 @@ export const UI_TEXT = {
 
 export const PART_COUNT_LIMITS = {
   MIN: 1,
-  MAX: 10,
+  MAX: 999, // 実質的に上限なし
   DEFAULT: 3,
 } as const;
 
