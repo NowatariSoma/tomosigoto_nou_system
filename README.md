@@ -10,7 +10,7 @@ cp env.example .env
 
 ### 2. Docker起動
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 3. アクセス
@@ -32,3 +32,8 @@ docker exec -it backend-backend-1 python tests/utils/get_test_token.py
 
 したらtestユーザーでログインしたアクセストークンが生成されるため、それを使用する。
 Swagger UIのAuthorizeとかで使用できる。
+
+docker-compose build backend
+docker-compose up backend ???みたいなかんじでやる
+cd frontend
+npm run dev
