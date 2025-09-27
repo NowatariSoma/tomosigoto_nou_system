@@ -9,14 +9,14 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - .env.prod
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
       
-      - ./.env:/.env
+      - ./.env.prod:/.env
     restart: unless-stopped
     command: >
       sh -c "
@@ -47,7 +47,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - .env.prod
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     volumes:
@@ -56,7 +56,7 @@ services:
       # node_modulesと.nextは除外（コンテナ内のものを使用）
       - /app/node_modules
       - /app/.next
-      - ./.env:/.env
+      - ./.env.prod:/.env
     restart: unless-stopped
     depends_on:
       - backend
