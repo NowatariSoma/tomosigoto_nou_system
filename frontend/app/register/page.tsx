@@ -2,7 +2,7 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Calendar } from 'lucide-react';
-import { RegisterPage } from '@/features/register/components';
+// import { RegisterPage } from '@/features/register/components';
 
 export default function Page() {
   return (
@@ -20,7 +20,11 @@ export default function Page() {
       }}
       maxWidth="7xl"
     >
-      <RegisterPage />
+      {/* <RegisterPage /> */}
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">練習予定管理</h2>
+        <p className="text-gray-500">この機能は開発中です。</p>
+      </div>
     </AppTemplate>
   );
 }

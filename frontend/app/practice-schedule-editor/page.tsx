@@ -1,15 +1,25 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { PracticeScheduleEditorPage } from '@/features/practice-schedule-editor/components';
 import { Edit3, Calendar } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
-export default function Page() {
+function PracticeScheduleEditorContent() {
   const searchParams = useSearchParams();
   const scheduleId = searchParams.get('scheduleId') || undefined;
   const scheduleDate = searchParams.get('date') || undefined;
 
+  return (
+    <PracticeScheduleEditorPage 
+      scheduleId={scheduleId}
+      scheduleDate={scheduleDate}
+    />
+  );
+}
+
+export default function Page() {
   return (
     <AppTemplate
       title="練習表編集"
@@ -21,10 +31,9 @@ export default function Page() {
       }}
       maxWidth="7xl"
     >
-      <PracticeScheduleEditorPage 
-        scheduleId={scheduleId}
-        scheduleDate={scheduleDate}
-      />
+      <Suspense fallback={<div>読み込み中...</div>}>
+        <PracticeScheduleEditorContent />
+      </Suspense>
     </AppTemplate>
   );
 }

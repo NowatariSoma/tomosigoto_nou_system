@@ -54,9 +54,9 @@ export const VALIDATION = {
 export const INITIAL_SESSION_FORM = {
   title: '',
   part_id: '',
-  instructor_ids: [],
+  instructor_ids: [] as string[],
   venue_id: '',
   time_slot: '',
   priority: 0,
   notes: '',
-} as const;
+};
