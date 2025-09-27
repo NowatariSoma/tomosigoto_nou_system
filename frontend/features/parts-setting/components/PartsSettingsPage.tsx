@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { useStageParts } from '../hooks/useStageParts';
 import { PartsForm } from './PartsForm';
 import { PartsList } from './PartsList';
+import { StageModal } from './StageModal';
 import { CreateStageRequest, StageData } from '../types';
 import { UI_TEXT, PART_COUNT_LIMITS } from '../constants';
 
@@ -13,6 +14,7 @@ export const PartsSettingsPage: React.FC = () => {
   const { stages, loading, error, createStage, updateStage, deleteStage } = useStageParts();
   const [showForm, setShowForm] = useState(false);
   const [editingStage, setEditingStage] = useState<StageData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<CreateStageRequest>({
     date: '',
     stageName: '',
@@ -76,20 +78,35 @@ export const PartsSettingsPage: React.FC = () => {
 
   const handleStageClick = (stage: StageData) => {
     setEditingStage(stage);
-    setFormData({
-      date: stage.date,
-      stageName: stage.stageName,
-      parts: [...(stage.parts || [])],
-      partCount: stage.partCount || PART_COUNT_LIMITS.DEFAULT,
-    });
-    setShowForm(true);
+    setIsModalOpen(true);
   };
 
-  const handleDeleteStage = async (stageId: string) => {
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingStage(null);
+  };
+
+  const handleSaveStage = async (data: CreateStageRequest) => {
     try {
-      await deleteStage(stageId);
+      if (editingStage) {
+        await updateStage(editingStage.id, data);
+      } else {
+        await createStage(data);
+      }
+      handleCloseModal();
     } catch (error) {
-      console.error('Failed to delete stage:', error);
+      console.error('Failed to save stage:', error);
+    }
+  };
+
+  const handleDeleteStage = async () => {
+    if (editingStage) {
+      try {
+        await deleteStage(editingStage.id);
+        handleCloseModal();
+      } catch (error) {
+        console.error('Failed to delete stage:', error);
+      }
     }
   };
 
@@ -128,17 +145,16 @@ export const PartsSettingsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Registration Form */}
-      {showForm && (
+      {/* Registration Form (新規登録時のみ) */}
+      {showForm && !editingStage && (
         <PartsForm
           formData={formData}
           onInputChange={handleInputChange}
           onPartCountChange={handlePartCountChange}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          onDelete={editingStage ? () => handleDeleteStage(editingStage.id) : undefined}
           isValid={isFormValid}
-          isEditing={!!editingStage}
+          isEditing={false}
         />
       )}
 
@@ -146,6 +162,15 @@ export const PartsSettingsPage: React.FC = () => {
       <PartsList 
         stages={stages} 
         onStageClick={handleStageClick}
+      />
+
+      {/* Stage Modal */}
+      <StageModal
+        stage={editingStage}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveStage}
+        onDelete={editingStage ? handleDeleteStage : undefined}
       />
     </div>
   );

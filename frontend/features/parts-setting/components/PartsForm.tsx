@@ -98,8 +98,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => onPartCountChange(Math.min(PART_COUNT_LIMITS.MAX, formData.partCount + 1))}
-                  disabled={formData.partCount >= PART_COUNT_LIMITS.MAX}
+                  onClick={() => onPartCountChange(formData.partCount + 1)}
                   className="p-2"
                 >
                   <PlusCircle className="h-4 w-4" />
