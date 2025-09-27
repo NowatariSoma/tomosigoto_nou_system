@@ -15,6 +15,8 @@ interface SupabaseStageResponse {
   id?: string;
   name?: string;
   performance_date?: string;
+  status?: 'active' | 'inactive';
+  description?: string;
   parts?: SupabasePart[];
 }
 
@@ -25,6 +27,8 @@ export const mapStageResponseToStageData = (stage: SupabaseStageResponse | null 
       id: '',
       date: '',
       stageName: '',
+      description: '',
+      status: 'active',
       parts: [],
       partCount: 0,
     };
@@ -37,6 +41,8 @@ export const mapStageResponseToStageData = (stage: SupabaseStageResponse | null 
     id: stage.id || '',
     date: stage.performance_date || '',
     stageName: stage.name || '',
+    description: stage.description,
+    status: stage.status || 'active',
     parts: partNames,
     partCount: partNames.length,
   };
@@ -47,6 +53,7 @@ export const mapCreateStageRequestToStage = (stage: CreateStageRequest) => {
   return {
     name: stage.stageName,
     performance_date: stage.date,
-    status: 'active',
+    description: stage.description,
+    status: stage.status,
   };
 };

@@ -135,6 +135,17 @@ export class PartsService {
     }
   }
 
+  async updatePartsStatusByStageId(stageId: string, status: 'active' | 'inactive'): Promise<void> {
+    const { error } = await supabase
+      .from(this.tableName)
+      .update({ status })
+      .eq('stage_id', stageId);
+
+    if (error) {
+      throw new Error(`Failed to update parts status by stage ID: ${error.message}`);
+    }
+  }
+
   private mapPartResponseToPartData(part: any): PartData {
     return {
       id: part.id,

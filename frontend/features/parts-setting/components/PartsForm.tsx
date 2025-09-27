@@ -75,6 +75,38 @@ export const PartsForm: React.FC<PartsFormProps> = ({
             </div>
           </div>
 
+          {/* Status Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Theater className="h-4 w-4 text-emerald-600" />
+              ステータス
+            </Label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="status"
+                  value="active"
+                  checked={formData.status === 'active'}
+                  onChange={(e) => onInputChange('status', e.target.value)}
+                  className="mr-2 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span className="text-sm font-medium text-gray-700">アクティブ</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="status"
+                  value="inactive"
+                  checked={formData.status === 'inactive'}
+                  onChange={(e) => onInputChange('status', e.target.value)}
+                  className="mr-2 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span className="text-sm font-medium text-gray-700">非アクティブ</span>
+              </label>
+            </div>
+          </div>
+
           {/* Part Count Control */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -120,7 +152,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   <Input
                     id={`part${index}`}
                     type="text"
-                    placeholder={`${UI_TEXT.PART_LABEL}${index + 1}${UI_TEXT.PART_PLACEHOLDER}`}
+                    placeholder={`パート名${index + 1}`}
                     value={formData.parts[index] || ''}
                     onChange={(e) => {
                       const newParts = [...formData.parts];

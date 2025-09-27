@@ -45,6 +45,26 @@ export const StageCard: React.FC<StageCardProps> = ({ stage, onClick }) => {
           </span>
         </div>
         
+        <div className="flex items-center">
+          <span className="text-gray-600 font-medium min-w-[80px]">ステータス</span>
+          <span className="text-gray-500">：</span>
+          <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${
+            (stage.status || 'active') === 'active' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-gray-500 text-white'
+          }`}>
+            {(stage.status || 'active') === 'active' ? 'アクティブ' : '非アクティブ'}
+          </span>
+        </div>
+        
+        {stage.description && (
+          <div className="flex items-start">
+            <span className="text-gray-600 font-medium min-w-[80px] pt-1">説明</span>
+            <span className="text-gray-500 pt-1">：</span>
+            <span className="text-gray-800 ml-2 flex-1">{stage.description}</span>
+          </div>
+        )}
+        
         <div className="flex items-start">
           <User className="h-4 w-4 text-emerald-600 mr-2 mt-1" />
           <span className="text-gray-600 font-medium min-w-[80px] pt-1">パート</span>

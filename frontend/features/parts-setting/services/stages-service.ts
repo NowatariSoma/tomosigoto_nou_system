@@ -15,6 +15,7 @@ export interface CreateStageRequest {
   name: string;
   description?: string;
   performanceDate?: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface UpdateStageRequest extends Partial<CreateStageRequest> {}
@@ -26,13 +27,13 @@ export class StagesService {
     const { data, error } = await supabase
       .from(this.tableName)
       .select('*')
-      .eq('status', 'active')
       .order('performance_date', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch stages: ${error.message}`);
     }
 
+    console.log('Fetched stages from DB:', data);
     return (data || []).map(this.mapStageResponseToStageData);
   }
 
@@ -41,7 +42,6 @@ export class StagesService {
       .from(this.tableName)
       .select('*')
       .eq('id', id)
-      .eq('status', 'active')
       .single();
 
     if (error) {
@@ -56,7 +56,7 @@ export class StagesService {
       name: data.name,
       description: data.description,
       performance_date: data.performanceDate,
-      status: 'active' as const,
+      status: data.status || 'active',
     };
 
     const { data: result, error } = await supabase
@@ -77,6 +77,9 @@ export class StagesService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.performanceDate !== undefined) updateData.performance_date = data.performanceDate;
+    if (data.status !== undefined) updateData.status = data.status;
+
+    console.log('Updating stage with data:', updateData);
 
     const { data: result, error } = await supabase
       .from(this.tableName)
@@ -89,6 +92,7 @@ export class StagesService {
       throw new Error(`Failed to update stage: ${error.message}`);
     }
 
+    console.log('Updated stage result:', result);
     return this.mapStageResponseToStageData(result);
   }
 
@@ -104,7 +108,8 @@ export class StagesService {
   }
 
   private mapStageResponseToStageData(stage: any): StageData {
-    return {
+    console.log('Mapping stage data:', stage);
+    const mapped = {
       id: stage.id,
       name: stage.name,
       description: stage.description,
@@ -113,6 +118,8 @@ export class StagesService {
       createdAt: stage.created_at,
       updatedAt: stage.updated_at,
     };
+    console.log('Mapped stage data:', mapped);
+    return mapped;
   }
 }
 

@@ -27,8 +27,11 @@ export const useStageParts = () => {
   const fetchStagesWithParts = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
+      console.log('fetchStagesWithParts: Starting...');
+      
       // 舞台を取得
       const stages = await stagesService.getStages();
+      console.log('fetchStagesWithParts: Fetched stages:', stages);
 
       // 各舞台のパートを取得
       const stagesWithParts: StageWithParts[] = [];
@@ -42,6 +45,8 @@ export const useStageParts = () => {
             id: stage.id,
             date: stage.performanceDate || '',
             stageName: stage.name,
+            description: stage.description,
+            status: stage.status,
             parts: partNames,
             partCount: partNames.length,
           });
@@ -51,12 +56,16 @@ export const useStageParts = () => {
             id: stage.id,
             date: stage.performanceDate || '',
             stageName: stage.name,
+            description: stage.description,
+            status: stage.status,
             parts: [],
             partCount: 0,
           });
         }
       }
 
+      console.log('fetchStagesWithParts: Final stages with parts:', stagesWithParts);
+      
       setState({
         stages: stagesWithParts,
         loading: false,
@@ -83,6 +92,7 @@ export const useStageParts = () => {
         name: data.stageName,
         description: data.description,
         performanceDate: data.date,
+        status: data.status,
       });
 
       // 2. パートを作成
@@ -101,6 +111,7 @@ export const useStageParts = () => {
         id: newStage.id,
         date: newStage.performanceDate || '',
         stageName: newStage.name,
+        description: newStage.description,
         parts: data.parts || [],
         partCount: data.parts?.length || 0,
       };
@@ -117,14 +128,22 @@ export const useStageParts = () => {
   const updateStage = useCallback(async (id: string, data: UpdateStageRequest) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
+      console.log('updateStage called with:', { id, data });
+      
       // 1. 舞台を更新
       const updatedStage = await stagesService.updateStage(id, {
         name: data.stageName,
         description: data.description,
         performanceDate: data.date,
+        status: data.status,
       });
+      
+      console.log('Stage updated, result:', updatedStage);
 
-      // 2. パートを更新（既存を削除して新しく作成）
+      // 2. パートのステータスを舞台のステータスに合わせて更新
+      await partsService.updatePartsStatusByStageId(id, data.status || 'active');
+
+      // 3. パートを更新（既存を削除して新しく作成）
       if (data.parts && data.parts.length > 0) {
         // 既存のパートを削除
         await partsService.deletePartsByStageId(id);
@@ -137,13 +156,17 @@ export const useStageParts = () => {
         await partsService.createParts(partsData);
       }
 
-      // 3. 統合データを再取得
+      // 4. 統合データを再取得
+      console.log('Refetching stages after update...');
       await fetchStagesWithParts();
+      console.log('Stages refetched');
       
       return {
         id: updatedStage.id,
         date: updatedStage.performanceDate || '',
         stageName: updatedStage.name,
+        description: updatedStage.description,
+        status: updatedStage.status,
         parts: data.parts || [],
         partCount: data.parts?.length || 0,
       };
