@@ -5,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { Attendance, PracticeSchedule } from '../types';
 import { AttendanceCard } from './AttendanceCard';
 import { UI_TEXT } from '../constants';
+import { Calendar } from 'lucide-react';
 
 interface AttendanceListProps {
   attendances: Attendance[];
