@@ -15,7 +15,7 @@ export default function Home() {
       text: 'バックエンド作成'
     }}
     permissionBadge={{
-      level: 'admin',
+      level: 'basic',
       text: '基本権限'
     }}
     maxWidth="7xl"
