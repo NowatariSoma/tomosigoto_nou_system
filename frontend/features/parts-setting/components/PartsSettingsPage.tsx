@@ -18,6 +18,8 @@ export const PartsSettingsPage: React.FC = () => {
   const [formData, setFormData] = useState<CreateStageRequest>({
     date: '',
     stageName: '',
+    description: '',
+    status: 'active',
     parts: Array(PART_COUNT_LIMITS.DEFAULT).fill(''),
     partCount: PART_COUNT_LIMITS.DEFAULT,
   });
@@ -55,6 +57,8 @@ export const PartsSettingsPage: React.FC = () => {
       setFormData({
         date: '',
         stageName: '',
+        description: '',
+        status: 'active',
         parts: Array(PART_COUNT_LIMITS.DEFAULT).fill(''),
         partCount: PART_COUNT_LIMITS.DEFAULT,
       });
@@ -71,6 +75,8 @@ export const PartsSettingsPage: React.FC = () => {
     setFormData({
       date: '',
       stageName: '',
+      description: '',
+      status: 'active',
       parts: Array(PART_COUNT_LIMITS.DEFAULT).fill(''),
       partCount: PART_COUNT_LIMITS.DEFAULT,
     });
@@ -110,8 +116,8 @@ export const PartsSettingsPage: React.FC = () => {
     }
   };
 
-  const isFormValid = formData.date && formData.stageName && 
-                     formData.parts.some(part => part.trim() !== '');
+  const isFormValid = Boolean(formData.date && formData.stageName && 
+                     formData.parts.some(part => part.trim() !== ''));
 
   if (loading) {
     return (

@@ -21,6 +21,8 @@ export const StageModal: React.FC<StageModalProps> = ({
   const [formData, setFormData] = useState<CreateStageRequest>({
     date: '',
     stageName: '',
+    description: '',
+    status: 'active',
     parts: Array(PART_COUNT_LIMITS.DEFAULT).fill(''),
     partCount: PART_COUNT_LIMITS.DEFAULT,
   });
@@ -30,6 +32,8 @@ export const StageModal: React.FC<StageModalProps> = ({
       setFormData({
         date: stage.date,
         stageName: stage.stageName,
+        description: stage.description || '',
+        status: stage.status || 'active',
         parts: [...(stage.parts || [])],
         partCount: stage.partCount || PART_COUNT_LIMITS.DEFAULT,
       });
@@ -120,6 +124,51 @@ export const StageModal: React.FC<StageModalProps> = ({
             />
           </div>
 
+          {/* 説明 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              説明
+            </label>
+            <textarea
+              value={formData.description || ''}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="舞台の説明を入力してください（任意）"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+            />
+          </div>
+
+          {/* ステータス */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              ステータス
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="status"
+                  value="active"
+                  checked={formData.status === 'active'}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">アクティブ</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="status"
+                  value="inactive"
+                  checked={formData.status === 'inactive'}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">非アクティブ</span>
+              </label>
+            </div>
+          </div>
+
           {/* パート数調整 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -152,13 +201,6 @@ export const StageModal: React.FC<StageModalProps> = ({
                 <span className="text-xl font-bold">+</span>
               </button>
             </div>
-            
-            {/* パート数制限の表示 */}
-            <div className="text-center mt-3">
-              <span className="text-sm text-blue-500 bg-white px-3 py-1 rounded-full border border-blue-200">
-                {PART_COUNT_LIMITS.MIN}パート以上設定可能
-              </span>
-            </div>
           </div>
 
           {/* パート入力 */}
@@ -180,7 +222,7 @@ export const StageModal: React.FC<StageModalProps> = ({
                       newParts[index] = e.target.value;
                       handleInputChange('parts', newParts);
                     }}
-                    placeholder={`${UI_TEXT.PART_PLACEHOLDER}${index + 1}`}
+                    placeholder={`パート名${index + 1}`}
                     className="flex-1 px-4 py-3 border-0 bg-transparent focus:ring-0 focus:outline-none text-blue-600 placeholder-gray-400 text-lg"
                   />
                 </div>
