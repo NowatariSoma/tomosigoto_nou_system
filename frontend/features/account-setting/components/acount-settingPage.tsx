@@ -15,9 +15,24 @@ interface FormData {
   last_name_katakana: string;
   first_name_katakana: string;
   year: number;
+  faculty: string;
   department_code: string;
   email: string;
 }
+
+// 学部のオプション
+const faculties: SelectOption[] = [
+  { value: 'literature', label: '文学部' },
+  { value: 'economics', label: '経済学部' },
+  { value: 'law', label: '法学部' },
+  { value: 'science', label: '理学部' },
+  { value: 'engineering', label: '工学部' },
+  { value: 'medicine', label: '医学部' },
+  { value: 'pharmacy', label: '薬学部' },
+  { value: 'agriculture', label: '農学部' },
+  { value: 'education', label: '教育学部' },
+  { value: 'other', label: 'その他' },
+];
 
 const AccountSettings: React.FC = () => {
   const {
@@ -89,12 +104,14 @@ const AccountSettings: React.FC = () => {
         last_name_katakana: profile.last_name_katakana || '',
         first_name_katakana: profile.first_name_katakana || '',
         year: profile.year || VALIDATION.MIN_YEAR,
+        faculty: profile.faculty || '',
         department_code: profile.department_code || '',
         email: profile.email || ''
       });
     }
   }, [profile]);
 
+<<<<<<< HEAD
   const handleEdit = () => {
     setEditMode(true);
   };
@@ -114,6 +131,20 @@ const AccountSettings: React.FC = () => {
     }
     setEditMode(false);
     setFieldErrors({});
+=======
+  const handleFacultySelect = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      faculty: value
+    }));
+  };
+
+  const handleNewUser = () => {
+    // セッションストレージをクリアして新しいユーザーIDを生成
+    sessionStorage.removeItem('test-user-id');
+    // ページをリロード
+    window.location.reload();
+>>>>>>> 62e0ad3c ([FEAT] bulidエラー解消。たくやの尻拭い)
   };
 
   const handleSave = async () => {

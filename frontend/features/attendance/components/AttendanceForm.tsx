@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Attendance, AttendanceFormData, PracticeSchedule } from '../types';
+import { Attendance, AttendanceFormData, AttendanceFormErrors, PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION, INITIAL_ATTENDANCE_FORM } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
 
@@ -30,6 +30,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     } : INITIAL_ATTENDANCE_FORM
   );
 
+<<<<<<< HEAD
   const [errors, setErrors] = useState<{
     practice_schedule_id?: string;
     status?: string;
@@ -42,6 +43,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       status?: string;
       notes?: string;
     } = {};
+=======
+  const [errors, setErrors] = useState<AttendanceFormErrors>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: AttendanceFormErrors = {};
+>>>>>>> 62e0ad3c ([FEAT] bulidエラー解消。たくやの尻拭い)
 
     if (!formData.practice_schedule_id) {
       newErrors.practice_schedule_id = '練習予定は必須です';
