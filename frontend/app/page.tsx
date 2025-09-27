@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
-import { Calendar, Settings, BookOpen, Building, Home, Users } from 'lucide-react';
+import { Calendar, Settings, BookOpen, Building, Home, Users, Theater } from 'lucide-react';
 
 interface DashboardCard {
   id: string;
@@ -36,7 +36,7 @@ const dashboardCards: DashboardCard[] = [
     route: '/practice-slots',
     difficulty: 'low',
     variant: 'default'
-  },
+  },  
   {
     id: 'room-settings',
     title: '部屋設定',
@@ -44,6 +44,15 @@ const dashboardCards: DashboardCard[] = [
     icon: 'Building',
     route: '/room-settings',
     difficulty: 'medium',
+    variant: 'default'
+  },
+  {
+    id: 'parts-setting',
+    title: '登録',
+    description: '舞台・パートの登録・管理',
+    icon: 'Theater',
+    route: '/parts-setting',
+    difficulty: 'low',
     variant: 'default'
   },
   {
@@ -63,7 +72,8 @@ const iconMap = {
   BookOpen,
   Building,
   Home,
-  Users
+  Users,
+  Theater
 };
 
 const difficultyColors = {
@@ -135,7 +145,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">練習スケジュールと部屋の登録・管理機能</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dashboardCards.filter(card => ['practice-schedule', 'practice-slots', 'room-settings'].includes(card.id)).map((card) => {
+                {dashboardCards.filter(card => ['practice-schedule', 'practice-slots','room-settings', 'parts-setting'].includes(card.id)).map((card) => {
                   const IconComponent = iconMap[card.icon as keyof typeof iconMap];
                   const iconColor = iconColors[card.icon as keyof typeof iconColors] || 'text-gray-600';
                   const isClickable = !!card.route;
@@ -159,7 +169,8 @@ export default function HomePage() {
                         <Button className="w-full">
                           {card.id === 'practice-schedule' ? '登録画面を開く' : 
                            card.id === 'practice-slots' ? '練習表を確認' :
-                           card.id === 'room-settings' ? '部屋設定を開く' : 'スタート'}
+                           card.id === 'room-settings' ? '部屋設定を開く' : 
+                           card.id === 'parts-setting' ? '舞台・パートを登録' :'スタート'}
                         </Button>
                       </CardContent>
                     </Card>
