@@ -78,6 +78,19 @@ class AccountSettingService:
         if not profile_data:
             return None
         
+        # 学部情報を取得
+        department_code = profile_data.get("department_code", "LIT")
+        department_name = profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=profile_data["id"],
@@ -88,8 +101,8 @@ class AccountSettingService:
             last_name_kanji=profile_data["last_name_kanji"],
             last_name_katakana=profile_data["last_name_katakana"],
             year=profile_data["grade"],  # grade -> year
-            department_code=profile_data.get("department_code", "LIT"),
-            department_name=profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=profile_data.get("email", ""),
             avatar_url=profile_data["avatar_url"],
             preferences=profile_data["preferences"],
@@ -103,6 +116,19 @@ class AccountSettingService:
         if not profile_data:
             return None
         
+        # 学部情報を取得
+        department_code = profile_data.get("department_code", "LIT")
+        department_name = profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=profile_data["id"],
@@ -113,8 +139,8 @@ class AccountSettingService:
             last_name_kanji=profile_data["last_name_kanji"],
             last_name_katakana=profile_data["last_name_katakana"],
             year=profile_data["grade"],  # grade -> year
-            department_code=profile_data.get("department_code", "LIT"),
-            department_name=profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=profile_data.get("email", ""),
             avatar_url=profile_data["avatar_url"],
             preferences=profile_data["preferences"],
@@ -163,6 +189,19 @@ class AccountSettingService:
         created_profile_data = await self.user_profile_repo.create_profile(profile_dict)
         logger.info(f"Account setting profile created successfully for user: {user_id}")
         
+        # 学部情報を取得
+        department_code = created_profile_data.get("department_code", "LIT")
+        department_name = created_profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = created_profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=created_profile_data["id"],
@@ -173,8 +212,8 @@ class AccountSettingService:
             last_name_kanji=created_profile_data["last_name_kanji"],
             last_name_katakana=created_profile_data["last_name_katakana"],
             year=created_profile_data["grade"],  # grade -> year
-            department_code=created_profile_data.get("department_code", "LIT"),
-            department_name=created_profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=created_profile_data.get("email", ""),
             avatar_url=created_profile_data["avatar_url"],
             preferences=created_profile_data["preferences"],
@@ -234,6 +273,19 @@ class AccountSettingService:
 
         logger.info(f"Account setting profile updated successfully for user: {user_id}")
         
+        # 学部情報を取得
+        department_code = updated_profile_data.get("department_code", "LIT")
+        department_name = updated_profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = updated_profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=updated_profile_data["id"],
@@ -244,8 +296,8 @@ class AccountSettingService:
             last_name_kanji=updated_profile_data["last_name_kanji"],
             last_name_katakana=updated_profile_data["last_name_katakana"],
             year=updated_profile_data["grade"],  # grade -> year
-            department_code=updated_profile_data.get("department_code", "LIT"),
-            department_name=updated_profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=updated_profile_data.get("email", ""),
             avatar_url=updated_profile_data["avatar_url"],
             preferences=updated_profile_data["preferences"],
