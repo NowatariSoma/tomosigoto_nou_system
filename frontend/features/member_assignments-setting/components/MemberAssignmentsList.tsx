@@ -1,17 +1,17 @@
 import React from 'react';
-import { StageWithPartsAndAssignments, MemberAssignmentWithDetails } from '../types';
+import { StageWithPartsAndAssignments } from '../types';
 import { StageAssignmentsCard } from './StageAssignmentsCard';
 import { UI_TEXT } from '../constants';
 import { Theater } from 'lucide-react';
 
 interface MemberAssignmentsListProps {
   stages: StageWithPartsAndAssignments[];
-  onAssignmentClick: (assignment: MemberAssignmentWithDetails) => void;
+  onPartClick: (partId: string, stageId: string) => void;
 }
 
 export const MemberAssignmentsList: React.FC<MemberAssignmentsListProps> = ({ 
   stages, 
-  onAssignmentClick 
+  onPartClick
 }) => {
   // stagesが未定義の場合のフォールバック処理
   const safeStages = stages || [];
@@ -35,7 +35,7 @@ export const MemberAssignmentsList: React.FC<MemberAssignmentsListProps> = ({
           <StageAssignmentsCard 
             key={stage.id} 
             stage={stage} 
-            onAssignmentClick={onAssignmentClick}
+            onPartClick={onPartClick}
           />
         ))}
       </div>

@@ -1,114 +1,51 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/forms/button';
-import { Plus } from 'lucide-react';
 import { useStageAssignments } from '../hooks/useStageAssignments';
 import { memberAssignmentService } from '../services/member-assignment-service';
-import { MemberAssignmentForm } from './MemberAssignmentForm';
 import { MemberAssignmentsList } from './MemberAssignmentsList';
-import { MemberAssignmentModal } from './MemberAssignmentModal';
-import { CreateMemberAssignmentRequest, MemberAssignmentWithDetails } from '../types';
+import { MemberRegistrationModal } from './MemberRegistrationModal';
+import { CreateMemberAssignmentRequest } from '../types';
 import { UI_TEXT } from '../constants';
 
 export const MemberAssignmentsSettingsPage: React.FC = () => {
   const { stages, loading, error, refreshStages } = useStageAssignments();
-  const [showForm, setShowForm] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<MemberAssignmentWithDetails | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedStageId, setSelectedStageId] = useState<string>('');
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [selectedPartId, setSelectedPartId] = useState<string>('');
-  const [formData, setFormData] = useState<CreateMemberAssignmentRequest>({
-    user_id: '',
-    part_id: '',
-    category: 'utai',
-    display_order: 0,
-  });
+  const [selectedStageId, setSelectedStageId] = useState<string>('');
+  const [selectedPartName, setSelectedPartName] = useState<string>('');
+  const [selectedStageName, setSelectedStageName] = useState<string>('');
 
-  const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  const handlePartClick = (partId: string, stageId: string) => {
+    // パートと舞台の情報を取得
+    const stage = stages.find(s => s.id === stageId);
+    const part = stage?.parts.find(p => p.id === partId);
     
-    try {
-      await memberAssignmentService.createMemberAssignment(formData);
-      
-      setFormData({
-        user_id: '',
-        part_id: '',
-        category: 'utai',
-        display_order: 0,
-      });
-      setEditingAssignment(null);
-      setShowForm(false);
-      
-      // データを再取得
-      await refreshStages();
-    } catch (error) {
-      console.error('Failed to save member assignment:', error);
-      alert('メンバー所属の作成に失敗しました。');
+    if (stage && part) {
+      setSelectedPartId(partId);
+      setSelectedStageId(stageId);
+      setSelectedPartName(part.name);
+      setSelectedStageName(stage.name);
+      setIsRegistrationModalOpen(true);
     }
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingAssignment(null);
-    setFormData({
-      user_id: '',
-      part_id: '',
-      category: 'utai',
-      display_order: 0,
-    });
+
+  const handleCloseRegistrationModal = () => {
+    setIsRegistrationModalOpen(false);
+    setSelectedPartId('');
+    setSelectedStageId('');
+    setSelectedPartName('');
+    setSelectedStageName('');
   };
 
-  const handleAssignmentClick = (assignment: MemberAssignmentWithDetails) => {
-    setEditingAssignment(assignment);
-    setIsModalOpen(true);
+  const handleRegistrationSuccess = () => {
+    refreshStages();
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingAssignment(null);
-  };
 
-  const handleSaveAssignment = async (data: CreateMemberAssignmentRequest) => {
-    try {
-      if (editingAssignment) {
-        await memberAssignmentService.updateMemberAssignment(editingAssignment.id, data);
-      } else {
-        await memberAssignmentService.createMemberAssignment(data);
-      }
-      handleCloseModal();
-      
-      // データを再取得
-      await refreshStages();
-    } catch (error) {
-      console.error('Failed to save member assignment:', error);
-      alert('メンバー所属の保存に失敗しました。');
-    }
-  };
-
-  const handleDeleteAssignment = async () => {
-    if (editingAssignment) {
-      try {
-        await memberAssignmentService.deleteMemberAssignment(editingAssignment.id);
-        handleCloseModal();
-        
-        // データを再取得
-        await refreshStages();
-      } catch (error) {
-        console.error('Failed to delete member assignment:', error);
-        alert('メンバー所属の削除に失敗しました。');
-      }
-    }
-  };
-
-  const isFormValid = Boolean(formData.user_id && formData.part_id);
 
   if (loading) {
     return (
@@ -129,49 +66,23 @@ export const MemberAssignmentsSettingsPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* New Assignment Button */}
-      <div className="text-center mb-8">
-        <Button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {UI_TEXT.NEW_ASSIGNMENT}
-        </Button>
-      </div>
-
-      {/* Assignment Form (新規登録時のみ) */}
-      {showForm && !editingAssignment && (
-        <MemberAssignmentForm
-          formData={formData}
-          onInputChange={handleInputChange}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isValid={isFormValid}
-          isEditing={false}
-          stages={stages}
-          selectedStageId={selectedStageId}
-          selectedPartId={selectedPartId}
-          onStageChange={setSelectedStageId}
-          onPartChange={setSelectedPartId}
-        />
-      )}
 
       {/* Assignment List */}
       <MemberAssignmentsList 
         stages={stages} 
-        onAssignmentClick={handleAssignmentClick}
+        onPartClick={handlePartClick}
       />
 
-      {/* Assignment Modal */}
-      <MemberAssignmentModal
-        assignment={editingAssignment}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveAssignment}
-        onDelete={editingAssignment ? handleDeleteAssignment : undefined}
-        stages={stages}
+
+      {/* Member Registration Modal */}
+      <MemberRegistrationModal
+        isOpen={isRegistrationModalOpen}
+        onClose={handleCloseRegistrationModal}
+        partId={selectedPartId}
+        stageId={selectedStageId}
+        partName={selectedPartName}
+        stageName={selectedStageName}
+        onSuccess={handleRegistrationSuccess}
       />
     </div>
   );
