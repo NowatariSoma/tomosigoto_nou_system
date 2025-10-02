@@ -46,13 +46,17 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
                     className="flex items-center justify-between cursor-pointer hover:bg-blue-50/30 rounded p-3 -m-1 transition-colors"
                     onClick={() => handlePartClick(part.id)}
                   >
-                    <h4 className="font-bold text-blue-900 text-lg">{part.name}</h4>
+                    <div className="flex items-center gap-3">
+                      <h4 className="font-bold text-blue-900 text-lg">{part.name}</h4>
+                      {part.member_assignments.length > 0 && (
+                        <span className="text-sm text-gray-600">
+                          {part.member_assignments[0].user.name}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">
-                        {part.member_assignments.length}名
-                      </span>
                       <span className="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
-                        メンバー追加
+                        メンバー編集
                       </span>
                     </div>
                   </div>

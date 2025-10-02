@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, User as UserIcon, Plus } from 'lucide-react';
 import { userService, User as UserType } from '../services/user-service';
 import { memberAssignmentService } from '../services/member-assignment-service';
-import { CreateMemberAssignmentRequest } from '../types';
+import { partAssignmentsService } from '../services/part-assignments-service';
+import { CreateMemberAssignmentRequest, MemberAssignmentWithDetails } from '../types';
 import { UI_TEXT, CATEGORY_OPTIONS } from '../constants';
 
 interface MemberRegistrationModalProps {
@@ -31,6 +32,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   const [searchResults, setSearchResults] = useState<UserType[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserType[]>([]);
   const [userCategories, setUserCategories] = useState<Record<string, 'utai' | 'mai'>>({});
+  const [existingMembers, setExistingMembers] = useState<MemberAssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -44,8 +46,24 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
       setSelectedUsers([]);
       setUserCategories({});
       setHasSearched(false);
+      loadExistingMembers();
     }
-  }, [isOpen]);
+  }, [isOpen, partId]);
+
+  const loadExistingMembers = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading existing members for partId:', partId);
+      const partData = await partAssignmentsService.getPartWithAssignments(partId);
+      console.log('Loaded part data:', partData);
+      console.log('Member assignments:', partData.member_assignments);
+      setExistingMembers(partData.member_assignments || []);
+    } catch (error) {
+      console.error('Failed to load existing members:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = async () => {
     if (!firstName.trim() && !lastName.trim()) {
@@ -129,6 +147,31 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
     setHasSearched(false);
   };
 
+  const handleDeleteMember = async (assignmentId: string) => {
+    try {
+      setSubmitting(true);
+      console.log('Deleting member assignment:', assignmentId);
+      
+      // 即座にUIを更新（楽観的更新）
+      setExistingMembers(prev => prev.filter(member => member.id !== assignmentId));
+      
+      await memberAssignmentService.deleteMemberAssignment(assignmentId);
+      console.log('Member assignment deleted successfully');
+      
+      // サーバーから最新データを取得して同期
+      await loadExistingMembers();
+      console.log('Existing members reloaded');
+      // 削除の場合は親コンポーネントへの通知は不要（リロードを避けるため）
+    } catch (error) {
+      console.error('Failed to delete member:', error);
+      // エラー時は元の状態に戻す
+      await loadExistingMembers();
+      alert('メンバーの削除に失敗しました');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -210,9 +253,9 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   検索クリア
                 </button>
               </div>
-            </div>
+          </div>
 
-            {/* 検索結果 */}
+          {/* 検索結果 */}
             {hasSearched && (
               <div className="mt-4 bg-white border-2 border-gray-200 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">
@@ -233,7 +276,6 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                             <div className="font-medium text-gray-900">
                               {user.last_name_katakana} {user.first_name_katakana}
                             </div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
                           </div>
                         </div>
                         <button
@@ -315,7 +357,41 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
             </div>
           )}
 
-
+          {/* 既存メンバー */}
+          {existingMembers.length > 0 && (
+            <div className="p-4">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                既存メンバー ({existingMembers.length}名)
+              </h4>
+              <div className="space-y-3 max-h-40 overflow-y-auto">
+                {existingMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="font-bold text-gray-900 text-xl">
+                          {member.user.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          区分: {member.category === 'utai' ? '謡' : '舞'}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMember(member.id)}
+                      disabled={submitting}
+                      className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold"
+                    >
+                      削除
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ボタン */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
