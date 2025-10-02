@@ -358,6 +358,8 @@ export const useSessionEditor = (scheduleId: string) => {
       fetchScheduleDetails();
     } else {
       console.log('スケジュールIDが空のため、スケジュール詳細の取得をスキップします');
+      // スケジュールIDが空の場合は、ローディング状態を解除
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, [scheduleId, fetchScheduleDetails]);
 
