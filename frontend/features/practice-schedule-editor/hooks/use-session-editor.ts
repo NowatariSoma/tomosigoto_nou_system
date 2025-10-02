@@ -361,7 +361,7 @@ export const useSessionEditor = (scheduleId: string) => {
       // スケジュールIDが空の場合は、ローディング状態を解除
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [scheduleId, fetchScheduleDetails]);
+  }, [scheduleId]);
 
   return {
     ...state,
