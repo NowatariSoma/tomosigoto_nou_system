@@ -20,11 +20,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -41,7 +36,7 @@ export class MemberAssignmentService {
       throw new Error(`Failed to fetch member assignments: ${error.message}`);
     }
 
-    return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
+    return Promise.all((data || []).map(assignment => this.mapResponseToMemberAssignmentWithDetails(assignment)));
   }
 
   async getMemberAssignment(id: string): Promise<MemberAssignmentWithDetails> {
@@ -55,11 +50,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -91,11 +81,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -113,7 +98,7 @@ export class MemberAssignmentService {
       throw new Error(`Failed to fetch member assignments by part: ${error.message}`);
     }
 
-    return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
+    return Promise.all((data || []).map(assignment => this.mapResponseToMemberAssignmentWithDetails(assignment)));
   }
 
   async getMemberAssignmentsByUser(userId: string): Promise<MemberAssignmentWithDetails[]> {
@@ -127,11 +112,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -149,7 +129,7 @@ export class MemberAssignmentService {
       throw new Error(`Failed to fetch member assignments by user: ${error.message}`);
     }
 
-    return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
+    return Promise.all((data || []).map(assignment => this.mapResponseToMemberAssignmentWithDetails(assignment)));
   }
 
   async createMemberAssignment(data: CreateMemberAssignmentRequest): Promise<MemberAssignmentWithDetails> {
@@ -171,11 +151,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -214,11 +189,6 @@ export class MemberAssignmentService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -249,7 +219,14 @@ export class MemberAssignmentService {
     }
   }
 
-  private mapResponseToMemberAssignmentWithDetails(assignment: any): MemberAssignmentWithDetails {
+  private async mapResponseToMemberAssignmentWithDetails(assignment: any): Promise<MemberAssignmentWithDetails> {
+    // ユーザー情報を別途取得
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, raw_user_meta_data')
+      .eq('id', assignment.user_id)
+      .single();
+
     return {
       id: assignment.id,
       user_id: assignment.user_id,
@@ -259,17 +236,17 @@ export class MemberAssignmentService {
       created_at: assignment.created_at,
       updated_at: assignment.updated_at,
       user: {
-        id: assignment.user.id,
-        name: assignment.user.name,
-        email: assignment.user.email,
+        id: userData?.id || assignment.user_id,
+        name: userData?.raw_user_meta_data?.name || userData?.raw_user_meta_data?.full_name || 'Unknown User',
+        email: userData?.email || '',
       },
       part: {
-        id: assignment.part.id,
-        name: assignment.part.name,
+        id: assignment.part?.id || '',
+        name: assignment.part?.name || '',
         stage: {
-          id: assignment.part.stage.id,
-          name: assignment.part.stage.name,
-          performance_date: assignment.part.stage.performance_date,
+          id: assignment.part?.stage?.id || '',
+          name: assignment.part?.stage?.name || '',
+          performance_date: assignment.part?.stage?.performance_date || '',
         },
       },
     };

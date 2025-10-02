@@ -23,12 +23,7 @@ export class PartAssignmentsService {
             category,
             display_order,
             created_at,
-            updated_at,
-            user:user_id (
-              id,
-              name,
-              email
-            )
+            updated_at
           )
         )
       `)
@@ -39,7 +34,7 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch stages with parts and assignments: ${error.message}`);
     }
 
-    return (data || []).map((stage) => this.mapStageResponseToStageWithPartsAndAssignments(stage));
+    return Promise.all((data || []).map(stage => this.mapStageResponseToStageWithPartsAndAssignments(stage)));
   }
 
   async getPartWithAssignments(partId: string): Promise<PartWithAssignments> {
@@ -60,12 +55,7 @@ export class PartAssignmentsService {
           category,
           display_order,
           created_at,
-          updated_at,
-          user:user_id (
-            id,
-            name,
-            email
-          )
+          updated_at
         )
       `)
       .eq('id', partId)
@@ -75,7 +65,7 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch part with assignments: ${error.message}`);
     }
 
-    return this.mapPartResponseToPartWithAssignments(data);
+    return await this.mapPartResponseToPartWithAssignments(data);
   }
 
   async getAssignmentsByStage(stageId: string): Promise<MemberAssignmentWithDetails[]> {
@@ -89,11 +79,6 @@ export class PartAssignmentsService {
         display_order,
         created_at,
         updated_at,
-        user:user_id (
-          id,
-          name,
-          email
-        ),
         part:part_id (
           id,
           name,
@@ -111,33 +96,40 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch assignments by stage: ${error.message}`);
     }
 
-    return (data || []).map((assignment) => this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment));
+    return Promise.all((data || []).map(assignment => this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment)));
   }
 
-  private mapStageResponseToStageWithPartsAndAssignments(stage: any): StageWithPartsAndAssignments {
+  private async mapStageResponseToStageWithPartsAndAssignments(stage: any): Promise<StageWithPartsAndAssignments> {
     return {
       id: stage.id,
       name: stage.name,
       performance_date: stage.performance_date,
       description: stage.description,
-      parts: (stage.parts || []).map((part: any) => this.mapPartResponseToPartWithAssignments(part)),
+      parts: await Promise.all((stage.parts || []).map((part: any) => this.mapPartResponseToPartWithAssignments(part))),
     };
   }
 
-  private mapPartResponseToPartWithAssignments(part: any): PartWithAssignments {
+  private async mapPartResponseToPartWithAssignments(part: any): Promise<PartWithAssignments> {
     return {
       id: part.id,
       name: part.name,
       stage_id: part.stage_id || part.stage?.id,
       stage_name: part.stage?.name || '',
       performance_date: part.stage?.performance_date || '',
-      member_assignments: (part.member_assignments || []).map((assignment: any) => 
+      member_assignments: await Promise.all((part.member_assignments || []).map((assignment: any) => 
         this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment)
-      ),
+      )),
     };
   }
 
-  private mapAssignmentResponseToMemberAssignmentWithDetails(assignment: any): MemberAssignmentWithDetails {
+  private async mapAssignmentResponseToMemberAssignmentWithDetails(assignment: any): Promise<MemberAssignmentWithDetails> {
+    // ユーザー情報を別途取得
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, raw_user_meta_data')
+      .eq('id', assignment.user_id)
+      .single();
+
     return {
       id: assignment.id,
       user_id: assignment.user_id,
@@ -147,17 +139,17 @@ export class PartAssignmentsService {
       created_at: assignment.created_at,
       updated_at: assignment.updated_at,
       user: {
-        id: assignment.user.id,
-        name: assignment.user.name,
-        email: assignment.user.email,
+        id: userData?.id || assignment.user_id,
+        name: userData?.raw_user_meta_data?.name || userData?.raw_user_meta_data?.full_name || 'Unknown User',
+        email: userData?.email || '',
       },
       part: {
-        id: assignment.part.id,
-        name: assignment.part.name,
+        id: assignment.part?.id || '',
+        name: assignment.part?.name || '',
         stage: {
-          id: assignment.part.stage.id,
-          name: assignment.part.stage.name,
-          performance_date: assignment.part.stage.performance_date,
+          id: assignment.part?.stage?.id || '',
+          name: assignment.part?.stage?.name || '',
+          performance_date: assignment.part?.stage?.performance_date || '',
         },
       },
     };
