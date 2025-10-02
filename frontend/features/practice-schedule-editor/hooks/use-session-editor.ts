@@ -70,6 +70,31 @@ const sessionEditorReducer = (
  * セッション編集用のカスタムフック
  */
 export const useSessionEditor = (scheduleId: string) => {
+  // スケジュールIDが空の場合は、フックを初期化しない
+  if (!scheduleId || scheduleId.trim() === '') {
+    console.log('useSessionEditor: スケジュールIDが空のため、フックを初期化しません');
+    return {
+      sessions: [],
+      venues: [],
+      time_slots: [],
+      selected_session: null,
+      is_modal_open: false,
+      edit_mode: 'view' as const,
+      loading: false,
+      error: null,
+      parts: [],
+      fetchScheduleDetails: () => {},
+      createSession: () => {},
+      updateSession: () => {},
+      deleteSession: () => {},
+      moveSession: () => {},
+      selectSession: () => {},
+      openModal: () => {},
+      closeModal: () => {},
+      toggleEditMode: () => {},
+    };
+  }
+
   const [state, dispatch] = useReducer(sessionEditorReducer, {
     sessions: [],
     venues: [],
