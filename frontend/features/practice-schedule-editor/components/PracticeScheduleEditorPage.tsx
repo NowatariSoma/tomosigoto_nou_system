@@ -26,7 +26,9 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     initialScheduleId,
     initialScheduleDate,
     currentScheduleId,
-    isScheduleSelected
+    isScheduleSelected,
+    currentScheduleIdLength: currentScheduleId?.length,
+    currentScheduleIdTrim: currentScheduleId?.trim()
   });
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
