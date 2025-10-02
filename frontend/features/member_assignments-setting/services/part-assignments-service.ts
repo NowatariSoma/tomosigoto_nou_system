@@ -123,12 +123,17 @@ export class PartAssignmentsService {
   }
 
   private async mapAssignmentResponseToMemberAssignmentWithDetails(assignment: any): Promise<MemberAssignmentWithDetails> {
-    // ユーザー情報を別途取得
+    // ユーザー情報を別途取得（account_setting_profileビューから）
     const { data: userData } = await supabase
-      .from('users')
-      .select('id, email, raw_user_meta_data')
-      .eq('id', assignment.user_id)
+      .from('account_setting_profile')
+      .select('user_id, first_name_katakana, last_name_katakana, email')
+      .eq('user_id', assignment.user_id)
       .single();
+
+    // 名前を構築
+    const userName = userData 
+      ? `${userData.last_name_katakana} ${userData.first_name_katakana}`
+      : 'Unknown User';
 
     return {
       id: assignment.id,
@@ -139,8 +144,8 @@ export class PartAssignmentsService {
       created_at: assignment.created_at,
       updated_at: assignment.updated_at,
       user: {
-        id: userData?.id || assignment.user_id,
-        name: userData?.raw_user_meta_data?.name || userData?.raw_user_meta_data?.full_name || 'Unknown User',
+        id: userData?.user_id || assignment.user_id,
+        name: userName,
         email: userData?.email || '',
       },
       part: {
