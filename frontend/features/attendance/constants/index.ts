@@ -10,6 +10,7 @@ export const ATTENDANCE_STATUS = {
   PRESENT: 'present',
   ABSENT: 'absent',
   LATE: 'late',
+  EXCUSED: 'excused',
 } as const;
 
 export type AttendanceStatus = typeof ATTENDANCE_STATUS[keyof typeof ATTENDANCE_STATUS];
@@ -19,6 +20,7 @@ export const ATTENDANCE_STATUS_LABELS = {
   [ATTENDANCE_STATUS.PRESENT]: '出席',
   [ATTENDANCE_STATUS.ABSENT]: '欠席',
   [ATTENDANCE_STATUS.LATE]: '遅刻',
+  [ATTENDANCE_STATUS.EXCUSED]: '公欠',
 } as const;
 
 // 出席ステータス色
@@ -26,6 +28,7 @@ export const ATTENDANCE_STATUS_COLORS = {
   [ATTENDANCE_STATUS.PRESENT]: 'text-green-600 bg-green-50',
   [ATTENDANCE_STATUS.ABSENT]: 'text-red-600 bg-red-50',
   [ATTENDANCE_STATUS.LATE]: 'text-yellow-600 bg-yellow-50',
+  [ATTENDANCE_STATUS.EXCUSED]: 'text-blue-600 bg-blue-50',
 } as const;
 
 // フォーム初期値

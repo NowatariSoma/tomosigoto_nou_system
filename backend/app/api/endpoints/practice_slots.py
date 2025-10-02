@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_practice_schedule_service
+from app.api.deps import get_current_user, get_current_user_optional, get_practice_schedule_service
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
 from app.schemas.practice_schedules import (
@@ -23,7 +23,7 @@ router = APIRouter()
 @router.get("/", response_model=List[PracticeScheduleResponse])
 async def get_practice_schedules(
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     すべての練習スケジュールを取得
@@ -42,7 +42,7 @@ async def get_practice_schedules(
 async def get_practice_schedule_by_date(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     指定した日付の練習スケジュールを取得
@@ -148,7 +148,7 @@ async def get_practice_schedule_details_by_date(
 async def get_practice_schedule_ideal_format(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     フロントエンド理想形式の練習スケジュール情報を取得
@@ -184,10 +184,10 @@ async def create_practice_schedule(
         作成された練習スケジュール
     """
     try:
-        # 作成者と更新者を設定（仮の値）
+        # 作成者と更新者を設定
         schedule_dict = schedule_data.model_dump()
-        schedule_dict["created_by"] = "system"
-        schedule_dict["updated_by"] = "system"
+        schedule_dict["created_by"] = str(current_user["id"])
+        schedule_dict["updated_by"] = str(current_user["id"])
 
         created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
         return PracticeScheduleResponse(**created_schedule)
@@ -215,9 +215,9 @@ async def update_practice_schedule(
         更新された練習スケジュール
     """
     try:
-        # 更新者を設定（仮の値）
+        # 更新者を設定
         schedule_dict = schedule_data.model_dump(exclude_unset=True)
-        schedule_dict["updated_by"] = "system"
+        schedule_dict["updated_by"] = str(current_user["id"])
 
         updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
         return PracticeScheduleResponse(**updated_schedule)
@@ -244,8 +244,8 @@ async def update_practice_schedule_with_details(
     Returns:
         更新された練習スケジュールの詳細情報
     """
-    # 更新者を設定（仮の値）
-    schedule_data["updated_by"] = "system"
+    # 更新者を設定
+    schedule_data["updated_by"] = str(current_user["id"])
 
     updated_schedule = await practice_schedule_service.update_practice_schedule_with_details(schedule_id, schedule_data)
     return PracticeScheduleWithDetailsResponse(**updated_schedule)
