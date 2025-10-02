@@ -329,7 +329,11 @@ async def create_session(
     Returns:
         作成されたセッション
     """
+    # 作成者と更新者を設定
     session_dict = session_data.model_dump()
+    session_dict["created_by"] = str(current_user["id"])
+    session_dict["updated_by"] = str(current_user["id"])
+    
     created_session = await practice_schedule_service.create_session(session_dict)
     return SessionResponse(**created_session)
 
@@ -352,7 +356,10 @@ async def update_session(
     Returns:
         更新されたセッション
     """
+    # 更新者を設定
     session_dict = session_data.model_dump(exclude_unset=True)
+    session_dict["updated_by"] = str(current_user["id"])
+    
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse(**updated_session)
 

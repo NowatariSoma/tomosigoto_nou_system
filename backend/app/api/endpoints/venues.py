@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_venue_service
+from app.api.deps import get_current_user, get_current_user_optional, get_venue_service
 from app.schemas.venues import VenueBase, VenueCreate, VenueResponse, VenueUpdate
 from app.services.venue_service import VenueService
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,7 +12,7 @@ router = APIRouter()
 @router.get("/", response_model=List[VenueResponse])
 async def get_venues(
     venue_service: VenueService = Depends(get_venue_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     会場の全情報を取得
@@ -65,7 +65,12 @@ async def create_venue(
     Returns
         スキーマを通して辞書型とした会場情報
     """
-    created_venue = await venue_service.create_venue(venue_data.dict())
+    # 作成者と更新者を設定
+    venue_dict = venue_data.model_dump()
+    venue_dict["created_by"] = str(current_user["id"])
+    venue_dict["updated_by"] = str(current_user["id"])
+    
+    created_venue = await venue_service.create_venue(venue_dict)
     return VenueResponse(**created_venue)
 
 
@@ -88,7 +93,11 @@ async def patch_venue(
     Returns
         スキーマを通して辞書型とした会場情報
     """
-    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict(exclude_unset=True))
+    # 更新者を設定
+    venue_dict = venue_data.model_dump(exclude_unset=True)
+    venue_dict["updated_by"] = str(current_user["id"])
+    
+    updated_venue = await venue_service.update_venue(venue_id, venue_dict)
     return VenueResponse(**updated_venue)
 
 
