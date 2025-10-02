@@ -100,6 +100,8 @@ export const useSessionEditor = (scheduleId: string) => {
         return;
       }
       
+      console.log(`スケジュールID検証: scheduleId="${scheduleId}", length=${scheduleId.length}, trim="${scheduleId.trim()}"`);
+      
       // 並列でデータを取得
       const [basicSchedule, details, allParts] = await Promise.all([
         practiceScheduleEditorService.getBasicSchedule(scheduleId),
@@ -350,6 +352,7 @@ export const useSessionEditor = (scheduleId: string) => {
 
   // 初期化
   useEffect(() => {
+    console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
     if (scheduleId && scheduleId.trim() !== '') {
       console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
       fetchScheduleDetails();
