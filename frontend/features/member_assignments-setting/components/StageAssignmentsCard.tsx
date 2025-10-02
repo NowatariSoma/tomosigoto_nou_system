@@ -43,7 +43,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
               {visibleParts.map((part) => (
                 <div key={part.id} className="bg-white rounded p-2 border border-blue-200">
                   <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded p-3 -m-1 transition-colors"
+                    className="flex items-center justify-between cursor-pointer hover:bg-blue-50/30 rounded p-3 -m-1 transition-colors"
                     onClick={() => handlePartClick(part.id)}
                   >
                     <h4 className="font-bold text-blue-900 text-lg">{part.name}</h4>
