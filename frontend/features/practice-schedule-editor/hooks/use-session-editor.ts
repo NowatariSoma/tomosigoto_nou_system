@@ -91,6 +91,8 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log(`スケジュール詳細を取得中: scheduleId=${scheduleId}`);
+      
       // 並列でデータを取得
       const [basicSchedule, details, allParts] = await Promise.all([
         practiceScheduleEditorService.getBasicSchedule(scheduleId),
@@ -99,7 +101,8 @@ export const useSessionEditor = (scheduleId: string) => {
       ]);
 
       if (!basicSchedule) {
-        throw new Error('スケジュールが見つかりません');
+        console.error(`スケジュールID ${scheduleId} が見つかりません`);
+        throw new Error(`スケジュールID ${scheduleId} が見つかりません。正しいスケジュールIDを指定してください。`);
       }
 
       setParts(allParts);

@@ -64,7 +64,7 @@ async def get_practice_schedule_by_date(
 async def get_practice_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     指定したIDの練習スケジュールを取得
@@ -84,7 +84,7 @@ async def get_practice_schedule(
 async def get_practice_schedule_with_details(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     指定した練習スケジュールの詳細情報（idealフォーマット）を取得

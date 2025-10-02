@@ -29,7 +29,9 @@ export class PracticeScheduleEditorService {
       const response = await fetchApi(`${this.basePath}/${scheduleId}`);
       return response.json();
     } catch (error: any) {
+      console.error('スケジュール取得エラー:', error);
       if (error.status === 404) {
+        console.warn(`スケジュールID ${scheduleId} が見つかりません`);
         return null;
       }
       throw error;
