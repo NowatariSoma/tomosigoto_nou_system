@@ -93,6 +93,13 @@ export const useSessionEditor = (scheduleId: string) => {
     try {
       console.log(`スケジュール詳細を取得中: scheduleId=${scheduleId}`);
       
+      // スケジュールIDが空の場合はエラーを投げない
+      if (!scheduleId || scheduleId.trim() === '') {
+        console.log('スケジュールIDが空のため、スケジュール詳細の取得をスキップします');
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+      
       // 並列でデータを取得
       const [basicSchedule, details, allParts] = await Promise.all([
         practiceScheduleEditorService.getBasicSchedule(scheduleId),
@@ -343,8 +350,11 @@ export const useSessionEditor = (scheduleId: string) => {
 
   // 初期化
   useEffect(() => {
-    if (scheduleId) {
+    if (scheduleId && scheduleId.trim() !== '') {
+      console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
       fetchScheduleDetails();
+    } else {
+      console.log('スケジュールIDが空のため、スケジュール詳細の取得をスキップします');
     }
   }, [scheduleId, fetchScheduleDetails]);
 
