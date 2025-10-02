@@ -87,19 +87,17 @@ export const useSessionEditor = (scheduleId: string) => {
    * スケジュール詳細を取得
    */
   const fetchScheduleDetails = useCallback(async () => {
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('fetchScheduleDetails: スケジュールIDが空のため、何もしません');
+      return;
+    }
+
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
       console.log(`スケジュール詳細を取得中: scheduleId=${scheduleId}`);
-      
-      // スケジュールIDが空の場合はエラーを投げない
-      if (!scheduleId || scheduleId.trim() === '') {
-        console.log('スケジュールIDが空のため、スケジュール詳細の取得をスキップします');
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
-      }
-      
       console.log(`スケジュールID検証: scheduleId="${scheduleId}", length=${scheduleId.length}, trim="${scheduleId.trim()}"`);
       
       // 並列でデータを取得
@@ -353,14 +351,15 @@ export const useSessionEditor = (scheduleId: string) => {
   // 初期化
   useEffect(() => {
     console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
-    if (scheduleId && scheduleId.trim() !== '') {
-      console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
-      fetchScheduleDetails();
-    } else {
-      console.log('スケジュールIDが空のため、スケジュール詳細の取得をスキップします');
-      // スケジュールIDが空の場合は、ローディング状態を解除
-      dispatch({ type: 'SET_LOADING', payload: false });
+    
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('スケジュールIDが空のため、useSessionEditorは何もしません');
+      return;
     }
+    
+    console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
+    fetchScheduleDetails();
   }, [scheduleId]);
 
   return {

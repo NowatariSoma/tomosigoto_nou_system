@@ -51,7 +51,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     openModal,
     closeModal,
     toggleEditMode,
-  } = useSessionEditor(currentScheduleId || '');
+  } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
 
