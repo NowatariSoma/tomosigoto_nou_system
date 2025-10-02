@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
-import { Calendar, Settings, BookOpen, Building, Home, Users, Theater } from 'lucide-react';
+import { Calendar, Settings, BookOpen, Building, Home, Users, Theater, UserCheck } from 'lucide-react';
 
 interface DashboardCard {
   id: string;
@@ -48,11 +48,20 @@ const dashboardCards: DashboardCard[] = [
   },
   {
     id: 'parts-setting',
-    title: '登録',
+    title: '舞台・パート登録',
     description: '舞台・パートの登録・管理',
     icon: 'Theater',
     route: '/parts-setting',
     difficulty: 'low',
+    variant: 'default'
+  },
+  {
+    id: 'member-assignments-setting',
+    title: 'メンバー所属設定',
+    description: 'メンバーのパート所属管理',
+    icon: 'UserCheck',
+    route: '/member-assignments-setting',
+    difficulty: 'medium',
     variant: 'default'
   },
   {
@@ -73,7 +82,8 @@ const iconMap = {
   Building,
   Home,
   Users,
-  Theater
+  Theater,
+  UserCheck
 };
 
 const difficultyColors = {
@@ -94,7 +104,9 @@ const iconColors = {
   BookOpen: 'text-green-600',
   Building: 'text-purple-600',
   Home: 'text-indigo-600',
-  Users: 'text-red-600'
+  Users: 'text-red-600',
+  Theater: 'text-emerald-600',
+  UserCheck: 'text-blue-600'
 };
 
 export default function HomePage() {
@@ -145,7 +157,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">練習スケジュールと部屋の登録・管理機能</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dashboardCards.filter(card => ['practice-schedule', 'practice-slots','room-settings', 'parts-setting'].includes(card.id)).map((card) => {
+                {dashboardCards.filter(card => ['practice-schedule', 'practice-slots','room-settings', 'parts-setting', 'member-assignments-setting'].includes(card.id)).map((card) => {
                   const IconComponent = iconMap[card.icon as keyof typeof iconMap];
                   const iconColor = iconColors[card.icon as keyof typeof iconColors] || 'text-gray-600';
                   const isClickable = !!card.route;
@@ -170,7 +182,8 @@ export default function HomePage() {
                           {card.id === 'practice-schedule' ? '登録画面を開く' : 
                            card.id === 'practice-slots' ? '練習表を確認' :
                            card.id === 'room-settings' ? '部屋設定を開く' : 
-                           card.id === 'parts-setting' ? '舞台・パートを登録' :'スタート'}
+                           card.id === 'parts-setting' ? '舞台・パートを登録' :
+                           card.id === 'member-assignments-setting' ? 'メンバー所属を設定' : 'スタート'}
                         </Button>
                       </CardContent>
                     </Card>
