@@ -22,6 +22,10 @@ export interface MemberAssignmentWithDetails extends MemberAssignmentData {
     id: string;
     name: string;
     email: string;
+    first_name_katakana: string;
+    last_name_katakana: string;
+    first_name_kanji: string;
+    last_name_kanji: string;
   };
   part: {
     id: string;

@@ -36,6 +36,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -46,6 +47,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
       setSelectedUsers([]);
       setUserCategories({});
       setHasSearched(false);
+      setErrorMessage('');
       loadExistingMembers();
     }
   }, [isOpen, partId]);
@@ -74,6 +76,8 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
     setHasSearched(true);
     try {
       const results = await userService.searchUsersByName(firstName.trim(), lastName.trim());
+      console.log('Search results in modal:', results);
+      console.log('First result:', results[0]);
       setSearchResults(results);
     } catch (error) {
       console.error('Failed to search users:', error);
@@ -84,13 +88,32 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   };
 
   const handleUserSelect = (user: UserType) => {
-    if (!selectedUsers.find(u => u.id === user.id)) {
-      setSelectedUsers(prev => [...prev, user]);
-      setUserCategories(prev => ({
-        ...prev,
-        [user.id]: 'utai' // デフォルトは謡
-      }));
+    console.log('Selected user:', user);
+    console.log('User kanji names:', {
+      first_name_kanji: user.first_name_kanji,
+      last_name_kanji: user.last_name_kanji
+    });
+    
+    // 既に選択されているかチェック
+    if (selectedUsers.find(u => u.id === user.id)) {
+      setErrorMessage('このユーザーは既に選択されています。');
+      return;
     }
+    
+    // 既存メンバーと重複するかチェック
+    if (existingMembers.find(member => member.user_id === user.id)) {
+      setErrorMessage(`${user.last_name_katakana} ${user.first_name_katakana}さんは既にこのパートに登録されています。`);
+      return;
+    }
+    
+    // エラーメッセージをクリア
+    setErrorMessage('');
+    
+    setSelectedUsers(prev => [...prev, user]);
+    setUserCategories(prev => ({
+      ...prev,
+      [user.id]: 'utai' // デフォルトは謡
+    }));
   };
 
   const handleUserRemove = (userId: string) => {
@@ -145,6 +168,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
     setSelectedUsers([]);
     setUserCategories({});
     setHasSearched(false);
+    setErrorMessage('');
   };
 
   const handleDeleteMember = async (assignmentId: string) => {
@@ -255,6 +279,17 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
               </div>
           </div>
 
+          {/* エラーメッセージ */}
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="text-red-600 text-sm font-medium">
+                  {errorMessage}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 検索結果 */}
             {hasSearched && (
               <div className="mt-4 bg-white border-2 border-gray-200 rounded-lg p-4">
@@ -262,12 +297,21 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   検索結果 ({searchResults.length}件)
                 </h4>
                 {searchResults.length > 0 ? (
-                  <div className="space-y-3 max-h-40 overflow-y-auto">
-                    {searchResults.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-400 focus-within:border-blue-500 transition-colors"
-                      >
+                  <div className="space-y-3">
+                    {searchResults.map((user) => {
+                      const isAlreadySelected = selectedUsers.find(u => u.id === user.id) !== undefined;
+                      const isExistingMember = existingMembers.find(member => member.user_id === user.id) !== undefined;
+                      const isDisabled = isAlreadySelected || isExistingMember;
+                      
+                      return (
+                        <div
+                          key={user.id}
+                          className={`flex items-center justify-between p-4 bg-white border rounded-lg transition-colors ${
+                            isDisabled 
+                              ? 'border-gray-300 bg-gray-50 opacity-60' 
+                              : 'border-gray-200 hover:border-blue-400 focus-within:border-blue-500'
+                          }`}
+                        >
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-600 rounded-full text-sm font-bold">
                             <UserIcon className="h-5 w-5" />
@@ -276,19 +320,28 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                             <div className="font-medium text-gray-900">
                               {user.last_name_katakana} {user.first_name_katakana}
                             </div>
+                            <div className="text-sm text-gray-600">
+                              {user.last_name_kanji} {user.first_name_kanji}
+                            </div>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleUserSelect(user)}
-                          disabled={selectedUsers.find(u => u.id === user.id) !== undefined}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold"
+                          disabled={isDisabled}
+                          className={`px-4 py-2 text-sm rounded-lg transition-colors font-semibold ${
+                            isDisabled
+                              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
                         >
                           <Plus className="h-4 w-4 mr-1 inline" />
-                          {selectedUsers.find(u => u.id === user.id) ? '選択済み' : '選択'}
+                          {isAlreadySelected ? '選択済み' : 
+                           isExistingMember ? '登録済み' : '選択'}
                         </button>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
@@ -315,13 +368,16 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   全クリア
                 </button>
               </div>
-              <div className="space-y-3 max-h-40 overflow-y-auto">
+              <div className="space-y-3">
                 {selectedUsers.map((user, index) => (
                   <div key={user.id} className="flex items-center justify-between bg-white rounded-lg p-4 hover:bg-green-100/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div>
                         <div className="font-bold text-green-800 text-xl">
                           {user.last_name_katakana} {user.first_name_katakana}
+                        </div>
+                        <div className="text-sm text-green-600">
+                          {user.last_name_kanji} {user.first_name_kanji}
                         </div>
                       </div>
                     </div>
@@ -363,7 +419,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
               <h4 className="text-lg font-semibold text-gray-800 mb-4">
                 既存メンバー ({existingMembers.length}名)
               </h4>
-              <div className="space-y-3 max-h-40 overflow-y-auto">
+              <div className="space-y-3">
                 {existingMembers.map((member) => (
                   <div
                     key={member.id}
@@ -373,6 +429,9 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                       <div>
                         <div className="font-bold text-gray-900 text-xl">
                           {member.user.name}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {member.user.last_name_kanji} {member.user.first_name_kanji}
                         </div>
                         <div className="text-sm text-gray-500">
                           区分: {member.category === 'utai' ? '謡' : '舞'}

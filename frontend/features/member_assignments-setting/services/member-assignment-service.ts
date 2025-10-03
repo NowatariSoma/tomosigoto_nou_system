@@ -223,7 +223,7 @@ export class MemberAssignmentService {
     // ユーザー情報を別途取得（account_setting_profileビューから）
     const { data: userData } = await supabase
       .from('account_setting_profile')
-      .select('user_id, first_name_katakana, last_name_katakana, email')
+      .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
       .eq('user_id', assignment.user_id)
       .single();
 
@@ -244,6 +244,10 @@ export class MemberAssignmentService {
         id: userData?.user_id || assignment.user_id,
         name: userName,
         email: userData?.email || '',
+        first_name_katakana: userData?.first_name_katakana || '',
+        last_name_katakana: userData?.last_name_katakana || '',
+        first_name_kanji: userData?.first_name_kanji || '',
+        last_name_kanji: userData?.last_name_kanji || '',
       },
       part: {
         id: assignment.part?.id || '',

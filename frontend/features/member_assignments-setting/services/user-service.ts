@@ -6,6 +6,8 @@ export interface User {
   email: string;
   first_name_katakana: string;
   last_name_katakana: string;
+  first_name_kanji: string;
+  last_name_kanji: string;
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +20,8 @@ export class UserService {
         user_id,
         first_name_katakana,
         last_name_katakana,
+        first_name_kanji,
+        last_name_kanji,
         email,
         created_at,
         updated_at
@@ -34,6 +38,8 @@ export class UserService {
       email: profile.email,
       first_name_katakana: profile.first_name_katakana,
       last_name_katakana: profile.last_name_katakana,
+      first_name_kanji: profile.first_name_kanji,
+      last_name_kanji: profile.last_name_kanji,
       created_at: profile.created_at,
       updated_at: profile.updated_at
     }));
@@ -48,6 +54,8 @@ export class UserService {
         user_id,
         first_name_katakana,
         last_name_katakana,
+        first_name_kanji,
+        last_name_kanji,
         email,
         created_at,
         updated_at
@@ -80,16 +88,24 @@ export class UserService {
 
     console.log('Search results:', data?.length || 0, 'users found');
     console.log('Raw data:', data);
+    console.log('First user data:', data?.[0]);
 
-    return (data || []).map((profile: any) => ({
+    const mappedUsers = (data || []).map((profile: any) => ({
       id: profile.user_id,
       name: `${profile.last_name_katakana} ${profile.first_name_katakana}`,
       email: profile.email,
       first_name_katakana: profile.first_name_katakana,
       last_name_katakana: profile.last_name_katakana,
+      first_name_kanji: profile.first_name_kanji,
+      last_name_kanji: profile.last_name_kanji,
       created_at: profile.created_at,
       updated_at: profile.updated_at
     }));
+    
+    console.log('Mapped users:', mappedUsers);
+    console.log('First mapped user:', mappedUsers[0]);
+    
+    return mappedUsers;
   }
 
   async getUser(id: string): Promise<User> {
@@ -99,6 +115,8 @@ export class UserService {
         user_id,
         first_name_katakana,
         last_name_katakana,
+        first_name_kanji,
+        last_name_kanji,
         email,
         created_at,
         updated_at
@@ -116,6 +134,8 @@ export class UserService {
       email: (data as any).email,
       first_name_katakana: (data as any).first_name_katakana,
       last_name_katakana: (data as any).last_name_katakana,
+      first_name_kanji: (data as any).first_name_kanji,
+      last_name_kanji: (data as any).last_name_kanji,
       created_at: (data as any).created_at,
       updated_at: (data as any).updated_at
     };
