@@ -4,37 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { Attendance, AttendanceFormData, PracticeSchedule } from '../types';
 import { AttendanceList } from './AttendanceList';
 import { AttendanceForm } from './AttendanceForm';
-import { LoginForm } from './LoginForm';
+import { SimpleAttendanceForm } from './SimpleAttendanceForm';
 import { useAttendance, usePracticeSchedule } from '../hooks';
-import { useAuth } from '@/contexts/AuthContext';
 import { UI_TEXT } from '../constants';
-import { Plus, User, Calendar } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 
 export const AttendancePage: React.FC = () => {
-  const { user, isLoading: authLoading, login, logout, isAuthenticated } = useAuth();
-  
   const { attendances, loading: attendanceLoading, upsertAttendance, deleteAttendance } = useAttendance();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = usePracticeSchedule();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      await login(email, password);
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+  const [selectedPractice, setSelectedPractice] = useState<PracticeSchedule | null>(null);
 
   const handleCreateClick = () => {
     setEditingAttendance(null);
@@ -57,13 +39,11 @@ export const AttendancePage: React.FC = () => {
   };
 
   const handleFormSubmit = async (data: AttendanceFormData) => {
-    if (!user) return;
-
     try {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: data.practice_schedule_id,
-        user_id: user.id, // 認証されたユーザーIDを使用
+        user_id: "1", // 仮のユーザーIDを使用
         status: data.status,
         notes: data.notes,
       });
@@ -81,28 +61,33 @@ export const AttendancePage: React.FC = () => {
     setEditingAttendance(null);
   };
 
-  // 認証チェック
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-          <p className="text-gray-600">認証情報を確認中...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userName: string }) => {
+    if (!selectedPractice) return;
+    
+    try {
+      setFormLoading(true);
+      await upsertAttendance({
+        practice_schedule_id: selectedPractice.id,
+        user_id: "1", // 仮のユーザーIDを使用
+        status: data.status as "present" | "absent" | "late" | "excused",
+        notes: data.notes,
+      });
+    } catch (error) {
+      console.error('Failed to save attendance:', error);
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-center mb-6">ログイン</h2>
-          <LoginForm onLogin={handleLogin} />
-        </div>
-      </div>
-    );
-  }
+  // 最新の練習スケジュールを選択
+  useEffect(() => {
+    if (practiceSchedules && practiceSchedules.length > 0 && !selectedPractice) {
+      const latestPractice = practiceSchedules.reduce((latest, current) => {
+        return new Date(current.schedule_date) > new Date(latest.schedule_date) ? current : latest;
+      });
+      setSelectedPractice(latestPractice);
+    }
+  }, [practiceSchedules, selectedPractice]);
 
   if (attendanceLoading || practiceLoading) {
     return (
@@ -132,33 +117,28 @@ export const AttendancePage: React.FC = () => {
     );
   }
 
+  // 練習スケジュールが選択されていない場合
+  if (!selectedPractice) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-yellow-800 mb-2">練習スケジュールが見つかりません</h2>
+            <p className="text-yellow-600 mb-4">練習スケジュールが設定されていません。</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* ユーザー情報表示 */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <User className="h-4 w-4" />
-          <span>{user?.email || 'ユーザー'}</span>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-        >
-          <span>{UI_TEXT.LOGOUT}</span>
-        </button>
-      </div>
-
-      {/* フォーム */}
-      {isFormOpen && (
-        <AttendanceForm
-          attendance={editingAttendance}
-          practiceSchedules={practiceSchedules}
-          userId={selectedUser.id} // 選択されたユーザーIDを使用
-          onSubmit={handleFormSubmit}
-          onCancel={handleFormCancel}
-          loading={formLoading}
-        />
-      )}
+      {/* シンプルな出席登録フォーム */}
+      <SimpleAttendanceForm
+        practiceSchedule={selectedPractice}
+        onSubmit={handleSimpleFormSubmit}
+        loading={formLoading}
+      />
 
       {/* 出席履歴一覧 */}
       <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg">
@@ -185,6 +165,18 @@ export const AttendancePage: React.FC = () => {
           showUserInfo={false}
         />
       </div>
+
+      {/* 詳細フォーム（必要に応じて表示） */}
+      {isFormOpen && (
+        <AttendanceForm
+          attendance={editingAttendance}
+          practiceSchedules={practiceSchedules}
+          userId="1" // 仮のユーザーIDを使用
+          onSubmit={handleFormSubmit}
+          onCancel={handleFormCancel}
+          loading={formLoading}
+        />
+      )}
     </div>
   );
 };

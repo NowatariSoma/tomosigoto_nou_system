@@ -361,7 +361,7 @@ export const useSessionEditor = (scheduleId: string) => {
     
     console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
     fetchScheduleDetails();
-  }, [scheduleId, fetchScheduleDetails]);
+  }, [scheduleId]);
 
   return {
     ...state,
