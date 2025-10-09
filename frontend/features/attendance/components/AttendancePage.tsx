@@ -9,6 +9,7 @@ import { useAttendance, usePracticeSchedule } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
   id: string;
@@ -17,6 +18,7 @@ interface User {
 }
 
 export const AttendancePage: React.FC = () => {
+  const { user, isLoading: authLoading } = useAuth();
   const { attendances, loading: attendanceLoading, upsertAttendance, deleteAttendance } = useAttendance();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = usePracticeSchedule();
   
@@ -92,6 +94,13 @@ export const AttendancePage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
+      
+      // デバッグ: 認証状態とlocalStorageのauthTokenを確認
+      console.log('Auth user:', user);
+      console.log('Auth loading:', authLoading);
+      const authToken = localStorage.getItem('authToken');
+      console.log('Auth token from localStorage:', authToken ? 'exists' : 'not found');
+      
       const response = await fetchApi('/users/');
       const usersData = await response.json();
       setUsers(usersData);
@@ -112,12 +121,14 @@ export const AttendancePage: React.FC = () => {
     }
   }, [practiceSchedules, selectedPractice]);
 
-  // ユーザー一覧を取得
+  // ユーザー一覧を取得（認証が完了してから）
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (!authLoading && user) {
+      fetchUsers();
+    }
+  }, [authLoading, user]);
 
-  if (attendanceLoading || practiceLoading || usersLoading) {
+  if (authLoading || attendanceLoading || practiceLoading || usersLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
