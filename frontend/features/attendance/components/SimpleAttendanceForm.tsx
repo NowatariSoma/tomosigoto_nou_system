@@ -5,24 +5,37 @@ import { PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, CheckCircle } from 'lucide-react';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface SimpleAttendanceFormProps {
   practiceSchedule: PracticeSchedule;
-  onSubmit: (data: { status: string; notes: string }) => Promise<void>;
+  users: User[];
+  onSubmit: (data: { status: string; notes: string; userId: string }) => Promise<void>;
   loading?: boolean;
 }
 
 export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   practiceSchedule,
+  users,
   onSubmit,
   loading = false,
 }) => {
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [errors, setErrors] = useState<{ status?: string; notes?: string }>({});
+  const [errors, setErrors] = useState<{ selectedUserId?: string; status?: string; notes?: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: { status?: string; notes?: string } = {};
+    const newErrors: { selectedUserId?: string; status?: string; notes?: string } = {};
+
+    if (!selectedUserId) {
+      newErrors.selectedUserId = 'ユーザーを選択してください';
+    }
 
     if (!status) {
       newErrors.status = '出席状況を選択してください';
@@ -40,11 +53,18 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       try {
-        await onSubmit({ status, notes });
+        await onSubmit({ userId: selectedUserId, status, notes });
         setIsSubmitted(true);
       } catch (error) {
         console.error('Failed to submit attendance:', error);
       }
+    }
+  };
+
+  const handleUserChange = (value: string) => {
+    setSelectedUserId(value);
+    if (errors.selectedUserId) {
+      setErrors(prev => ({ ...prev, selectedUserId: undefined }));
     }
   };
 
@@ -90,7 +110,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
       </div>
 
       {/* 練習情報表示 */}
-      <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg mb-8">
+      <div className="bg-white border border-slate-200 p-6 rounded-lg mb-8 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900 mb-6 flex items-center">
           <div className="bg-blue-100 p-2 rounded-lg mr-3">
             <Calendar className="h-5 w-5 text-blue-600" />
@@ -167,8 +187,34 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* ユーザー選択 */}
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+          <label className="block text-lg font-semibold text-slate-900 mb-4">
+            ユーザー選択 <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={selectedUserId}
+            onChange={(e) => handleUserChange(e.target.value)}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-colors ${
+              errors.selectedUserId 
+                ? 'border-red-500 bg-red-50 focus:ring-red-500' 
+                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
+            }`}
+          >
+            <option value="">ユーザーを選択してください</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} ({user.email})
+              </option>
+            ))}
+          </select>
+          {errors.selectedUserId && (
+            <p className="mt-2 text-sm text-red-600 font-medium">{errors.selectedUserId}</p>
+          )}
+        </div>
+
         {/* 出席状況選択 */}
-        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="block text-lg font-semibold text-slate-900 mb-6">
             出席状況 <span className="text-red-500">*</span>
           </label>
@@ -205,7 +251,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
         </div>
 
         {/* 備考 */}
-        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
             <div className="bg-slate-100 p-2 rounded-lg">
               <FileText className="h-5 w-5 text-slate-600" />
