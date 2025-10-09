@@ -8,6 +8,7 @@ import { SimpleAttendanceForm } from './SimpleAttendanceForm';
 import { useAttendance, usePracticeSchedule } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -91,12 +92,26 @@ export const AttendancePage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`);
+      
+      // 認証トークンを取得
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error('No authentication token available');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (response.ok) {
         const usersData = await response.json();
         setUsers(usersData);
       } else {
-        console.error('Failed to fetch users');
+        console.error('Failed to fetch users:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
