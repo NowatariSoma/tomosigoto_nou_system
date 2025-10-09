@@ -34,7 +34,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
       await upsertAttendance({
         practice_schedule_id: selectedPractice.id,
         user_id: user.id,
-        status: data.status as 'present' | 'absent' | 'late' | 'excused',
+        status: data.status as 'present' | 'absent' | 'late' | 'undecided',
         notes: data.notes,
       });
     } catch (error) {
@@ -129,7 +129,8 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
       {/* 出席フォーム */}
       {selectedPractice && (
         <SimpleAttendanceForm
-          practiceSchedule={selectedPractice}
+          practiceSchedules={[selectedPractice]}
+          users={[]}
           onSubmit={handleSubmit}
           loading={formLoading}
         />

@@ -2,7 +2,7 @@ export interface Attendance {
   id: string;
   practice_schedule_id: string;
   user_id: string;
-  status: 'present' | 'absent' | 'late' | 'excused';
+  status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -13,12 +13,12 @@ export interface Attendance {
 export interface AttendanceCreate {
   practice_schedule_id: string;
   user_id: string;
-  status: 'present' | 'absent' | 'late' | 'excused';
+  status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
 }
 
 export interface AttendanceUpdate {
-  status?: 'present' | 'absent' | 'late' | 'excused';
+  status?: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
 }
 
@@ -26,7 +26,7 @@ export interface AttendanceResponse {
   id: string;
   practice_schedule_id: string;
   user_id: string;
-  status: 'present' | 'absent' | 'late' | 'excused';
+  status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -43,7 +43,7 @@ export interface AttendanceSummary {
   present_count: number;
   absent_count: number;
   late_count: number;
-  excused_count: number;
+  no_show_count: number;
 }
 
 export interface UserAttendanceHistory {
@@ -53,7 +53,7 @@ export interface UserAttendanceHistory {
   present_count: number;
   absent_count: number;
   late_count: number;
-  excused_count: number;
+  no_show_count: number;
   attendance_rate: number;
 }
 
@@ -80,6 +80,6 @@ export interface PracticeSchedule {
 
 export interface AttendanceFormData {
   practice_schedule_id: string;
-  status: 'present' | 'absent' | 'late' | 'excused';
+  status: 'present' | 'absent' | 'late' | 'undecided';
   notes: string;
 }

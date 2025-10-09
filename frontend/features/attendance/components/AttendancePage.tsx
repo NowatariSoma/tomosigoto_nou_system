@@ -25,7 +25,6 @@ export const AttendancePage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [selectedPractice, setSelectedPractice] = useState<PracticeSchedule | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
 
@@ -72,15 +71,13 @@ export const AttendancePage: React.FC = () => {
     setEditingAttendance(null);
   };
 
-  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userId: string }) => {
-    if (!selectedPractice) return;
-    
+  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userId: string; practiceScheduleId: string }) => {
     try {
       setFormLoading(true);
       await upsertAttendance({
-        practice_schedule_id: selectedPractice.id,
+        practice_schedule_id: data.practiceScheduleId,
         user_id: data.userId,
-        status: data.status as "present" | "absent" | "late" | "excused",
+        status: data.status as "present" | "absent" | "late" | "undecided",
         notes: data.notes,
       });
     } catch (error) {
@@ -111,15 +108,6 @@ export const AttendancePage: React.FC = () => {
     }
   };
 
-  // 最新の練習スケジュールを選択
-  useEffect(() => {
-    if (practiceSchedules && practiceSchedules.length > 0 && !selectedPractice) {
-      const latestPractice = practiceSchedules.reduce((latest, current) => {
-        return new Date(current.schedule_date) > new Date(latest.schedule_date) ? current : latest;
-      });
-      setSelectedPractice(latestPractice);
-    }
-  }, [practiceSchedules, selectedPractice]);
 
   // ユーザー一覧を取得（認証が完了してから）
   useEffect(() => {
@@ -156,8 +144,8 @@ export const AttendancePage: React.FC = () => {
     );
   }
 
-  // 練習スケジュールが選択されていない場合
-  if (!selectedPractice) {
+  // 練習スケジュールが存在しない場合
+  if (!practiceSchedules || practiceSchedules.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -174,7 +162,7 @@ export const AttendancePage: React.FC = () => {
     <div className="space-y-6">
       {/* シンプルな出席登録フォーム */}
       <SimpleAttendanceForm
-        practiceSchedule={selectedPractice}
+        practiceSchedules={practiceSchedules}
         users={users}
         onSubmit={handleSimpleFormSubmit}
         loading={formLoading}
