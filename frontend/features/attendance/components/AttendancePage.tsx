@@ -9,6 +9,12 @@ import { useAttendance, usePracticeSchedule } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar } from 'lucide-react';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export const AttendancePage: React.FC = () => {
   const { attendances, loading: attendanceLoading, upsertAttendance, deleteAttendance } = useAttendance();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = usePracticeSchedule();
@@ -17,6 +23,8 @@ export const AttendancePage: React.FC = () => {
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [selectedPractice, setSelectedPractice] = useState<PracticeSchedule | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const handleCreateClick = () => {
     setEditingAttendance(null);
@@ -43,7 +51,7 @@ export const AttendancePage: React.FC = () => {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: data.practice_schedule_id,
-        user_id: "1", // 仮のユーザーIDを使用
+        user_id: "79d7e10b-cfa1-4b0e-8512-039bf51013f5", // 現在のユーザーIDを使用
         status: data.status,
         notes: data.notes,
       });
@@ -61,14 +69,14 @@ export const AttendancePage: React.FC = () => {
     setEditingAttendance(null);
   };
 
-  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userName: string }) => {
+  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userId: string }) => {
     if (!selectedPractice) return;
     
     try {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: selectedPractice.id,
-        user_id: "1", // 仮のユーザーIDを使用
+        user_id: data.userId,
         status: data.status as "present" | "absent" | "late" | "excused",
         notes: data.notes,
       });
@@ -76,6 +84,24 @@ export const AttendancePage: React.FC = () => {
       console.error('Failed to save attendance:', error);
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  // ユーザー一覧を取得
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`);
+      if (response.ok) {
+        const usersData = await response.json();
+        setUsers(usersData);
+      } else {
+        console.error('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -89,7 +115,12 @@ export const AttendancePage: React.FC = () => {
     }
   }, [practiceSchedules, selectedPractice]);
 
-  if (attendanceLoading || practiceLoading) {
+  // ユーザー一覧を取得
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  if (attendanceLoading || practiceLoading || usersLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -136,6 +167,7 @@ export const AttendancePage: React.FC = () => {
       {/* シンプルな出席登録フォーム */}
       <SimpleAttendanceForm
         practiceSchedule={selectedPractice}
+        users={users}
         onSubmit={handleSimpleFormSubmit}
         loading={formLoading}
       />
@@ -171,7 +203,7 @@ export const AttendancePage: React.FC = () => {
         <AttendanceForm
           attendance={editingAttendance}
           practiceSchedules={practiceSchedules}
-          userId="1" // 仮のユーザーIDを使用
+          userId="79d7e10b-cfa1-4b0e-8512-039bf51013f5" // 現在のユーザーIDを使用
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
