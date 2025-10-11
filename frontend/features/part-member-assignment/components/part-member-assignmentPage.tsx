@@ -38,13 +38,7 @@ export const PartMemberAssignmentPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">メンバー選択</h1>
-          <h2 className="text-xl text-gray-700">2025EVE祭</h2>
-        </div>
-
+    <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
           {parts.map((part) => (
             <PartCard
@@ -61,7 +55,6 @@ export const PartMemberAssignmentPage = () => {
           selectedPart={selectedPart}
           onConfirm={handleConfirm}
         />
-      </div>
     </div>
   );
 }
