@@ -9,18 +9,18 @@ class VenueBase(BaseModel):
     """会場の基本情報"""
 
     name: str
-    capacity: Optional[int] = None
-    campus: Optional[str] = None
+    capacity: int  # NOT NULL制約
+    campus: str  # NOT NULL制約
     is_active: bool = True
 
 
 class VenueCreate(VenueBase):
-    code: Optional[str] = None
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    code: str  # NOT NULL制約
+    address: str  # NOT NULL制約
+    latitude: float  # NOT NULL制約
+    longitude: float  # NOT NULL制約
     description: Optional[str] = None
-    can_mai: bool = False
+    can_mai: bool = False  # NOT NULL制約
     desk: Optional[int] = None
     chair: Optional[int] = None
 

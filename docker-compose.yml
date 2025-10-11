@@ -16,15 +16,18 @@ services:
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - ML_ENGINE_URL=http://ml-engine:8001
     volumes:
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
+      # バックエンドのソースコードをマウント
+      - ./backend:/app
+      
       - ./.env:/.env
     restart: unless-stopped
     networks:
       - app-network
     command: >
       sh -c "
-      cp /env.example /.env &&
+      if [ ! -f /.env ]; then
+        cp /env.example /.env
+      fi &&
       if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       else
@@ -55,10 +58,11 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_ML_ENGINE_URL=http://localhost:8001
     volumes:
+      # フロントエンドのソースコードをマウント
+      - ./frontend:/app
+      # node_modulesと.nextは除外（コンテナ内のものを使用）
       - /app/node_modules
       - /app/.next
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
       - ./.env:/.env
     restart: unless-stopped
     depends_on:
@@ -68,11 +72,13 @@ services:
       - app-network
     command: >
       sh -c "
-      cp /env.example /.env &&
+      if [ ! -f /.env ]; then
+        cp /env.example /.env
+      fi &&
       if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
-        yarn dev
+        npm run dev
       else
-        yarn start
+        npm start
       fi"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
@@ -158,4 +164,5 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  default:
     name: tomosigoto-network

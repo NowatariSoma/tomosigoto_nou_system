@@ -91,13 +91,13 @@ erDiagram
         date schedule_date
         time start_time
         time end_time
+        int division_count
+        varchar title
         text description
         varchar schedule_type
         varchar status
         timestamp created_at
         timestamp updated_at
-        uuid created_by FK
-        uuid updated_by FK
     }
 
     schedule_available_venues {
@@ -116,8 +116,7 @@ erDiagram
         uuid schedule_id FK
         uuid part_id FK
         varchar title
-        time start_time
-        time end_time
+        int slot_order
         uuid schedule_available_venues FK
         int priority
         timestamp created_at
@@ -140,8 +139,6 @@ erDiagram
         text notes
         timestamptz created_at
         timestamptz updated_at
-        uuid created_by FK
-        uuid updated_by FK
     }
 
     %% -------------------------
@@ -174,6 +171,18 @@ erDiagram
 **3. 履歴管理**
 - `selected_venue_id`で実際に選択された会場を記録
 - 意思決定の履歴を保持
+
+### 練習枠とセッション管理の設計方針
+
+**1. 練習枠（practice_slots）による時間管理**
+- 練習スケジュール全体の時間を複数の練習枠に分割
+- 各練習枠は`division_count`により、さらに細かいコマに分割可能
+- 例: 2時間の練習枠を4分割 = 30分のコマが4つ
+
+**2. セッション（sessions）のコマベース管理**
+- セッションは具体的な時間ではなく`slot_count`（コマ数）で管理
+- 実際の時間は所属する練習枠の分割数から計算
+- 柔軟なセッション配置と時間調整が可能
 
 ## 実装アプローチ
 ### データベース設計と実装

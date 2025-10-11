@@ -5,19 +5,24 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/forms/button';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Users,
+  User,
   X,
   Home,
   Settings,
   ChevronUp,
   ChevronDown,
   Calendar,
+  Theater,
   BookOpen,
-  Building
+  Building,
+  ReceiptText,
+  Clock,
+  Edit3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -204,8 +209,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <NavItem
                 icon={<Calendar className="w-4 h-4" />}
                 label="登録"
-                active={pathname === '/register'}
-                onClick={() => handleNavigateAndClose('/register')}
+                active={pathname === '/practice-schedule'}
+                onClick={() => handleNavigateAndClose('/practice-schedule')}
               />
 
               <NavItem
@@ -216,16 +221,51 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
+                icon={<Edit3 className="w-4 h-4" />}
+                label="練習表編集"
+                active={pathname.startsWith('/practice-schedule-editor')}
+                onClick={() => handleNavigateAndClose('/practice-schedule-editor')}
+              />
+
+              <NavItem
                 icon={<Building className="w-4 h-4" />}
                 label="部屋設定"
                 active={pathname === '/room-settings'}
                 onClick={() => handleNavigateAndClose('/room-settings')}
               />
 
+              <NavItem
+                icon={<Theater className="w-4 h-4" />}
+                label="舞台・パート登録"
+                active={pathname === '/parts-settings'}
+                onClick={() => handleNavigateAndClose('/parts-settings')}
+              />
+
+              <NavItem
+                icon={<ReceiptText className="w-4 h-4" />}
+                label="演目一覧"
+                active={pathname === '/performances-list'}
+                onClick={() => handleNavigateAndClose('/performances-list')}
+              />
+
+              <NavItem
+                icon={<Clock className="w-4 h-4" />}
+                label="出席管理"
+                active={pathname === '/attendance'}
+                onClick={() => handleNavigateAndClose('/attendance')}
+              />
+
               <NavTitle label="その他" />
 
               <NavItem
-                icon={<Users className="w-4 h-4" />}
+                icon={<User className="w-4 h-4" />}
+                label="アカウント設定"
+                active={pathname === '/account-setting'}
+                onClick={() => handleNavigateAndClose('/account-setting')}
+              />
+
+              <NavItem
+                icon={<Settings className="w-4 h-4" />}
                 label="設定"
                 active={pathname === '/settings'}
                 onClick={() => handleNavigateAndClose('/settings')}
@@ -292,8 +332,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           <NavItem
             icon={<Calendar className="w-4 h-4" />}
             label={isCollapsed ? "" : "登録"}
-            active={pathname === '/register'}
-            href="/register"
+            active={pathname === '/practice-schedule'}
+            href="/practice-schedule"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
@@ -306,17 +346,56 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           />
 
           <NavItem
+            icon={<Edit3 className="w-4 h-4" />}
+            label={isCollapsed ? "" : "練習表編集"}
+            active={pathname.startsWith('/practice-schedule-editor')}
+            href="/practice-schedule-editor"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
             icon={<Building className="w-4 h-4" />}
             label={isCollapsed ? "" : "部屋設定"}
             active={pathname === '/room-settings'}
             href="/room-settings"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
+          <NavItem
+            icon={<Theater className="w-4 h-4" />}
+            label={isCollapsed ? "" : "舞台・パート登録画面"}
+            active={pathname === '/parts-setting'}
+            href="/parts-setting"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          /> 
+
+          <NavItem
+            icon={<ReceiptText className="w-4 h-4" />}
+            label={isCollapsed ? "" : "演目一覧"}
+            active={pathname === '/performances-list'}
+            href="/performances-list"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Clock className="w-4 h-4" />}
+            label={isCollapsed ? "" : "出席管理"}
+            active={pathname === '/attendance'}
+            href="/attendance"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
 
           {!isCollapsed && <NavTitle label="その他" />}
 
           <NavItem
-            icon={<Users className="w-4 h-4" />}
+            icon={<User className="w-4 h-4" />}
+            label={isCollapsed ? "" : "アカウント設定"}
+            active={pathname === '/account-setting'}
+            href="/account-setting"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Settings className="w-4 h-4" />}
             label={isCollapsed ? "" : "設定"}
             active={pathname === '/settings'}
             href="/settings"

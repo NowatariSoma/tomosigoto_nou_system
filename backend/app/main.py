@@ -5,7 +5,7 @@
 # Supabase連携を有効にする
 from app.api.api import api_router
 from app.core.config import settings
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -34,27 +34,14 @@ async def root():
     return {"message": f"{settings.PROJECT_NAME} is running"}
 
 
-# Supabase接続テスト用エンドポイント（認証不要）
-@app.get("/debug/supabase-users")
-async def debug_supabase_users():
-    """実際のSupabaseからユーザを取得（デバッグ用・認証不要）"""
-    try:
-        from app.core.exceptions import create_error_response, create_success_response
-        from app.core.supabase import get_supabase
-        from app.repositories.user_repository import UserRepository
-        from app.services.user_service import UserService
-
-        client = get_supabase()
-        repository = UserRepository(client)
-        service = UserService(repository, client.auth)
-
-        users = await service.get_all_users()
-        return create_success_response(users, f"Found {len(users)} users")
-    except Exception as e:
-        from app.core.exceptions import create_error_response
-
-        return create_error_response("Failed to fetch users", e)
-
+# favicon.ico エンドポイント（404エラーを防ぐため）
+@app.get("/favicon.ico")
+async def favicon():
+    """
+    ブラウザのfavicon要求に対応するエンドポイント
+    実際のfaviconファイルがない場合の404エラーを防ぐ
+    """
+    return Response(status_code=204)
 
 if __name__ == "__main__":
     import uvicorn

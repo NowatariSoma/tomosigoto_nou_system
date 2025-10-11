@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     
     # CORS設定
     BACKEND_CORS_ORIGINS: List[str] = []
+
+    # スケジュール表示設定
+    DEFAULT_VENUE_COLORS: List[str] = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"]
+    DEFAULT_PART_COLORS: List[str] = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F", "#BB8FCE"]
+
+    # 時間スケジュール設定
+    SCHEDULE_START_HOUR: int = 9
+    SCHEDULE_END_HOUR: int = 17
+    SCHEDULE_SLOT_MINUTES: int = 30
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

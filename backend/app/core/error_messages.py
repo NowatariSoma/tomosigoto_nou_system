@@ -47,6 +47,37 @@ class ErrorMessage:
         status_code = status.HTTP_403_FORBIDDEN
         text = "このユーザーは無効化されています"
     
+    # パート関連
+    class PART_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "パートが見つかりません"
+    
+    class PART_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "このパート名は既に使用されています"
+    
+    class INACTIVE_PART(BaseMessage):
+        status_code = status.HTTP_403_FORBIDDEN
+        text = "このパートは無効化されています"
+    
+    # ステージ関連
+    class STAGE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "指定されたステージが見つかりません"
+    
+    # メンバー所属関連
+    class MEMBER_ASSIGNMENT_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "メンバー所属が見つかりません"
+    
+    class MEMBER_ASSIGNMENT_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "このユーザーは既に指定されたパートに所属しています"
+    
+    class INVALID_CATEGORY(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "カテゴリは 'utai' または 'mai' である必要があります"
+    
     # データベース関連
     class DATABASE_ERROR(BaseMessage):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -68,3 +99,20 @@ class ErrorMessage:
     class VALIDATION_ERROR(BaseMessage):
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         text = "入力値が正しくありません: {}"
+
+    # 練習スケジュール関連
+    class PRACTICE_SCHEDULE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "練習スケジュールが見つかりません"
+
+    class SESSION_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "セッションが見つかりません"
+
+    class SCHEDULE_VENUE_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "スケジュール利用可能会場が見つかりません"
+
+    class SESSION_INSTRUCTOR_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "セッション指導者が見つかりません"
