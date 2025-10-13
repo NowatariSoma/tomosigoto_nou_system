@@ -1,10 +1,10 @@
 // API関連の定数
 export const API_ENDPOINTS = {
-  ACCOUNT_SETTING: '/api/v1/account-setting',
-  PROFILE: '/api/v1/account-setting/profile',
-  PROFILE_PUBLIC: '/api/v1/account-setting/profile-public',
-  DEPARTMENTS: '/api/v1/account-setting/departments',
-  VALIDATE: '/api/v1/account-setting/validate-public',
+  ACCOUNT_SETTING: '/account-setting',
+  PROFILE: '/account-setting/profile',
+  PROFILE_PUBLIC: '/account-setting/profile-public',
+  DEPARTMENTS: '/account-setting/departments',
+  VALIDATE: '/account-setting/validate-public',
 } as const;
 
 // 学部関連の定数
@@ -21,6 +21,7 @@ export const INITIAL_ACCOUNT_FORM = {
   last_name_katakana: '',
   first_name_katakana: '',
   year: 1,
+  faculty: '',
   department_code: '',
   email: ''
 } as const;

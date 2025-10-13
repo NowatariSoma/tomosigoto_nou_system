@@ -43,29 +43,6 @@ async def favicon():
     """
     return Response(status_code=204)
 
-
-# Supabase接続テスト用エンドポイント（認証不要）
-@app.get("/debug/supabase-users")
-async def debug_supabase_users():
-    """実際のSupabaseからユーザを取得（デバッグ用・認証不要）"""
-    try:
-        from app.core.exceptions import create_error_response, create_success_response
-        from app.core.supabase import get_supabase
-        from app.repositories.user_repository import UserRepository
-        from app.services.user_service import UserService
-
-        client = get_supabase()
-        repository = UserRepository(client)
-        service = UserService(repository, client.auth)
-
-        users = await service.get_all_users()
-        return create_success_response(users, f"Found {len(users)} users")
-    except Exception as e:
-        from app.core.exceptions import create_error_response
-
-        return create_error_response("Failed to fetch users", e)
-
-
 if __name__ == "__main__":
     import uvicorn
 

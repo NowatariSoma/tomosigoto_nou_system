@@ -12,6 +12,7 @@ export const mapApiResponseToProfile = (apiResponse: any): AccountSettingProfile
     last_name_kanji: apiResponse.last_name_kanji || '',
     last_name_katakana: apiResponse.last_name_katakana || '',
     year: apiResponse.year || DEFAULTS.YEAR,
+    faculty: apiResponse.faculty || '',
     department_code: apiResponse.department_code || DEFAULTS.DEPARTMENT_CODE,
     department_name: apiResponse.department_name || DEFAULTS.DEPARTMENT_NAME,
     email: apiResponse.email || DEFAULTS.EMAIL,
@@ -31,6 +32,7 @@ export const mapFormDataToUpdateRequest = (formData: any): any => {
     last_name_kanji: formData.last_name_kanji,
     last_name_katakana: formData.last_name_katakana,
     year: formData.year,
+    faculty: formData.faculty,
     department_code: formData.department_code,
     email: formData.email
   };

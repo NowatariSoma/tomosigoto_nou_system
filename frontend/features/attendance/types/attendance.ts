@@ -71,10 +71,21 @@ export interface PracticeSchedule {
   updated_at?: string;
   created_by?: string;
   updated_by?: string;
+  venues?: {
+    id: string;
+    name: string;
+    campus: string;
+  }[];
 }
 
 export interface AttendanceFormData {
   practice_schedule_id: string;
   status: 'present' | 'absent' | 'late' | 'excused';
   notes: string;
+}
+
+export interface AttendanceFormErrors {
+  practice_schedule_id?: string;
+  status?: string;
+  notes?: string;
 }

@@ -28,6 +28,7 @@ async def get_current_user_profile(
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
     user_id = current_user["id"]
+    print(f"Getting profile for user_id: {user_id}")
     profile = await account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:
@@ -39,42 +40,16 @@ async def get_current_user_profile(
 @router.get("/profile-public", response_model=AccountSettingProfileResponse)
 async def get_public_profile(
     user_id: str = Query(..., description="ユーザーID"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを取得（テスト用）"""
-    try:
-        print(f"Getting profile for user_id: {user_id}")
-        profile = await account_setting_service.get_profile_by_user_id(user_id)
-        
-        if not profile:
-            # プロフィールが存在しない場合は404エラーを返す
-            print(f"Profile not found for user_id: {user_id}, returning 404")
-            raise APIException(ErrorMessage.USER_NOT_FOUND)
-        
-        return profile
-    except APIException:
-        # APIExceptionの場合は再発生させる
-        raise
-    except Exception as e:
-        # その他のエラーが発生した場合はログを出力してデフォルト値を返す
-        print(f"Error getting profile: {e}")
-        return AccountSettingProfileResponse(
-            id="default-id",
-            user_id=user_id,
-            student_id="",
-            first_name_kanji="",
-            first_name_katakana="",
-            last_name_kanji="",
-            last_name_katakana="",
-            year=1,
-            department_code="LIT",
-            department_name="文学部",
-            email="",
-            avatar_url=None,
-            preferences=None,
-            created_at=None,
-            updated_at=None
-        )
+    profile = await account_setting_service.get_profile_by_user_id(user_id)
+
+    if not profile:
+        raise APIException(ErrorMessage.USER_NOT_FOUND)
+
+    return profile
 
 
 @router.get("/profile/{user_id}", response_model=AccountSettingProfileResponse)
@@ -119,6 +94,7 @@ async def create_user_profile(
 async def create_public_profile(
     profile_data: AccountSettingProfileCreate,
     user_id: str = Query(..., description="ユーザーID"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを作成（テスト用）"""
@@ -168,6 +144,7 @@ async def update_user_profile(
 async def update_public_profile(
     update_data: AccountSettingUpdateRequest,
     user_id: str = Query(..., description="ユーザーID"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを更新（テスト用）"""
@@ -212,6 +189,7 @@ async def delete_user_profile(
 
 @router.get("/departments", response_model=List[DepartmentResponse])
 async def get_all_departments(
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """すべての学部を取得"""
@@ -222,6 +200,7 @@ async def get_all_departments(
 @router.get("/departments/{department_code}", response_model=DepartmentResponse)
 async def get_department_by_code(
     department_code: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """学部コードで学部を取得"""
@@ -273,6 +252,7 @@ async def validate_profile_data(
 @router.post("/validate-public", response_model=AccountSettingValidationResponse)
 async def validate_profile_data_public(
     profile_data: Dict[str, Any],
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィールデータのバリデーション（認証不要）"""
@@ -304,8 +284,3 @@ async def get_profile_by_student_id(
     
     return profile
 
-
-@router.get("/health")
-async def health_check():
-    """アカウント設定APIのヘルスチェック"""
-    return {"status": "healthy", "service": "account-setting"}

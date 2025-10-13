@@ -37,6 +37,7 @@ class UserProfileRepository:
         Returns:
             プロフィール情報、見つからない場合はNone
         """
+        print(f"Searching for profile with user_id: {user_id}")
         response = (
             self.client.table(self.table_name)
             .select("""

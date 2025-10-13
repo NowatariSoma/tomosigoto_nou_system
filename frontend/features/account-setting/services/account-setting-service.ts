@@ -1,104 +1,182 @@
-import { fetchApi, ApiError } from '../../../lib/api';
-import { 
-  AccountSettingProfile, 
-  AccountSettingUpdateRequest, 
-  Department, 
-  ValidationResponse 
+import { ApiError } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+import {
+  AccountSettingProfile,
+  AccountSettingUpdateRequest,
+  Department,
+  ValidationResponse
 } from '../types';
 import { API_ENDPOINTS } from '../constants';
 
 export class AccountSettingService {
   private readonly basePath = API_ENDPOINTS.ACCOUNT_SETTING;
+  private readonly apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+  private async getAuthHeaders(): Promise<HeadersInit> {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    return {
+      'Content-Type': 'application/json',
+      ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+    };
+  }
 
   async getCurrentUserProfile(): Promise<AccountSettingProfile | null> {
     try {
-      // テスト用のユーザーIDを生成（実際の実装では認証から取得）
-      const testUserId = this.getTestUserId();
-      console.log('Fetching profile for user ID:', testUserId);
-      const response = await fetchApi(`${this.basePath}/profile-public?user_id=${testUserId}`);
-      const result = await response.json();
-      console.log('Profile found:', result);
-      return result;
-    } catch (error: any) {
-      // 404エラーの場合はnullを返す（プロフィールが存在しない）
-      if (error.status === 404) {
-        console.log('Profile not found (404), returning null');
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile`, {
+        headers,
+      });
+
+      if (response.status === 404) {
         return null;
       }
-      // その他のエラーは再発生
-      console.error('Error fetching profile:', error);
+
+      if (!response.ok) {
+        throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return null;
+      }
       throw error;
     }
   }
 
-  private getTestUserId(): string {
-    // テスト用のユーザーIDを生成（実際の実装では認証から取得）
-    // セッションストレージから取得、なければ新しく生成
-    let userId = sessionStorage.getItem('test-user-id');
-    if (!userId) {
-      // より一意性の高いユーザーIDを生成（タイムスタンプ + ランダム文字列）
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(2, 15);
-      userId = `test-user-${timestamp}-${randomStr}`;
-      sessionStorage.setItem('test-user-id', userId);
+  async getCurrentUserRole(): Promise<any> {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}/users/me/role`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
     }
-    console.log('Generated test user ID:', userId);
-    return userId;
+
+    return response.json();
+  }
+
+  async getCurrentUserInfo(): Promise<any> {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}/users/me`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async createProfile(profileData: AccountSettingUpdateRequest): Promise<AccountSettingProfile> {
-    const testUserId = this.getTestUserId();
-    
-    console.log('Creating profile with user ID:', testUserId, 'and data:', profileData);
-    const response = await fetchApi(`${this.basePath}/profile-public?user_id=${testUserId}`, {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile`, {
       method: 'POST',
+      headers,
       body: JSON.stringify(profileData),
     });
-    const result = await response.json();
-    console.log('Profile creation response:', result);
-    return result;
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async updateProfile(updateData: AccountSettingUpdateRequest): Promise<AccountSettingProfile> {
-    const testUserId = this.getTestUserId();
-    const response = await fetchApi(`${this.basePath}/profile-public?user_id=${testUserId}`, {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile`, {
       method: 'PUT',
+      headers,
       body: JSON.stringify(updateData),
     });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 
   async deleteProfile(): Promise<void> {
-    await fetchApi(`${this.basePath}/profile`, {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile`, {
       method: 'DELETE',
+      headers,
     });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
   }
 
   async getAllDepartments(): Promise<Department[]> {
-    const response = await fetchApi(`${this.basePath}/departments`);
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/departments`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 
   async getDepartmentByCode(departmentCode: string): Promise<Department> {
-    const response = await fetchApi(`${this.basePath}/departments/${departmentCode}`);
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/departments/${departmentCode}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 
   async validateProfileData(profileData: Record<string, any>): Promise<ValidationResponse> {
-    const response = await fetchApi(`${this.basePath}/validate-public`, {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/validate`, {
       method: 'POST',
+      headers,
       body: JSON.stringify(profileData),
     });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 
   async getProfileHistory(limit: number = 50): Promise<any[]> {
-    const response = await fetchApi(`${this.basePath}/profile/history?limit=${limit}`);
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile/history?limit=${limit}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 
   async getFieldHistory(fieldName: string, limit: number = 20): Promise<any[]> {
-    const response = await fetchApi(`${this.basePath}/profile/history/${fieldName}?limit=${limit}`);
+    const headers = await this.getAuthHeaders();
+    const response = await fetch(`${this.apiBaseUrl}${this.basePath}/profile/history/${fieldName}?limit=${limit}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+    }
+
     return response.json();
   }
 }

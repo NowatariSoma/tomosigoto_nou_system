@@ -1,10 +1,19 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { UserCheck } from 'lucide-react';
-import { AttendancePage } from '@/features/attendance/components';
+import { AttendancePage, PracticeAttendancePage } from '@/features/attendance/components';
+import { useSearchParams } from 'next/navigation';
 
-export default function Page() {
+function AttendanceContent() {
+  const searchParams = useSearchParams();
+  const practiceId = searchParams.get('practice');
+
+  if (practiceId) {
+    return <PracticeAttendancePage practiceId={practiceId} />;
+  }
+
   return (
     <AppTemplate
       title="出席登録"
@@ -14,14 +23,21 @@ export default function Page() {
         level: 'alpha',
         text: '認証システム統合、UI改善'
       }}
-      // TODO: ユーザー権限を一時的に無効化 - 本番環境では有効にする必要がある
-      // permissionBadge={{
-      //   level: 'basic',
-      //   text: 'ユーザー'
-      // }}
+      permissionBadge={{
+        level: 'basic',
+        text: '管理者'
+      }}
       maxWidth="7xl"
     >
       <AttendancePage />
     </AppTemplate>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AttendanceContent />
+    </Suspense>
   );
 }
