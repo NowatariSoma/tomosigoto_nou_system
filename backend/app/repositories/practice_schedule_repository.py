@@ -69,6 +69,7 @@ class PracticeScheduleRepository:
             .eq("id", schedule_id_str)
             .execute()
         )
+        
         return response.data[0]
 
     @handle_supabase_errors("delete")
