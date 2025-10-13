@@ -127,14 +127,21 @@ export class PracticeScheduleEditorService {
    * @param scheduleId - スケジュールID
    * @param startTime - 開始時間 (HH:MM:SS形式)
    * @param endTime - 終了時間 (HH:MM:SS形式)
+   * @param divisionCount - 分割数（オプション）
    */
-  async updateScheduleTime(scheduleId: string, startTime: string, endTime: string): Promise<void> {
-    await fetchApi(`${this.basePath}${scheduleId}`, {
+  async updateScheduleTime(scheduleId: string, startTime: string, endTime: string, divisionCount?: number): Promise<void> {
+    const updateData: any = {
+      start_time: startTime,
+      end_time: endTime,
+    };
+    
+    if (divisionCount !== undefined) {
+      updateData.division_count = divisionCount;
+    }
+    
+    await fetchApi(`${this.basePath}/${scheduleId}`, {
       method: 'PUT',
-      body: JSON.stringify({
-        start_time: startTime,
-        end_time: endTime,
-      }),
+      body: JSON.stringify(updateData),
     });
   }
 

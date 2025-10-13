@@ -23,7 +23,7 @@ router = APIRouter()
 async def get_stages(
     status_filter: Optional[str] = Query(None, description="ステータスでフィルタリング (active/inactive)"),
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     舞台一覧を取得
@@ -38,7 +38,7 @@ async def get_stages(
 async def get_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     特定の舞台情報を取得
@@ -50,7 +50,7 @@ async def get_stage(
 async def create_stage(
     stage_data: StageCreate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しい舞台を作成
@@ -63,7 +63,7 @@ async def update_stage(
     stage_id: str,
     stage_data: StageUpdate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     舞台情報を更新
@@ -81,7 +81,7 @@ async def update_stage(
 async def delete_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     舞台を削除
@@ -94,7 +94,7 @@ async def get_stage_parts(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
     part_service: PartService = Depends(get_part_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定された舞台に紐づくパート一覧を取得
@@ -114,7 +114,7 @@ async def get_stage_members(
     stage_service: StageService = Depends(get_stage_service),
     part_service: PartService = Depends(get_part_service),
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定された舞台に所属するメンバー一覧を取得
