@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/forms/button";
 import { Badge } from "@/components/ui/feedback/badge";
 import CustomModal from "@/features/schedule/components/custom-modal";
 
-// Generate hours in 12-hour format
+// Generate hours in 24-hour format (Japanese style)
 const hours = Array.from({ length: 24 }, (_, i) => {
-  const hour = i % 12 || 12;
-  const ampm = i < 12 ? "AM" : "PM";
-  return `${hour}:00 ${ampm}`;
+  return `${i}:00`;
 });
 
 // Animation variants
@@ -178,11 +176,9 @@ export default function DailyView({
       const minuteFraction = (y % hourHeight) / hourHeight;
       const minutes = Math.floor(minuteFraction * 60);
 
-      // Format in 12-hour format
-      const hour12 = hour % 12 || 12;
-      const ampm = hour < 12 ? "AM" : "PM";
+      // Format in 24-hour format (Japanese style)
       setDetailedHour(
-        `${hour12}:${Math.max(0, minutes).toString().padStart(2, "0")} ${ampm}`
+        `${hour}:${Math.max(0, minutes).toString().padStart(2, "0")}`
       );
 
       // Ensure timelinePosition is never negative and is within bounds
@@ -192,10 +188,13 @@ export default function DailyView({
     []
   );
 
-  const getFormattedDayTitle = useCallback(
-    () => currentDate.toDateString(),
-    [currentDate]
-  );
+  const getFormattedDayTitle = useCallback(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][currentDate.getDay()];
+    return `${year}年${month}月${day}日（${dayOfWeek}）`;
+  }, [currentDate]);
 
   const dayEvents = getters.getEventsForDay(
     currentDate?.getDate() || 0,
@@ -236,18 +235,10 @@ export default function DailyView({
       return;
     }
 
-    // Parse the 12-hour format time
-    const [timePart, ampm] = detailedHour.split(" ");
-    const [hourStr, minuteStr] = timePart.split(":");
-    let hours = parseInt(hourStr);
+    // Parse the 24-hour format time
+    const [hourStr, minuteStr] = detailedHour.split(":");
+    const hours = parseInt(hourStr);
     const minutes = parseInt(minuteStr);
-
-    // Convert to 24-hour format for Date object
-    if (ampm === "PM" && hours < 12) {
-      hours += 12;
-    } else if (ampm === "AM" && hours === 12) {
-      hours = 0;
-    }
 
     const chosenDay = currentDate.getDate();
 
@@ -385,8 +376,7 @@ export default function DailyView({
                     variants={itemVariants}
                     className="cursor-pointer transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
-                    <span className="hidden sm:inline">{hour}</span>
-                    <span className="sm:hidden">{hour.split(' ')[0]}</span>
+                    {hour}
                   </motion.div>
                 ))}
               </div>
@@ -400,8 +390,6 @@ export default function DailyView({
                     className="cursor-pointer w-full relative border-b hover:bg-default-200/50 transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
                     <div className="absolute bg-accent flex items-center justify-center text-xs opacity-0 transition left-0 top-0 duration-250 hover:opacity-100 w-full h-full">
-                      <span className="hidden sm:inline">Add Event</span>
-                      <span className="sm:hidden">+</span>
                     </div>
                   </div>
                 ))}
@@ -480,8 +468,7 @@ export default function DailyView({
                   variant="outline"
                   className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-[10px] sm:text-xs px-1 sm:px-2"
                 >
-                  <span className="hidden sm:inline">{detailedHour}</span>
-                  <span className="sm:hidden">{detailedHour.split(' ')[0]}</span>
+                  {detailedHour}
                 </Badge>
               </div>
             )}

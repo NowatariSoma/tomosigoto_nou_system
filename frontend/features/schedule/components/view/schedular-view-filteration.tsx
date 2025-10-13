@@ -136,7 +136,7 @@ export default function SchedulerViewFilteration({
             onValueChange={setActiveView}
             className={cn("w-full", classNames?.tabs)}
           >
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+            <div className="mb-4">
               <TabsList className={cn(
                 "grid w-full sm:w-auto",
                 viewsSelector?.length === 1 && "grid-cols-1",
@@ -185,23 +185,6 @@ export default function SchedulerViewFilteration({
                   </TabsTrigger>
                 )}
               </TabsList>
-
-              {/* Add Event Button */}
-              {CustomComponents?.customButtons?.CustomAddEventButton ? (
-                <div onClick={() => handleAddEvent()}>
-                  {CustomComponents?.customButtons.CustomAddEventButton}
-                </div>
-              ) : (
-                <Button
-                  onClick={() => handleAddEvent()}
-                  className={classNames?.buttons?.addEvent}
-                  variant="default"
-                  size="sm"
-                >
-                  <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="text-xs sm:text-sm">Add Event</span>
-                </Button>
-              )}
             </div>
 
             {viewsSelector?.includes("day") && (
