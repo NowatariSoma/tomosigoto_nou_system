@@ -21,6 +21,15 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   const [currentScheduleId, setCurrentScheduleId] = useState(initialScheduleId || '');
   const [currentScheduleDate, setCurrentScheduleDate] = useState(initialScheduleDate || '');
   const [isScheduleSelected, setIsScheduleSelected] = useState(!!initialScheduleId);
+  
+  console.log('PracticeScheduleEditorPage初期化:', {
+    initialScheduleId,
+    initialScheduleDate,
+    currentScheduleId,
+    isScheduleSelected,
+    currentScheduleIdLength: currentScheduleId?.length,
+    currentScheduleIdTrim: currentScheduleId?.trim()
+  });
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
 

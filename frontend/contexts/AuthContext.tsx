@@ -66,6 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
+        // Supabaseの認証トークンをlocalStorageに保存
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          localStorage.setItem('authToken', session.access_token);
+        }
         await fetchUserRole();
       }
     } catch (error) {
@@ -91,6 +96,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user);
       if (data.user) {
+        // Supabaseの認証トークンをlocalStorageに保存
+        if (data.session?.access_token) {
+          localStorage.setItem('authToken', data.session.access_token);
+        }
         await fetchUserRole();
       }
     } finally {
@@ -129,10 +138,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(null);
       setUserRole(null);
+      // localStorageから認証トークンを削除
+      localStorage.removeItem('authToken');
     } catch (error) {
       console.error('Logout error:', error);
       setUser(null);
       setUserRole(null);
+      // localStorageから認証トークンを削除
+      localStorage.removeItem('authToken');
     }
   };
 
@@ -144,9 +157,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
+          // Supabaseの認証トークンをlocalStorageに保存
+          if (session?.access_token) {
+            localStorage.setItem('authToken', session.access_token);
+          }
           await fetchUserRole();
         } else {
           setUserRole(null);
+          // localStorageから認証トークンを削除
+          localStorage.removeItem('authToken');
         }
         setIsLoading(false);
       }

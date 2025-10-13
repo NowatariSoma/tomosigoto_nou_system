@@ -1,15 +1,23 @@
 import { Room, CreateRoomRequest } from '../types';
 import { CAMPUS, DEFAULTS, UI_TEXT } from '../constants';
 
-// バックエンドのVenue型の定義（推測）
+// バックエンドのVenue型の定義
 interface VenueResponse {
   id?: string;
   name?: string;
+  code?: string;
   address?: string;
   capacity?: number;
+  campus?: string;
   description?: string;
-  location?: string;
-  isActive?: boolean;
+  latitude?: number;
+  longitude?: number;
+  can_mai?: boolean;
+  desk?: number;
+  chair?: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // バックエンドのVenue型をフロントエンドのRoom型にマッピング
@@ -29,11 +37,11 @@ export const mapVenueToRoom = (venue: VenueResponse | null | undefined): Room =>
   return {
     id: venue.id || '',
     name: venue.name || '',
-    campus: venue.address?.includes(CAMPUS.IMADEGAWA) ? CAMPUS.IMADEGAWA : CAMPUS.KYOTANABE,
+    campus: venue.campus === CAMPUS.IMADEGAWA ? CAMPUS.IMADEGAWA : CAMPUS.KYOTANABE,
     capacity: venue.capacity || DEFAULTS.CAPACITY,
-    danceAllowed: venue.description?.includes(UI_TEXT.DANCE_KEYWORD) || DEFAULTS.DANCE_ALLOWED,
+    danceAllowed: venue.can_mai || DEFAULTS.DANCE_ALLOWED,
     description: venue.description || '',
-    location: venue.location || ''
+    location: venue.address || ''
   };
 };
 
@@ -41,10 +49,16 @@ export const mapVenueToRoom = (venue: VenueResponse | null | undefined): Room =>
 export const mapRoomToVenue = (room: Partial<CreateRoomRequest>) => {
   return {
     name: room.name,
-    address: room.campus ? `${room.campus}${UI_TEXT.CAMPUS_SUFFIX}` : undefined,
+    code: `ROOM_${Date.now()}`, // 一時的なコード生成
+    address: room.campus ? `${room.campus}${UI_TEXT.CAMPUS_SUFFIX}` : '未設定',
     capacity: room.capacity,
+    campus: room.campus,
     description: room.description || (room.danceAllowed ? UI_TEXT.DANCE_KEYWORD + '可能' : ''),
-    location: room.location,
-    isActive: true
+    latitude: 35.6762, // デフォルト値（京都）
+    longitude: 139.6503, // デフォルト値（京都）
+    can_mai: room.danceAllowed || false,
+    desk: 0,
+    chair: room.capacity || 0,
+    is_active: true
   };
 };

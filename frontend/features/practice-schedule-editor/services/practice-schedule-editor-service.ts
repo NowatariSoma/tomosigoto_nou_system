@@ -26,11 +26,12 @@ export class PracticeScheduleEditorService {
    */
   async getBasicSchedule(scheduleId: string): Promise<any> {
     try {
-      const response = await fetchApi(`${this.basePath}/${scheduleId}`);
-      const data = await response.json();
-      return data;
+      const response = await fetchApi(`${this.basePath}${scheduleId}`);
+      return response.json();
     } catch (error: any) {
+      console.error('スケジュール取得エラー:', error);
       if (error.status === 404) {
+        console.warn(`スケジュールID ${scheduleId} が見つかりません`);
         return null;
       }
       throw error;
@@ -44,7 +45,7 @@ export class PracticeScheduleEditorService {
    */
   async getScheduleDetails(scheduleId: string): Promise<IdealFormatApiResponse> {
     try {
-      const response = await fetchApi(`${this.basePath}/${scheduleId}/details`);
+      const response = await fetchApi(`${this.basePath}${scheduleId}/details`);
       return response.json();
     } catch (error: any) {
       if (error.status === 404) {

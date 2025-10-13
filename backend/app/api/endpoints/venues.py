@@ -74,6 +74,8 @@ async def create_venue(
 async def patch_venue(
     venue_id: UUID,
     venue_data: VenueUpdate,
+64
+
     venue_service: VenueService = Depends(get_venue_service),
     # current_user: Dict[str, Any] = Depends(get_current_user),
 ):

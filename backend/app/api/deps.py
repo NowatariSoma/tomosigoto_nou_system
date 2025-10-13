@@ -38,7 +38,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from supabase import Client
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_user_repository(
@@ -61,6 +61,11 @@ async def get_current_user(
     user_service: UserService = Depends(get_user_service),
 ) -> Dict[str, Any]:
     """JWTトークンから現在のユーザー情報を取得"""
+    if not credentials:
+        raise APIException(
+            ErrorMessage.INVALID_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"}
+        )
+    
     token = credentials.credentials
     user = await user_service.verify_jwt_token(token)
 
@@ -70,6 +75,22 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    user_service: UserService = Depends(get_user_service),
+) -> Optional[Dict[str, Any]]:
+    """JWTトークンから現在のユーザー情報を取得（オプショナル）"""
+    if not credentials:
+        return None
+    
+    try:
+        token = credentials.credentials
+        user = await user_service.verify_jwt_token(token)
+        return user
+    except Exception:
+        return None
 
 
 async def get_current_active_user(

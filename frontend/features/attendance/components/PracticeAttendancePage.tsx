@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAttendance } from '../hooks';
 import { usePracticeSchedule as useAllPracticeSchedules } from '../hooks/use-practice-schedule';
 import { SimpleAttendanceForm } from './SimpleAttendanceForm';
+import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 
@@ -14,6 +15,7 @@ interface PracticeAttendancePageProps {
 export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
   practiceId,
 }) => {
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = useAllPracticeSchedules();
   const { upsertAttendance } = useAttendance();
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>(practiceId);
@@ -22,15 +24,8 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
 
   const selectedPractice = practiceSchedules.find(p => p.id === selectedPracticeId);
 
-  // モックユーザーデータ（開発用）
-  const mockUser = {
-    id: '00000000-0000-0000-0000-000000000001',
-    email: 'test@example.com',
-    name: 'テストユーザー',
-  };
-
   const handleSubmit = async (data: { status: string; notes: string }) => {
-    if (!selectedPractice) return;
+    if (!selectedPractice || !user) return;
 
     try {
       setFormLoading(true);
@@ -38,8 +33,8 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
 
       await upsertAttendance({
         practice_schedule_id: selectedPractice.id,
-        user_id: mockUser.id,
-        status: data.status as 'present' | 'absent' | 'late' | 'excused',
+        user_id: user.id,
+        status: data.status as 'present' | 'absent' | 'late' | 'undecided',
         notes: data.notes,
       });
     } catch (error) {
@@ -49,6 +44,30 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
       setFormLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+          <p className="text-gray-600">認証情報を確認中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">ログインが必要です</h2>
+            <p className="text-red-600">出席登録を行うにはログインしてください。</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (practiceLoading) {
     return (
@@ -110,7 +129,8 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
       {/* 出席フォーム */}
       {selectedPractice && (
         <SimpleAttendanceForm
-          practiceSchedule={selectedPractice}
+          practiceSchedules={[selectedPractice]}
+          users={[]}
           onSubmit={handleSubmit}
           loading={formLoading}
         />

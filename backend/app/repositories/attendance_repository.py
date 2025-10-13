@@ -78,6 +78,11 @@ class AttendanceRepository:
         """出欠記録を作成"""
         # UUID型を文字列に変換
         serialized_data = self._serialize_uuid_fields(attendance_data)
+        
+        # created_byとupdated_byを一時的に除外（PostgRESTのスキーマキャッシュの問題のため）
+        serialized_data.pop('created_by', None)
+        serialized_data.pop('updated_by', None)
+        
         response = self.client.table(self.table_name).insert(serialized_data).execute()
         return response.data[0]
 
@@ -86,6 +91,11 @@ class AttendanceRepository:
         """出欠記録を更新"""
         # UUID型を文字列に変換
         serialized_data = self._serialize_uuid_fields(attendance_data)
+        
+        # created_byとupdated_byを一時的に除外（PostgRESTのスキーマキャッシュの問題のため）
+        serialized_data.pop('created_by', None)
+        serialized_data.pop('updated_by', None)
+        
         response = (
             self.client.table(self.table_name)
             .update(serialized_data)
@@ -99,6 +109,10 @@ class AttendanceRepository:
         """出欠記録を作成または更新（practice_schedule_id + user_idの組み合わせで）"""
         # UUID型を文字列に変換
         serialized_data = self._serialize_uuid_fields(attendance_data)
+        
+        # created_byとupdated_byを一時的に除外（PostgRESTのスキーマキャッシュの問題のため）
+        serialized_data.pop('created_by', None)
+        serialized_data.pop('updated_by', None)
         
         # 既存の記録を確認
         existing = await self.find_by_practice_and_user(
