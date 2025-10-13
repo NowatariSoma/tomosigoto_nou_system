@@ -34,6 +34,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     edit_mode,
     loading,
     error,
+    fetchScheduleDetails,
     createSession,
     updateSession,
     deleteSession,
@@ -110,6 +111,74 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     setCurrentScheduleDate('');
   };
 
+  const handleAddTimeSlot = async () => {
+    try {
+      const { practiceScheduleEditorService } = await import('../services');
+      
+      // 現在のdivision_countとstart_time/end_timeをAPIから取得
+      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(currentScheduleId);
+      const currentDivisionCount = basicSchedule?.division_count || time_slots.length || 6;
+      const newDivisionCount = currentDivisionCount + 1;
+      
+      // 実際のスケジュールの時間を使用（stateは初期値のままの可能性があるため）
+      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
+      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
+      
+      if (newDivisionCount > 24) {
+        alert('時間スロットは最大24個までです');
+        return;
+      }
+      
+      // division_countを更新（時間は既存の値を使用）
+      await practiceScheduleEditorService.updateScheduleTime(
+        currentScheduleId,
+        actualStartTime,
+        actualEndTime,
+        newDivisionCount
+      );
+      
+      // テーブルのみ再読み込み
+      await fetchScheduleDetails();
+    } catch (error) {
+      console.error('時間スロットの追加に失敗しました:', error);
+      alert('時間スロットの追加に失敗しました');
+    }
+  };
+
+  const handleRemoveTimeSlot = async () => {
+    try {
+      const { practiceScheduleEditorService } = await import('../services');
+      
+      // 現在のdivision_countとstart_time/end_timeをAPIから取得
+      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(currentScheduleId);
+      const currentDivisionCount = basicSchedule?.division_count || time_slots.length || 6;
+      const newDivisionCount = currentDivisionCount - 1;
+      
+      // 実際のスケジュールの時間を使用
+      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
+      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
+      
+      if (newDivisionCount < 1) {
+        alert('時間スロットは最低1個必要です');
+        return;
+      }
+      
+      // division_countを更新（時間は既存の値を使用）
+      await practiceScheduleEditorService.updateScheduleTime(
+        currentScheduleId,
+        actualStartTime,
+        actualEndTime,
+        newDivisionCount
+      );
+      
+      // テーブルのみ再読み込み
+      await fetchScheduleDetails();
+    } catch (error) {
+      console.error('時間スロットの削除に失敗しました:', error);
+      alert('時間スロットの削除に失敗しました');
+    }
+  };
+
   // スケジュールが選択されていない場合は選択画面を表示
   if (!isScheduleSelected) {
     return <ScheduleSelector onScheduleSelect={handleScheduleSelect} />;
@@ -178,6 +247,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         onEditSession={handleEditSession}
         onDeleteSession={handleDeleteSession}
         onMoveSession={handleSessionMove}
+        onAddTimeSlot={handleAddTimeSlot}
+        onRemoveTimeSlot={handleRemoveTimeSlot}
       />
 
       {/* セッション編集モーダル */}
