@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/forms/button";
 import { Badge } from "@/components/ui/feedback/badge";
 import CustomModal from "@/features/schedule/components/custom-modal";
 
-// Generate hours in 12-hour format
+// Generate hours in 24-hour format (Japanese style)
 const hours = Array.from({ length: 24 }, (_, i) => {
-  const hour = i % 12 || 12;
-  const ampm = i < 12 ? "AM" : "PM";
-  return `${hour}:00 ${ampm}`;
+  return `${i}:00`;
 });
 
 // Animation variants
@@ -178,11 +176,9 @@ export default function DailyView({
       const minuteFraction = (y % hourHeight) / hourHeight;
       const minutes = Math.floor(minuteFraction * 60);
 
-      // Format in 12-hour format
-      const hour12 = hour % 12 || 12;
-      const ampm = hour < 12 ? "AM" : "PM";
+      // Format in 24-hour format (Japanese style)
       setDetailedHour(
-        `${hour12}:${Math.max(0, minutes).toString().padStart(2, "0")} ${ampm}`
+        `${hour}:${Math.max(0, minutes).toString().padStart(2, "0")}`
       );
 
       // Ensure timelinePosition is never negative and is within bounds
@@ -192,10 +188,13 @@ export default function DailyView({
     []
   );
 
-  const getFormattedDayTitle = useCallback(
-    () => currentDate.toDateString(),
-    [currentDate]
-  );
+  const getFormattedDayTitle = useCallback(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][currentDate.getDay()];
+    return `${year}年${month}月${day}日（${dayOfWeek}）`;
+  }, [currentDate]);
 
   const dayEvents = getters.getEventsForDay(
     currentDate?.getDate() || 0,
@@ -236,18 +235,10 @@ export default function DailyView({
       return;
     }
 
-    // Parse the 12-hour format time
-    const [timePart, ampm] = detailedHour.split(" ");
-    const [hourStr, minuteStr] = timePart.split(":");
-    let hours = parseInt(hourStr);
+    // Parse the 24-hour format time
+    const [hourStr, minuteStr] = detailedHour.split(":");
+    const hours = parseInt(hourStr);
     const minutes = parseInt(minuteStr);
-
-    // Convert to 24-hour format for Date object
-    if (ampm === "PM" && hours < 12) {
-      hours += 12;
-    } else if (ampm === "AM" && hours === 12) {
-      hours = 0;
-    }
 
     const chosenDay = currentDate.getDate();
 
@@ -290,12 +281,12 @@ export default function DailyView({
 
   return (
     <div className="">
-      <div className="flex justify-between gap-3 flex-wrap mb-5">
-        <h1 className="text-3xl font-semibold mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mb-5">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2 sm:mb-4">
           {getFormattedDayTitle()}
         </h1>
 
-        <div className="flex ml-auto  gap-3">
+        <div className="flex gap-2 sm:gap-3 sm:ml-auto">
           {prevButton ? (
             <div onClick={handlePrevDay}>{prevButton}</div>
           ) : (
@@ -303,9 +294,10 @@ export default function DailyView({
               variant={"outline"}
               className={classNames?.prev}
               onClick={handlePrevDay}
+              size="sm"
             >
-              <ArrowLeft />
-              Prev
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
             </Button>
           )}
           {nextButton ? (
@@ -315,9 +307,10 @@ export default function DailyView({
               variant={"outline"}
               className={classNames?.next}
               onClick={handleNextDay}
+              size="sm"
             >
-              Next
-              <ArrowRight />
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -376,12 +369,12 @@ export default function DailyView({
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setDetailedHour(null)}
             >
-              <div className="flex  flex-col">
+              <div className="flex flex-col min-w-[60px] sm:min-w-[80px]">
                 {hours.map((hour, index) => (
                   <motion.div
                     key={`hour-${index}`}
                     variants={itemVariants}
-                    className="cursor-pointer   transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                    className="cursor-pointer transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
                     {hour}
                   </motion.div>
@@ -394,10 +387,9 @@ export default function DailyView({
                       handleAddEventDay(detailedHour as string);
                     }}
                     key={`hour-${index}`}
-                    className="cursor-pointer w-full relative border-b  hover:bg-default-200/50  transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                    className="cursor-pointer w-full relative border-b hover:bg-default-200/50 transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
                     <div className="absolute bg-accent flex items-center justify-center text-xs opacity-0 transition left-0 top-0 duration-250 hover:opacity-100 w-full h-full">
-                      Add Event
                     </div>
                   </div>
                 ))}
@@ -469,12 +461,12 @@ export default function DailyView({
 
             {detailedHour && (
               <div
-                className="absolute left-[50px] w-[calc(100%-53px)] h-[2px] bg-primary/40 rounded-full pointer-events-none"
+                className="absolute left-[60px] sm:left-[80px] w-[calc(100%-63px)] sm:w-[calc(100%-83px)] h-[2px] bg-primary/40 rounded-full pointer-events-none"
                 style={{ top: `${timelinePosition}px` }}
               >
                 <Badge
                   variant="outline"
-                  className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-xs"
+                  className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-[10px] sm:text-xs px-1 sm:px-2"
                 >
                   {detailedHour}
                 </Badge>
