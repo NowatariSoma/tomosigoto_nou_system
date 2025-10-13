@@ -19,10 +19,23 @@ export class ApiError extends Error {
 }
 
 export async function fetchApi(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('authToken');
+  // サーバーサイドかクライアントサイドかを判定
+  const isServer = typeof window === 'undefined';
   
-  // URLが相対パスの場合、API_BASE_URLを前に付ける
-  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  // サーバーサイド（Docker内）では backend:8000 を使用
+  // クライアントサイド（ブラウザ）では localhost:8000 を使用
+  const baseUrl = isServer 
+    ? 'http://backend:8000/api/v1'  // Docker内のサービス名を使用
+    : API_BASE_URL;  // ブラウザからは localhost を使用
+  
+  // トークンの取得（サーバーサイドでは localStorage が使えないため）
+  let token = null;
+  if (!isServer && typeof localStorage !== 'undefined') {
+    token = localStorage.getItem('authToken');
+  }
+  
+  // URLが相対パスの場合、baseUrlを前に付ける
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
   
   const response = await fetch(fullUrl, {
     ...options,

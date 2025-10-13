@@ -33,6 +33,19 @@ class PracticeScheduleRepository:
         response = self.client.table(self.table_name).select("*").eq("schedule_date", target_date).execute()
         return response.data[0] if response.data else None
 
+    @handle_supabase_errors("find_by_date_range")
+    async def find_by_date_range(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """指定された日付範囲の練習スケジュールを取得"""
+        response = (
+            self.client.table(self.table_name)
+            .select("*")
+            .gte("schedule_date", start_date)
+            .lt("schedule_date", end_date)
+            .order("schedule_date", desc=False)
+            .execute()
+        )
+        return response.data
+
     @handle_supabase_errors("create")
     async def create(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しい練習スケジュールを作成"""
