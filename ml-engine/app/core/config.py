@@ -28,6 +28,14 @@ class Settings:
         }
     }
     
+    # 最適化アルゴリズム設定
+    OPTIMIZATION: Dict[str, Any] = {
+        "use_algorithm_fallback": True,  # 機械学習が失敗した場合のアルゴリズム代替
+        "algorithm_type": "greedy",      # greedy, genetic, simulated_annealing
+        "max_iterations": 1000,
+        "timeout_seconds": 30
+    }
+    
     # 強化学習設定
     REINFORCEMENT_LEARNING: Dict[str, Any] = {
         "algorithm": "PPO",
