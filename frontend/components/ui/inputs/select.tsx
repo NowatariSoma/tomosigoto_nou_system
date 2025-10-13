@@ -146,6 +146,45 @@ const SelectSeparator = React.forwardRef<
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
+// Custom Select Component with Options
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  options: SelectOption[];
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  width?: string;
+  disabled?: boolean;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = "選択してください",
+  width = "w-full",
+  disabled = false,
+}) => {
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className={width}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
 export {
   Select,
   SelectGroup,
@@ -159,4 +198,4 @@ export {
   SelectScrollDownButton,
 }
 
-export default Select
+export default CustomSelect
