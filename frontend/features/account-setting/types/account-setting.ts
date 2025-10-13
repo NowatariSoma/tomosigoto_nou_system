@@ -7,6 +7,7 @@ export interface AccountSettingProfile {
   last_name_kanji: string;
   last_name_katakana: string;
   year: number;
+  faculty: string;
   department_code: string;
   department_name?: string;
   email: string;
@@ -23,6 +24,7 @@ export interface AccountSettingUpdateRequest {
   last_name_kanji?: string;
   last_name_katakana?: string;
   year?: number;
+  faculty?: string;
   department_code?: string;
   email?: string;
   avatar_url?: string;
@@ -49,4 +51,22 @@ export interface ValidationResponse {
   is_valid: boolean;
   errors: ValidationError[];
   warnings: string[];
+}
+
+export interface UserRole {
+  id?: string;
+  user_id?: string;
+  role_type: string;
+  is_visible_to_general: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  created_at?: string;
+  updated_at?: string;
+  last_sign_in_at?: string;
+  raw_user_meta_data?: Record<string, any>;
 }

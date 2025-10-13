@@ -226,6 +226,7 @@ def get_practice_schedule_service(
     schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
     session_repository: SessionRepository = Depends(get_session_repository),
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+    venue_repository: VenueRepository = Depends(get_venue_repository),
 ) -> PracticeScheduleService:
     """PracticeScheduleServiceのインスタンスを依存性注入で取得"""
     return PracticeScheduleService(
@@ -233,5 +234,23 @@ def get_practice_schedule_service(
         schedule_available_venue_repository,
         session_repository,
         session_instructor_repository,
+        venue_repository,
         supabase_client.auth,
     )
+
+
+async def require_admin(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+) -> Dict[str, Any]:
+    """管理者権限チェック"""
+    user_id = current_user.get("id")
+    role = await user_role_repository.get_role_by_user_id(user_id)
+
+    if not role or role.get("role_type") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="管理者権限が必要です"
+        )
+
+    return current_user

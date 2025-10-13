@@ -2,38 +2,49 @@
 
 import { useState, useCallback } from 'react';
 import { accountSettingService } from '../services/account-setting-service';
-import { AccountSettingProfile, AccountSettingUpdateRequest, Department, ValidationResponse } from '../types';
+import { AccountSettingProfile, AccountSettingUpdateRequest, Department, ValidationResponse, UserRole, UserInfo } from '../types';
 
 export interface UseAccountSettingReturn {
   // データ
   profile: AccountSettingProfile | null;
   departments: Department[];
   validation: ValidationResponse | null;
-  
+  userRole: UserRole | null;
+  userInfo: UserInfo | null;
+
   // ローディング状態
   isLoading: boolean;
   isSaving: boolean;
   isValidating: boolean;
-  
+
   // エラー状態
   error: string | null;
-  
+
+  // 編集モード
+  isEditMode: boolean;
+
   // アクション
   loadProfile: () => Promise<void>;
   loadDepartments: () => Promise<void>;
+  loadUserRole: () => Promise<void>;
+  loadUserInfo: () => Promise<void>;
   saveProfile: (data: AccountSettingUpdateRequest) => Promise<boolean>;
   validateProfile: (data: Record<string, any>) => Promise<boolean>;
   clearError: () => void;
+  setEditMode: (mode: boolean) => void;
 }
 
 export function useAccountSetting(): UseAccountSettingReturn {
   const [profile, setProfile] = useState<AccountSettingProfile | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -45,10 +56,14 @@ export function useAccountSetting(): UseAccountSettingReturn {
       setError(null);
       const profileData = await accountSettingService.getCurrentUserProfile();
       setProfile(profileData);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'プロフィールの読み込みに失敗しました';
-      setError(errorMessage);
-      console.error('Failed to load profile:', err);
+    } catch (err: any) {
+      if (err?.status === 404 || err?.status === 403) {
+        setProfile(null);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'プロフィールの読み込みに失敗しました';
+        setError(errorMessage);
+        console.error('Failed to load profile:', err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +79,40 @@ export function useAccountSetting(): UseAccountSettingReturn {
       const errorMessage = err instanceof Error ? err.message : '学部データの読み込みに失敗しました';
       setError(errorMessage);
       console.error('Failed to load departments:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const loadUserRole = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const roleData = await accountSettingService.getCurrentUserRole();
+      setUserRole(roleData);
+    } catch (err: any) {
+      if (err?.status === 403) {
+        console.log('認証エラー: ロール情報の取得に失敗');
+      } else {
+        console.error('Failed to load user role:', err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const loadUserInfo = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const infoData = await accountSettingService.getCurrentUserInfo();
+      setUserInfo(infoData);
+    } catch (err: any) {
+      if (err?.status === 403) {
+        console.log('認証エラー: ユーザー情報の取得に失敗');
+      } else {
+        console.error('Failed to load user info:', err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -108,11 +157,12 @@ export function useAccountSetting(): UseAccountSettingReturn {
         return false;
       }
       
-      // 常に新規プロフィールを作成（テスト用）
-      console.log('Creating new profile with data:', data);
-      const savedProfile = await accountSettingService.createProfile(data);
+      const savedProfile = profile
+        ? await accountSettingService.updateProfile(data)
+        : await accountSettingService.createProfile(data);
       
       setProfile(savedProfile);
+      setIsEditMode(false);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'プロフィールの保存に失敗しました';
@@ -124,18 +174,28 @@ export function useAccountSetting(): UseAccountSettingReturn {
     }
   }, [profile, validateProfile]);
 
+  const setEditMode = useCallback((mode: boolean) => {
+    setIsEditMode(mode);
+  }, []);
+
   return {
     profile,
     departments,
     validation,
+    userRole,
+    userInfo,
     isLoading,
     isSaving,
     isValidating,
     error,
+    isEditMode,
     loadProfile,
     loadDepartments,
+    loadUserRole,
+    loadUserInfo,
     saveProfile,
     validateProfile,
     clearError,
+    setEditMode,
   };
 }

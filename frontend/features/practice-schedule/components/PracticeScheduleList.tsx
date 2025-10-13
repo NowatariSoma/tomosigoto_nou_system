@@ -29,8 +29,12 @@ export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
     );
   }
 
-  // 日付順でソート（新しい日付が上）
-  const sortedSchedules = [...schedules].sort((a, b) => {
+  // 重複を除去してから日付順でソート（新しい日付が上）
+  const uniqueSchedules = schedules.filter((schedule, index, self) => 
+    index === self.findIndex(s => s.id === schedule.id)
+  );
+  
+  const sortedSchedules = [...uniqueSchedules].sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     return dateB.getTime() - dateA.getTime();
@@ -39,12 +43,12 @@ export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
   return (
     <div className="space-y-4">
       {sortedSchedules.map((schedule) => (
-        <PracticeScheduleCard
-          key={schedule.id}
-          schedule={schedule}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+          <PracticeScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
       ))}
     </div>
   );

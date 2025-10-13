@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Attendance, AttendanceFormData, PracticeSchedule } from '../types';
+import { Attendance, AttendanceFormData, AttendanceFormErrors, PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION, INITIAL_ATTENDANCE_FORM } from '../constants';
-import { Calendar, Clock, MapPin, FileText, Save, X, User } from 'lucide-react';
+import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
 
 interface AttendanceFormProps {
   attendance?: Attendance | null;
@@ -30,18 +30,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     } : INITIAL_ATTENDANCE_FORM
   );
 
-  const [errors, setErrors] = useState<{
-    practice_schedule_id?: string;
-    status?: string;
-    notes?: string;
-  }>({});
+  const [errors, setErrors] = useState<AttendanceFormErrors>({});
 
   const validateForm = (): boolean => {
-    const newErrors: {
-      practice_schedule_id?: string;
-      status?: string;
-      notes?: string;
-    } = {};
+    const newErrors: AttendanceFormErrors = {};
 
     if (!formData.practice_schedule_id) {
       newErrors.practice_schedule_id = '練習予定は必須です';
@@ -91,24 +83,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* ユーザー情報 */}
-        <div className="bg-white border border-gray-200 p-5 rounded-lg shadow-sm">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-              <User className="h-4 w-4 text-blue-600" />
-            </div>
-            <span className="text-base font-semibold text-gray-900">ユーザー情報</span>
-          </div>
-          <div className="bg-white p-4 rounded-md border border-gray-200">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">ユーザーID:</span>
-              <span className="text-base font-mono text-gray-900 bg-white px-3 py-1 rounded border border-gray-300">
-                {userId}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* 練習予定選択 */}
         <div>
           <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">

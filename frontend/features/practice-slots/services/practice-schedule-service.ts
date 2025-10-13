@@ -113,6 +113,50 @@ export class PracticeScheduleService {
     return data;
   }
 
+  /**
+   * 指定した日付以降の次の練習日程を取得
+   * @param currentDate - 現在の日付 (YYYY-MM-DD形式)
+   * @returns 次の練習日程の日付、見つからない場合はnull
+   */
+  async getNextPracticeScheduleDate(currentDate: string): Promise<string | null> {
+    try {
+      const allSchedules = await this.getAllPracticeSchedules();
+      
+      // 現在の日付より後の練習日程をフィルタリング
+      const futureSchedules = allSchedules
+        .filter(schedule => schedule.schedule_date > currentDate)
+        .sort((a, b) => a.schedule_date.localeCompare(b.schedule_date));
+      
+      // 最初の練習日程を返す
+      return futureSchedules.length > 0 ? futureSchedules[0].schedule_date : null;
+    } catch (error) {
+      console.error('次の練習日程の取得に失敗しました:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 指定した日付以前の前の練習日程を取得
+   * @param currentDate - 現在の日付 (YYYY-MM-DD形式)
+   * @returns 前の練習日程の日付、見つからない場合はnull
+   */
+  async getPreviousPracticeScheduleDate(currentDate: string): Promise<string | null> {
+    try {
+      const allSchedules = await this.getAllPracticeSchedules();
+      
+      // 現在の日付より前の練習日程をフィルタリング
+      const pastSchedules = allSchedules
+        .filter(schedule => schedule.schedule_date < currentDate)
+        .sort((a, b) => b.schedule_date.localeCompare(a.schedule_date)); // 降順でソート
+      
+      // 最初の練習日程を返す
+      return pastSchedules.length > 0 ? pastSchedules[0].schedule_date : null;
+    } catch (error) {
+      console.error('前の練習日程の取得に失敗しました:', error);
+      return null;
+    }
+  }
+
   // ===== practice-slots.tsから統合されたメソッド =====
 
   /**

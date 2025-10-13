@@ -22,18 +22,3 @@ docker compose up -d
 ```bash
 docker-compose down
 ```
-
-## トークンの取得方法
-dockerを立ち上げた状態で
-```
-docker exec -it backend-backend-1 python tests/utils/get_test_token.py
-```
-をする。
-
-したらtestユーザーでログインしたアクセストークンが生成されるため、それを使用する。
-Swagger UIのAuthorizeとかで使用できる。
-
-docker-compose build backend
-docker-compose up backend ???みたいなかんじでやる
-cd frontend
-npm run dev

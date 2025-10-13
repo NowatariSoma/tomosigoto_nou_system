@@ -58,6 +58,7 @@ export const PracticeSchedulePage: React.FC = () => {
     setEditingSchedule(null);
   };
 
+
   if (loading || venuesLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -121,15 +122,24 @@ export const PracticeSchedulePage: React.FC = () => {
 
       {/* 練習予定一覧 */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          練習予定一覧 ({schedules.length}件)
-        </h2>
+        {(() => {
+          // 重複を除去した実際の件数を計算
+          const uniqueSchedules = schedules.filter((schedule, index, self) => 
+            index === self.findIndex(s => s.id === schedule.id)
+          );
+          return (
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              練習予定一覧 ({uniqueSchedules.length}件)
+            </h2>
+          );
+        })()}
         <PracticeScheduleList
           schedules={schedules}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
         />
       </div>
+
     </div>
   );
 };

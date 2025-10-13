@@ -15,7 +15,7 @@ export default function Settings() {
         text: '安定版'
       }}
       permissionBadge={{
-        level: 'super',
+        level: 'admin',
         text: 'システム管理者'
       }}
       maxWidth="7xl"
