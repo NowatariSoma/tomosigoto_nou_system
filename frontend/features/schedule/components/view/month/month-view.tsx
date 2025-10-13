@@ -235,7 +235,7 @@ export default function MonthView({
           initial="enter"
           animate="center"
           exit="exit"
-          className="grid grid-cols-7 gap-1 sm:gap-2"
+          className="grid grid-cols-7"
         >
           {daysOfWeek.map((day, idx) => {
             const dayIndex = weekStartsOn === "monday" ? (idx + 1) % 7 : idx;
@@ -267,15 +267,15 @@ export default function MonthView({
             return (
               <motion.div
                 key={`offset-${idx}`}
-                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
                 variants={itemVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
               >
-                <Card className="shadow-none cursor-default overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border border-transparent bg-transparent h-full">
+                <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
                   <div className={clsx(
-                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40",
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
                     isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
                   )}>
                     {prevMonthDay}
@@ -294,7 +294,7 @@ export default function MonthView({
 
             return (
               <motion.div
-                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
                 key={dayObj.day}
                 variants={itemVariants}
                 initial="enter"
@@ -302,12 +302,12 @@ export default function MonthView({
                 exit="exit"
               >
                 <Card
-                  className="shadow-md cursor-pointer overflow-hidden relative flex flex-col border h-full"
+                  className="cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none"
                   onClick={() => handleAddEvent(dayObj.day)}
                 >
                   <div
                     className={clsx(
-                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 px-2 sm:px-3 md:px-4 pt-1 sm:pt-2",
+                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 pt-1 sm:pt-2 text-center",
                       new Date().getDate() === dayObj.day &&
                         new Date().getMonth() === currentDate.getMonth() &&
                         new Date().getFullYear() === currentDate.getFullYear()
@@ -370,15 +370,15 @@ export default function MonthView({
             return (
               <motion.div
                 key={`next-${idx}`}
-                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
                 variants={itemVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
               >
-                <Card className="shadow-none cursor-default overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border border-transparent bg-transparent h-full">
+                <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
                   <div className={clsx(
-                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40",
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
                     isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
                   )}>
                     {nextMonthDay}
