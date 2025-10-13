@@ -7,6 +7,7 @@ export interface AccountSettingProfile {
   last_name_kanji: string;
   last_name_katakana: string;
   year: number;
+  faculty: string;
   department_code: string;
   department_name?: string;
   email: string;
@@ -23,6 +24,7 @@ export interface AccountSettingUpdateRequest {
   last_name_kanji?: string;
   last_name_katakana?: string;
   year?: number;
+  faculty?: string;
   department_code?: string;
   email?: string;
   avatar_url?: string;
