@@ -110,15 +110,15 @@ export default function AddEventModal({
   const getButtonVariant = (color: string) => {
     switch (color) {
       case "blue":
-        return "default";
+        return "default" as const;
       case "red":
-        return "destructive";
+        return "destructive" as const;
       case "green":
-        return "success";
+        return "secondary" as const;
       case "yellow":
-        return "warning";
+        return "outline" as const;
       default:
-        return "default";
+        return "default" as const;
     }
   };
 

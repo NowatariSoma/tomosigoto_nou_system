@@ -26,7 +26,7 @@ const pageTransitionVariants = {
   exit: (direction: number) => ({
     opacity: 0,
     transition: {
-      opacity: { duration: 0.2, ease: "easeInOut" },
+      opacity: { duration: 0.2 },
     },
   }),
 };

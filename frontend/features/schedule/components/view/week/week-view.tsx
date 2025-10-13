@@ -84,7 +84,7 @@ const pageTransitionVariants = {
   exit: (direction: number) => ({
     opacity: 0,
     transition: {
-      opacity: { duration: 0.2, ease: "easeInOut" },
+      opacity: { duration: 0.2 },
     },
   }),
 };
@@ -282,9 +282,9 @@ export default function WeeklyView({
         while (stack.length > 0) {
           const current = stack.pop()!;
           group.push(current);
-          
+
           // Visit neighbors (overlapping events)
-          for (const neighborId of graph[current.id]) {
+          for (const neighborId of Array.from(graph[current.id])) {
             if (!visited.has(neighborId)) {
               const neighbor = sortedEvents.find(e => e.id === neighborId);
               if (neighbor) {
