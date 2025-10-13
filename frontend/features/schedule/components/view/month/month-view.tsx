@@ -148,8 +148,8 @@ export default function MonthView({
 
   const daysOfWeek =
     weekStartsOn === "monday"
-      ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      ? ["月", "火", "水", "木", "金", "土", "日"]
+      : ["日", "月", "火", "水", "木", "金", "土"];
 
   const firstDayOfMonth = new Date(
     currentDate.getFullYear(),
@@ -171,6 +171,11 @@ export default function MonthView({
     prevMonth.getMonth() + 1,
     0
   ).getDate();
+
+  // Calculate how many days from next month to show
+  const totalCells = Math.ceil((startOffset + daysInMonth.length) / 7) * 7;
+  const nextMonthDays = totalCells - startOffset - daysInMonth.length;
+
   return (
     <div>
       <div className="flex flex-col gap-3 mb-4">
@@ -182,8 +187,7 @@ export default function MonthView({
           transition={{ duration: 0.5 }}
           className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
         >
-          {currentDate.toLocaleString("default", { month: "long" })}{" "}
-          {currentDate.getFullYear()}
+          {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
         </motion.h2>
         <div className="flex gap-2 sm:gap-3">
           {prevButton ? (
@@ -233,30 +237,64 @@ export default function MonthView({
           exit="exit"
           className="grid grid-cols-7 gap-1 sm:gap-2"
         >
-          {daysOfWeek.map((day, idx) => (
-            <div
-              key={idx}
-              className="text-center my-2 sm:my-4 md:my-6 lg:my-8 text-xs sm:text-xl md:text-2xl lg:text-4xl tracking-tighter font-medium"
-            >
-              <span className="hidden sm:inline">{day}</span>
-              <span className="sm:hidden">{day.substring(0, 1)}</span>
-            </div>
-          ))}
-
-          {Array.from({ length: startOffset }).map((_, idx) => (
-            <div key={`offset-${idx}`} className="h-[60px] sm:h-[100px] md:h-[120px] lg:h-[150px] opacity-50">
-              <div className={clsx("font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1")}>
-                {lastDateOfPrevMonth - startOffset + idx + 1}
+          {daysOfWeek.map((day, idx) => {
+            const dayIndex = weekStartsOn === "monday" ? (idx + 1) % 7 : idx;
+            const isSunday = dayIndex === 0;
+            const isSaturday = dayIndex === 6;
+            return (
+              <div
+                key={idx}
+                className={`text-center my-1 sm:my-2 md:my-3 text-xs sm:text-base md:text-lg tracking-tighter font-medium opacity-40 ${
+                  isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                }`}
+              >
+                {day}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {daysInMonth.map((dayObj) => {
-            const dayEvents = getters.getEventsForDay(dayObj.day, currentDate);
+          {Array.from({ length: startOffset }).map((_, idx) => {
+            const prevMonthDay = lastDateOfPrevMonth - startOffset + idx + 1;
+            const prevMonthDate = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() - 1,
+              prevMonthDay
+            );
+            const dayOfWeek = prevMonthDate.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
 
             return (
               <motion.div
-                className="hover:z-50 border-none h-[60px] sm:h-[100px] md:h-[120px] lg:h-[150px] rounded group flex flex-col"
+                key={`offset-${idx}`}
+                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
+                variants={itemVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <Card className="shadow-none cursor-default overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border border-transparent bg-transparent h-full">
+                  <div className={clsx(
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40",
+                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    {prevMonthDay}
+                  </div>
+                </Card>
+              </motion.div>
+            );
+          })}
+
+          {daysInMonth.map((dayObj) => {
+            const dayEvents = getters.getEventsForDay(dayObj.day, currentDate);
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayObj.day);
+            const dayOfWeek = date.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+
+            return (
+              <motion.div
+                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
                 key={dayObj.day}
                 variants={itemVariants}
                 initial="enter"
@@ -269,20 +307,23 @@ export default function MonthView({
                 >
                   <div
                     className={clsx(
-                      "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1",
-                      dayEvents.length > 0
-                        ? "text-primary-600"
-                        : "text-muted-foreground",
+                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1",
                       new Date().getDate() === dayObj.day &&
                         new Date().getMonth() === currentDate.getMonth() &&
                         new Date().getFullYear() === currentDate.getFullYear()
                         ? "text-secondary-500"
-                        : ""
+                        : isSunday
+                        ? "text-red-600"
+                        : isSaturday
+                        ? "text-blue-600"
+                        : dayEvents.length > 0
+                        ? "text-primary-600"
+                        : "text-muted-foreground"
                     )}
                   >
                     {dayObj.day}
                   </div>
-                  <div className="flex-grow flex flex-col gap-2 w-full">
+                  <div className="flex-grow flex flex-col gap-2 w-full relative z-10">
                     <AnimatePresence mode="wait">
                       {dayEvents?.length > 0 && (
                         <motion.div
@@ -319,15 +360,44 @@ export default function MonthView({
                     )}
                   </div>
 
-                  {/* Hover Text */}
+                  {/* Hover overlay */}
                   {dayEvents.length === 0 && (
-                    <div className="absolute inset-0 bg-primary/20 bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-black tracking-tighter text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold">
-                        <span className="hidden md:inline">Add Event</span>
-                        <span className="md:hidden">+</span>
-                      </span>
+                    <div className="absolute inset-0 bg-accent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     </div>
                   )}
+                </Card>
+              </motion.div>
+            );
+          })}
+
+          {/* Next month days */}
+          {Array.from({ length: nextMonthDays }).map((_, idx) => {
+            const nextMonthDay = idx + 1;
+            const nextMonthDate = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() + 1,
+              nextMonthDay
+            );
+            const dayOfWeek = nextMonthDate.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+
+            return (
+              <motion.div
+                key={`next-${idx}`}
+                className="hover:z-50 border-none min-h-[calc((100vh-400px)/6)] sm:min-h-[calc((100vh-350px)/6)] md:min-h-[calc((100vh-300px)/6)] rounded group flex flex-col"
+                variants={itemVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <Card className="shadow-none cursor-default overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border border-transparent bg-transparent h-full">
+                  <div className={clsx(
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40",
+                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    {nextMonthDay}
+                  </div>
                 </Card>
               </motion.div>
             );

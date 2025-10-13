@@ -12,9 +12,7 @@ import { Event, CustomEventModal } from "@/features/schedule/types";
 import CustomModal from "@/features/schedule/components/custom-modal";
 
 const hours = Array.from({ length: 24 }, (_, i) => {
-  const hour = i % 12 || 12;
-  const ampm = i < 12 ? "AM" : "PM";
-  return `${hour}:00 ${ampm}`;
+  return `${i}:00`;
 });
 
 interface ChipData {
@@ -130,12 +128,10 @@ export default function WeeklyView({
     const hour = Math.max(0, Math.min(23, Math.floor(y / hourHeight)));
     const minuteFraction = (y % hourHeight) / hourHeight;
     const minutes = Math.floor(minuteFraction * 60);
-    
-    // Format in 12-hour format
-    const hour12 = hour % 12 || 12;
-    const ampm = hour < 12 ? "AM" : "PM";
+
+    // Format in 24-hour format (Japanese style)
     setDetailedHour(
-      `${hour12}:${minutes.toString().padStart(2, "0")} ${ampm}`
+      `${hour}:${minutes.toString().padStart(2, "0")}`
     );
     
     // Ensure timelinePosition is never negative and is within bounds
@@ -189,18 +185,10 @@ export default function WeeklyView({
       return;
     }
 
-    // Parse the 12-hour format time
-    const [timePart, ampm] = detailedHour.split(" ");
-    const [hourStr, minuteStr] = timePart.split(":");
-    let hours = parseInt(hourStr);
+    // Parse the 24-hour format time
+    const [hourStr, minuteStr] = detailedHour.split(":");
+    const hours = parseInt(hourStr);
     const minutes = parseInt(minuteStr);
-    
-    // Convert to 24-hour format for Date object
-    if (ampm === "PM" && hours < 12) {
-      hours += 12;
-    } else if (ampm === "AM" && hours === 12) {
-      hours = 0;
-    }
 
     const chosenDay = daysOfWeek[dayIndex % 7].getDate();
 
@@ -362,9 +350,10 @@ export default function WeeklyView({
                 <div key={idx} className="relative group flex flex-col min-w-[80px] sm:min-w-0">
                   <div className="sticky bg-default-100 top-0 z-20 flex-grow flex items-center justify-center">
                     <div className="text-center p-2 sm:p-4">
-                      <div className="text-sm sm:text-base md:text-lg font-semibold">
-                        <span className="hidden sm:inline">{getters.getDayName(day.getDay())}</span>
-                        <span className="sm:hidden">{getters.getDayName(day.getDay()).substring(0, 3)}</span>
+                      <div className={`text-sm sm:text-base md:text-lg font-semibold ${
+                        day.getDay() === 0 ? "text-red-600" : day.getDay() === 6 ? "text-blue-600" : ""
+                      }`}>
+                        {["日", "月", "火", "水", "木", "金", "土"][day.getDay()]}
                       </div>
                       <div
                         className={clsx(
@@ -373,6 +362,10 @@ export default function WeeklyView({
                             new Date().getMonth() === currentDate.getMonth() &&
                             new Date().getFullYear() === currentDate.getFullYear()
                             ? "text-secondary-500"
+                            : day.getDay() === 0
+                            ? "text-red-600"
+                            : day.getDay() === 6
+                            ? "text-blue-600"
                             : ""
                         )}
                       >
@@ -399,14 +392,14 @@ export default function WeeklyView({
                           );
                           
                           setOpen(
-                            <CustomModal title={`${getters.getDayName(day.getDay())} ${day.getDate()}, ${selectedDay.getFullYear()}`}>
+                            <CustomModal title={`${selectedDay.getFullYear()}年${selectedDay.getMonth() + 1}月${day.getDate()}日（${["日", "月", "火", "水", "木", "金", "土"][day.getDay()]}）`}>
                               <div className="flex flex-col space-y-4 p-4">
                                 <div className="flex items-center mb-4">
                                   <ChevronLeft 
                                     className="cursor-pointer hover:text-primary mr-2" 
                                     onClick={() => setOpen(null)}
                                   />
-                                  <h2 className="text-2xl font-bold">{selectedDay.toDateString()}</h2>
+                                  <h2 className="text-2xl font-bold">{selectedDay.getFullYear()}年{selectedDay.getMonth() + 1}月{selectedDay.getDate()}日</h2>
                                 </div>
                                 
                                 {dayEvents && dayEvents.length > 0 ? (
@@ -575,8 +568,7 @@ export default function WeeklyView({
                   variants={itemVariants}
                   className="cursor-pointer border-b border-default-200 p-2 sm:p-[16px] h-[48px] sm:h-[64px] text-center text-xs sm:text-sm text-muted-foreground border-r"
                 >
-                  <span className="hidden sm:inline">{hour}</span>
-                  <span className="sm:hidden">{hour.split(' ')[0]}</span>
+                  {hour}
                 </motion.div>
               ))}
             </div>
@@ -694,8 +686,9 @@ export default function WeeklyView({
                             onClick={(e) => {
                               e.stopPropagation();
                               // Show a modal with all events for this day
+                              const selectedDay = daysOfWeek[dayIndex];
                               setOpen(
-                                <CustomModal title={`Events for ${daysOfWeek[dayIndex].toDateString()}`}>
+                                <CustomModal title={`${selectedDay.getFullYear()}年${selectedDay.getMonth() + 1}月${selectedDay.getDate()}日のイベント`}>
                                   <div className="space-y-2 p-2 max-h-[80vh] overflow-y-auto">
                                     {dayEvents?.map((event) => (
                                       <EventStyled
@@ -726,8 +719,6 @@ export default function WeeklyView({
                         className="col-span-1 border-default-200 h-[48px] sm:h-[64px] relative transition duration-300 cursor-pointer border-r border-b text-center text-xs sm:text-sm text-muted-foreground"
                       >
                         <div className="absolute bg-accent z-40 flex items-center justify-center text-xs opacity-0 transition duration-250 hover:opacity-100 w-full h-full">
-                          <span className="hidden sm:inline">Add Event</span>
-                          <span className="sm:hidden">+</span>
                         </div>
                       </div>
                     ))}
