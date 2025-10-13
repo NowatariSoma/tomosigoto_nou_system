@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.api.deps import get_current_user, get_practice_schedule_service
@@ -15,7 +15,7 @@ from app.schemas.practice_schedules import (
     PracticeScheduleWithDetailsResponse,
 )
 from app.services.practice_schedule_service import PracticeScheduleService
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 router = APIRouter()
 
@@ -402,6 +402,73 @@ async def delete_session(
     """
     await practice_schedule_service.remove_session(session_id)
     return {"message": "セッションが正常に削除されました"}
+
+
+# ===== Monthカレンダー表示用エンドポイント =====
+
+@router.get("/calendar/month/{year}/{month}")
+async def get_practice_schedules_for_month_calendar(
+    year: int,
+    month: int,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Monthカレンダー表示用の練習スケジュール一覧を取得
+
+    Args:
+        year: 年 (例: 2024)
+        month: 月 (1-12)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        指定月の練習スケジュール一覧（カレンダー表示用形式）
+    """
+    if not (1 <= month <= 12):
+        raise APIException(ErrorMessage.INVALID_MONTH)
+    
+    calendar_events = await practice_schedule_service.get_practice_schedules_for_month_calendar(year, month)
+    return {
+        "year": year,
+        "month": month,
+        "events": calendar_events,
+        "total_count": len(calendar_events)
+    }
+
+
+@router.get("/calendar/range")
+async def get_practice_schedules_for_date_range(
+    start_date: str = Query(..., description="開始日 (YYYY-MM-DD形式)"),
+    end_date: str = Query(..., description="終了日 (YYYY-MM-DD形式)"),
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    指定した日付範囲の練習スケジュール一覧を取得（カレンダー表示用）
+
+    Args:
+        start_date: 開始日 (YYYY-MM-DD形式)
+        end_date: 終了日 (YYYY-MM-DD形式)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        指定範囲の練習スケジュール一覧（カレンダー表示用形式）
+    """
+    # 日付形式の簡単な検証
+    try:
+        from datetime import datetime
+        datetime.strptime(start_date, "%Y-%m-%d")
+        datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        raise APIException(ErrorMessage.INVALID_DATE_FORMAT)
+    
+    calendar_events = await practice_schedule_service.get_practice_schedules_for_date_range(start_date, end_date)
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "events": calendar_events,
+        "total_count": len(calendar_events)
+    }
 
 
 # ===== Groups関連エンドポイント =====
