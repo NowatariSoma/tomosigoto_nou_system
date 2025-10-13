@@ -14,3 +14,5 @@ api_router.include_router(member_assignments.router, prefix="/member-assignments
 api_router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 api_router.include_router(account_setting.router, prefix="/account-setting", tags=["account-setting"])
 api_router.include_router(practice_slots.router, prefix="/practice_schedules", tags=["practice_schedules"])
+
+api_router.include_router(instructor.router, prefix="/instructor", tags=["practice_schedules"])
