@@ -22,7 +22,6 @@ import {
   Building,
   ReceiptText,
   Clock,
-  Edit3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -237,8 +236,15 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <NavItem
                 icon={<Theater className="w-4 h-4" />}
                 label="舞台・パート登録"
-                active={pathname === '/parts-settings'}
-                onClick={() => handleNavigateAndClose('/parts-settings')}
+                active={pathname === '/parts-setting'}
+                onClick={() => handleNavigateAndClose('/parts-setting')}
+              />
+
+              <NavItem
+                icon={<UserCheck className="w-4 h-4" />}
+                label="メンバー所属設定"
+                active={pathname === '/member-assignments-setting'}
+                onClick={() => handleNavigateAndClose('/member-assignments-setting')}
               />
 
               <NavItem
@@ -280,7 +286,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   // Desktop sidebar
   return (
     <div className={cn(
-      "hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 transition-all duration-300 z-40",
+      "hidden md:flex flex-col fixed inset-y-0 left-0 transition-all duration-300 z-50",
       isCollapsed ? "w-16" : "w-64"
     )}>
       <div className="flex flex-col flex-1 min-h-0 bg-white border-r border-gray-200 shadow-sm">
@@ -362,11 +368,19 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           />
           <NavItem
             icon={<Theater className="w-4 h-4" />}
-            label={isCollapsed ? "" : "舞台・パート登録画面"}
+            label={isCollapsed ? "" : "舞台・パート登録"}
             active={pathname === '/parts-setting'}
             href="/parts-setting"
             className={isCollapsed ? "justify-center px-2" : ""}
           /> 
+
+          <NavItem
+            icon={<UserCheck className="w-4 h-4" />}
+            label={isCollapsed ? "" : "メンバー所属設定"}
+            active={pathname === '/member-assignments-setting'}
+            href="/member-assignments-setting"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
 
           <NavItem
             icon={<ReceiptText className="w-4 h-4" />}
