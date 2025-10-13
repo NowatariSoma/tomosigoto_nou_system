@@ -23,7 +23,7 @@ router = APIRouter()
 
 @router.get("/profile", response_model=AccountSettingProfileResponse)
 async def get_current_user_profile(
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
@@ -40,7 +40,7 @@ async def get_current_user_profile(
 @router.get("/profile-public", response_model=AccountSettingProfileResponse)
 async def get_public_profile(
     user_id: str = Query(..., description="ユーザーID"),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを取得（テスト用）"""
@@ -55,7 +55,7 @@ async def get_public_profile(
 @router.get("/profile/{user_id}", response_model=AccountSettingProfileResponse)
 async def get_user_profile(
     user_id: str,
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """指定されたユーザーのアカウント設定プロフィールを取得"""
@@ -70,7 +70,7 @@ async def get_user_profile(
 @router.post("/profile", response_model=AccountSettingProfileResponse, status_code=status.HTTP_201_CREATED)
 async def create_user_profile(
     profile_data: AccountSettingProfileCreate,
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを作成"""
@@ -94,7 +94,7 @@ async def create_user_profile(
 async def create_public_profile(
     profile_data: AccountSettingProfileCreate,
     user_id: str = Query(..., description="ユーザーID"),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを作成（テスト用）"""
@@ -119,7 +119,7 @@ async def create_public_profile(
 @router.put("/profile", response_model=AccountSettingProfileResponse)
 async def update_user_profile(
     update_data: AccountSettingUpdateRequest,
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを更新"""
@@ -144,7 +144,7 @@ async def update_user_profile(
 async def update_public_profile(
     update_data: AccountSettingUpdateRequest,
     user_id: str = Query(..., description="ユーザーID"),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを更新（テスト用）"""
@@ -174,7 +174,7 @@ async def update_public_profile(
 
 @router.delete("/profile")
 async def delete_user_profile(
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを削除"""
@@ -189,7 +189,7 @@ async def delete_user_profile(
 
 @router.get("/departments", response_model=List[DepartmentResponse])
 async def get_all_departments(
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """すべての学部を取得"""
@@ -200,7 +200,7 @@ async def get_all_departments(
 @router.get("/departments/{department_code}", response_model=DepartmentResponse)
 async def get_department_by_code(
     department_code: str,
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """学部コードで学部を取得"""
@@ -215,7 +215,7 @@ async def get_department_by_code(
 @router.get("/profile/history", response_model=List[AccountSettingHistoryResponse])
 async def get_profile_history(
     limit: int = Query(50, ge=1, le=100),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定変更履歴を取得"""
@@ -228,7 +228,7 @@ async def get_profile_history(
 async def get_field_history(
     field_name: str,
     limit: int = Query(20, ge=1, le=50),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーの特定フィールドの変更履歴を取得"""
@@ -240,7 +240,7 @@ async def get_field_history(
 @router.post("/validate", response_model=AccountSettingValidationResponse)
 async def validate_profile_data(
     profile_data: Dict[str, Any],
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィールデータのバリデーション"""
@@ -252,7 +252,7 @@ async def validate_profile_data(
 @router.post("/validate-public", response_model=AccountSettingValidationResponse)
 async def validate_profile_data_public(
     profile_data: Dict[str, Any],
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィールデータのバリデーション（認証不要）"""
@@ -262,7 +262,7 @@ async def validate_profile_data_public(
 
 @router.get("/statistics")
 async def get_profile_statistics(
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィール統計情報を取得（管理者用）"""
@@ -273,7 +273,7 @@ async def get_profile_statistics(
 @router.get("/profile/student-id/{student_id}", response_model=AccountSettingProfileResponse)
 async def get_profile_by_student_id(
     student_id: str,
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """学籍番号でアカウント設定プロフィールを取得"""
