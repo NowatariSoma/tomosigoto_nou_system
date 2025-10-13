@@ -53,7 +53,7 @@ export const AttendancePage: React.FC = () => {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: data.practice_schedule_id,
-        user_id: "79d7e10b-cfa1-4b0e-8512-039bf51013f5", // 現在のユーザーIDを使用
+        user_id: user?.id || "", // AuthContextから取得
         status: data.status,
         notes: data.notes,
       });
@@ -199,7 +199,7 @@ export const AttendancePage: React.FC = () => {
         <AttendanceForm
           attendance={editingAttendance}
           practiceSchedules={practiceSchedules}
-          userId="79d7e10b-cfa1-4b0e-8512-039bf51013f5" // 現在のユーザーIDを使用
+          userId={user?.id || ""} // AuthContextから取得
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
