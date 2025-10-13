@@ -15,7 +15,7 @@ interface PracticeAttendancePageProps {
 export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
   practiceId,
 }) => {
-  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = useAllPracticeSchedules();
   const { upsertAttendance } = useAttendance();
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>(practiceId);
@@ -56,7 +56,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
