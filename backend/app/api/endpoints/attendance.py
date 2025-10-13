@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_attendance_service, require_admin
+from app.api.deps import get_current_user, get_current_user_optional, get_attendance_service, require_admin
 from app.schemas.attendance import (
     AttendanceBase, 
     AttendanceCreate, 
@@ -19,7 +19,7 @@ router = APIRouter()
 @router.get("/", response_model=List[AttendanceResponse])
 async def get_attendances(
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     すべての出欠記録を取得
@@ -151,7 +151,7 @@ async def update_attendance(
 async def upsert_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     出欠記録を作成または更新（practice_schedule_id + user_idの組み合わせで）
@@ -163,10 +163,15 @@ async def upsert_attendance(
     Returns:
         作成または更新された出欠記録
     """
-    # 作成者と更新者を設定（開発用）
+    # 作成者と更新者を設定
     attendance_dict = attendance_data.model_dump()
-    attendance_dict["created_by"] = attendance_dict["user_id"]  # ユーザーIDをそのまま使用
-    attendance_dict["updated_by"] = attendance_dict["user_id"]
+    if current_user:
+        attendance_dict["created_by"] = str(current_user["id"])
+        attendance_dict["updated_by"] = str(current_user["id"])
+    else:
+        # 認証されていない場合はuser_idを使用（開発用）
+        attendance_dict["created_by"] = attendance_dict["user_id"]
+        attendance_dict["updated_by"] = attendance_dict["user_id"]
     
     upserted_attendance = await attendance_service.upsert_attendance(attendance_dict)
     return AttendanceResponse(**upserted_attendance)
@@ -195,7 +200,7 @@ async def delete_attendance(
 @router.get("/summary/practice", response_model=List[AttendanceSummary])
 async def get_attendance_summary(
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
 ):
     """
     練習別の出欠サマリーを取得

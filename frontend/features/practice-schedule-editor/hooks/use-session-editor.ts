@@ -87,10 +87,19 @@ export const useSessionEditor = (scheduleId: string) => {
    * スケジュール詳細を取得
    */
   const fetchScheduleDetails = useCallback(async () => {
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('fetchScheduleDetails: スケジュールIDが空のため、何もしません');
+      return;
+    }
+
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log(`スケジュール詳細を取得中: scheduleId=${scheduleId}`);
+      console.log(`スケジュールID検証: scheduleId="${scheduleId}", length=${scheduleId.length}, trim="${scheduleId.trim()}"`);
+      
       // 並列でデータを取得
       const [basicSchedule, details, allParts] = await Promise.all([
         practiceScheduleEditorService.getBasicSchedule(scheduleId),
@@ -99,7 +108,8 @@ export const useSessionEditor = (scheduleId: string) => {
       ]);
 
       if (!basicSchedule) {
-        throw new Error('スケジュールが見つかりません');
+        console.error(`スケジュールID ${scheduleId} が見つかりません`);
+        throw new Error(`スケジュールID ${scheduleId} が見つかりません。正しいスケジュールIDを指定してください。`);
       }
 
       setParts(allParts);
@@ -310,10 +320,18 @@ export const useSessionEditor = (scheduleId: string) => {
 
   // 初期化
   useEffect(() => {
-    if (scheduleId) {
-      fetchScheduleDetails();
+    console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
+    
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('スケジュールIDが空のため、useSessionEditorは何もしません');
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return;
     }
-  }, [scheduleId, fetchScheduleDetails]);
+    
+    console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
+    fetchScheduleDetails();
+  }, [scheduleId]);
 
   return {
     ...state,

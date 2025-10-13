@@ -5,24 +5,42 @@ import { PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, CheckCircle } from 'lucide-react';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface SimpleAttendanceFormProps {
-  practiceSchedule: PracticeSchedule;
-  onSubmit: (data: { status: string; notes: string }) => Promise<void>;
+  practiceSchedules: PracticeSchedule[];
+  users: User[];
+  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string }) => Promise<void>;
   loading?: boolean;
 }
 
 export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
-  practiceSchedule,
+  practiceSchedules,
+  users,
   onSubmit,
   loading = false,
 }) => {
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [errors, setErrors] = useState<{ status?: string; notes?: string }>({});
+  const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: { status?: string; notes?: string } = {};
+    const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string } = {};
+
+    if (!selectedUserId) {
+      newErrors.selectedUserId = 'ユーザーを選択してください';
+    }
+
+    if (!selectedPracticeId) {
+      newErrors.selectedPracticeId = '練習を選択してください';
+    }
 
     if (!status) {
       newErrors.status = '出席状況を選択してください';
@@ -40,11 +58,25 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       try {
-        await onSubmit({ status, notes });
+        await onSubmit({ userId: selectedUserId, practiceScheduleId: selectedPracticeId, status, notes });
         setIsSubmitted(true);
       } catch (error) {
         console.error('Failed to submit attendance:', error);
       }
+    }
+  };
+
+  const handleUserChange = (value: string) => {
+    setSelectedUserId(value);
+    if (errors.selectedUserId) {
+      setErrors(prev => ({ ...prev, selectedUserId: undefined }));
+    }
+  };
+
+  const handlePracticeChange = (value: string) => {
+    setSelectedPracticeId(value);
+    if (errors.selectedPracticeId) {
+      setErrors(prev => ({ ...prev, selectedPracticeId: undefined }));
     }
   };
 
@@ -89,86 +121,67 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
         <p className="text-gray-600">練習への出席状況を登録してください</p>
       </div>
 
-      {/* 練習情報表示 */}
-      <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg mb-8">
-        <h3 className="text-lg font-semibold text-slate-900 mb-6 flex items-center">
-          <div className="bg-blue-100 p-2 rounded-lg mr-3">
-            <Calendar className="h-5 w-5 text-blue-600" />
-          </div>
-          練習情報
-        </h3>
-        <div className="space-y-6">
-          {/* 日付と時間 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">日付</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {new Date(practiceSchedule.schedule_date).toLocaleDateString('ja-JP', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long',
-                    })}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">時間</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {practiceSchedule.start_time} - {practiceSchedule.end_time}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* 会場情報 */}
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-            <div className="flex items-start space-x-3">
-              <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-600 mb-2">会場</p>
-                {practiceSchedule.venues && practiceSchedule.venues.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {practiceSchedule.venues.map(venue => (
-                      <span
-                        key={venue.id}
-                        className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold text-sm"
-                      >
-                        {venue.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-lg font-semibold text-slate-900">
-                    会場未設定
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* 説明 */}
-          {practiceSchedule.description && (
-            <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
-              <p className="text-slate-700 leading-relaxed">
-                {practiceSchedule.description}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* 練習選択 */}
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+          <label className="block text-lg font-semibold text-slate-900 mb-4">
+            練習選択 <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={selectedPracticeId}
+            onChange={(e) => handlePracticeChange(e.target.value)}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-colors ${
+              errors.selectedPracticeId 
+                ? 'border-red-500 bg-red-50 focus:ring-red-500' 
+                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
+            }`}
+          >
+            <option value="">練習を選択してください</option>
+            {practiceSchedules.map((practice) => (
+              <option key={practice.id} value={practice.id}>
+                {practice.title} - {new Date(practice.schedule_date).toLocaleDateString('ja-JP', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  weekday: 'long',
+                })} {practice.start_time} - {practice.end_time}
+              </option>
+            ))}
+          </select>
+          {errors.selectedPracticeId && (
+            <p className="mt-2 text-sm text-red-600 font-medium">{errors.selectedPracticeId}</p>
+          )}
+        </div>
+
+        {/* ユーザー選択 */}
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+          <label className="block text-lg font-semibold text-slate-900 mb-4">
+            ユーザー選択 <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={selectedUserId}
+            onChange={(e) => handleUserChange(e.target.value)}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-colors ${
+              errors.selectedUserId 
+                ? 'border-red-500 bg-red-50 focus:ring-red-500' 
+                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
+            }`}
+          >
+            <option value="">ユーザーを選択してください</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} ({user.email})
+              </option>
+            ))}
+          </select>
+          {errors.selectedUserId && (
+            <p className="mt-2 text-sm text-red-600 font-medium">{errors.selectedUserId}</p>
+          )}
+        </div>
+
         {/* 出席状況選択 */}
-        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="block text-lg font-semibold text-slate-900 mb-6">
             出席状況 <span className="text-red-500">*</span>
           </label>
@@ -205,7 +218,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
         </div>
 
         {/* 備考 */}
-        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
             <div className="bg-slate-100 p-2 rounded-lg">
               <FileText className="h-5 w-5 text-slate-600" />
