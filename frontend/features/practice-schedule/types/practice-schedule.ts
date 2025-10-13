@@ -26,10 +26,13 @@ export interface CreatePracticeScheduleRequest {
   startTime: string;
   endTime: string;
   venueId: string;
+  divisionCount?: number;
   title?: string;
   description?: string;
   // 複数部屋選択対応
   venueIds?: string[];
+  scheduleType?: string;
+  status?: string;
 }
 
 export interface UpdatePracticeScheduleRequest {
@@ -37,10 +40,13 @@ export interface UpdatePracticeScheduleRequest {
   startTime?: string;
   endTime?: string;
   venueId?: string;
+  divisionCount?: number;
   title?: string;
   description?: string;
   // 複数部屋選択対応
   venueIds?: string[];
+  scheduleType?: string;
+  status?: string;
 }
 
 export interface PracticeScheduleListResponse {

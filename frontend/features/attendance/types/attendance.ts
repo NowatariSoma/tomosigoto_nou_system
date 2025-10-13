@@ -83,3 +83,9 @@ export interface AttendanceFormData {
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes: string;
 }
+
+export interface AttendanceFormErrors {
+  practice_schedule_id?: string;
+  status?: string;
+  notes?: string;
+}

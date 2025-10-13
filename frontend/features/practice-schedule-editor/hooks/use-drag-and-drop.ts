@@ -2,7 +2,7 @@
  * ドラッグ&ドロップ用のカスタムフック
  */
 
-import { useState, useCallback } from 'react';
+import { useReducer, useCallback } from 'react';
 import { DragItem, DropZone, DragDropState, DragDropAction } from '../types/drag-and-drop';
 
 /**
@@ -38,7 +38,7 @@ const dragDropReducer = (
  * ドラッグ&ドロップ用のカスタムフック
  */
 export const useDragAndDrop = () => {
-  const [state, dispatch] = useState<DragDropState>({
+  const [state, dispatch] = useReducer(dragDropReducer, {
     dragged_item: null,
     drop_zones: [],
     is_dragging: false,

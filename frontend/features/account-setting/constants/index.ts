@@ -21,6 +21,7 @@ export const INITIAL_ACCOUNT_FORM = {
   last_name_katakana: '',
   first_name_katakana: '',
   year: 1,
+  faculty: '',
   department_code: '',
   email: ''
 } as const;
