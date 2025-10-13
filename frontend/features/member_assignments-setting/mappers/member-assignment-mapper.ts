@@ -9,6 +9,10 @@ interface SupabaseUser {
   id: string;
   name: string;
   email: string;
+  first_name_katakana?: string;
+  last_name_katakana?: string;
+  first_name_kanji?: string;
+  last_name_kanji?: string;
 }
 
 interface SupabaseStage {
@@ -79,6 +83,10 @@ export const mapMemberAssignmentResponseToMemberAssignmentWithDetails = (
         id: '',
         name: '',
         email: '',
+        first_name_katakana: '',
+        last_name_katakana: '',
+        first_name_kanji: '',
+        last_name_kanji: '',
       },
       part: {
         id: '',
@@ -104,6 +112,10 @@ export const mapMemberAssignmentResponseToMemberAssignmentWithDetails = (
       id: assignment.user?.id || '',
       name: assignment.user?.name || '',
       email: assignment.user?.email || '',
+      first_name_katakana: assignment.user?.first_name_katakana || '',
+      last_name_katakana: assignment.user?.last_name_katakana || '',
+      first_name_kanji: assignment.user?.first_name_kanji || '',
+      last_name_kanji: assignment.user?.last_name_kanji || '',
     },
     part: {
       id: assignment.part?.id || '',
