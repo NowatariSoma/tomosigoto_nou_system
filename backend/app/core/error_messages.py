@@ -116,3 +116,12 @@ class ErrorMessage:
     class SESSION_INSTRUCTOR_NOT_FOUND(BaseMessage):
         status_code = status.HTTP_404_NOT_FOUND
         text = "セッション指導者が見つかりません"
+
+    # カレンダー関連
+    class INVALID_MONTH(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "月は1から12の範囲で指定してください"
+
+    class INVALID_DATE_FORMAT(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "日付はYYYY-MM-DD形式で指定してください"

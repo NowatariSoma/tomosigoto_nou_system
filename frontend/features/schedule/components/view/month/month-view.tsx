@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/forms/button";
 import { Card } from "@/components/ui/layout/card";
@@ -15,6 +15,7 @@ import ShowMoreEventsModal from "@/features/schedule/modals/show-more-events-mod
 import EventStyled from "../event-component/event-styled";
 import { Event, CustomEventModal } from "@/features/schedule/types";
 import CustomModal from "@/features/schedule/components/custom-modal";
+import { usePracticeScheduleEvents } from "@/features/schedule/hooks/use-practice-schedule-calendar";
 
 const pageTransitionVariants = {
   enter: (direction: number) => ({
@@ -46,6 +47,18 @@ export default function MonthView({
 }) {
   const { getters, weekStartsOn } = useScheduler();
   const { setOpen } = useModal();
+  
+  // 練習スケジュールデータを取得
+  const {
+    events: practiceEvents,
+    rawEvents,
+    loading,
+    error,
+    currentYear,
+    currentMonth,
+    totalCount,
+    fetchMonthSchedules,
+  } = usePracticeScheduleEvents();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [direction, setDirection] = useState<number>(0);
@@ -63,7 +76,9 @@ export default function MonthView({
       1
     );
     setCurrentDate(newDate);
-  }, [currentDate]);
+    // 新しい月の練習スケジュールを取得
+    fetchMonthSchedules(newDate.getFullYear(), newDate.getMonth() + 1);
+  }, [currentDate, fetchMonthSchedules]);
 
   const handleNextMonth = useCallback(() => {
     setDirection(1);
@@ -73,7 +88,14 @@ export default function MonthView({
       1
     );
     setCurrentDate(newDate);
-  }, [currentDate]);
+    // 新しい月の練習スケジュールを取得
+    fetchMonthSchedules(newDate.getFullYear(), newDate.getMonth() + 1);
+  }, [currentDate, fetchMonthSchedules]);
+
+  // 月が変わったときに練習スケジュールを取得
+  useEffect(() => {
+    fetchMonthSchedules(currentDate.getFullYear(), currentDate.getMonth() + 1);
+  }, [currentDate, fetchMonthSchedules]);
 
   function handleAddEvent(selectedDay: number) {
     // Create start date at 12:00 AM on the selected day
@@ -286,7 +308,18 @@ export default function MonthView({
           })}
 
           {daysInMonth.map((dayObj) => {
-            const dayEvents = getters.getEventsForDay(dayObj.day, currentDate);
+            // 既存のスケジューラーイベントと練習スケジュールイベントを統合
+            const schedulerEvents = getters.getEventsForDay(dayObj.day, currentDate);
+            const dayPracticeEvents = practiceEvents.filter(event => {
+              const eventDate = new Date(event.startDate);
+              return eventDate.getDate() === dayObj.day &&
+                     eventDate.getMonth() === currentDate.getMonth() &&
+                     eventDate.getFullYear() === currentDate.getFullYear();
+            });
+            
+            // 全てのイベントを統合
+            const dayEvents = [...schedulerEvents, ...dayPracticeEvents];
+            
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayObj.day);
             const dayOfWeek = date.getDay();
             const isSunday = dayOfWeek === 0;
