@@ -8,8 +8,8 @@ import { SchedulerProvider } from '@/features/schedule/providers/schedular-provi
 export default function Home() {
   return (
     <AppTemplate
-      title="パート割り当て"
-      description="公演に対してパートを割り当てるページ"
+      title="カレンダー"
+      description="カレンダーから練習日程に移動できるページ"
       icon={<Brain className="h-8 w-8 text-blue-600" />}
       permissionBadge={{
         level: 'basic',
@@ -17,7 +17,7 @@ export default function Home() {
       }}
       maxWidth="7xl"
     >
-      <SchedulerProvider weekStartsOn="monday">
+      <SchedulerProvider weekStartsOn="sunday">
         <SchedulePage />
       </SchedulerProvider>
     </AppTemplate>
