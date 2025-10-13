@@ -290,12 +290,12 @@ export default function DailyView({
 
   return (
     <div className="">
-      <div className="flex justify-between gap-3 flex-wrap mb-5">
-        <h1 className="text-3xl font-semibold mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mb-5">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2 sm:mb-4">
           {getFormattedDayTitle()}
         </h1>
 
-        <div className="flex ml-auto  gap-3">
+        <div className="flex gap-2 sm:gap-3 sm:ml-auto">
           {prevButton ? (
             <div onClick={handlePrevDay}>{prevButton}</div>
           ) : (
@@ -303,9 +303,10 @@ export default function DailyView({
               variant={"outline"}
               className={classNames?.prev}
               onClick={handlePrevDay}
+              size="sm"
             >
-              <ArrowLeft />
-              Prev
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
             </Button>
           )}
           {nextButton ? (
@@ -315,9 +316,10 @@ export default function DailyView({
               variant={"outline"}
               className={classNames?.next}
               onClick={handleNextDay}
+              size="sm"
             >
-              Next
-              <ArrowRight />
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -376,14 +378,15 @@ export default function DailyView({
               onMouseMove={handleMouseMove}
               onMouseLeave={() => setDetailedHour(null)}
             >
-              <div className="flex  flex-col">
+              <div className="flex flex-col min-w-[60px] sm:min-w-[80px]">
                 {hours.map((hour, index) => (
                   <motion.div
                     key={`hour-${index}`}
                     variants={itemVariants}
-                    className="cursor-pointer   transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                    className="cursor-pointer transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
-                    {hour}
+                    <span className="hidden sm:inline">{hour}</span>
+                    <span className="sm:hidden">{hour.split(' ')[0]}</span>
                   </motion.div>
                 ))}
               </div>
@@ -394,10 +397,11 @@ export default function DailyView({
                       handleAddEventDay(detailedHour as string);
                     }}
                     key={`hour-${index}`}
-                    className="cursor-pointer w-full relative border-b  hover:bg-default-200/50  transition duration-300  p-4 h-[64px] text-left text-sm text-muted-foreground border-default-200"
+                    className="cursor-pointer w-full relative border-b hover:bg-default-200/50 transition duration-300 p-2 sm:p-4 h-[48px] sm:h-[64px] text-left text-xs sm:text-sm text-muted-foreground border-default-200"
                   >
                     <div className="absolute bg-accent flex items-center justify-center text-xs opacity-0 transition left-0 top-0 duration-250 hover:opacity-100 w-full h-full">
-                      Add Event
+                      <span className="hidden sm:inline">Add Event</span>
+                      <span className="sm:hidden">+</span>
                     </div>
                   </div>
                 ))}
@@ -469,14 +473,15 @@ export default function DailyView({
 
             {detailedHour && (
               <div
-                className="absolute left-[50px] w-[calc(100%-53px)] h-[2px] bg-primary/40 rounded-full pointer-events-none"
+                className="absolute left-[60px] sm:left-[80px] w-[calc(100%-63px)] sm:w-[calc(100%-83px)] h-[2px] bg-primary/40 rounded-full pointer-events-none"
                 style={{ top: `${timelinePosition}px` }}
               >
                 <Badge
                   variant="outline"
-                  className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-xs"
+                  className="absolute -translate-y-1/2 bg-white z-50 left-[-20px] text-[10px] sm:text-xs px-1 sm:px-2"
                 >
-                  {detailedHour}
+                  <span className="hidden sm:inline">{detailedHour}</span>
+                  <span className="sm:hidden">{detailedHour.split(' ')[0]}</span>
                 </Badge>
               </div>
             )}

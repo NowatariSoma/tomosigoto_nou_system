@@ -173,19 +173,19 @@ export default function MonthView({
   ).getDate();
   return (
     <div>
-      <div className="flex flex-col mb-4">
+      <div className="flex flex-col gap-3 mb-4">
         <motion.h2
           key={currentDate.getMonth()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-3xl my-5 tracking-tighter font-bold"
+          className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
         >
           {currentDate.toLocaleString("default", { month: "long" })}{" "}
           {currentDate.getFullYear()}
         </motion.h2>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {prevButton ? (
             <div onClick={handlePrevMonth}>{prevButton}</div>
           ) : (
@@ -193,9 +193,10 @@ export default function MonthView({
               variant="outline"
               className={classNames?.prev}
               onClick={handlePrevMonth}
+              size="sm"
             >
-              <ArrowLeft />
-              Prev
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
             </Button>
           )}
           {nextButton ? (
@@ -205,9 +206,10 @@ export default function MonthView({
               variant="outline"
               className={classNames?.next}
               onClick={handleNextMonth}
+              size="sm"
             >
-              Next
-              <ArrowRight />
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -234,15 +236,16 @@ export default function MonthView({
           {daysOfWeek.map((day, idx) => (
             <div
               key={idx}
-              className="text-left my-8 text-4xl tracking-tighter font-medium"
+              className="text-center my-2 sm:my-4 md:my-6 lg:my-8 text-xs sm:text-xl md:text-2xl lg:text-4xl tracking-tighter font-medium"
             >
-              {day}
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.substring(0, 1)}</span>
             </div>
           ))}
 
           {Array.from({ length: startOffset }).map((_, idx) => (
-            <div key={`offset-${idx}`} className="h-[150px] opacity-50">
-              <div className={clsx("font-semibold relative text-3xl mb-1")}>
+            <div key={`offset-${idx}`} className="h-[60px] sm:h-[100px] md:h-[120px] lg:h-[150px] opacity-50">
+              <div className={clsx("font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1")}>
                 {lastDateOfPrevMonth - startOffset + idx + 1}
               </div>
             </div>
@@ -253,7 +256,7 @@ export default function MonthView({
 
             return (
               <motion.div
-                className="hover:z-50 border-none h-[150px] rounded group flex flex-col"
+                className="hover:z-50 border-none h-[60px] sm:h-[100px] md:h-[120px] lg:h-[150px] rounded group flex flex-col"
                 key={dayObj.day}
                 variants={itemVariants}
                 initial="enter"
@@ -261,12 +264,12 @@ export default function MonthView({
                 exit="exit"
               >
                 <Card
-                  className="shadow-md cursor-pointer overflow-hidden relative flex p-4 border h-full"
+                  className="shadow-md cursor-pointer overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border h-full"
                   onClick={() => handleAddEvent(dayObj.day)}
                 >
                   <div
                     className={clsx(
-                      "font-semibold relative text-3xl mb-1",
+                      "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1",
                       dayEvents.length > 0
                         ? "text-primary-600"
                         : "text-muted-foreground",
@@ -307,7 +310,7 @@ export default function MonthView({
                           handleShowMoreEvents(dayEvents);
                         }}
                         variant="outline"
-                        className="hover:bg-default-200 absolute right-2 text-xs top-2 transition duration-300"
+                        className="hover:bg-default-200 absolute right-0.5 sm:right-1 md:right-2 text-[8px] sm:text-[10px] md:text-xs top-0.5 sm:top-1 md:top-2 transition duration-300 px-0.5 sm:px-1 md:px-2"
                       >
                         {dayEvents.length > 1
                           ? `+${dayEvents.length - 1}`
@@ -319,8 +322,9 @@ export default function MonthView({
                   {/* Hover Text */}
                   {dayEvents.length === 0 && (
                     <div className="absolute inset-0 bg-primary/20 bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-black tracking-tighter text-lg font-semibold">
-                        Add Event
+                      <span className="text-black tracking-tighter text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold">
+                        <span className="hidden md:inline">Add Event</span>
+                        <span className="md:hidden">+</span>
                       </span>
                     </div>
                   )}
