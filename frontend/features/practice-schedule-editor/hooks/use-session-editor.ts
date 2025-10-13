@@ -173,44 +173,14 @@ export const useSessionEditor = (scheduleId: string) => {
 
       dispatch({ type: 'SET_VENUES', payload: venues });
 
-      // 時間スロットの生成
+      // 時間スロットの生成（常にdivision_countベースで生成）
       let timeSlots: TimeSlot[] = [];
 
-      if (Object.keys(timeSchedule).length > 0) {
-        // 実際のセッションがある時間スロットのみを生成
-        const usedTimeSlots = new Set<string>();
-        Object.keys(timeSchedule).forEach(time => {
-          const hasSessions = Object.values(timeSchedule[time]).some(parts => parts.length > 0);
-          if (hasSessions) {
-            usedTimeSlots.add(time);
-          }
-        });
-
-        // 使用されている時間スロットからTimeSlotオブジェクトを生成
-        const sortedSlots = Array.from(usedTimeSlots).sort();
-        timeSlots = sortedSlots.map((time, index) => {
-          let endTime: string;
-
-          if (index < sortedSlots.length - 1) {
-            endTime = sortedSlots[index + 1];
-          } else {
-            const scheduleEndTime = details.schedule_info.end_time || basicSchedule?.end_time || '17:00';
-            endTime = scheduleEndTime.substring(0, 5);
-          }
-
-          return {
-            time: time,
-            start_time: time,
-            end_time: endTime,
-            display_time: `${time}-${endTime}`,
-          };
-        });
-      } else if (basicSchedule) {
-        // セッションがない場合は、スケジュールの開始・終了時間から時間スロットを生成
-        console.log('セッションがないため、デフォルトの時間スロットを生成します。');
+      if (basicSchedule) {
         const startTime = basicSchedule.start_time || '09:00';
         const endTime = basicSchedule.end_time || '17:00';
         const divisionCount = basicSchedule.division_count || 6;
+        
         timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
       }
 
