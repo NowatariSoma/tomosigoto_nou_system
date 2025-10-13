@@ -148,8 +148,8 @@ export default function MonthView({
 
   const daysOfWeek =
     weekStartsOn === "monday"
-      ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      ? ["月", "火", "水", "木", "金", "土", "日"]
+      : ["日", "月", "火", "水", "木", "金", "土"];
 
   const firstDayOfMonth = new Date(
     currentDate.getFullYear(),
@@ -171,21 +171,25 @@ export default function MonthView({
     prevMonth.getMonth() + 1,
     0
   ).getDate();
+
+  // Calculate how many days from next month to show
+  const totalCells = Math.ceil((startOffset + daysInMonth.length) / 7) * 7;
+  const nextMonthDays = totalCells - startOffset - daysInMonth.length;
+
   return (
     <div>
-      <div className="flex flex-col mb-4">
+      <div className="flex flex-col gap-3 mb-4">
         <motion.h2
           key={currentDate.getMonth()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-3xl my-5 tracking-tighter font-bold"
+          className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
         >
-          {currentDate.toLocaleString("default", { month: "long" })}{" "}
-          {currentDate.getFullYear()}
+          {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
         </motion.h2>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {prevButton ? (
             <div onClick={handlePrevMonth}>{prevButton}</div>
           ) : (
@@ -193,9 +197,10 @@ export default function MonthView({
               variant="outline"
               className={classNames?.prev}
               onClick={handlePrevMonth}
+              size="sm"
             >
-              <ArrowLeft />
-              Prev
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
             </Button>
           )}
           {nextButton ? (
@@ -205,9 +210,10 @@ export default function MonthView({
               variant="outline"
               className={classNames?.next}
               onClick={handleNextMonth}
+              size="sm"
             >
-              Next
-              <ArrowRight />
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -229,31 +235,66 @@ export default function MonthView({
           initial="enter"
           animate="center"
           exit="exit"
-          className="grid grid-cols-7 gap-1 sm:gap-2"
+          className="grid grid-cols-7"
         >
-          {daysOfWeek.map((day, idx) => (
-            <div
-              key={idx}
-              className="text-left my-8 text-4xl tracking-tighter font-medium"
-            >
-              {day}
-            </div>
-          ))}
-
-          {Array.from({ length: startOffset }).map((_, idx) => (
-            <div key={`offset-${idx}`} className="h-[150px] opacity-50">
-              <div className={clsx("font-semibold relative text-3xl mb-1")}>
-                {lastDateOfPrevMonth - startOffset + idx + 1}
+          {daysOfWeek.map((day, idx) => {
+            const dayIndex = weekStartsOn === "monday" ? (idx + 1) % 7 : idx;
+            const isSunday = dayIndex === 0;
+            const isSaturday = dayIndex === 6;
+            return (
+              <div
+                key={idx}
+                className={`text-center my-1 sm:my-2 md:my-3 text-xs sm:text-base md:text-lg tracking-tighter font-medium opacity-40 ${
+                  isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                }`}
+              >
+                {day}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {daysInMonth.map((dayObj) => {
-            const dayEvents = getters.getEventsForDay(dayObj.day, currentDate);
+          {Array.from({ length: startOffset }).map((_, idx) => {
+            const prevMonthDay = lastDateOfPrevMonth - startOffset + idx + 1;
+            const prevMonthDate = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() - 1,
+              prevMonthDay
+            );
+            const dayOfWeek = prevMonthDate.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
 
             return (
               <motion.div
-                className="hover:z-50 border-none h-[150px] rounded group flex flex-col"
+                key={`offset-${idx}`}
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
+                variants={itemVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
+                  <div className={clsx(
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
+                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    {prevMonthDay}
+                  </div>
+                </Card>
+              </motion.div>
+            );
+          })}
+
+          {daysInMonth.map((dayObj) => {
+            const dayEvents = getters.getEventsForDay(dayObj.day, currentDate);
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayObj.day);
+            const dayOfWeek = date.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+
+            return (
+              <motion.div
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
                 key={dayObj.day}
                 variants={itemVariants}
                 initial="enter"
@@ -261,69 +302,87 @@ export default function MonthView({
                 exit="exit"
               >
                 <Card
-                  className="shadow-md cursor-pointer overflow-hidden relative flex p-4 border h-full"
+                  className="cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none"
                   onClick={() => handleAddEvent(dayObj.day)}
                 >
                   <div
                     className={clsx(
-                      "font-semibold relative text-3xl mb-1",
-                      dayEvents.length > 0
-                        ? "text-primary-600"
-                        : "text-muted-foreground",
+                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 pt-1 sm:pt-2 text-center",
                       new Date().getDate() === dayObj.day &&
                         new Date().getMonth() === currentDate.getMonth() &&
                         new Date().getFullYear() === currentDate.getFullYear()
                         ? "text-secondary-500"
-                        : ""
+                        : isSunday
+                        ? "text-red-600"
+                        : isSaturday
+                        ? "text-blue-600"
+                        : dayEvents.length > 0
+                        ? "text-primary-600"
+                        : "text-muted-foreground"
                     )}
                   >
                     {dayObj.day}
                   </div>
-                  <div className="flex-grow flex flex-col gap-2 w-full">
+                  <div className="flex-grow flex flex-col gap-1 w-full relative z-10 px-1 sm:px-2">
                     <AnimatePresence mode="wait">
-                      {dayEvents?.length > 0 && (
+                      {dayEvents?.length > 0 && dayEvents.map((event, index) => (
                         <motion.div
-                          key={dayEvents[0].id}
+                          key={event.id}
+                          className="w-full"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
                         >
                           <EventStyled
                             event={{
-                              ...dayEvents[0],
+                              ...event,
                               CustomEventComponent,
                               minmized: true,
                             }}
                             CustomEventModal={CustomEventModal}
                           />
                         </motion.div>
-                      )}
+                      ))}
                     </AnimatePresence>
-                    {dayEvents.length > 1 && (
-                      <Badge
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowMoreEvents(dayEvents);
-                        }}
-                        variant="outline"
-                        className="hover:bg-default-200 absolute right-2 text-xs top-2 transition duration-300"
-                      >
-                        {dayEvents.length > 1
-                          ? `+${dayEvents.length - 1}`
-                          : " "}
-                      </Badge>
-                    )}
                   </div>
 
-                  {/* Hover Text */}
-                  {dayEvents.length === 0 && (
-                    <div className="absolute inset-0 bg-primary/20 bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-black tracking-tighter text-lg font-semibold">
-                        Add Event
-                      </span>
-                    </div>
-                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-accent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  </div>
+                </Card>
+              </motion.div>
+            );
+          })}
+
+          {/* Next month days */}
+          {Array.from({ length: nextMonthDays }).map((_, idx) => {
+            const nextMonthDay = idx + 1;
+            const nextMonthDate = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() + 1,
+              nextMonthDay
+            );
+            const dayOfWeek = nextMonthDate.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+
+            return (
+              <motion.div
+                key={`next-${idx}`}
+                className="hover:z-50 border-none min-h-[calc((100vh-280px)/6)] sm:min-h-[calc((100vh-300px)/6)] md:min-h-[calc((100vh-300px)/6)] group flex flex-col"
+                variants={itemVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
+                  <div className={clsx(
+                    "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
+                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    {nextMonthDay}
+                  </div>
                 </Card>
               </motion.div>
             );
