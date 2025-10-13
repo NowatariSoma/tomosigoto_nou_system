@@ -213,11 +213,27 @@ export default function AddEventModal({
             </DropdownMenu>
           </div>
 
-          <div className="flex justify-end space-x-2 mt-4 pt-2 border-t">
-            <Button variant="outline" type="button" onClick={() => setClose()}>
-              Cancel
-            </Button>
-            <Button type="submit">Save Event</Button>
+          <div className="flex justify-between items-center space-x-2 mt-4 pt-2 border-t">
+            <div>
+              {typedData?.default?.id && (
+                <Button
+                  variant="destructive"
+                  type="button"
+                  onClick={() => {
+                    handlers.handleDeleteEvent(typedData.default.id);
+                    setClose();
+                  }}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" type="button" onClick={() => setClose()}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Event</Button>
+            </div>
           </div>
         </>
       )}

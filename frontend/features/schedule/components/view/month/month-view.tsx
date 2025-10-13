@@ -302,12 +302,12 @@ export default function MonthView({
                 exit="exit"
               >
                 <Card
-                  className="shadow-md cursor-pointer overflow-hidden relative flex p-1 sm:p-2 md:p-3 lg:p-4 border h-full"
+                  className="shadow-md cursor-pointer overflow-hidden relative flex flex-col border h-full"
                   onClick={() => handleAddEvent(dayObj.day)}
                 >
                   <div
                     className={clsx(
-                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1",
+                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 px-2 sm:px-3 md:px-4 pt-1 sm:pt-2",
                       new Date().getDate() === dayObj.day &&
                         new Date().getMonth() === currentDate.getMonth() &&
                         new Date().getFullYear() === currentDate.getFullYear()
@@ -323,48 +323,33 @@ export default function MonthView({
                   >
                     {dayObj.day}
                   </div>
-                  <div className="flex-grow flex flex-col gap-2 w-full relative z-10">
+                  <div className="flex-grow flex flex-col gap-1 w-full relative z-10 px-1 sm:px-2">
                     <AnimatePresence mode="wait">
-                      {dayEvents?.length > 0 && (
+                      {dayEvents?.length > 0 && dayEvents.map((event, index) => (
                         <motion.div
-                          key={dayEvents[0].id}
+                          key={event.id}
+                          className="w-full"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
                         >
                           <EventStyled
                             event={{
-                              ...dayEvents[0],
+                              ...event,
                               CustomEventComponent,
                               minmized: true,
                             }}
                             CustomEventModal={CustomEventModal}
                           />
                         </motion.div>
-                      )}
+                      ))}
                     </AnimatePresence>
-                    {dayEvents.length > 1 && (
-                      <Badge
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowMoreEvents(dayEvents);
-                        }}
-                        variant="outline"
-                        className="hover:bg-default-200 absolute right-0.5 sm:right-1 md:right-2 text-[8px] sm:text-[10px] md:text-xs top-0.5 sm:top-1 md:top-2 transition duration-300 px-0.5 sm:px-1 md:px-2"
-                      >
-                        {dayEvents.length > 1
-                          ? `+${dayEvents.length - 1}`
-                          : " "}
-                      </Badge>
-                    )}
                   </div>
 
                   {/* Hover overlay */}
-                  {dayEvents.length === 0 && (
-                    <div className="absolute inset-0 bg-accent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    </div>
-                  )}
+                  <div className="absolute inset-0 bg-accent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  </div>
                 </Card>
               </motion.div>
             );
