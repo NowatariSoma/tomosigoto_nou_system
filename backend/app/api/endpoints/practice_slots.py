@@ -220,6 +220,7 @@ async def update_practice_schedule(
         schedule_dict["updated_by"] = "system"
 
         updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
+        
         return PracticeScheduleResponse(**updated_schedule)
     except Exception as e:
         raise
