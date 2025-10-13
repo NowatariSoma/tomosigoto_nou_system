@@ -61,6 +61,20 @@ export default function MonthView({
   } = usePracticeScheduleEvents();
 
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // useEffect内でデバッグログを出力（レンダリングサイクルに影響しない）
+  useEffect(() => {
+    console.log('MonthView Debug:', {
+      practiceEventsCount: practiceEvents.length,
+      rawEventsCount: rawEvents.length,
+      loading,
+      error,
+      totalCount,
+      currentYear,
+      currentMonth,
+      firstEvent: practiceEvents[0] ? { id: practiceEvents[0].id, title: practiceEvents[0].title } : null,
+    });
+  }, [practiceEvents, rawEvents, loading, error, totalCount, currentYear, currentMonth]);
   const [direction, setDirection] = useState<number>(0);
 
   const daysInMonth = getters.getDaysInMonth(
@@ -201,16 +215,16 @@ export default function MonthView({
   return (
     <div>
       <div className="flex flex-col gap-3 mb-4">
-        <motion.h2
-          key={currentDate.getMonth()}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
-        >
-          {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
-        </motion.h2>
+            <motion.h2
+              key={currentDate.getMonth()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
+            >
+              {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
+            </motion.h2>
         <div className="flex gap-2 sm:gap-3">
           {prevButton ? (
             <div onClick={handlePrevMonth}>{prevButton}</div>
@@ -312,13 +326,41 @@ export default function MonthView({
             const schedulerEvents = getters.getEventsForDay(dayObj.day, currentDate);
             const dayPracticeEvents = practiceEvents.filter(event => {
               const eventDate = new Date(event.startDate);
-              return eventDate.getDate() === dayObj.day &&
+              const matches = eventDate.getDate() === dayObj.day &&
                      eventDate.getMonth() === currentDate.getMonth() &&
                      eventDate.getFullYear() === currentDate.getFullYear();
+              
+              // デバッグ用ログ（10月12日と13日のみ）
+              if (dayObj.day === 12 || dayObj.day === 13) {
+                console.log(`Day ${dayObj.day} Filter:`, {
+                  eventTitle: event.title,
+                  eventStartDate: event.startDate,
+                  eventDateParsed: eventDate,
+                  eventDay: eventDate.getDate(),
+                  eventMonth: eventDate.getMonth(),
+                  eventYear: eventDate.getFullYear(),
+                  currentDay: dayObj.day,
+                  currentMonth: currentDate.getMonth(),
+                  currentYear: currentDate.getFullYear(),
+                  matches
+                });
+              }
+              
+              return matches;
             });
             
             // 全てのイベントを統合
             const dayEvents = [...schedulerEvents, ...dayPracticeEvents];
+            
+            // デバッグ用ログ（10月12日と13日のみ）
+            if (dayObj.day === 12 || dayObj.day === 13) {
+              console.log(`Day ${dayObj.day} Final:`, {
+                schedulerEventsCount: schedulerEvents.length,
+                dayPracticeEventsCount: dayPracticeEvents.length,
+                totalDayEventsCount: dayEvents.length,
+                dayEvents: dayEvents.map(e => ({ id: e.id, title: e.title }))
+              });
+            }
             
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayObj.day);
             const dayOfWeek = date.getDay();

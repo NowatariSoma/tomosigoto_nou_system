@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -13,6 +13,34 @@ import { CustomEventModal, Event } from "@/features/schedule/types";
 import { Button } from "@/components/ui/forms/button";
 import { Badge } from "@/components/ui/feedback/badge";
 import CustomModal from "@/features/schedule/components/custom-modal";
+
+// クライアントサイドでのみレンダリングするコンポーネント
+function ClientOnlyDateTitle({ currentDate }: { currentDate: Date }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getFormattedDayTitle = useCallback(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][currentDate.getDay()];
+    return `${year}年${month}月${day}日（${dayOfWeek}）`;
+  }, [currentDate]);
+
+  if (!mounted) {
+    // サーバーサイドでは空の状態を返す
+    return <div className="h-8 sm:h-9 md:h-10" />;
+  }
+
+  return (
+    <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2 sm:mb-4">
+      {getFormattedDayTitle()}
+    </h1>
+  );
+}
 
 // Generate hours in 24-hour format (Japanese style)
 const hours = Array.from({ length: 24 }, (_, i) => {
@@ -161,10 +189,25 @@ export default function DailyView({
   const hoursColumnRef = useRef<HTMLDivElement>(null);
   const [detailedHour, setDetailedHour] = useState<string | null>(null);
   const [timelinePosition, setTimelinePosition] = useState<number>(0);
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  // SSRとクライアントサイドで一貫した初期値を使用
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    // サーバーサイドでは固定の日付を使用
+    if (typeof window === 'undefined') {
+      return new Date('2025-10-13T00:00:00.000Z');
+    }
+    // クライアントサイドでは現在の日付を使用
+    return new Date();
+  });
   const [direction, setDirection] = useState<number>(0);
   const { setOpen } = useModal();
   const { getters, handlers } = useScheduler();
+
+  // クライアントサイドでマウント後に現在の日付に更新
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentDate(new Date());
+    }
+  }, []);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -187,14 +230,6 @@ export default function DailyView({
     },
     []
   );
-
-  const getFormattedDayTitle = useCallback(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-    const day = currentDate.getDate();
-    const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][currentDate.getDay()];
-    return `${year}年${month}月${day}日（${dayOfWeek}）`;
-  }, [currentDate]);
 
   const dayEvents = getters.getEventsForDay(
     currentDate?.getDate() || 0,
@@ -282,9 +317,7 @@ export default function DailyView({
   return (
     <div className="">
       <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mb-5">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2 sm:mb-4">
-          {getFormattedDayTitle()}
-        </h1>
+        <ClientOnlyDateTitle currentDate={currentDate} />
 
         <div className="flex gap-2 sm:gap-3 sm:ml-auto">
           {prevButton ? (
