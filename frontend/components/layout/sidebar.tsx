@@ -22,7 +22,8 @@ import {
   Building,
   ReceiptText,
   Clock,
-  Edit3
+  Edit3,
+  UserCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
