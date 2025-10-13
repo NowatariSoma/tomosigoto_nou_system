@@ -108,27 +108,10 @@ export default function EventStyled({
     <div
       key={event?.id}
       className={cn(
-        "w-full z-50 relative cursor-pointer border group rounded-lg flex flex-col flex-grow shadow-sm hover:shadow-md transition-shadow duration-200",
-        event?.minmized ? "border-transparent" : "border-default-400/60"
+        "w-full z-50 relative cursor-pointer group rounded-lg flex flex-col flex-grow",
+        event?.minmized ? "" : ""
       )}
     >
-      {/* Delete button - shown by default for non-minimized, or on hover for minimized */}
-      <Button
-        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handlers.handleDeleteEvent(event?.id);
-          onDelete?.(event?.id);
-        }}
-        variant="destructive"
-        size="icon"
-        className={cn(
-          "absolute z-[100] right-1 top-[-8px] h-6 w-6 p-0 shadow-md hover:bg-destructive/90 transition-all duration-200",
-          event?.minmized ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-        )}
-      >
-        <TrashIcon size={14} className="text-destructive-foreground" />
-      </Button>
-
       {event.CustomEventComponent ? (
         <div
           onClick={(e: React.MouseEvent<HTMLDivElement>) => {
@@ -164,18 +147,11 @@ export default function EventStyled({
             event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
           )}
         >
-          <div className="flex flex-col h-full">
-            <div className="font-semibold text-xs truncate mb-1">
+          <div className={cn("flex flex-col h-full", event?.minmized && "justify-center")}>
+            <div className="font-semibold text-xs truncate">
               {event?.title || "Untitled Event"}
             </div>
-            
-            {/* Show time in minimized mode */}
-            {event?.minmized && (
-              <div className="text-[10px] opacity-80">
-                {formatTime(event?.startDate)}
-              </div>
-            )}
-            
+
             {!event?.minmized && event?.description && (
               <div className="my-2 text-sm">{event?.description}</div>
             )}
