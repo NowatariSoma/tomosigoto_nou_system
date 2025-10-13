@@ -17,6 +17,7 @@ import {
   ChevronUp,
   ChevronDown,
   Calendar,
+  CalendarDays,
   Theater,
   BookOpen,
   Building,
@@ -215,6 +216,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
+                icon={<CalendarDays className="w-4 h-4" />}
+                label="スケジュール"
+                active={pathname === '/schedule'}
+                onClick={() => handleNavigateAndClose('/schedule')}
+              />
+
+              <NavItem
                 icon={<BookOpen className="w-4 h-4" />}
                 label="練習表"
                 active={pathname === '/practice-slots'}
@@ -342,6 +350,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "登録"}
             active={pathname === '/practice-schedule'}
             href="/practice-schedule"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<CalendarDays className="w-4 h-4" />}
+            label={isCollapsed ? "" : "スケジュール"}
+            active={pathname === '/schedule'}
+            href="/schedule"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
