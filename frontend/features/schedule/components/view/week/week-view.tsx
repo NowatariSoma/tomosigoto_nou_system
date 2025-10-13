@@ -309,23 +309,23 @@ export default function WeeklyView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-3">
 
-        <div className="flex ml-auto gap-3">
+        <div className="flex gap-2 sm:gap-3 sm:ml-auto">
           {prevButton ? (
             <div onClick={handlePrevWeek}>{prevButton}</div>
           ) : (
-            <Button variant="outline" className={classNames?.prev} onClick={handlePrevWeek}>
-              <ArrowLeft />
-              Prev
+            <Button variant="outline" className={classNames?.prev} onClick={handlePrevWeek} size="sm">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
             </Button>
           )}
           {nextButton ? (
             <div onClick={handleNextWeek}>{nextButton}</div>
           ) : (
-            <Button variant="outline" className={classNames?.next} onClick={handleNextWeek}>
-              Next
-              <ArrowRight />
+            <Button variant="outline" className={classNames?.next} onClick={handleNextWeek} size="sm">
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -342,32 +342,33 @@ export default function WeeklyView({
           transition={{
             opacity: { duration: 0.2 },
           }}
-          className={`grid use-automation-zoom-in grid-cols-8 gap-0`}
+          className="grid use-automation-zoom-in grid-cols-1 sm:grid-cols-8 gap-0"
         >
-          <div className="sticky top-0 left-0 z-30 bg-default-100 rounded-tl-lg h-full border-0 flex items-center justify-center bg-primary/10">
-            <span className="text-xl tracking-tight font-semibold ">
+          <div className="sticky top-0 left-0 z-30 bg-default-100 rounded-t-lg sm:rounded-tl-lg sm:rounded-tr-none h-full border-0 flex items-center justify-center bg-primary/10 p-2 sm:p-0">
+            <span className="text-base sm:text-lg md:text-xl tracking-tight font-semibold">
               Week {getters.getWeekNumber(currentDate)}
             </span>
           </div>
 
-          <div className="col-span-7 flex flex-col relative">
-            <div 
-              className="grid gap-0 flex-grow bg-primary/10 rounded-r-lg" 
-              style={{ 
+          <div className="col-span-1 sm:col-span-7 flex flex-col relative">
+            <div
+              className="grid gap-0 flex-grow bg-primary/10 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none overflow-x-auto"
+              style={{
                 gridTemplateColumns: colWidth.map(w => `${w}fr`).join(' '),
                 transition: isResizing ? 'none' : 'grid-template-columns 0.3s ease-in-out'
               }}
             >
               {daysOfWeek.map((day, idx) => (
-                <div key={idx} className="relative relative group flex flex-col">
+                <div key={idx} className="relative group flex flex-col min-w-[80px] sm:min-w-0">
                   <div className="sticky bg-default-100 top-0 z-20 flex-grow flex items-center justify-center">
-                    <div className="text-center p-4">
-                      <div className="text-lg font-semibold">
-                        {getters.getDayName(day.getDay())}
+                    <div className="text-center p-2 sm:p-4">
+                      <div className="text-sm sm:text-base md:text-lg font-semibold">
+                        <span className="hidden sm:inline">{getters.getDayName(day.getDay())}</span>
+                        <span className="sm:hidden">{getters.getDayName(day.getDay()).substring(0, 3)}</span>
                       </div>
                       <div
                         className={clsx(
-                          "text-lg font-semibold",
+                          "text-sm sm:text-base md:text-lg font-semibold",
                           new Date().getDate() === day.getDate() &&
                             new Date().getMonth() === currentDate.getMonth() &&
                             new Date().getFullYear() === currentDate.getFullYear()
@@ -565,23 +566,24 @@ export default function WeeklyView({
             ref={hoursColumnRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setDetailedHour(null)}
-            className="relative grid grid-cols-8 col-span-8"
+            className="relative grid grid-cols-1 sm:grid-cols-8 col-span-1 sm:col-span-8"
           >
             <div className="col-span-1 bg-default-50 hover:bg-default-100 transition duration-400">
               {hours.map((hour, index) => (
                 <motion.div
                   key={`hour-${index}`}
                   variants={itemVariants}
-                  className="cursor-pointer border-b border-default-200 p-[16px] h-[64px] text-center text-sm text-muted-foreground border-r"
+                  className="cursor-pointer border-b border-default-200 p-2 sm:p-[16px] h-[48px] sm:h-[64px] text-center text-xs sm:text-sm text-muted-foreground border-r"
                 >
-                  {hour}
+                  <span className="hidden sm:inline">{hour}</span>
+                  <span className="sm:hidden">{hour.split(' ')[0]}</span>
                 </motion.div>
               ))}
             </div>
 
-            <div 
-              className="col-span-7 bg-default-50 grid h-full" 
-              style={{ 
+            <div
+              className="col-span-1 sm:col-span-7 bg-default-50 grid h-full overflow-x-auto"
+              style={{
                 gridTemplateColumns: colWidth.map(w => `${w}fr`).join(' '),
                 transition: isResizing ? 'none' : 'grid-template-columns 0.3s ease-in-out'
               }}
@@ -608,7 +610,7 @@ export default function WeeklyView({
                 return (
                   <div
                     key={`day-${dayIndex}`}
-                    className="col-span-1 border-default-200 z-20 relative transition duration-300 cursor-pointer border-r border-b text-center text-sm text-muted-foreground overflow-hidden"
+                    className="col-span-1 border-default-200 z-20 relative transition duration-300 cursor-pointer border-r border-b text-center text-xs sm:text-sm text-muted-foreground overflow-hidden min-w-[80px] sm:min-w-0"
                     onClick={() => {
                       handleAddEventWeek(dayIndex, detailedHour as string);
                     }}
@@ -721,10 +723,11 @@ export default function WeeklyView({
                     {Array.from({ length: 24 }, (_, hourIndex) => (
                       <div
                         key={`day-${dayIndex}-hour-${hourIndex}`}
-                        className="col-span-1 border-default-200 h-[64px] relative transition duration-300 cursor-pointer border-r border-b text-center text-sm text-muted-foreground"
+                        className="col-span-1 border-default-200 h-[48px] sm:h-[64px] relative transition duration-300 cursor-pointer border-r border-b text-center text-xs sm:text-sm text-muted-foreground"
                       >
                         <div className="absolute bg-accent z-40 flex items-center justify-center text-xs opacity-0 transition duration-250 hover:opacity-100 w-full h-full">
-                          Add Event
+                          <span className="hidden sm:inline">Add Event</span>
+                          <span className="sm:hidden">+</span>
                         </div>
                       </div>
                     ))}
