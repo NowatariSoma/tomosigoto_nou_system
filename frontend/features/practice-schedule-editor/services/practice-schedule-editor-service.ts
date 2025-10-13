@@ -26,7 +26,7 @@ export class PracticeScheduleEditorService {
    */
   async getBasicSchedule(scheduleId: string): Promise<any> {
     try {
-      const response = await fetchApi(`${this.basePath}/${scheduleId}`);
+      const response = await fetchApi(`${this.basePath}${scheduleId}`);
       return response.json();
     } catch (error: any) {
       console.error('スケジュール取得エラー:', error);
@@ -45,7 +45,7 @@ export class PracticeScheduleEditorService {
    */
   async getScheduleDetails(scheduleId: string): Promise<IdealFormatApiResponse> {
     try {
-      const response = await fetchApi(`${this.basePath}/${scheduleId}/details`);
+      const response = await fetchApi(`${this.basePath}${scheduleId}/details`);
       return response.json();
     } catch (error: any) {
       if (error.status === 404) {
@@ -129,7 +129,7 @@ export class PracticeScheduleEditorService {
    * @param endTime - 終了時間 (HH:MM:SS形式)
    */
   async updateScheduleTime(scheduleId: string, startTime: string, endTime: string): Promise<void> {
-    await fetchApi(`${this.basePath}/${scheduleId}`, {
+    await fetchApi(`${this.basePath}${scheduleId}`, {
       method: 'PUT',
       body: JSON.stringify({
         start_time: startTime,
