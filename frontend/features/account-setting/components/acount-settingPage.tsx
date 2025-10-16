@@ -437,11 +437,9 @@ const AccountSettings: React.FC = () => {
             ) : (
               <div className="flex-1">
                 <span className="text-gray-900">{formData.email || '-'}</span>
-                {profile ? (
-                  <p className="text-sm text-gray-500 mt-1">※メールアドレスは編集できません</p>
-                ) : (
-                  <p className="text-sm text-gray-500 mt-1">※初回登録時のみ編集可能</p>
-                )}
+                <p className="text-sm text-gray-500 mt-1">
+                  ※メールアドレスは{profile ? '変更できません' : '初回登録後は変更できません'}
+                </p>
               </div>
             )}
           </div>

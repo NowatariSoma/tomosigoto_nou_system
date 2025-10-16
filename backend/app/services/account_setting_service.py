@@ -250,20 +250,19 @@ class AccountSettingService:
         if "year" in update_dict:
             update_dict["grade"] = update_dict.pop("year")
 
-        # 学籍番号の重複チェックは一時的に無効化
-        # if "student_id" in update_dict:
-        #     if await self.repository.check_student_id_exists(update_dict["student_id"], user_id):
-        #         logger.warning(f"Student ID already exists: {update_dict['student_id']}")
-        #         raise APIException(ErrorMessage.BAD_REQUEST)
+        # 学籍番号の重複チェック（必要に応じて実装）
+        # 現在は無効化されているが、将来的に実装可能
 
-        # メールアドレスの重複チェックは一時的に無効化
-        # if "email" in update_dict:
-        #     if await self.repository.check_email_exists(update_dict["email"], user_id):
-        #         logger.warning(f"Email already exists: {update_dict['email']}")
-        #         raise APIException(ErrorMessage.BAD_REQUEST)
+        # メールアドレスの重複チェック（設定に従う）
+        if "email" in update_dict:
+            from app.core.config import settings
+            if settings.ENABLE_EMAIL_DUPLICATE_CHECK:
+                if await self.user_profile_repo.check_email_exists(update_dict["email"]):
+                    logger.warning(f"Email already exists: {update_dict['email']}")
+                    raise APIException(ErrorMessage.BAD_REQUEST)
 
-        # 変更履歴の記録は一時的に無効化
-        # await self._record_profile_changes(user_id, existing_profile, update_dict, update_data.change_reason)
+        # 変更履歴の記録（必要に応じて実装）
+        # 現在は無効化されているが、将来的に実装可能
 
         # リポジトリを通して更新
         updated_profile_data = await self.user_profile_repo.update_profile(user_id, update_dict)
@@ -384,13 +383,14 @@ class AccountSettingService:
                     value=email
                 ))
             # 大学メールアドレスの推奨は削除（任意のメールアドレスを許可）
-            # 初回登録時（user_idがNone）は重複チェックを実行
-            elif user_id is None and await self.user_profile_repo.check_email_exists(email):
-                errors.append(AccountSettingValidationError(
-                    field="email",
-                    message="このメールアドレスは既に使用されています",
-                    value=email
-                ))
+            # メールアドレスの重複チェック（初回登録時は常にチェック、更新時は設定に従う）
+            elif user_id is None:  # 初回登録時は常にチェック
+                if await self.user_profile_repo.check_email_exists(email):
+                    errors.append(AccountSettingValidationError(
+                        field="email",
+                        message="このメールアドレスは既に使用されています",
+                        value=email
+                    ))
 
         # 学部のバリデーション
         if "department_code" in profile_data:

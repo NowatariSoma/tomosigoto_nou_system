@@ -28,6 +28,9 @@ class Settings(BaseSettings):
 
     # 時間スケジュール設定
     SCHEDULE_START_HOUR: int = 9
+    
+    # メールアドレス重複チェック設定
+    ENABLE_EMAIL_DUPLICATE_CHECK: bool = True
     SCHEDULE_END_HOUR: int = 17
     SCHEDULE_SLOT_MINUTES: int = 30
     
