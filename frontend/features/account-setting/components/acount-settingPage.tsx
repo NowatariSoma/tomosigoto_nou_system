@@ -418,10 +418,32 @@ const AccountSettings: React.FC = () => {
 
           <div className="flex items-center">
             <label className="w-32 text-gray-700 font-medium">メールアドレス</label>
-            <div className="flex-1">
-              <span className="text-gray-900">{formData.email || '-'}</span>
-              <p className="text-sm text-gray-500 mt-1">※メールアドレスは編集できません</p>
-            </div>
+            {isEditMode && !profile ? (
+              <div className="flex-1">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="example@mail.doshisha.ac.jp"
+                  className={`w-full max-w-md px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    fieldErrors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {fieldErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                )}
+                <p className="text-sm text-gray-500 mt-1">※大学のメールアドレス</p>
+              </div>
+            ) : (
+              <div className="flex-1">
+                <span className="text-gray-900">{formData.email || '-'}</span>
+                {profile ? (
+                  <p className="text-sm text-gray-500 mt-1">※メールアドレスは編集できません</p>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-1">※初回登録時のみ編集可能</p>
+                )}
+              </div>
+            )}
           </div>
 
           {isEditMode && (
