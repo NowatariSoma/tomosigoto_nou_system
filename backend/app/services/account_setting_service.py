@@ -368,7 +368,7 @@ class AccountSettingService:
             #         value=student_id
             #     ))
 
-        # メールアドレスのバリデーション
+        # メールアドレスのバリデーション（緩和版）
         if "email" in profile_data:
             email = profile_data["email"]
             if not email or len(email.strip()) == 0:
@@ -383,8 +383,7 @@ class AccountSettingService:
                     message="有効なメールアドレスを入力してください",
                     value=email
                 ))
-            elif not email.endswith("@mail.doshisha.ac.jp"):
-                warnings.append("大学のメールアドレス（@mail.doshisha.ac.jp）の使用を推奨します")
+            # 大学メールアドレスの推奨は削除（任意のメールアドレスを許可）
             # メールアドレスの重複チェックは一時的に無効化
             # elif await self.repository.check_email_exists(email, user_id):
             #     errors.append(AccountSettingValidationError(
