@@ -38,12 +38,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile, onU
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 メールアドレス
               </label>
-              <input
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              />
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-600">
+                {profile.email}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">※メールアドレスは編集できません</p>
             </div>
           </div>
 
