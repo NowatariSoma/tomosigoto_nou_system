@@ -384,13 +384,13 @@ class AccountSettingService:
                     value=email
                 ))
             # 大学メールアドレスの推奨は削除（任意のメールアドレスを許可）
-            # メールアドレスの重複チェックは一時的に無効化
-            # elif await self.repository.check_email_exists(email, user_id):
-            #     errors.append(AccountSettingValidationError(
-            #         field="email",
-            #         message="このメールアドレスは既に使用されています",
-            #         value=email
-            #     ))
+            # 初回登録時（user_idがNone）は重複チェックを実行
+            elif user_id is None and await self.user_profile_repo.check_email_exists(email):
+                errors.append(AccountSettingValidationError(
+                    field="email",
+                    message="このメールアドレスは既に使用されています",
+                    value=email
+                ))
 
         # 学部のバリデーション
         if "department_code" in profile_data:

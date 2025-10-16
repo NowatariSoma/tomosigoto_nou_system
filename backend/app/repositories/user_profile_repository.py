@@ -223,3 +223,24 @@ class UserProfileRepository:
         data = response.data or []
         logger.info(f"Found {len(data)} profiles for department: {department_id}")
         return data
+
+    @handle_supabase_errors("check_email_exists")
+    async def check_email_exists(self, email: str) -> bool:
+        """
+        メールアドレスの重複チェック
+
+        Args:
+            email: チェックするメールアドレス
+
+        Returns:
+            メールアドレスが既に存在する場合はTrue
+        """
+        response = (
+            self.client.table(self.table_name)
+            .select("id")
+            .eq("email", email)
+            .execute()
+        )
+        exists = len(response.data or []) > 0
+        logger.info(f"Email {email} exists: {exists}")
+        return exists
