@@ -60,6 +60,7 @@ const variantColors = {
 interface EventStyledProps extends Event {
   minmized?: boolean;
   CustomEventComponent?: React.FC<Event>;
+  disableClick?: boolean;
 }
 
 export default function EventStyled({
@@ -108,22 +109,25 @@ export default function EventStyled({
     <div
       key={event?.id}
       className={cn(
-        "w-full z-50 relative cursor-pointer group rounded-lg flex flex-col flex-grow",
-        event?.minmized ? "" : ""
+        "w-full z-50 relative group rounded-lg flex flex-col flex-grow",
+        event?.minmized ? "" : "",
+        event?.disableClick ? "cursor-default" : "cursor-pointer"
       )}
     >
       {event.CustomEventComponent ? (
         <div
           onClick={(e: React.MouseEvent<HTMLDivElement>) => {
             e.stopPropagation();
-            handleEditEvent({
-              id: event?.id,
-              title: event?.title,
-              startDate: event?.startDate,
-              endDate: event?.endDate,
-              description: event?.description,
-              variant: event?.variant,
-            });
+            if (!event?.disableClick) {
+              handleEditEvent({
+                id: event?.id,
+                title: event?.title,
+                startDate: event?.startDate,
+                endDate: event?.endDate,
+                description: event?.description,
+                variant: event?.variant,
+              });
+            }
           }}
         >
           <event.CustomEventComponent {...event} />
@@ -132,19 +136,22 @@ export default function EventStyled({
         <div
           onClick={(e: React.MouseEvent<HTMLDivElement>) => {
             e.stopPropagation();
-            handleEditEvent({
-              id: event?.id,
-              title: event?.title,
-              startDate: event?.startDate,
-              endDate: event?.endDate,
-              description: event?.description,
-              variant: event?.variant,
-            });
+            if (!event?.disableClick) {
+              handleEditEvent({
+                id: event?.id,
+                title: event?.title,
+                startDate: event?.startDate,
+                endDate: event?.endDate,
+                description: event?.description,
+                variant: event?.variant,
+              });
+            }
           }}
           className={cn(
             "w-full p-2 rounded",
             getBackgroundColor(event?.variant),
-            event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
+            event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit",
+            event?.disableClick ? "cursor-default" : ""
           )}
         >
           <div className={cn("flex flex-col h-full", event?.minmized && "justify-center")}>
