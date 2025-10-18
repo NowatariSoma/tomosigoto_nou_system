@@ -29,7 +29,7 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, session) : undefined}
-      className={`rounded-lg p-3 bg-blue-100 border border-blue-200 hover:bg-blue-200 hover:shadow-md transition-all ${
+      className={`w-full rounded-lg px-4 py-4 bg-blue-100 border border-blue-200 hover:bg-blue-200 hover:shadow-md transition-all ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50' : ''}`}
       onClick={(e) => {
