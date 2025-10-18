@@ -10,6 +10,7 @@ services:
       - .env
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ORTOOLS_ENGINE_URL=http://ortools-engine:8001
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
@@ -48,6 +49,8 @@ services:
       - .env
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_ORTOOLS_ENGINE_URL=http://localhost:8001
     volumes:
       # フロントエンドのソースコードをマウント
       - ./frontend:/app
@@ -76,6 +79,49 @@ services:
     labels:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
+
+  # OR-Tools最適化エンジン
+  ortools-engine:
+    build:
+      context: ./ortools-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"  # ポート8001で公開
+    env_file:
+      - .env
+    environment:
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_ROOMS=${MAX_ROOMS:-10}
+      - MAX_SCENES=${MAX_SCENES:-20}
+      - MAX_TIMESLOTS=${MAX_TIMESLOTS:-4}
+      - MAX_PEOPLE=${MAX_PEOPLE:-60}
+      - OPTIMIZATION_TIMEOUT=${OPTIMIZATION_TIMEOUT:-30}
+    volumes:
+      # ログファイルをマウント
+      - ./ortools-engine/logs:/app/logs
+      # 開発時のソースコードマウント（開発モードのみ）
+      - ./ortools-engine/app:/app/app
+      - ./ortools-engine/tests:/app/tests
+    restart: unless-stopped
+    networks:
+      - app-network
+    command: >
+      sh -c "
+      if [ \"$${DEBUG:-false}\" = \"true\" ]; then
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+      else
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 2
+      fi"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=OR-Tools optimization engine for schedule optimization"
 
 networks:
   default:
