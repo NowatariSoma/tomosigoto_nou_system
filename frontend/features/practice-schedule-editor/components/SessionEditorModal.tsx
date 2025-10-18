@@ -30,6 +30,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<SessionFormData>(INITIAL_SESSION_FORM);
   const [errors, setErrors] = useState<Partial<SessionFormData>>({});
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const { validateSessionForm } = useSessionValidation(venues);
 
@@ -58,8 +59,20 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiError(null);
+    console.log('フォーム送信:', formData);
     if (validateForm()) {
-      await onSubmit(formData);
+      console.log('バリデーションOK、API呼び出し開始');
+      try {
+        await onSubmit(formData);
+        console.log('セッション作成成功');
+      } catch (error) {
+        console.error('セッション作成エラー:', error);
+        const errorMessage = error instanceof Error ? error.message : 'セッションの保存に失敗しました';
+        setApiError(errorMessage);
+      }
+    } else {
+      console.log('バリデーションエラー:', errors);
     }
   };
 
@@ -87,6 +100,14 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* APIエラー表示 */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <p className="font-bold">エラー</p>
+              <p className="text-sm">{apiError}</p>
+            </div>
+          )}
+
           {/* セッション名 */}
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">

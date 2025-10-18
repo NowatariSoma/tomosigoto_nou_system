@@ -366,6 +366,8 @@ class PracticeScheduleService:
 
     async def create_session(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """セッションを作成"""
+        print(f"DEBUG create_session: 受信データ = {session_data}")
+
         # UUIDフィールドを文字列に変換
         if "schedule_id" in session_data and isinstance(session_data["schedule_id"], UUID):
             session_data["schedule_id"] = str(session_data["schedule_id"])
@@ -373,8 +375,12 @@ class PracticeScheduleService:
             session_data["part_id"] = str(session_data["part_id"])
         if "schedule_available_venue_id" in session_data and isinstance(session_data["schedule_available_venue_id"], UUID):
             session_data["schedule_available_venue_id"] = str(session_data["schedule_available_venue_id"])
-        
-        return await self.session_repository.create(session_data)
+
+        print(f"DEBUG create_session: 変換後データ = {session_data}")
+
+        result = await self.session_repository.create(session_data)
+        print(f"DEBUG create_session: 作成成功 = {result}")
+        return result
 
     async def update_session(
         self, session_id: UUID, session_data: Dict[str, Any]
