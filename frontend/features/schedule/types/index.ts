@@ -121,8 +121,6 @@ export interface CustomComponents {
   };
 
   customTabs?: {
-    CustomDayTab?: React.ReactNode;
-    CustomWeekTab?: React.ReactNode;
     CustomMonthTab?: React.ReactNode;
   };
   CustomEventComponent?: React.FC<Event>; // Using custom event type
@@ -149,8 +147,6 @@ export interface TabsClassNames {
 }
 
 export interface ViewClassNames {
-  dayView?: string;
-  weekView?: string;
   monthView?: string;
 }
 
