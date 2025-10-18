@@ -101,11 +101,10 @@ services:
       # ログファイルをマウント
       - ./ortools-engine/logs:/app/logs
       # 開発時のソースコードマウント（開発モードのみ）
-      - ./ortools-engine/app:/app/app
-      - ./ortools-engine/tests:/app/tests
+      - ./ortools-engine:/app
     restart: unless-stopped
     networks:
-      - app-network
+      - default
     command: >
       sh -c "
       if [ \"$${DEBUG:-false}\" = \"true\" ]; then
