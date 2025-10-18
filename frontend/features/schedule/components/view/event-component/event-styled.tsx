@@ -61,6 +61,7 @@ interface EventStyledProps extends Event {
   minmized?: boolean;
   CustomEventComponent?: React.FC<Event>;
   disableClick?: boolean;
+  onEventClick?: (event: Event) => void;
 }
 
 export default function EventStyled({
@@ -118,7 +119,12 @@ export default function EventStyled({
         <div
           onClick={(e: React.MouseEvent<HTMLDivElement>) => {
             e.stopPropagation();
-            if (!event?.disableClick) {
+            if (event?.disableClick) {
+              return;
+            }
+            if (event?.onEventClick) {
+              event.onEventClick(event);
+            } else {
               handleEditEvent({
                 id: event?.id,
                 title: event?.title,
@@ -136,7 +142,12 @@ export default function EventStyled({
         <div
           onClick={(e: React.MouseEvent<HTMLDivElement>) => {
             e.stopPropagation();
-            if (!event?.disableClick) {
+            if (event?.disableClick) {
+              return;
+            }
+            if (event?.onEventClick) {
+              event.onEventClick(event);
+            } else {
               handleEditEvent({
                 id: event?.id,
                 title: event?.title,
@@ -150,8 +161,7 @@ export default function EventStyled({
           className={cn(
             "w-full p-2 rounded",
             getBackgroundColor(event?.variant),
-            event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit",
-            event?.disableClick ? "cursor-default" : ""
+            event?.minmized ? "flex-grow overflow-hidden" : "min-h-fit"
           )}
         >
           <div className={cn("flex flex-col h-full", event?.minmized && "justify-center")}>

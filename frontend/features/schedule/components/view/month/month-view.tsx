@@ -124,6 +124,13 @@ export default function MonthView({
     router.push(`/schedule?date=${dateStr}`);
   }
 
+  // イベントクリック時に詳細表示に遷移
+  function handleEventClick(event: Event) {
+    const eventDate = new Date(event.startDate);
+    const dateStr = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    router.push(`/schedule?date=${dateStr}`);
+  }
+
   function handleAddEvent(selectedDay: number) {
     // Create date range for the selected day
     const startDate = new Date(
@@ -426,7 +433,7 @@ export default function MonthView({
                               ...event,
                               CustomEventComponent,
                               minmized: true,
-                              disableClick: true,
+                              onEventClick: handleEventClick,
                             }}
                             CustomEventModal={CustomEventModal}
                           />
