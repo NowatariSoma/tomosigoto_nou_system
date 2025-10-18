@@ -15,7 +15,7 @@ class MLIntegrationService:
     """MLエンジンとの連携を管理するサービス"""
     
     def __init__(self):
-        self.ml_engine_url = "http://ml-engine:8001"
+        self.ml_engine_url = settings.ML_ENGINE_URL
         self.timeout = 30.0
     
     async def optimize_schedule(

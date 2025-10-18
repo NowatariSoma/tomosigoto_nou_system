@@ -12,7 +12,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SUPABASE_URL=${SUPABASE_URL:-http://127.0.0.1:54321}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - ML_ENGINE_URL=http://ml-engine:8001
+      - ML_ENGINE_URL=http://ortools-engine:8001
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
@@ -32,7 +32,7 @@ services:
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
       fi"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -79,7 +79,7 @@ services:
         npm start
       fi"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -87,47 +87,49 @@ services:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
 
-  # ML-Engine サービス
-  ml-engine:
+  # OR-Tools最適化エンジン
+  ortools-engine:
     build:
-      context: ./ml-engine
+      context: ./ortools-engine
       dockerfile: Dockerfile
     ports:
-      - "8001:8001"
+      - "8001:8001"  # ポート8001で公開
     env_file:
       - .env
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - SUPABASE_URL=${SUPABASE_URL:-http://127.0.0.1:54321}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - PYTHONPATH=/app/src
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_ROOMS=${MAX_ROOMS:-10}
+      - MAX_SCENES=${MAX_SCENES:-20}
+      - MAX_TIMESLOTS=${MAX_TIMESLOTS:-4}
+      - MAX_PEOPLE=${MAX_PEOPLE:-60}
+      - OPTIMIZATION_TIMEOUT=${OPTIMIZATION_TIMEOUT:-30}
     volumes:
-      # モデルファイルと出力ファイルをマウント
-      - ./ml-engine/models:/app/models
-      - ./ml-engine/outputs:/app/outputs
-      - ./ml-engine/logs:/app/logs
-      - ./ml-engine/result:/app/result
+      # ログファイルをマウント
+      - ./ortools-engine/logs:/app/logs
       # 開発時のソースコードマウント（開発モードのみ）
-      - ./ml-engine/src:/app/src
-      - ./ml-engine/configs:/app/configs
-      - ./ml-engine/scripts:/app/scripts
-      # env.exampleと.envファイルをマウント
-      - ./env.example:/env.example:ro
-      - ./.env:/app/.env
+      - ./ortools-engine/app:/app/app
+      - ./ortools-engine/config:/app/config
+      - ./ortools-engine/tests:/app/tests
     restart: unless-stopped
     networks:
       - app-network
     command: >
       sh -c "
-      if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
+      if [ \"$${DEBUG:-false}\" = \"true\" ]; then
         uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
       else
         uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 2
       fi"
-
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/ml/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - "project=tomosigoto-supabase"
-      - "description=ML-Engine for schedule optimization"
+      - "description=OR-Tools optimization engine for schedule optimization"
 
   # Optional: PostgreSQL for future database features
   postgres:
