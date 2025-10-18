@@ -39,7 +39,6 @@ CREATE TABLE sessions (
   priority integer DEFAULT 0,
   created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (schedule_id, slot_order) -- 同一スケジュールでの重複コマ防止
 );
 
 -- 4) practice_user_attendance（Enum版）
@@ -57,18 +56,18 @@ CREATE TABLE practice_user_attendance (
 -- 5) session_instructors（attendance参照）
 CREATE TABLE session_instructors (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   attendance_id uuid NOT NULL REFERENCES public.practice_user_attendance(id) ON DELETE RESTRICT,
+  schedule_id uuid NOT NULL REFERENCES public.practice_schedules(id) ON DELETE CASCADE,
+  schedule_available_venue_id uuid REFERENCES public.schedule_available_venues(id) ON DELETE SET NULL,
+  slot_order integer NOT NULL CHECK (slot_order > 0),
   created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (session_id, attendance_id)
+  updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- インデックス
 CREATE INDEX idx_practice_schedules_date ON practice_schedules(schedule_date);
 CREATE INDEX idx_practice_schedules_status ON practice_schedules(status);
 CREATE INDEX idx_schedule_available_venues_schedule_id ON schedule_available_venues(schedule_id);
-CREATE INDEX idx_schedule_available_venues_venue_id ON schedule_available_venues(venue_id);
 CREATE INDEX idx_sessions_schedule_id ON sessions(schedule_id);
 CREATE INDEX idx_sessions_schedule_available_venue_id ON sessions(schedule_available_venue_id);
 CREATE INDEX idx_sessions_part_id ON sessions(part_id);
@@ -96,50 +95,3 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trg_u_practice_user_attendance
 BEFORE UPDATE ON public.practice_user_attendance
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- 整合性トリガ（同一スケジュール & 出席系のみ）
-CREATE OR REPLACE FUNCTION public.check_session_instructor_integrity()
-RETURNS trigger AS $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM public.sessions s
-    JOIN public.practice_user_attendance pua
-      ON pua.id = NEW.attendance_id
-    WHERE s.id = NEW.session_id
-      AND pua.practice_schedule_id = s.schedule_id
-      AND pua.status IN ('present','late')
-  ) THEN
-    RAISE EXCEPTION 'attendance/schedule mismatch OR status not eligible';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_check_session_instructor_integrity
-BEFORE INSERT OR UPDATE ON public.session_instructors
-FOR EACH ROW EXECUTE FUNCTION public.check_session_instructor_integrity();
-
--- 逆方向の保全（監督割当中に absent 禁止）
-CREATE OR REPLACE FUNCTION public.prevent_absent_if_instructor()
-RETURNS trigger AS $$
-DECLARE
-  has_assignment boolean;
-BEGIN
-  IF NEW.status = 'absent' THEN
-    SELECT EXISTS (
-      SELECT 1 FROM public.session_instructors si
-      WHERE si.attendance_id = NEW.id
-    ) INTO has_assignment;
-
-    IF has_assignment THEN
-      RAISE EXCEPTION 'cannot set to absent: instructor assignment exists';
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_prevent_absent_if_instructor
-BEFORE UPDATE OF status ON public.practice_user_attendance
-FOR EACH ROW EXECUTE FUNCTION public.prevent_absent_if_instructor();

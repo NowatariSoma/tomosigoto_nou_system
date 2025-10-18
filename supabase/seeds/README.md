@@ -6,10 +6,11 @@
 
 - `01_user_seed.sql` - ユーザー関連データ（auth.users, departments, user_profiles, user_roles）
 - `02_stage_and_parts_seed.sql` - 舞台（高砂、羽衣など）とパート情報
-- `03_practice_schedules_seed.sql` - 練習スケジュール関連データ（practice_schedules, schedule_available_venues）
-- `04_venue_seed.sql` - 会場情報のサンプルデータ
-- `05_member_assignments_seed.sql` - メンバーのパート所属データ
-- `06_sessions_seed.sql` - セッション関連データ（sessions, session_instructors, session_attendances）
+- `03_stage_part_seed.sql` - 舞台とパートの関連付けデータ
+- `03_venue_seed.sql` - 会場情報のサンプルデータ
+- `04_practice_schedules_seed.sql` - 練習スケジュール関連データ（practice_schedules, schedule_available_venues）
+- `05_practice_user_attendance_seed.sql` - 練習出欠データ（practice_user_attendance）
+- `06_session_instructors_seed.sql` - セッション指導者データ（session_instructors）
 
 ## 実行方法
 
@@ -30,20 +31,23 @@ supabase seed
 # 1. ユーザー関連テーブル（auth.users, departments, user_profiles, user_roles）
 psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/01_user_seed.sql
 
-# 2. 会場データ
-psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/04_venue_seed.sql
-
-# 3. 舞台・パートデータ
+# 2. 舞台・パートデータ
 psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/02_stage_and_parts_seed.sql
 
-# 4. 練習スケジュールデータ
-psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/03_practice_schedules_seed.sql
+# 3. 舞台とパートの関連付けデータ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/03_stage_part_seed.sql
 
-# 5. メンバー割り当てデータ
-psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/05_member_assignments_seed.sql
+# 4. 会場データ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/03_venue_seed.sql
 
-# 6. セッション関連データ（sessions, session_instructors, session_attendances）
-psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/06_sessions_seed.sql
+# 5. 練習スケジュールデータ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/04_practice_schedules_seed.sql
+
+# 6. 練習出欠データ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/05_practice_user_attendance_seed.sql
+
+# 7. セッション指導者データ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/06_session_instructors_seed.sql
 ```
 
 ### 方法3: 特定のseedファイルのみ実行
@@ -62,11 +66,12 @@ psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/02_stage_an
 2. **テーブルの依存関係**
    - seedファイルは以下の順序で実行してください:
    1. `01_user_seed.sql` （auth.users, departments, user_profiles, user_roles）
-   2. `04_venue_seed.sql` （venues）
-   3. `02_stage_and_parts_seed.sql` （stages, parts）
-   4. `03_practice_schedules_seed.sql` （practice_schedules, schedule_available_venues）
-   5. `05_member_assignments_seed.sql` （member_assignments）
-   6. `06_sessions_seed.sql` （sessions, session_instructors, session_attendances）
+   2. `02_stage_and_parts_seed.sql` （stages, parts）
+   3. `03_stage_part_seed.sql` （stage_parts）
+   4. `03_venue_seed.sql` （venues）
+   5. `04_practice_schedules_seed.sql` （practice_schedules, schedule_available_venues）
+   6. `05_practice_user_attendance_seed.sql` （practice_user_attendance）
+   7. `06_session_instructors_seed.sql` （session_instructors）
 
 3. **重複実行**
    - 同じseedファイルを複数回実行するとエラーになる可能性があります
@@ -102,5 +107,5 @@ psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/02_stage_an
 - ユーザープロフィール（学生ID、氏名、学部所属など）
 - ユーザー役割（admin、instructor、part_leader、memberなど）
 - 練習スケジュール（2025年2月〜5月、7件）
-- メンバー割り当てデータ（各舞台の配役）
-- セッションデータ（練習セッション、指導者割り当て、出欠管理）
+- 練習出欠データ（各ユーザーの出席状況）
+- セッション指導者データ（各練習セッションの指導者割り当て）

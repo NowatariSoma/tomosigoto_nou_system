@@ -5,11 +5,11 @@ from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.repositories.practice_schedule_repository import (
     PracticeScheduleRepository,
-    ScheduleAvailableVenueRepository,
     SessionRepository,
-    SessionInstructorRepository,
 )
+from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.repositories.venue_repository import VenueRepository
+from app.repositories.session_instructor_repository import SessionInstructorRepository
 from app.core.config import settings
 
 
@@ -431,8 +431,8 @@ class PracticeScheduleService:
         if not session:
             raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-        # 関連する指導者情報を削除
-        await self.session_instructor_repository.delete_by_session(session_id)
+        # 関連する指導者情報を削除（新しい構造では不要）
+        # await self.session_instructor_repository.delete_by_session(session_id)
 
         # セッション本体を削除
         await self.session_repository.delete(session_id)
@@ -440,21 +440,23 @@ class PracticeScheduleService:
         return True
 
     # ===== セッション指導者 CRUD =====
+    # 注意: これらの機能は新しいSessionInstructorServiceに移行されました
+    # 新しいテーブル構造では session_id ではなく schedule_id + slot_order を使用します
 
-    async def get_session_instructors(self, session_id: UUID) -> List[Dict[str, Any]]:
-        """指定したセッションの指導者一覧を取得"""
-        return await self.session_instructor_repository.find_by_session(session_id)
+    # async def get_session_instructors(self, session_id: UUID) -> List[Dict[str, Any]]:
+    #     """指定したセッションの指導者一覧を取得"""
+    #     return await self.session_instructor_repository.find_by_session(session_id)
 
-    async def add_session_instructor(
-        self, instructor_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """セッションに指導者を追加"""
-        return await self.session_instructor_repository.create(instructor_data)
+    # async def add_session_instructor(
+    #     self, instructor_data: Dict[str, Any]
+    # ) -> Dict[str, Any]:
+    #     """セッションに指導者を追加"""
+    #     return await self.session_instructor_repository.create(instructor_data)
 
-    async def remove_session_instructor(self, instructor_id: UUID) -> bool:
-        """セッション指導者を削除"""
-        await self.session_instructor_repository.delete(instructor_id)
-        return True
+    # async def remove_session_instructor(self, instructor_id: UUID) -> bool:
+    #     """セッション指導者を削除"""
+    #     await self.session_instructor_repository.delete(instructor_id)
+    #     return True
 
     # ===== 複合操作 =====
 
@@ -486,21 +488,22 @@ class PracticeScheduleService:
                 await self.schedule_available_venue_repository.create(venue_data)
 
         # セッションを更新（既存を削除して再作成）
-        if "sessions" in schedule_data:
-            await self.session_instructor_repository.delete_by_schedule(schedule_id)
-            await self.session_repository.delete_by_schedule(schedule_id)
+        # 注意: 新しいテーブル構造に対応するため、一時的にコメントアウト
+        # if "sessions" in schedule_data:
+        #     await self.session_instructor_repository.delete_by_schedule(schedule_id)
+        #     await self.session_repository.delete_by_schedule(schedule_id)
 
-            for session_data in schedule_data["sessions"]:
-                session_data["schedule_id"] = schedule_id
-                instructors_data = session_data.pop("instructors", [])
+        #     for session_data in schedule_data["sessions"]:
+        #         session_data["schedule_id"] = schedule_id
+        #         instructors_data = session_data.pop("instructors", [])
 
-                created_session = await self.session_repository.create(session_data)
-                session_id = created_session["id"]
+        #         created_session = await self.session_repository.create(session_data)
+        #         session_id = created_session["id"]
 
-                # 指導者を追加
-                for instructor_data in instructors_data:
-                    instructor_data["session_id"] = session_id
-                    await self.session_instructor_repository.create(instructor_data)
+        #         # 指導者を追加
+        #         for instructor_data in instructors_data:
+        #             instructor_data["session_id"] = session_id
+        #             await self.session_instructor_repository.create(instructor_data)
 
         # 更新された詳細情報を返す
         return await self.get_practice_schedule_with_details(schedule_id)
