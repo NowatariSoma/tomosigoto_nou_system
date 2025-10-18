@@ -10,8 +10,7 @@ from ortools.sat.python import cp_model
 from app.schemas.schedule import ScheduleData, Member, Venue, Constraints
 from app.core.exceptions import (
     OptimizationTimeoutException,
-    OptimizationFailedException,
-    InvalidInputException
+    OptimizationFailedException
 )
 
 logger = logging.getLogger(__name__)
@@ -93,20 +92,18 @@ class ORToolsOptimizer:
     ):
         """入力データの検証"""
         if not members:
-            raise InvalidInputException("members", members, "メンバーが空です")
+            raise OptimizationFailedException("メンバーが空です")
         
         if not venues:
-            raise InvalidInputException("venues", venues, "会場が空です")
+            raise OptimizationFailedException("会場が空です")
         
         if len(members) > self.max_people:
-            raise InvalidInputException(
-                "members", len(members), 
+            raise OptimizationFailedException(
                 f"メンバー数が上限を超えています（最大{self.max_people}名）"
             )
         
         if len(venues) > self.max_rooms:
-            raise InvalidInputException(
-                "venues", len(venues),
+            raise OptimizationFailedException(
                 f"会場数が上限を超えています（最大{self.max_rooms}会場）"
             )
     
@@ -120,19 +117,19 @@ class ORToolsOptimizer:
         """最適化モデルの構築"""
         # 変数の定義
         # 各メンバーが各会場の各時間帯に参加するかどうか
-        assignments = {}
+        self.assignments = {}
         for member in members:
             for venue in venues:
                 for timeslot in range(self.max_timeslots):
-                    assignments[(member.id, venue.id, timeslot)] = self.model.NewBoolVar(
+                    self.assignments[(member.id, venue.id, timeslot)] = self.model.NewBoolVar(
                         f"assign_{member.id}_{venue.id}_{timeslot}"
                     )
         
         # 制約の追加
-        self._add_constraints(assignments, members, venues, constraints)
+        self._add_constraints(self.assignments, members, venues, constraints)
         
         # 目的関数の設定
-        self._set_objective(assignments, members, venues)
+        self._set_objective(self.assignments, members, venues)
     
     def _add_constraints(
         self,
@@ -207,9 +204,7 @@ class ORToolsOptimizer:
                 session_members = []
                 for member in members:
                     if self.solver.Value(
-                        self.model.GetOrMakeIndex(
-                            f"assign_{member.id}_{venue.id}_{timeslot}"
-                        )
+                        self.assignments[(member.id, venue.id, timeslot)]
                     ):
                         session_members.append(member.id)
                 
