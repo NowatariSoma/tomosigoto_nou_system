@@ -170,7 +170,7 @@ async def get_practice_schedule_ideal_format(
 async def create_practice_schedule(
     schedule_data: PracticeScheduleCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しい練習スケジュールを作成
@@ -200,7 +200,7 @@ async def update_practice_schedule(
     schedule_id: UUID,
     schedule_data: PracticeScheduleUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した練習スケジュールを更新
@@ -220,7 +220,7 @@ async def update_practice_schedule(
         schedule_dict["updated_by"] = str(current_user["id"])
 
         updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
-        
+
         return PracticeScheduleResponse(**updated_schedule)
     except Exception as e:
         raise
@@ -231,7 +231,7 @@ async def update_practice_schedule_with_details(
     schedule_id: UUID,
     schedule_data: Dict[str, Any],
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     練習スケジュールを関連データと一緒に更新
@@ -318,7 +318,7 @@ async def get_session(
 async def create_session(
     session_data: SessionCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しいセッションを作成
@@ -334,7 +334,7 @@ async def create_session(
     session_dict = session_data.model_dump()
     session_dict["created_by"] = str(current_user["id"])
     session_dict["updated_by"] = str(current_user["id"])
-    
+
     created_session = await practice_schedule_service.create_session(session_dict)
     return SessionResponse(**created_session)
 
@@ -344,7 +344,7 @@ async def update_session(
     session_id: UUID,
     session_data: SessionUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したセッションを更新
@@ -360,7 +360,7 @@ async def update_session(
     # 更新者を設定
     session_dict = session_data.model_dump(exclude_unset=True)
     session_dict["updated_by"] = str(current_user["id"])
-    
+
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse(**updated_session)
 

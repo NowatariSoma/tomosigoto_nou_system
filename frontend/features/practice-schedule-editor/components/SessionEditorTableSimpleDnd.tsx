@@ -172,18 +172,16 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                   return (
                     <td
                       key={`${venue.id}-${timeSlot.time}`}
-                      className={`px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top transition-colors ${
-                        isOver ? 'bg-blue-50' : 'bg-white'
-                      }`}
+                      className="border-r border-gray-200 last:border-r-0 min-h-[80px] align-middle bg-white p-1"
                       onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, venue.id, timeSlot.time)}
                     >
-                      <div className={`min-h-[80px] ${
+                      <div className={`min-h-[80px] flex items-center ${
                         isOver && venueSessions.length === 0 ? 'border-2 border-dashed border-blue-400 rounded-lg' : ''
                       }`}>
                         {venueSessions.length > 0 && (
-                          <div className="space-y-1">
+                          <div className="w-full space-y-1">
                             {venueSessions.map((session) => (
                               <DraggableSessionCard
                                 key={session.id}
