@@ -8,14 +8,17 @@ interface RoomModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (room: Room) => void;
+  onDelete?: () => void;
 }
 
-export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onSave }) => {
+export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onSave, onDelete }) => {
   const [formData, setFormData] = useState<Room>(INITIAL_ROOM_FORM);
 
   useEffect(() => {
     if (room) {
       setFormData(room);
+    } else {
+      setFormData(INITIAL_ROOM_FORM);
     }
   }, [room]);
 
@@ -47,13 +50,15 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
     }));
   };
 
-  if (!isOpen || !room) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">会場情報編集</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {room ? '会場情報編集' : '新規会場登録'}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -197,17 +202,28 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
           </div>
 
           {/* ボタン */}
-          <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-lg font-medium"
-            >
-              キャンセル
-            </button>
+          <div className="flex justify-between pt-4">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-lg font-medium"
+              >
+                キャンセル
+              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-lg font-medium"
+                >
+                  削除
+                </button>
+              )}
+            </div>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-lg font-medium"
+              className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-lg font-medium"
             >
               保存
             </button>
