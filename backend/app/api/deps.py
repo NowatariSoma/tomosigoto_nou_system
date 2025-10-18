@@ -23,16 +23,16 @@ from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from app.services.attendance_service import AttendanceService
 from app.services.account_setting_service import AccountSettingService
+from app.services.session_instructor_service import SessionInstructorService
 from app.repositories.practice_schedule_repository import (
     PracticeScheduleRepository,
-    ScheduleAvailableVenueRepository,
     SessionRepository,
-    SessionInstructorRepository,
 )
-from app.services.user_service import UserService
-from app.services.venue_service import VenueService
-from app.services.attendance_service import AttendanceService
+from app.repositories.session_repository import SessionRepository as SessionRepositoryNew
+from app.repositories.session_instructor_repository import SessionInstructorRepository
+from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.services.practice_schedule_service import PracticeScheduleService
+from app.services.schedule_available_venue_service import ScheduleAvailableVenueService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -234,6 +234,13 @@ def get_session_repository(
     return SessionRepository(supabase_client)
 
 
+def get_session_repository_new(
+    supabase_client: Client = Depends(get_supabase),
+) -> SessionRepositoryNew:
+    """SessionRepositoryNew（拡張版）のインスタンスを取得"""
+    return SessionRepositoryNew(supabase_client)
+
+
 def get_session_instructor_repository(
     supabase_client: Client = Depends(get_supabase),
 ) -> SessionInstructorRepository:
@@ -275,3 +282,24 @@ async def require_admin(
         )
 
     return current_user
+
+
+def get_session_instructor_service(
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+) -> SessionInstructorService:
+    """SessionInstructorServiceのインスタンスを依存性注入で取得"""
+    return SessionInstructorService(session_instructor_repository)
+
+
+def get_schedule_available_venue_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> ScheduleAvailableVenueRepository:
+    """ScheduleAvailableVenueRepositoryのインスタンスを取得"""
+    return ScheduleAvailableVenueRepository(supabase_client)
+
+
+def get_schedule_available_venue_service(
+    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
+) -> ScheduleAvailableVenueService:
+    """ScheduleAvailableVenueServiceのインスタンスを依存性注入で取得"""
+    return ScheduleAvailableVenueService(schedule_available_venue_repository)
