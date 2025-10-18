@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
-import { Calendar, GripVertical, Trash2 } from 'lucide-react';
+import { Calendar, GripVertical, Trash2, Plus, Minus } from 'lucide-react';
 
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
@@ -13,6 +13,8 @@ interface SessionEditorTableSimpleDndProps {
   onEditSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
+  onAddTimeSlot?: () => void;
+  onRemoveTimeSlot?: () => void;
 }
 
 export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndProps> = ({
@@ -23,6 +25,8 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   onEditSession,
   onDeleteSession,
   onMoveSession,
+  onAddTimeSlot,
+  onRemoveTimeSlot,
 }) => {
   const [draggedSession, setDraggedSession] = useState<Session | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ venueId: string; timeSlot: string } | null>(null);
@@ -243,6 +247,37 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                 })}
               </tr>
             ))}
+            
+            {/* 時間追加・削除ボタン行 */}
+            {edit_mode === 'edit' && (onAddTimeSlot || onRemoveTimeSlot) && (
+              <tr className="border-t-2 border-gray-200">
+                <td colSpan={venues.length + 1} className="px-4 py-3 bg-white">
+                  <div className="flex items-center justify-center space-x-3">
+                    {onRemoveTimeSlot && (
+                      <button
+                        onClick={onRemoveTimeSlot}
+                        className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                        title="時間スロットを削除"
+                        disabled={time_slots.length <= 1}
+                      >
+                        <Minus className="h-4 w-4" />
+                        <span>時間スロットを削除</span>
+                      </button>
+                    )}
+                    {onAddTimeSlot && (
+                      <button
+                        onClick={onAddTimeSlot}
+                        className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                        title="時間スロットを追加"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>時間スロットを追加</span>
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

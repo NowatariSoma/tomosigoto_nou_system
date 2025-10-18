@@ -15,7 +15,7 @@ export default function Page() {
         text: 'バックエンド結合'
       }}
       permissionBadge={{
-        level: 'admin',
+        level: 'basic',
         text: '管理者'
       }}
       maxWidth="7xl"

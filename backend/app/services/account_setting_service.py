@@ -78,6 +78,19 @@ class AccountSettingService:
         if not profile_data:
             return None
         
+        # 学部情報を取得
+        department_code = profile_data.get("department_code", "LIT")
+        department_name = profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=profile_data["id"],
@@ -88,8 +101,8 @@ class AccountSettingService:
             last_name_kanji=profile_data["last_name_kanji"],
             last_name_katakana=profile_data["last_name_katakana"],
             year=profile_data["grade"],  # grade -> year
-            department_code=profile_data.get("department_code", "LIT"),
-            department_name=profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=profile_data.get("email", ""),
             avatar_url=profile_data["avatar_url"],
             preferences=profile_data["preferences"],
@@ -103,6 +116,19 @@ class AccountSettingService:
         if not profile_data:
             return None
         
+        # 学部情報を取得
+        department_code = profile_data.get("department_code", "LIT")
+        department_name = profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=profile_data["id"],
@@ -113,8 +139,8 @@ class AccountSettingService:
             last_name_kanji=profile_data["last_name_kanji"],
             last_name_katakana=profile_data["last_name_katakana"],
             year=profile_data["grade"],  # grade -> year
-            department_code=profile_data.get("department_code", "LIT"),
-            department_name=profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=profile_data.get("email", ""),
             avatar_url=profile_data["avatar_url"],
             preferences=profile_data["preferences"],
@@ -163,6 +189,19 @@ class AccountSettingService:
         created_profile_data = await self.user_profile_repo.create_profile(profile_dict)
         logger.info(f"Account setting profile created successfully for user: {user_id}")
         
+        # 学部情報を取得
+        department_code = created_profile_data.get("department_code", "LIT")
+        department_name = created_profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = created_profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
+        
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
             id=created_profile_data["id"],
@@ -173,8 +212,8 @@ class AccountSettingService:
             last_name_kanji=created_profile_data["last_name_kanji"],
             last_name_katakana=created_profile_data["last_name_katakana"],
             year=created_profile_data["grade"],  # grade -> year
-            department_code=created_profile_data.get("department_code", "LIT"),
-            department_name=created_profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=created_profile_data.get("email", ""),
             avatar_url=created_profile_data["avatar_url"],
             preferences=created_profile_data["preferences"],
@@ -211,20 +250,19 @@ class AccountSettingService:
         if "year" in update_dict:
             update_dict["grade"] = update_dict.pop("year")
 
-        # 学籍番号の重複チェックは一時的に無効化
-        # if "student_id" in update_dict:
-        #     if await self.repository.check_student_id_exists(update_dict["student_id"], user_id):
-        #         logger.warning(f"Student ID already exists: {update_dict['student_id']}")
-        #         raise APIException(ErrorMessage.BAD_REQUEST)
+        # 学籍番号の重複チェック（必要に応じて実装）
+        # 現在は無効化されているが、将来的に実装可能
 
-        # メールアドレスの重複チェックは一時的に無効化
-        # if "email" in update_dict:
-        #     if await self.repository.check_email_exists(update_dict["email"], user_id):
-        #         logger.warning(f"Email already exists: {update_dict['email']}")
-        #         raise APIException(ErrorMessage.BAD_REQUEST)
+        # メールアドレスの重複チェック（設定に従う）
+        if "email" in update_dict:
+            from app.core.config import settings
+            if settings.ENABLE_EMAIL_DUPLICATE_CHECK:
+                if await self.user_profile_repo.check_email_exists(update_dict["email"]):
+                    logger.warning(f"Email already exists: {update_dict['email']}")
+                    raise APIException(ErrorMessage.BAD_REQUEST)
 
-        # 変更履歴の記録は一時的に無効化
-        # await self._record_profile_changes(user_id, existing_profile, update_dict, update_data.change_reason)
+        # 変更履歴の記録（必要に応じて実装）
+        # 現在は無効化されているが、将来的に実装可能
 
         # リポジトリを通して更新
         updated_profile_data = await self.user_profile_repo.update_profile(user_id, update_dict)
@@ -233,6 +271,19 @@ class AccountSettingService:
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
         logger.info(f"Account setting profile updated successfully for user: {user_id}")
+        
+        # 学部情報を取得
+        department_code = updated_profile_data.get("department_code", "LIT")
+        department_name = updated_profile_data.get("department_name", "文学部")
+        
+        # 学部情報が取得できていない場合は、department_idから取得
+        if not department_code or department_code == "LIT":
+            department_id = updated_profile_data.get("department_id")
+            if department_id:
+                department = await self.department_repo.get_department_by_id(department_id)
+                if department:
+                    department_code = department.get("department_code", "LIT")
+                    department_name = department.get("department_name", "文学部")
         
         # AccountSettingProfileResponseに変換
         return AccountSettingProfileResponse(
@@ -244,8 +295,8 @@ class AccountSettingService:
             last_name_kanji=updated_profile_data["last_name_kanji"],
             last_name_katakana=updated_profile_data["last_name_katakana"],
             year=updated_profile_data["grade"],  # grade -> year
-            department_code=updated_profile_data.get("department_code", "LIT"),
-            department_name=updated_profile_data.get("department_name", "文学部"),
+            department_code=department_code,
+            department_name=department_name,
             email=updated_profile_data.get("email", ""),
             avatar_url=updated_profile_data["avatar_url"],
             preferences=updated_profile_data["preferences"],
@@ -316,7 +367,7 @@ class AccountSettingService:
             #         value=student_id
             #     ))
 
-        # メールアドレスのバリデーション
+        # メールアドレスのバリデーション（緩和版）
         if "email" in profile_data:
             email = profile_data["email"]
             if not email or len(email.strip()) == 0:
@@ -331,15 +382,15 @@ class AccountSettingService:
                     message="有効なメールアドレスを入力してください",
                     value=email
                 ))
-            elif not email.endswith("@mail.doshisha.ac.jp"):
-                warnings.append("大学のメールアドレス（@mail.doshisha.ac.jp）の使用を推奨します")
-            # メールアドレスの重複チェックは一時的に無効化
-            # elif await self.repository.check_email_exists(email, user_id):
-            #     errors.append(AccountSettingValidationError(
-            #         field="email",
-            #         message="このメールアドレスは既に使用されています",
-            #         value=email
-            #     ))
+            # 大学メールアドレスの推奨は削除（任意のメールアドレスを許可）
+            # メールアドレスの重複チェック（初回登録時は常にチェック、更新時は設定に従う）
+            elif user_id is None:  # 初回登録時は常にチェック
+                if await self.user_profile_repo.check_email_exists(email):
+                    errors.append(AccountSettingValidationError(
+                        field="email",
+                        message="このメールアドレスは既に使用されています",
+                        value=email
+                    ))
 
         # 学部のバリデーション
         if "department_code" in profile_data:

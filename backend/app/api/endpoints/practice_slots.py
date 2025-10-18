@@ -1,7 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_practice_schedule_service
+from app.api.deps import get_current_user, get_current_user_optional, get_practice_schedule_service
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
 from app.schemas.practice_schedules import (
@@ -15,7 +15,7 @@ from app.schemas.practice_schedules import (
     PracticeScheduleWithDetailsResponse,
 )
 from app.services.practice_schedule_service import PracticeScheduleService
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 router = APIRouter()
 
@@ -184,10 +184,10 @@ async def create_practice_schedule(
         作成された練習スケジュール
     """
     try:
-        # 作成者と更新者を設定（仮の値）
+        # 作成者と更新者を設定
         schedule_dict = schedule_data.model_dump()
-        schedule_dict["created_by"] = "system"
-        schedule_dict["updated_by"] = "system"
+        schedule_dict["created_by"] = str(current_user["id"])
+        schedule_dict["updated_by"] = str(current_user["id"])
 
         created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
         return PracticeScheduleResponse(**created_schedule)
@@ -215,11 +215,12 @@ async def update_practice_schedule(
         更新された練習スケジュール
     """
     try:
-        # 更新者を設定（仮の値）
+        # 更新者を設定
         schedule_dict = schedule_data.model_dump(exclude_unset=True)
-        schedule_dict["updated_by"] = "system"
+        schedule_dict["updated_by"] = str(current_user["id"])
 
         updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
+        
         return PracticeScheduleResponse(**updated_schedule)
     except Exception as e:
         raise
@@ -244,8 +245,8 @@ async def update_practice_schedule_with_details(
     Returns:
         更新された練習スケジュールの詳細情報
     """
-    # 更新者を設定（仮の値）
-    schedule_data["updated_by"] = "system"
+    # 更新者を設定
+    schedule_data["updated_by"] = str(current_user["id"])
 
     updated_schedule = await practice_schedule_service.update_practice_schedule_with_details(schedule_id, schedule_data)
     return PracticeScheduleWithDetailsResponse(**updated_schedule)
@@ -329,7 +330,11 @@ async def create_session(
     Returns:
         作成されたセッション
     """
+    # 作成者と更新者を設定
     session_dict = session_data.model_dump()
+    session_dict["created_by"] = str(current_user["id"])
+    session_dict["updated_by"] = str(current_user["id"])
+    
     created_session = await practice_schedule_service.create_session(session_dict)
     return SessionResponse(**created_session)
 
@@ -352,7 +357,10 @@ async def update_session(
     Returns:
         更新されたセッション
     """
+    # 更新者を設定
     session_dict = session_data.model_dump(exclude_unset=True)
+    session_dict["updated_by"] = str(current_user["id"])
+    
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse(**updated_session)
 
@@ -401,6 +409,73 @@ async def delete_session(
     """
     await practice_schedule_service.remove_session(session_id)
     return {"message": "セッションが正常に削除されました"}
+
+
+# ===== Monthカレンダー表示用エンドポイント =====
+
+@router.get("/calendar/month/{year}/{month}")
+async def get_practice_schedules_for_month_calendar(
+    year: int,
+    month: int,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Monthカレンダー表示用の練習スケジュール一覧を取得
+
+    Args:
+        year: 年 (例: 2024)
+        month: 月 (1-12)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        指定月の練習スケジュール一覧（カレンダー表示用形式）
+    """
+    if not (1 <= month <= 12):
+        raise APIException(ErrorMessage.INVALID_MONTH)
+    
+    calendar_events = await practice_schedule_service.get_practice_schedules_for_month_calendar(year, month)
+    return {
+        "year": year,
+        "month": month,
+        "events": calendar_events,
+        "total_count": len(calendar_events)
+    }
+
+
+@router.get("/calendar/range")
+async def get_practice_schedules_for_date_range(
+    start_date: str = Query(..., description="開始日 (YYYY-MM-DD形式)"),
+    end_date: str = Query(..., description="終了日 (YYYY-MM-DD形式)"),
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    指定した日付範囲の練習スケジュール一覧を取得（カレンダー表示用）
+
+    Args:
+        start_date: 開始日 (YYYY-MM-DD形式)
+        end_date: 終了日 (YYYY-MM-DD形式)
+        practice_schedule_service: 練習スケジュール管理サービス
+
+    Returns:
+        指定範囲の練習スケジュール一覧（カレンダー表示用形式）
+    """
+    # 日付形式の簡単な検証
+    try:
+        from datetime import datetime
+        datetime.strptime(start_date, "%Y-%m-%d")
+        datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        raise APIException(ErrorMessage.INVALID_DATE_FORMAT)
+    
+    calendar_events = await practice_schedule_service.get_practice_schedules_for_date_range(start_date, end_date)
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "events": calendar_events,
+        "total_count": len(calendar_events)
+    }
 
 
 # ===== Groups関連エンドポイント =====

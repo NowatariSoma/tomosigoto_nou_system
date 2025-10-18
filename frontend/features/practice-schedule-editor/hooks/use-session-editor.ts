@@ -87,10 +87,19 @@ export const useSessionEditor = (scheduleId: string) => {
    * スケジュール詳細を取得
    */
   const fetchScheduleDetails = useCallback(async () => {
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('fetchScheduleDetails: スケジュールIDが空のため、何もしません');
+      return;
+    }
+
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log(`スケジュール詳細を取得中: scheduleId=${scheduleId}`);
+      console.log(`スケジュールID検証: scheduleId="${scheduleId}", length=${scheduleId.length}, trim="${scheduleId.trim()}"`);
+      
       // 並列でデータを取得
       const [basicSchedule, details, allParts] = await Promise.all([
         practiceScheduleEditorService.getBasicSchedule(scheduleId),
@@ -99,7 +108,8 @@ export const useSessionEditor = (scheduleId: string) => {
       ]);
 
       if (!basicSchedule) {
-        throw new Error('スケジュールが見つかりません');
+        console.error(`スケジュールID ${scheduleId} が見つかりません`);
+        throw new Error(`スケジュールID ${scheduleId} が見つかりません。正しいスケジュールIDを指定してください。`);
       }
 
       setParts(allParts);
@@ -163,44 +173,14 @@ export const useSessionEditor = (scheduleId: string) => {
 
       dispatch({ type: 'SET_VENUES', payload: venues });
 
-      // 時間スロットの生成
+      // 時間スロットの生成（常にdivision_countベースで生成）
       let timeSlots: TimeSlot[] = [];
 
-      if (Object.keys(timeSchedule).length > 0) {
-        // 実際のセッションがある時間スロットのみを生成
-        const usedTimeSlots = new Set<string>();
-        Object.keys(timeSchedule).forEach(time => {
-          const hasSessions = Object.values(timeSchedule[time]).some(parts => parts.length > 0);
-          if (hasSessions) {
-            usedTimeSlots.add(time);
-          }
-        });
-
-        // 使用されている時間スロットからTimeSlotオブジェクトを生成
-        const sortedSlots = Array.from(usedTimeSlots).sort();
-        timeSlots = sortedSlots.map((time, index) => {
-          let endTime: string;
-
-          if (index < sortedSlots.length - 1) {
-            endTime = sortedSlots[index + 1];
-          } else {
-            const scheduleEndTime = details.schedule_info.end_time || basicSchedule?.end_time || '17:00';
-            endTime = scheduleEndTime.substring(0, 5);
-          }
-
-          return {
-            time: time,
-            start_time: time,
-            end_time: endTime,
-            display_time: `${time}-${endTime}`,
-          };
-        });
-      } else if (basicSchedule) {
-        // セッションがない場合は、スケジュールの開始・終了時間から時間スロットを生成
-        console.log('セッションがないため、デフォルトの時間スロットを生成します。');
+      if (basicSchedule) {
         const startTime = basicSchedule.start_time || '09:00';
         const endTime = basicSchedule.end_time || '17:00';
         const divisionCount = basicSchedule.division_count || 6;
+        
         timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
       }
 
@@ -340,10 +320,18 @@ export const useSessionEditor = (scheduleId: string) => {
 
   // 初期化
   useEffect(() => {
-    if (scheduleId) {
-      fetchScheduleDetails();
+    console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
+    
+    // スケジュールIDが空の場合は何もしない
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.log('スケジュールIDが空のため、useSessionEditorは何もしません');
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return;
     }
-  }, [scheduleId, fetchScheduleDetails]);
+    
+    console.log(`スケジュール詳細を取得開始: scheduleId=${scheduleId}`);
+    fetchScheduleDetails();
+  }, [scheduleId]);
 
   return {
     ...state,

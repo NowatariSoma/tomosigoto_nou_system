@@ -418,13 +418,13 @@ const AccountSettings: React.FC = () => {
 
           <div className="flex items-center">
             <label className="w-32 text-gray-700 font-medium">メールアドレス</label>
-            {isEditMode ? (
+            {isEditMode && !profile ? (
               <div className="flex-1">
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="example@mail[].doshisha.ac.jp"
+                  placeholder="example@mail.doshisha.ac.jp"
                   className={`w-full max-w-md px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     fieldErrors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -435,7 +435,12 @@ const AccountSettings: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-1">※大学のメールアドレス</p>
               </div>
             ) : (
-              <span className="text-gray-900">{formData.email || '-'}</span>
+              <div className="flex-1">
+                <span className="text-gray-900">{formData.email || '-'}</span>
+                <p className="text-sm text-gray-500 mt-1">
+                  ※メールアドレスは{profile ? '変更できません' : '初回登録後は変更できません'}
+                </p>
+              </div>
             )}
           </div>
 

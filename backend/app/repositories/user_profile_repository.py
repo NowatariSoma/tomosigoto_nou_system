@@ -107,6 +107,10 @@ class UserProfileRepository:
         response = self.client.table(self.table_name).insert(profile_data).execute()
         if response.data:
             logger.info(f"User profile created successfully for user: {profile_data.get('user_id', 'unknown')}")
+            # 作成後に学部情報を含めて再取得
+            user_id = profile_data.get('user_id')
+            if user_id:
+                return await self.get_profile_by_user_id(user_id)
             return response.data[0]
 
         logger.error(f"Failed to create user profile for user: {profile_data.get('user_id', 'unknown')}")
@@ -138,7 +142,8 @@ class UserProfileRepository:
         )
         if response.data and len(response.data) > 0:
             logger.info(f"User profile updated successfully for user: {user_id}")
-            return response.data[0]
+            # 更新後に学部情報を含めて再取得
+            return await self.get_profile_by_user_id(user_id)
 
         logger.warning(f"User profile not found for update: {user_id}")
         return None
@@ -218,3 +223,24 @@ class UserProfileRepository:
         data = response.data or []
         logger.info(f"Found {len(data)} profiles for department: {department_id}")
         return data
+
+    @handle_supabase_errors("check_email_exists")
+    async def check_email_exists(self, email: str) -> bool:
+        """
+        メールアドレスの重複チェック
+
+        Args:
+            email: チェックするメールアドレス
+
+        Returns:
+            メールアドレスが既に存在する場合はTrue
+        """
+        response = (
+            self.client.table(self.table_name)
+            .select("id")
+            .eq("email", email)
+            .execute()
+        )
+        exists = len(response.data or []) > 0
+        logger.info(f"Email {email} exists: {exists}")
+        return exists
