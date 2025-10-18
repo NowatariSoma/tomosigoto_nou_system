@@ -215,17 +215,17 @@ export default function MonthView({
   return (
     <div>
       <div className="flex flex-col gap-3 mb-4">
-            <motion.h2
-              key={currentDate.getMonth()}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
-            >
-              {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
-            </motion.h2>
-        <div className="flex gap-2 sm:gap-3">
+        <motion.h2
+          key={currentDate.getMonth()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-xl sm:text-2xl md:text-3xl my-2 sm:my-5 tracking-tighter font-bold"
+        >
+          {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
+        </motion.h2>
+        <div className="flex justify-between items-center gap-2 sm:gap-3">
           {prevButton ? (
             <div onClick={handlePrevMonth}>{prevButton}</div>
           ) : (
