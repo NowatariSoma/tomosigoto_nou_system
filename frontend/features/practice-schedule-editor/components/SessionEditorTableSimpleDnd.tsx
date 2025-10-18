@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
-import { Calendar, GripVertical, Trash2, Plus, Minus } from 'lucide-react';
+import { Calendar, Plus, Minus } from 'lucide-react';
+import { DraggableSessionCard } from './DraggableSessionCard';
 
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
@@ -171,74 +172,27 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                   return (
                     <td
                       key={`${venue.id}-${timeSlot.time}`}
-                      className={`px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top transition-colors ${
-                        isOver ? 'bg-blue-50' : 'bg-white'
-                      }`}
+                      className="border-r border-gray-200 last:border-r-0 min-h-[80px] align-middle bg-white p-1"
                       onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, venue.id, timeSlot.time)}
                     >
-                      <div className={`min-h-[80px] ${
+                      <div className={`min-h-[80px] flex items-center ${
                         isOver && venueSessions.length === 0 ? 'border-2 border-dashed border-blue-400 rounded-lg' : ''
                       }`}>
-                        {venueSessions.length > 0 ? (
-                          <div className="space-y-1">
+                        {venueSessions.length > 0 && (
+                          <div className="w-full space-y-1">
                             {venueSessions.map((session) => (
-                              <div
+                              <DraggableSessionCard
                                 key={session.id}
-                                draggable={edit_mode === 'edit'}
-                                onDragStart={(e) => handleDragStart(e, session)}
-                                className={`rounded-lg p-3 bg-blue-100 border border-blue-200 hover:bg-blue-200 hover:shadow-md transition-all ${
-                                  edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
-                                } ${draggedSession?.id === session.id ? 'opacity-50' : ''}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEditSession(session.id);
-                                }}
-                              >
-                                <div className="flex items-start gap-2">
-                                  {edit_mode === 'edit' && (
-                                    <div className="mt-1 cursor-grab hover:cursor-grabbing">
-                                      <GripVertical className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1">
-                                    <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-                                      {session.title}
-                                    </div>
-                                    <div className="text-xs text-gray-700">
-                                      優先度: {session.priority}
-                                    </div>
-                                    {session.start_time && session.end_time && (
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        {session.start_time} - {session.end_time}
-                                      </div>
-                                    )}
-                                    {session.part_id && (
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        パートID: {session.part_id}
-                                      </div>
-                                    )}
-                                  </div>
-                                  {edit_mode === 'edit' && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteSession(session.id);
-                                      }}
-                                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                                      title="削除"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                                session={session}
+                                edit_mode={edit_mode}
+                                is_dragging={draggedSession?.id === session.id}
+                                onDragStart={handleDragStart}
+                                onEdit={onEditSession}
+                                onDelete={onDeleteSession}
+                              />
                             ))}
-                          </div>
-                        ) : (
-                          <div className="text-center text-gray-400 py-6">
-                            {edit_mode === 'edit' && draggedSession ? 'ドロップして移動' : '空き'}
                           </div>
                         )}
                       </div>
