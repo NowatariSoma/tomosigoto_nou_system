@@ -193,7 +193,10 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     return <ScheduleSelector onScheduleSelect={handleScheduleSelect} />;
   }
 
-  if (loading) {
+  // 初回読み込み中のみローディングスピナーを表示
+  // データが既にある場合（sessions.length > 0）、またはモーダルが開いている場合は、
+  // 操作中でもテーブル/モーダルを表示し続ける
+  if (loading && sessions.length === 0 && !is_modal_open) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -202,7 +205,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     );
   }
 
-  if (error) {
+  if (error && sessions.length === 0 && !is_modal_open) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
         エラー: {error}

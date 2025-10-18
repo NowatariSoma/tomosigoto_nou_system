@@ -314,7 +314,13 @@ class SessionRepository:
     @handle_supabase_errors("create")
     async def create(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しいセッションを作成"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"SessionRepository.create called with data: {session_data}")
+        logger.info(f"Table name: {self.table_name}")
+
         response = self.client.table(self.table_name).insert(session_data).execute()
+        logger.info(f"Insert response: {response.data}")
         return response.data[0]
 
     @handle_supabase_errors("update")

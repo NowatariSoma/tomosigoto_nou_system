@@ -4,6 +4,7 @@ export { SessionEditorTableSimpleDnd } from './SessionEditorTableSimpleDnd';
 export { SessionEditorModal } from './SessionEditorModal';
 export { ScheduleSelector } from './ScheduleSelector';
 export { DraggableSession } from './DraggableSession';
+export { DraggableSessionCard } from './DraggableSessionCard';
 export { SessionCell } from './SessionCell';
 export { TimeSlotHeader } from './TimeSlotHeader';
 export { VenueColumn } from './VenueColumn';

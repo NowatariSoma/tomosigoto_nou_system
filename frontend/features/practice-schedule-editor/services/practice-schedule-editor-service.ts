@@ -79,7 +79,7 @@ export class PracticeScheduleEditorService {
    */
   async getScheduleDetailsByDate(date: string): Promise<IdealFormatApiResponse | null> {
     try {
-      const response = await fetchApi(`${this.basePath}/date/${date}/details`);
+      const response = await fetchApi(`${this.basePath}date/${date}/details`);
       return response.json();
     } catch (error: any) {
       if (error.status === 404) {
@@ -134,12 +134,12 @@ export class PracticeScheduleEditorService {
       start_time: startTime,
       end_time: endTime,
     };
-    
+
     if (divisionCount !== undefined) {
       updateData.division_count = divisionCount;
     }
-    
-    await fetchApi(`${this.basePath}/${scheduleId}`, {
+
+    await fetchApi(`${this.basePath}${scheduleId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
     });

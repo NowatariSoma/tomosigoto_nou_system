@@ -205,20 +205,33 @@ export const useSessionEditor = (scheduleId: string) => {
       const slotIndex = state.time_slots.findIndex(slot => slot.time === formData.time_slot);
       const slotOrder = slotIndex !== -1 ? slotIndex + 1 : 1;
 
-      const newSession = await sessionService.createSession({
+      console.log('createSession - formData:', formData);
+      console.log('createSession - slotIndex:', slotIndex, 'slotOrder:', slotOrder);
+      console.log('createSession - part_id:', formData.part_id);
+      console.log('createSession - venue_id:', formData.venue_id);
+      console.log('createSession - scheduleId:', scheduleId);
+
+      const sessionData = {
         schedule_id: scheduleId,
         part_id: formData.part_id || undefined,
         title: formData.title,
         slot_order: slotOrder,
         schedule_available_venue_id: formData.venue_id || undefined,
         priority: formData.priority,
-      });
+      };
 
+      console.log('createSession - 送信データ:', sessionData);
+
+      const newSession = await sessionService.createSession(sessionData);
+
+      console.log('createSession - 作成成功:', newSession);
       dispatch({ type: 'ADD_SESSION', payload: newSession });
       dispatch({ type: 'CLOSE_MODAL' });
     } catch (error) {
+      console.error('createSession - エラー:', error);
       const errorMessage = error instanceof Error ? error.message : 'セッションの作成に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error; // エラーを再スローしてモーダルで表示できるようにする
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -250,24 +263,44 @@ export const useSessionEditor = (scheduleId: string) => {
 
   /**
    * セッションを削除
+   * 楽観的UI更新: 即座にUIから削除し、API失敗時のみ復元
    */
   const deleteSession = useCallback(async (sessionId: string) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
+    // 削除確認
+    const session = state.sessions.find(s => s.id === sessionId);
+    if (!session) {
+      console.error('削除対象のセッションが見つかりません:', sessionId);
+      return;
+    }
+
+    if (!confirm(`「${session.title}」を削除しますか？`)) {
+      return;
+    }
+
+    // 楽観的UI更新: 即座にUIから削除
+    dispatch({ type: 'DELETE_SESSION', payload: sessionId });
     dispatch({ type: 'SET_ERROR', payload: null });
 
+    // バックグラウンドでAPI呼び出し
     try {
       await sessionService.deleteSession(sessionId);
-      dispatch({ type: 'DELETE_SESSION', payload: sessionId });
+      // API成功: 何もしない（すでにUIから削除済み）
     } catch (error) {
+      // API失敗: セッションを復元
+      console.error('セッション削除API失敗、復元します:', error);
+      dispatch({ type: 'ADD_SESSION', payload: session });
+
       const errorMessage = error instanceof Error ? error.message : 'セッションの削除に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+
+      // エラー通知
+      alert(`❌ セッションの削除に失敗しました\n\n${errorMessage}\n\nセッションを復元しました。`);
     }
-  }, []);
+  }, [state.sessions]);
 
   /**
    * セッションを移動（ドラッグ&ドロップ用）
+   * 楽観的UI更新: 即座にUIを更新し、API失敗時のみロールバック
    */
   const moveSession = useCallback(async (
     sessionId: string,
@@ -275,19 +308,43 @@ export const useSessionEditor = (scheduleId: string) => {
     timeSlot: string,
     slotOrder: number
   ) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
+    // 現在のセッション状態を保存（ロールバック用）
+    const originalSession = state.sessions.find(s => s.id === sessionId);
+    if (!originalSession) {
+      console.error('移動対象のセッションが見つかりません:', sessionId);
+      return;
+    }
+
+    // 楽観的UI更新: 即座にセッションを更新
+    const timeSlotObj = state.time_slots.find(slot => slot.time === timeSlot);
+    const optimisticSession: Session = {
+      ...originalSession,
+      schedule_available_venue_id: venueId,
+      slot_order: slotOrder,
+      start_time: timeSlot,
+      end_time: timeSlotObj?.end_time || originalSession.end_time,
+    };
+
+    dispatch({ type: 'UPDATE_SESSION', payload: optimisticSession });
     dispatch({ type: 'SET_ERROR', payload: null });
 
+    // バックグラウンドでAPI呼び出し
     try {
       const updatedSession = await sessionService.moveSession(sessionId, venueId, slotOrder);
+      // API成功: サーバーの最新データで再度更新
       dispatch({ type: 'UPDATE_SESSION', payload: updatedSession });
     } catch (error) {
+      // API失敗: 元の状態にロールバック
+      console.error('セッション移動API失敗、ロールバックします:', error);
+      dispatch({ type: 'UPDATE_SESSION', payload: originalSession });
+
       const errorMessage = error instanceof Error ? error.message : 'セッションの移動に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+
+      // エラー通知（アラート）
+      alert(`❌ セッションの移動に失敗しました\n\n${errorMessage}\n\n元の位置に戻しました。`);
     }
-  }, []);
+  }, [state.sessions, state.time_slots]);
 
   /**
    * セッション選択
