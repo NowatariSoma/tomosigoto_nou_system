@@ -114,14 +114,18 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
           <div className="text-sm text-gray-700">
             {schedule.venues && schedule.venues.length > 0 ? (
               <div className="flex flex-wrap gap-1">
-                {schedule.venues.map(venue => (
-                  <span
-                    key={venue.id}
-                    className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
-                  >
-                    {venue.name}
-                  </span>
-                ))}
+                {schedule.venues
+                  .filter((venue, index, self) =>
+                    index === self.findIndex(v => v.id === venue.id)
+                  )
+                  .map((venue, index) => (
+                    <span
+                      key={`${venue.id}-${index}`}
+                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
+                    >
+                      {venue.name}
+                    </span>
+                  ))}
               </div>
             ) : schedule.venueName ? (
               <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
