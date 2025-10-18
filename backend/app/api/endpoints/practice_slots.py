@@ -330,12 +330,15 @@ async def create_session(
     Returns:
         作成されたセッション
     """
-    # 作成者と更新者を設定
+    print(f"DEBUG create_session endpoint: session_data = {session_data}")
+    print(f"DEBUG create_session endpoint: current_user = {current_user}")
+
+    # セッションデータを取得（created_by/updated_byは不要）
     session_dict = session_data.model_dump()
-    session_dict["created_by"] = str(current_user["id"])
-    session_dict["updated_by"] = str(current_user["id"])
+    print(f"DEBUG create_session endpoint: session_dict = {session_dict}")
 
     created_session = await practice_schedule_service.create_session(session_dict)
+    print(f"DEBUG create_session endpoint: created_session = {created_session}")
     return SessionResponse(**created_session)
 
 
@@ -357,9 +360,8 @@ async def update_session(
     Returns:
         更新されたセッション
     """
-    # 更新者を設定
+    # セッションデータを取得（updated_byは不要）
     session_dict = session_data.model_dump(exclude_unset=True)
-    session_dict["updated_by"] = str(current_user["id"])
 
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse(**updated_session)
