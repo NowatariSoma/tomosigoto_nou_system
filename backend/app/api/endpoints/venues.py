@@ -12,7 +12,6 @@ router = APIRouter()
 @router.get("/", response_model=List[VenueResponse])
 async def get_venues(
     venue_service: VenueService = Depends(get_venue_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     会場の全情報を取得
@@ -32,7 +31,6 @@ async def get_venues(
 async def get_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した会場情報を取得
@@ -53,7 +51,6 @@ async def get_venue(
 async def create_venue(
     venue_data: VenueCreate,
     venue_service: VenueService = Depends(get_venue_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     新しく会場情報を生成
@@ -74,10 +71,7 @@ async def create_venue(
 async def patch_venue(
     venue_id: UUID,
     venue_data: VenueUpdate,
-64
-
     venue_service: VenueService = Depends(get_venue_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した会場情報を部分更新
@@ -98,7 +92,6 @@ async def patch_venue(
 async def delete_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定した会場情報を削除
