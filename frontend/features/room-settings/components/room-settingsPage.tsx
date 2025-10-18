@@ -1,16 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/forms/button';
+import { Plus } from 'lucide-react';
 import { RoomList } from './RoomList';
 import { RoomModal } from './RoomModal';
-import { Room } from '../types';
+import { Room, CreateRoomRequest } from '../types';
 import { useRooms } from '../hooks';
-import { UI_TEXT } from '../constants';
+import { UI_TEXT, INITIAL_ROOM_FORM } from '../constants';
 
 export const RoomSettingsPage: React.FC = () => {
-  const { rooms, loading, error, updateRoom, deleteRoom } = useRooms();
+  const { rooms, loading, error, createRoom, updateRoom, deleteRoom } = useRooms();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddClick = () => {
+    setSelectedRoom(null);
+    setIsModalOpen(true);
+  };
 
   const handleRoomClick = (room: Room) => {
     setSelectedRoom(room);
@@ -24,17 +31,41 @@ export const RoomSettingsPage: React.FC = () => {
 
   const handleSaveRoom = async (updatedRoom: Room) => {
     try {
-      await updateRoom(updatedRoom.id, {
-        name: updatedRoom.name,
-        campus: updatedRoom.campus,
-        capacity: updatedRoom.capacity,
-        danceAllowed: updatedRoom.danceAllowed,
-        description: updatedRoom.description,
-        location: updatedRoom.location
-      });
+      if (selectedRoom) {
+        // 編集モード
+        await updateRoom(updatedRoom.id, {
+          name: updatedRoom.name,
+          campus: updatedRoom.campus,
+          capacity: updatedRoom.capacity,
+          danceAllowed: updatedRoom.danceAllowed,
+          description: updatedRoom.description,
+          location: updatedRoom.location
+        });
+      } else {
+        // 新規登録モード
+        await createRoom({
+          name: updatedRoom.name,
+          campus: updatedRoom.campus,
+          capacity: updatedRoom.capacity,
+          danceAllowed: updatedRoom.danceAllowed,
+          description: updatedRoom.description,
+          location: updatedRoom.location
+        });
+      }
       handleCloseModal();
     } catch (error) {
-      console.error('Failed to update room:', error);
+      console.error('Failed to save room:', error);
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (selectedRoom) {
+      try {
+        await deleteRoom(selectedRoom.id);
+        handleCloseModal();
+      } catch (error) {
+        console.error('Failed to delete room:', error);
+      }
     }
   };
 
@@ -57,12 +88,25 @@ export const RoomSettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 新規登録ボタン */}
+      <div className="text-center">
+        <Button
+          onClick={handleAddClick}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          size="lg"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          新規登録
+        </Button>
+      </div>
+
       <RoomList rooms={rooms || []} onRoomClick={handleRoomClick} />
       <RoomModal
         room={selectedRoom}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveRoom}
+        onDelete={selectedRoom ? handleDeleteRoom : undefined}
       />
     </div>
   );
