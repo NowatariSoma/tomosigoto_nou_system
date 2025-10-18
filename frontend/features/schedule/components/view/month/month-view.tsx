@@ -426,6 +426,7 @@ export default function MonthView({
                               ...event,
                               CustomEventComponent,
                               minmized: true,
+                              disableClick: true,
                             }}
                             CustomEventModal={CustomEventModal}
                           />
