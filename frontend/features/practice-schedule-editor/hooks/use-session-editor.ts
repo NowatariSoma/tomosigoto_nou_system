@@ -205,20 +205,33 @@ export const useSessionEditor = (scheduleId: string) => {
       const slotIndex = state.time_slots.findIndex(slot => slot.time === formData.time_slot);
       const slotOrder = slotIndex !== -1 ? slotIndex + 1 : 1;
 
-      const newSession = await sessionService.createSession({
+      console.log('createSession - formData:', formData);
+      console.log('createSession - slotIndex:', slotIndex, 'slotOrder:', slotOrder);
+      console.log('createSession - part_id:', formData.part_id);
+      console.log('createSession - venue_id:', formData.venue_id);
+      console.log('createSession - scheduleId:', scheduleId);
+
+      const sessionData = {
         schedule_id: scheduleId,
         part_id: formData.part_id || undefined,
         title: formData.title,
         slot_order: slotOrder,
         schedule_available_venue_id: formData.venue_id || undefined,
         priority: formData.priority,
-      });
+      };
 
+      console.log('createSession - 送信データ:', sessionData);
+
+      const newSession = await sessionService.createSession(sessionData);
+
+      console.log('createSession - 作成成功:', newSession);
       dispatch({ type: 'ADD_SESSION', payload: newSession });
       dispatch({ type: 'CLOSE_MODAL' });
     } catch (error) {
+      console.error('createSession - エラー:', error);
       const errorMessage = error instanceof Error ? error.message : 'セッションの作成に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error; // エラーを再スローしてモーダルで表示できるようにする
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }

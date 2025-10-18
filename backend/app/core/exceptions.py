@@ -57,7 +57,12 @@ def handle_supabase_errors(operation_name: str = "operation"):
             try:
                 return await func(*args, **kwargs)
             except PostgrestAPIError as e:
+                # 詳細なエラー情報をログに出力
                 logger.error(f"Database error in {operation_name}: {str(e)}")
+                logger.error(f"Error details: code={getattr(e, 'code', None)}, message={getattr(e, 'message', None)}, details={getattr(e, 'details', None)}")
+                # デバッグ用：エラーの全属性を出力
+                logger.error(f"PostgrestAPIError attributes: {dir(e)}")
+                logger.error(f"PostgrestAPIError __dict__: {e.__dict__ if hasattr(e, '__dict__') else 'No __dict__'}")
                 raise APIException(ErrorMessage.DATABASE_ERROR)
             except AuthError as e:
                 logger.error(f"Authentication error in {operation_name}: {str(e)}")
@@ -67,6 +72,10 @@ def handle_supabase_errors(operation_name: str = "operation"):
                 raise
             except Exception as e:
                 logger.error(f"Unexpected error in {operation_name}: {str(e)}")
+                logger.error(f"Exception type: {type(e).__name__}")
+                logger.error(f"Exception details: {e.__dict__ if hasattr(e, '__dict__') else 'No __dict__'}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
                 raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
         return wrapper
     return decorator
