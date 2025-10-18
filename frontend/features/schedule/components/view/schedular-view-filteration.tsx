@@ -18,11 +18,9 @@ const animationConfig = {
 };
 
 export default function SchedulerViewFilteration({
-  stopDayEventSummary = false,
   CustomComponents,
   classNames,
 }: {
-  stopDayEventSummary?: boolean;
   CustomComponents?: CustomComponents;
   classNames?: ClassNames;
 }) {
@@ -30,10 +28,13 @@ export default function SchedulerViewFilteration({
 
   function handleAddEvent(selectedDay?: number) {
     // Create the modal content with proper data
+    const today = new Date();
+    const selectedDate = selectedDay ?? today.getDate();
+    
     const startDate = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      selectedDay ?? new Date().getDate(),
+      today.getFullYear(),
+      today.getMonth(),
+      selectedDate,
       0,
       0,
       0,
@@ -41,9 +42,9 @@ export default function SchedulerViewFilteration({
     );
 
     const endDate = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      selectedDay ?? new Date().getDate(),
+      today.getFullYear(),
+      today.getMonth(),
+      selectedDate,
       23,
       59,
       59,

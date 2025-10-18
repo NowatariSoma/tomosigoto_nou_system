@@ -112,7 +112,7 @@ export default function MonthView({
   }, [currentDate, fetchMonthSchedules]);
 
   function handleAddEvent(selectedDay: number) {
-    // Create start date at 12:00 AM on the selected day
+    // Create date range for the selected day
     const startDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -122,7 +122,6 @@ export default function MonthView({
       0
     );
 
-    // Create end date at 11:59 PM on the same day
     const endDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
