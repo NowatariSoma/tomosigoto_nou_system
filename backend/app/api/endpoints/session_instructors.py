@@ -14,6 +14,23 @@ from fastapi import APIRouter, Depends, HTTPException
 router = APIRouter()
 
 
+@router.get("/debug")
+async def debug_session_instructors(
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+):
+    """デバッグ用：実際のテーブル構造を確認"""
+    try:
+        response = session_instructor_repository.client.table("session_instructors").select("*").execute()
+        return {
+            "table_name": "session_instructors",
+            "data_count": len(response.data),
+            "sample_data": response.data[:2] if response.data else [],
+            "columns": list(response.data[0].keys()) if response.data else []
+        }
+    except Exception as e:
+        return {"error": str(e), "table_name": "session_instructors"}
+
+
 @router.get("/", response_model=List[SessionInstructorResponse])
 async def get_all_session_instructors(
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
