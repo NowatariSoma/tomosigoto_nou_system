@@ -27,8 +27,8 @@ from app.repositories.practice_schedule_repository import (
     PracticeScheduleRepository,
     ScheduleAvailableVenueRepository,
     SessionRepository,
+    SessionInstructorRepository,
 )
-from app.repositories.session_instructors import SessionInstructorRepository
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from app.services.attendance_service import AttendanceService
