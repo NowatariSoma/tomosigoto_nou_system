@@ -60,7 +60,7 @@ async def create_session_instructor(
     try:
         # UUIDを文字列に変換してからリポジトリに渡す
         instructor_data = session_instructor_data.dict()
-        instructor_data["schedule_id"] = str(instructor_data["schedule_id"])
+        instructor_data["session_id"] = str(instructor_data["session_id"])
         instructor_data["attendance_id"] = str(instructor_data["attendance_id"])
         
         created_instructor = await session_instructor_repository.create(instructor_data)
