@@ -113,7 +113,7 @@ class PracticeScheduleRepository:
         for session in sessions:
             instructors_response = (
                 self.client.table("session_instructors")
-                .select("*, practice_user_attendance(*, users(*))")
+                .select("*")
                 .eq("session_id", session["id"])
                 .execute()
             )
@@ -424,25 +424,13 @@ class SessionInstructorRepository:
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールの全セッションの指導者を取得"""
-        # セッションIDを取得してから指導者情報を取得
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        sessions_response = (
-            self.client.table("sessions")
-            .select("id")
-            .eq("schedule_id", schedule_id_str)
-            .execute()
-        )
-
-        session_ids = [session["id"] for session in sessions_response.data]
-
-        if not session_ids:
-            return []
-
+        
         # 指導者情報を取得
         response = (
             self.client.table(self.table_name)
-            .select("*, users(*)")
-            .in_("session_id", session_ids)
+            .select("*")
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
         return response.data
@@ -453,7 +441,7 @@ class SessionInstructorRepository:
         instructor_id_str = str(instructor_id) if isinstance(instructor_id, UUID) else instructor_id
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(*, users(*))")
+            .select("*")
             .eq("id", instructor_id_str)
             .execute()
         )
