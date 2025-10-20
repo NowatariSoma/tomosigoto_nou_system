@@ -19,13 +19,22 @@ class SessionInstructorRepository:
     @handle_supabase_errors("find_all")
     async def find_all(self) -> List[Dict[str, Any]]:
         """すべてのセッション指導者を取得"""
-        response = self.client.table(self.table_name).select("*").execute()
+        response = (
+            self.client.table(self.table_name)
+            .select("id, session_id, attendance_id, created_at, updated_at, practice_user_attendance(*, users(*))")
+            .execute()
+        )
         return response.data
 
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, instructor_id: UUID) -> Dict[str, Any]:
         """指定したIDのセッション指導者を取得"""
-        response = self.client.table(self.table_name).select("*").eq("id", instructor_id).execute()
+        response = (
+            self.client.table(self.table_name)
+            .select("id, session_id, attendance_id, created_at, updated_at, practice_user_attendance(*, users(*))")
+            .eq("id", instructor_id)
+            .execute()
+        )
         return response.data[0]
 
     @handle_supabase_errors("find_by_session")
@@ -34,7 +43,7 @@ class SessionInstructorRepository:
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(*, users(*))")
+            .select("id, session_id, attendance_id, created_at, updated_at, practice_user_attendance(*, users(*))")
             .eq("session_id", session_id_str)
             .execute()
         )
