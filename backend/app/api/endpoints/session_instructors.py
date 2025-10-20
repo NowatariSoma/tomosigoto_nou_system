@@ -14,31 +14,6 @@ from fastapi import APIRouter, Depends, HTTPException
 router = APIRouter()
 
 
-@router.get("/debug/schema")
-async def debug_session_instructors_schema(
-    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
-):
-    """デバッグ用: session_instructorsテーブルの構造を確認"""
-    try:
-        # 空のテーブルから1件取得して構造を確認
-        response = (
-            session_instructor_repository.client.table("session_instructors")
-            .select("*")
-            .limit(1)
-            .execute()
-        )
-        return {
-            "table_exists": True,
-            "sample_data": response.data,
-            "columns": list(response.data[0].keys()) if response.data else []
-        }
-    except Exception as e:
-        return {
-            "table_exists": False,
-            "error": str(e)
-        }
-
-
 @router.get("/", response_model=List[SessionInstructorResponse])
 async def get_all_session_instructors(
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
@@ -47,16 +22,7 @@ async def get_all_session_instructors(
     """セッション指導者を取得（全部）"""
 
     instructors = await session_instructor_repository.find_all()
-    
-    # user_idを抽出してレスポンスに追加
-    processed_instructors = []
-    for instructor in instructors:
-        instructor_data = instructor.copy()
-        if "practice_user_attendance" in instructor and instructor["practice_user_attendance"]:
-            instructor_data["user_id"] = instructor["practice_user_attendance"].get("user_id")
-        processed_instructors.append(instructor_data)
-    
-    return processed_instructors
+    return instructors
 
 
 @router.get("/session/{schedule_id}", response_model=List[SessionInstructorResponse])
@@ -68,16 +34,7 @@ async def get_session_instructors_by_schedule(
     """指定されたスケジュールの指導者を取得（session_idパラメータでschedule_idを指定）"""
 
     instructors = await session_instructor_repository.find_by_schedule(schedule_id)
-    
-    # user_idを抽出してレスポンスに追加
-    processed_instructors = []
-    for instructor in instructors:
-        instructor_data = instructor.copy()
-        if "practice_user_attendance" in instructor and instructor["practice_user_attendance"]:
-            instructor_data["user_id"] = instructor["practice_user_attendance"].get("user_id")
-        processed_instructors.append(instructor_data)
-    
-    return processed_instructors
+    return instructors
 
 
 @router.get("/{session_instructor_id}", response_model=SessionInstructorResponse)
@@ -89,11 +46,6 @@ async def get_session_instructor(
     """指定したセッション指導者を取得（一人）"""
 
     instructor_data = await session_instructor_repository.find_by_id(session_instructor_id)
-    
-    # user_idを抽出してレスポンスに追加
-    if "practice_user_attendance" in instructor_data and instructor_data["practice_user_attendance"]:
-        instructor_data["user_id"] = instructor_data["practice_user_attendance"].get("user_id")
-    
     return SessionInstructorResponse(**instructor_data)
 
 

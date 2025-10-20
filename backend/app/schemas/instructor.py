@@ -29,7 +29,6 @@ class SessionInstructorResponse(SessionInstructorBase):
     """セッション指導者レスポンス用スキーマ"""
 
     id: UUID
-    user_id: Optional[UUID] = None  # ユーザーIDを直接取得
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

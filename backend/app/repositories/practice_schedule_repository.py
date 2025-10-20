@@ -347,7 +347,7 @@ class SessionInstructorRepository:
         """すべてのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(user_id, *, users(*))")
+            .select("*")
             .execute()
         )
         return response.data
@@ -357,7 +357,7 @@ class SessionInstructorRepository:
         """指定したIDのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(user_id, *, users(*))")
+            .select("*")
             .eq("id", instructor_id)
             .execute()
         )
@@ -367,9 +367,10 @@ class SessionInstructorRepository:
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールの指導者を取得"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(user_id, *, users(*))")
+            .select("*")
             .eq("schedule_id", schedule_id_str)
             .execute()
         )
