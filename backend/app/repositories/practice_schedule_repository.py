@@ -347,7 +347,7 @@ class SessionInstructorRepository:
         """すべてのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(*, users(*))")
+            .select("*, practice_user_attendance(user_id, *, users(*))")
             .execute()
         )
         return response.data
@@ -357,7 +357,7 @@ class SessionInstructorRepository:
         """指定したIDのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(*, users(*))")
+            .select("*, practice_user_attendance(user_id, *, users(*))")
             .eq("id", instructor_id)
             .execute()
         )
@@ -369,7 +369,7 @@ class SessionInstructorRepository:
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = (
             self.client.table(self.table_name)
-            .select("*, practice_user_attendance(*, users(*))")
+            .select("*, practice_user_attendance(user_id, *, users(*))")
             .eq("session_id", session_id_str)
             .execute()
         )

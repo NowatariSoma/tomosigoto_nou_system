@@ -22,7 +22,16 @@ async def get_all_session_instructors(
     """セッション指導者を取得（全部）"""
 
     instructors = await session_instructor_repository.find_all()
-    return instructors
+    
+    # user_idを抽出してレスポンスに追加
+    processed_instructors = []
+    for instructor in instructors:
+        instructor_data = instructor.copy()
+        if "practice_user_attendance" in instructor and instructor["practice_user_attendance"]:
+            instructor_data["user_id"] = instructor["practice_user_attendance"].get("user_id")
+        processed_instructors.append(instructor_data)
+    
+    return processed_instructors
 
 
 @router.get("/session/{session_id}", response_model=List[SessionInstructorResponse])
@@ -34,7 +43,16 @@ async def get_session_instructors_by_session(
     """指定されたセッションの指導者を取得"""
 
     instructors = await session_instructor_repository.find_by_session(session_id)
-    return instructors
+    
+    # user_idを抽出してレスポンスに追加
+    processed_instructors = []
+    for instructor in instructors:
+        instructor_data = instructor.copy()
+        if "practice_user_attendance" in instructor and instructor["practice_user_attendance"]:
+            instructor_data["user_id"] = instructor["practice_user_attendance"].get("user_id")
+        processed_instructors.append(instructor_data)
+    
+    return processed_instructors
 
 
 @router.get("/{session_instructor_id}", response_model=SessionInstructorResponse)
@@ -46,6 +64,11 @@ async def get_session_instructor(
     """指定したセッション指導者を取得（一人）"""
 
     instructor_data = await session_instructor_repository.find_by_id(session_instructor_id)
+    
+    # user_idを抽出してレスポンスに追加
+    if "practice_user_attendance" in instructor_data and instructor_data["practice_user_attendance"]:
+        instructor_data["user_id"] = instructor_data["practice_user_attendance"].get("user_id")
+    
     return SessionInstructorResponse(**instructor_data)
 
 

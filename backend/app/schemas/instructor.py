@@ -29,6 +29,7 @@ class SessionInstructorResponse(SessionInstructorBase):
     id: UUID
     schedule_available_venue_id: Optional[UUID] = None
     slot_order: Optional[int] = None
+    user_id: Optional[UUID] = None  # ユーザーIDを直接取得
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
