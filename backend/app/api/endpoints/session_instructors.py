@@ -34,34 +34,13 @@ async def get_all_session_instructors(
     return processed_instructors
 
 
-@router.get("/session/{session_id}", response_model=List[SessionInstructorResponse])
-async def get_session_instructors_by_session(
-    session_id: UUID,
-    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
-):
-    """指定されたセッションの指導者を取得"""
-
-    instructors = await session_instructor_repository.find_by_session(session_id)
-    
-    # user_idを抽出してレスポンスに追加
-    processed_instructors = []
-    for instructor in instructors:
-        instructor_data = instructor.copy()
-        if "practice_user_attendance" in instructor and instructor["practice_user_attendance"]:
-            instructor_data["user_id"] = instructor["practice_user_attendance"].get("user_id")
-        processed_instructors.append(instructor_data)
-    
-    return processed_instructors
-
-
-@router.get("/schedule/{schedule_id}", response_model=List[SessionInstructorResponse])
+@router.get("/session/{schedule_id}", response_model=List[SessionInstructorResponse])
 async def get_session_instructors_by_schedule(
     schedule_id: UUID,
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
     # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """指定されたスケジュールの指導者を取得"""
+    """指定されたスケジュールの指導者を取得（session_idパラメータでschedule_idを指定）"""
 
     instructors = await session_instructor_repository.find_by_schedule(schedule_id)
     

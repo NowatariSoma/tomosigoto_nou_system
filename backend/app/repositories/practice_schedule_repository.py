@@ -363,18 +363,6 @@ class SessionInstructorRepository:
         )
         return response.data[0]
 
-    @handle_supabase_errors("find_by_session")
-    async def find_by_session(self, session_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたセッションの指導者を取得"""
-        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
-        response = (
-            self.client.table(self.table_name)
-            .select("*, practice_user_attendance(user_id, *, users(*))")
-            .eq("session_id", session_id_str)
-            .execute()
-        )
-        return response.data
-
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定されたスケジュールの指導者を取得"""
