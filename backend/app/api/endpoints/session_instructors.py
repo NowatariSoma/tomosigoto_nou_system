@@ -14,6 +14,31 @@ from fastapi import APIRouter, Depends, HTTPException
 router = APIRouter()
 
 
+@router.get("/debug/schema")
+async def debug_session_instructors_schema(
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+):
+    """デバッグ用: session_instructorsテーブルの構造を確認"""
+    try:
+        # 空のテーブルから1件取得して構造を確認
+        response = (
+            session_instructor_repository.client.table("session_instructors")
+            .select("*")
+            .limit(1)
+            .execute()
+        )
+        return {
+            "table_exists": True,
+            "sample_data": response.data,
+            "columns": list(response.data[0].keys()) if response.data else []
+        }
+    except Exception as e:
+        return {
+            "table_exists": False,
+            "error": str(e)
+        }
+
+
 @router.get("/", response_model=List[SessionInstructorResponse])
 async def get_all_session_instructors(
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
@@ -85,6 +110,10 @@ async def create_session_instructor(
         instructor_data = session_instructor_data.dict()
         instructor_data["schedule_id"] = str(instructor_data["schedule_id"])
         instructor_data["attendance_id"] = str(instructor_data["attendance_id"])
+        
+        # schedule_available_venue_idが提供されている場合は文字列に変換
+        if instructor_data.get("schedule_available_venue_id"):
+            instructor_data["schedule_available_venue_id"] = str(instructor_data["schedule_available_venue_id"])
         
         created_instructor = await session_instructor_repository.create(instructor_data)
         return SessionInstructorResponse(**created_instructor)

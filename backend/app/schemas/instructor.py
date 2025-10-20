@@ -14,7 +14,8 @@ class SessionInstructorBase(BaseModel):
 
 class SessionInstructorCreate(SessionInstructorBase):
     """セッション指導者作成用スキーマ"""
-    pass
+    slot_order: int
+    schedule_available_venue_id: Optional[UUID] = None
 
 
 class SessionInstructorUpdate(BaseModel):
