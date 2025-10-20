@@ -1,4 +1,4 @@
-from app.api.endpoints import users, venues, parts, member_assignments, stages, attendance, auth, account_setting, instructor, instructors, session_instructors, practice_slots
+from app.api.endpoints import users, venues, parts, member_assignments, stages, attendance, auth, account_setting, instructors, session_instructors, practice_slots
 from fastapi import APIRouter
 
 api_router = APIRouter()
