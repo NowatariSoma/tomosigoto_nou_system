@@ -363,19 +363,6 @@ class SessionInstructorRepository:
         )
         return response.data[0]
 
-    @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたスケジュールの指導者を取得"""
-        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("schedule_id", schedule_id_str)
-            .execute()
-        )
-        return response.data
-
     @handle_supabase_errors("create")
     async def create(self, instructor_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しいセッション指導者を作成"""
