@@ -1,30 +1,17 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_session_instructor_repository, get_user_service
+from app.api.deps import get_current_user, get_session_instructor_repository
 from app.schemas.instructor import (
     SessionInstructorBase,
     SessionInstructorCreate,
     SessionInstructorResponse,
     SessionInstructorUpdate,
 )
-from app.schemas.user import UserResponse
 from app.repositories.practice_schedule_repository import SessionInstructorRepository
-from app.services.user_service import UserService
 from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter()
-
-
-@router.get("/users", response_model=List[UserResponse])
-async def get_available_instructors(
-    user_service: UserService = Depends(get_user_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
-):
-    """指導者として登録可能なユーザー一覧を取得"""
-    
-    users = await user_service.get_all_users()
-    return users
 
 
 @router.get("/", response_model=List[SessionInstructorResponse])
@@ -124,4 +111,3 @@ async def delete_session_instructor(
     """指定したセッション指導者を削除"""
     await session_instructor_repository.delete(session_instructor_id)
     return {"message": "セッション指導者が削除されました"}
-    

@@ -1,5 +1,5 @@
 from datetime import datetime, date, time
-from typing import Optional, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -127,33 +127,14 @@ class SessionResponse(SessionBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SessionInstructorBase(BaseModel):
-    """セッション指導者の基本情報"""
-
-    session_id: UUID
-    attendance_id: UUID
-
-
-class SessionInstructorCreate(SessionInstructorBase):
-    """セッション指導者作成用スキーマ"""
-    pass
-
-
-class SessionInstructorResponse(SessionInstructorBase):
-    """セッション指導者レスポンス用スキーマ"""
-
-    id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True)
+# SessionInstructor関連の型定義は instructor.py に移動しました
 
 
 # 複合レスポンススキーマ
 class SessionWithInstructorsResponse(SessionResponse):
     """指導者情報を含むセッションレスポンス"""
 
-    instructors: List[SessionInstructorResponse] = []
+    instructors: List[Dict[str, Any]] = []  # SessionInstructorResponseは instructor.py で定義
 
 
 class PracticeScheduleWithDetailsResponse(PracticeScheduleResponse):

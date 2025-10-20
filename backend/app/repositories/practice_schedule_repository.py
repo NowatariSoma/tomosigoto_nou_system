@@ -418,3 +418,27 @@ class SessionInstructorRepository:
             .execute()
         )
         return response.data
+
+    @handle_supabase_errors("find_by_id")
+    async def find_by_id(self, instructor_id: UUID) -> Dict[str, Any]:
+        """指定されたIDのセッション指導者を取得"""
+        instructor_id_str = str(instructor_id) if isinstance(instructor_id, UUID) else instructor_id
+        response = (
+            self.client.table(self.table_name)
+            .select("*, practice_user_attendance(*, users(*))")
+            .eq("id", instructor_id_str)
+            .execute()
+        )
+        return response.data[0] if response.data else None
+
+    @handle_supabase_errors("update")
+    async def update(self, instructor_id: UUID, instructor_data: Dict[str, Any]) -> Dict[str, Any]:
+        """セッション指導者を更新"""
+        instructor_id_str = str(instructor_id) if isinstance(instructor_id, UUID) else instructor_id
+        response = (
+            self.client.table(self.table_name)
+            .update(instructor_data)
+            .eq("id", instructor_id_str)
+            .execute()
+        )
+        return response.data[0]
