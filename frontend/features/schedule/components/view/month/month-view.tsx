@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/layout/card";
 import { Badge } from "@/components/ui/feedback/badge";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 
 import { useScheduler } from "@/features/schedule/providers/schedular-provider";
 import { useModal } from "@/features/schedule/providers/modal-context";
@@ -47,7 +48,8 @@ export default function MonthView({
 }) {
   const { getters, weekStartsOn } = useScheduler();
   const { setOpen } = useModal();
-  
+  const router = useRouter();
+
   // 練習スケジュールデータを取得
   const {
     events: practiceEvents,
@@ -110,6 +112,24 @@ export default function MonthView({
   useEffect(() => {
     fetchMonthSchedules(currentDate.getFullYear(), currentDate.getMonth() + 1);
   }, [currentDate, fetchMonthSchedules]);
+
+  // 日付クリック時に詳細表示に遷移
+  function handleDateClick(selectedDay: number) {
+    const clickedDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      selectedDay
+    );
+    const dateStr = clickedDate.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    router.push(`/schedule?date=${dateStr}`);
+  }
+
+  // イベントクリック時に詳細表示に遷移
+  function handleEventClick(event: Event) {
+    const eventDate = new Date(event.startDate);
+    const dateStr = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    router.push(`/schedule?date=${dateStr}`);
+  }
 
   function handleAddEvent(selectedDay: number) {
     // Create date range for the selected day
@@ -377,7 +397,7 @@ export default function MonthView({
               >
                 <Card
                   className="cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none"
-                  onClick={() => handleAddEvent(dayObj.day)}
+                  onClick={() => handleDateClick(dayObj.day)}
                 >
                   <div
                     className={clsx(
@@ -413,6 +433,7 @@ export default function MonthView({
                               ...event,
                               CustomEventComponent,
                               minmized: true,
+                              onEventClick: handleEventClick,
                             }}
                             CustomEventModal={CustomEventModal}
                           />
