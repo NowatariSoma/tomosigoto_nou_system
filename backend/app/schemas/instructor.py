@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 class SessionInstructorBase(BaseModel):
     """セッション指導者の基本情報"""
 
-    session_id: UUID
+    schedule_id: UUID
     attendance_id: UUID
 
 
@@ -27,6 +27,8 @@ class SessionInstructorResponse(SessionInstructorBase):
     """セッション指導者レスポンス用スキーマ"""
 
     id: UUID
+    schedule_available_venue_id: Optional[UUID] = None
+    slot_order: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
