@@ -25,18 +25,6 @@ async def get_all_session_instructors(
     return instructors
 
 
-@router.get("/session/{schedule_id}", response_model=List[SessionInstructorResponse])
-async def get_session_instructors_by_schedule(
-    schedule_id: UUID,
-    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
-):
-    """指定されたスケジュールの指導者を取得（session_idパラメータでschedule_idを指定）"""
-
-    instructors = await session_instructor_repository.find_by_schedule(schedule_id)
-    return instructors
-
-
 @router.get("/{session_instructor_id}", response_model=SessionInstructorResponse)
 async def get_session_instructor(
     session_instructor_id: UUID,
