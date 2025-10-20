@@ -21,7 +21,7 @@ class SessionInstructorRepository:
         """すべてのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("*, practice_user_attendance(*, users(*))")
             .execute()
         )
         return response.data
@@ -31,7 +31,7 @@ class SessionInstructorRepository:
         """指定したIDのセッション指導者を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("*, practice_user_attendance(*, users(*))")
             .eq("id", instructor_id)
             .execute()
         )
@@ -40,13 +40,18 @@ class SessionInstructorRepository:
     @handle_supabase_errors("find_by_session")
     async def find_by_session(self, session_id: UUID) -> List[Dict[str, Any]]:
         """指定されたセッションの指導者を取得"""
-        # TODO: 実際のテーブル構造を確認してから実装
-        # session_idカラムが存在しない可能性があるため、一旦空のリストを返す
-        return []
+        session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
+        response = (
+            self.client.table(self.table_name)
+            .select("*, practice_user_attendance(*, users(*))")
+            .eq("session_id", session_id_str)
+            .execute()
+        )
+        return response.data
     
+    @handle_supabase_errors("create")
     async def create(self, instructor_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しいセッション指導者を作成"""
-        # 整合性チェックを完全に無視して、強制的にinsertを実行
         response = self.client.table(self.table_name).insert(instructor_data).execute()
         return response.data[0]
     
