@@ -10,12 +10,13 @@ class SessionInstructorBase(BaseModel):
 
     schedule_id: UUID
     attendance_id: UUID
+    slot_order: int
+    schedule_available_venue_id: Optional[UUID] = None
 
 
 class SessionInstructorCreate(SessionInstructorBase):
     """セッション指導者作成用スキーマ"""
-    slot_order: int
-    schedule_available_venue_id: Optional[UUID] = None
+    pass
 
 
 class SessionInstructorUpdate(BaseModel):
@@ -28,8 +29,6 @@ class SessionInstructorResponse(SessionInstructorBase):
     """セッション指導者レスポンス用スキーマ"""
 
     id: UUID
-    schedule_available_venue_id: Optional[UUID] = None
-    slot_order: Optional[int] = None
     user_id: Optional[UUID] = None  # ユーザーIDを直接取得
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
