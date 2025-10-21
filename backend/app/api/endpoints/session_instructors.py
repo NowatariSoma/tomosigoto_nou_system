@@ -25,16 +25,16 @@ async def get_all_session_instructors(
     return instructors
 
 
-@router.get("/{session_instructor_id}", response_model=SessionInstructorResponse)
-async def get_session_instructor(
-    session_instructor_id: UUID,
+@router.get("/schedule/{schedule_id}", response_model=List[SessionInstructorResponse])
+async def get_session_instructors_by_schedule(
+    schedule_id: UUID,
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
     # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """指定したセッション指導者を取得（一人）"""
+    """指定されたスケジュールの指導者を取得"""
 
-    instructor_data = await session_instructor_repository.find_by_id(session_instructor_id)
-    return SessionInstructorResponse(**instructor_data)
+    instructors = await session_instructor_repository.find_by_schedule(schedule_id)
+    return instructors
 
 
 @router.post("/", response_model=SessionInstructorResponse)
@@ -76,6 +76,24 @@ async def create_session_instructor(
             )
 
 
+@router.patch("/schedule/{schedule_id}", response_model=List[SessionInstructorResponse])
+async def update_session_instructors_by_schedule(
+    schedule_id: UUID,
+    session_instructor_data: SessionInstructorUpdate,
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """指定されたスケジュールの指導者を更新"""
+    
+    # UUIDを文字列に変換してからリポジトリに渡す
+    instructor_data = session_instructor_data.dict(exclude_unset=True)
+    if "attendance_id" in instructor_data:
+        instructor_data["attendance_id"] = str(instructor_data["attendance_id"])
+    
+    updated_instructors = await session_instructor_repository.update_by_schedule(schedule_id, instructor_data)
+    return [SessionInstructorResponse(**instructor) for instructor in updated_instructors]
+
+
 @router.patch("/{session_instructor_id}", response_model=SessionInstructorResponse)
 async def update_session_instructor(
     session_instructor_id: UUID,
@@ -92,6 +110,17 @@ async def update_session_instructor(
     
     updated_instructor = await session_instructor_repository.update(session_instructor_id, instructor_data)
     return SessionInstructorResponse(**updated_instructor)
+
+
+@router.delete("/schedule/{schedule_id}")
+async def delete_session_instructors_by_schedule(
+    schedule_id: UUID,
+    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """指定されたスケジュールの指導者を削除"""
+    await session_instructor_repository.delete_by_schedule(schedule_id)
+    return {"message": "スケジュールのセッション指導者が削除されました"}
 
 
 @router.delete("/{session_instructor_id}")

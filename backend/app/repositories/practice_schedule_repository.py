@@ -352,16 +352,18 @@ class SessionInstructorRepository:
         )
         return response.data
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, instructor_id: UUID) -> Dict[str, Any]:
-        """指定したIDのセッション指導者を取得"""
+    @handle_supabase_errors("find_by_schedule")
+    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+        """指定されたスケジュールの指導者を取得"""
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        
         response = (
             self.client.table(self.table_name)
             .select("*")
-            .eq("id", instructor_id)
+            .eq("schedule_id", schedule_id_str)
             .execute()
         )
-        return response.data[0]
+        return response.data
 
     @handle_supabase_errors("create")
     async def create(self, instructor_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -374,6 +376,19 @@ class SessionInstructorRepository:
         """指定したセッション指導者を更新"""
         response = self.client.table(self.table_name).update(instructor_data).eq("id", instructor_id).execute()
         return response.data[0]
+
+    @handle_supabase_errors("update_by_schedule")
+    async def update_by_schedule(self, schedule_id: UUID, instructor_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """指定されたスケジュールの指導者を更新"""
+        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
+        
+        response = (
+            self.client.table(self.table_name)
+            .update(instructor_data)
+            .eq("schedule_id", schedule_id_str)
+            .execute()
+        )
+        return response.data
 
     @handle_supabase_errors("delete")
     async def delete(self, instructor_id: UUID) -> bool:
@@ -391,21 +406,10 @@ class SessionInstructorRepository:
 
     @handle_supabase_errors("delete_by_schedule")
     async def delete_by_schedule(self, schedule_id: UUID) -> bool:
-        """指定されたスケジュールの全セッションの指導者を削除"""
-        # セッションIDを取得してから削除
+        """指定されたスケジュールの指導者を削除"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        sessions_response = (
-            self.client.table("sessions")
-            .select("id")
-            .eq("schedule_id", schedule_id_str)
-            .execute()
-        )
-
-        session_ids = [session["id"] for session in sessions_response.data]
-
-        if session_ids:
-            self.client.table(self.table_name).delete().in_("session_id", session_ids).execute()
-
+        
+        self.client.table(self.table_name).delete().eq("schedule_id", schedule_id_str).execute()
         return True
 
     @handle_supabase_errors("find_by_schedule")
