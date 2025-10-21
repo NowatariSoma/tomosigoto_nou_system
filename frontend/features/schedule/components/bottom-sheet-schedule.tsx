@@ -98,7 +98,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
         }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.5 }}
+        dragElastic={0}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         style={{ y }}
