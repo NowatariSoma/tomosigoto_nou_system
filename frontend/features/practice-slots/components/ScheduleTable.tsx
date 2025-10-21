@@ -102,15 +102,38 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                       onClick={() => handleCellClick(time, venue.id, parts)}
                     >
                       {parts.length > 0 ? (
-                        <div 
+                        <div
                           className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
+                          {/* セッションタイトル */}
+                          {parts[0].session_title && (
+                            <div className="text-xs font-semibold text-blue-700 mb-1">
+                              {parts[0].session_title}
+                            </div>
+                          )}
+                          {/* パート名 */}
                           <div className="text-sm font-medium text-gray-900 mb-1">
                             {parts[0].part_name}
                           </div>
-                          <div className="text-xs text-gray-600">
+                          {/* 指導者情報 */}
+                          <div className="text-xs text-gray-600 mb-1">
                             🎭 {parts[0].instructors.length > 0 ? parts[0].instructors.join(', ') : '指導者未定'}
+                          </div>
+                          {/* 参加者数とステータス */}
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            {parts[0].participants > 0 && (
+                              <span>👥 {parts[0].participants}名</span>
+                            )}
+                            {parts[0].status && (
+                              <span className={
+                                parts[0].status === '確定' ? 'text-green-600' :
+                                parts[0].status === '仮' ? 'text-yellow-600' :
+                                'text-gray-500'
+                              }>
+                                {parts[0].status}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ) : (
