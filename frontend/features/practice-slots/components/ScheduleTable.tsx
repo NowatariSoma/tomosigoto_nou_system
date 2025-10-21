@@ -127,11 +127,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                             )}
                             {parts[0].status && (
                               <span className={
-                                parts[0].status === '確定' ? 'text-green-600' :
-                                parts[0].status === '仮' ? 'text-yellow-600' :
+                                parts[0].status === 'confirmed' || parts[0].status === '確定' ? 'text-green-600 font-medium' :
+                                parts[0].status === 'tentative' || parts[0].status === '仮' ? 'text-yellow-600 font-medium' :
                                 'text-gray-500'
                               }>
-                                {parts[0].status}
+                                {parts[0].status === 'confirmed' ? '確定' :
+                                 parts[0].status === 'tentative' ? '仮' :
+                                 parts[0].status}
                               </span>
                             )}
                           </div>
