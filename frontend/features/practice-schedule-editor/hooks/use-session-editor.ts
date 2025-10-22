@@ -17,7 +17,7 @@ import {
   IdealVenueInfo,
   IdealPartInfo
 } from '../types/api';
-import { sessionService, practiceScheduleEditorService } from '../services';
+import { sessionService, practiceScheduleEditorService, sessionInstructorService } from '../services';
 import { partService, Part } from '../services/part-service';
 import { generateTimeSlots } from '../mappers/time-slot-mapper';
 
@@ -225,6 +225,33 @@ export const useSessionEditor = (scheduleId: string) => {
       const newSession = await sessionService.createSession(sessionData);
 
       console.log('createSession - 作成成功:', newSession);
+
+      // インストラクターが選択されている場合、一括登録APIを呼び出す
+      if (formData.instructor_ids && formData.instructor_ids.length > 0) {
+        console.log('createSession - インストラクター登録開始:', formData.instructor_ids);
+        
+        try {
+          const instructorData = {
+            schedule_id: scheduleId,
+            schedule_available_venue_id: formData.venue_id || undefined,
+            slot_order: slotOrder,
+            attendance_ids: formData.instructor_ids,
+          };
+
+          console.log('createSession - インストラクター登録データ:', instructorData);
+          
+          const instructorResult = await sessionInstructorService.createSessionInstructorsBulk(instructorData);
+          
+          console.log('createSession - インストラクター登録成功:', instructorResult);
+        } catch (instructorError) {
+          console.error('createSession - インストラクター登録エラー:', instructorError);
+          // インストラクター登録に失敗してもセッション作成は成功として扱う
+          // ユーザーには警告を表示
+          const instructorErrorMessage = instructorError instanceof Error ? instructorError.message : 'インストラクターの登録に失敗しました';
+          alert(`⚠️ セッションは作成されましたが、インストラクターの登録に失敗しました\n\n${instructorErrorMessage}\n\n後でインストラクターを手動で設定してください。`);
+        }
+      }
+
       dispatch({ type: 'ADD_SESSION', payload: newSession });
       dispatch({ type: 'CLOSE_MODAL' });
     } catch (error) {

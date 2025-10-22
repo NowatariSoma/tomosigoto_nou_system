@@ -10,6 +10,7 @@ interface SessionCellProps {
   timeSlot: TimeSlot;
   sessions: Session[];
   edit_mode: EditMode;
+  scheduleId: string;
   onEditSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
@@ -20,6 +21,7 @@ export const SessionCell: React.FC<SessionCellProps> = ({
   timeSlot,
   sessions,
   edit_mode,
+  scheduleId,
   onEditSession,
   onDeleteSession,
   onMoveSession,
@@ -53,6 +55,7 @@ export const SessionCell: React.FC<SessionCellProps> = ({
               key={session.id}
               session={session}
               edit_mode={edit_mode}
+              scheduleId={scheduleId}
               onEdit={onEditSession}
               onDelete={onDeleteSession}
               onMove={handleSessionMove}

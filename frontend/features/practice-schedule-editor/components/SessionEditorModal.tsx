@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Session, VenueInfo, TimeSlot, SessionFormData } from '../types/session-editor';
+import { Session, VenueInfo, TimeSlot, SessionFormData, AttendanceInfo } from '../types/session-editor';
 import { UI_TEXT, INITIAL_SESSION_FORM, VALIDATION } from '../constants';
 import { useSessionValidation } from '../hooks/use-session-validation';
-import { Save, X, User, MapPin, Clock, Star, FileText } from 'lucide-react';
+import { Save, X, User, MapPin, Clock, Star, FileText, Users } from 'lucide-react';
 import { Part } from '../services/part-service';
+import { attendanceService } from '../services';
 
 interface SessionEditorModalProps {
   session?: Session | null;
   venues: VenueInfo[];
   time_slots: TimeSlot[];
   parts: Part[];
+  scheduleId: string;
   is_creating: boolean;
   onSubmit: (formData: SessionFormData) => Promise<void>;
   onCancel: () => void;
@@ -23,6 +25,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   venues,
   time_slots,
   parts,
+  scheduleId,
   is_creating,
   onSubmit,
   onCancel,
@@ -31,8 +34,30 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   const [formData, setFormData] = useState<SessionFormData>(INITIAL_SESSION_FORM);
   const [errors, setErrors] = useState<Partial<SessionFormData>>({});
   const [apiError, setApiError] = useState<string | null>(null);
+  const [availableAttendees, setAvailableAttendees] = useState<AttendanceInfo[]>([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
 
   const { validateSessionForm } = useSessionValidation(venues);
+
+  // 出席者データを取得
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      if (!scheduleId) return;
+      
+      setAttendeesLoading(true);
+      try {
+        const attendees = await attendanceService.getAttendancesByPractice(scheduleId);
+        setAvailableAttendees(attendees);
+      } catch (error) {
+        console.error('出席者データの取得に失敗しました:', error);
+        setAvailableAttendees([]);
+      } finally {
+        setAttendeesLoading(false);
+      }
+    };
+
+    fetchAttendees();
+  }, [scheduleId]);
 
   // セッション情報でフォームを初期化
   useEffect(() => {
@@ -82,6 +107,15 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  const handleInstructorToggle = (attendanceId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      instructor_ids: prev.instructor_ids.includes(attendanceId)
+        ? prev.instructor_ids.filter(id => id !== attendanceId)
+        : [...prev.instructor_ids, attendanceId]
+    }));
   };
 
   return (
@@ -217,6 +251,47 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               onChange={(e) => handleInputChange('priority', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* インストラクター選択 */}
+          <div>
+            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <Users className="h-4 w-4" />
+              <span>インストラクター</span>
+            </label>
+            {attendeesLoading ? (
+              <div className="text-sm text-gray-500">出席者データを読み込み中...</div>
+            ) : availableAttendees.length > 0 ? (
+              <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto">
+                <div className="space-y-2">
+                  {availableAttendees.map((attendee) => (
+                    <label key={attendee.id} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.instructor_ids.includes(attendee.id)}
+                        onChange={() => handleInstructorToggle(attendee.id)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {attendee.user_name}
+                        {attendee.user_email && (
+                          <span className="text-gray-500 ml-1">({attendee.user_email})</span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 p-3 border border-gray-300 rounded-md">
+                この練習に出席予定の参加者がいません
+              </div>
+            )}
+            {formData.instructor_ids.length > 0 && (
+              <div className="mt-2 text-sm text-gray-600">
+                {formData.instructor_ids.length}名のインストラクターが選択されています
+              </div>
+            )}
           </div>
 
           {/* 備考 */}

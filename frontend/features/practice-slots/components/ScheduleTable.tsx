@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useIdealSchedule } from '../hooks';
 import { IdealScheduleData } from '../types/schedule';
+import { InstructorDisplay } from './InstructorDisplay';
 
 interface ScheduleTableProps {
   className?: string;
@@ -15,6 +16,32 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 }) => {
   // 理想的な形式のスケジュール管理フック
   const { idealData, loading, error, fetchIdealScheduleByDate } = useIdealSchedule();
+
+  /**
+   * 時間文字列からslot_orderを計算する
+   * バックエンドの_calculate_slot_time関数の逆算
+   */
+  const calculateSlotOrder = (timeStr: string, scheduleData: IdealScheduleData): number => {
+    if (!scheduleData?.schedule_info) return 1;
+
+    try {
+      const startTime = new Date(`2000-01-01T${scheduleData.schedule_info.start_time}`);
+      const endTime = new Date(`2000-01-01T${scheduleData.schedule_info.end_time}`);
+      const targetTime = new Date(`2000-01-01T${timeStr}:00`);
+
+      const totalMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+      const timeSlots = Object.keys(scheduleData.time_schedule).length;
+      const slotDuration = totalMinutes / timeSlots;
+      
+      const elapsedMinutes = (targetTime.getTime() - startTime.getTime()) / (1000 * 60);
+      const slotOrder = Math.floor(elapsedMinutes / slotDuration) + 1;
+      
+      return Math.max(1, slotOrder);
+    } catch (error) {
+      console.warn('slot_orderの計算に失敗:', error);
+      return 1;
+    }
+  };
 
   // 日付が変更されたときにAPIからデータを取得
   useEffect(() => {
@@ -109,9 +136,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                           <div className="text-sm font-medium text-gray-900 mb-1">
                             {parts[0].part_name}
                           </div>
-                          <div className="text-xs text-gray-600">
-                            🎭 {parts[0].instructors.length > 0 ? parts[0].instructors.join(', ') : '指導者未定'}
-                          </div>
+                          <InstructorDisplay
+                            scheduleId={idealData.schedule_info.id}
+                            slotOrder={parts[0].slot_order || calculateSlotOrder(time, idealData)}
+                            fallbackInstructors={parts[0].instructors}
+                            maxDisplay={2}
+                          />
                         </div>
                       ) : (
                         <div className="text-center text-gray-400 py-6">
@@ -125,38 +155,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             ))}
           </tbody>
         </table>
-      </div>
-      
-      {/* 統計情報 - 目立たないデザイン */}
-      <div className="px-4 py-2 bg-white border-t border-gray-100">
-        <div className="flex justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-4">
-            <span>パート: {
-              Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
-                return total + Object.values(timeSlot).reduce((venueTotal: number, parts: any) => venueTotal + parts.length, 0);
-              }, 0)
-            }</span>
-            <span>指導者: {
-              new Set(
-                Object.values(idealData.time_schedule).flatMap((timeSlot: any) =>
-                  Object.values(timeSlot).flatMap((parts: any) =>
-                    parts.flatMap((part: any) => part.instructors)
-                  )
-                )
-              ).size
-            }</span>
-            <span>稼働率: {
-              idealData.venues.length > 0 ? Math.round((Object.values(idealData.time_schedule).reduce((total: number, timeSlot: any) => {
-                return total + Object.values(timeSlot).filter((parts: any) => parts.length > 0).length;
-              }, 0) / (Object.keys(idealData.time_schedule).length * idealData.venues.length)) * 100) : 0
-            }%</span>
-          </div>
-          {idealData.debug_info && (
-            <div className="text-gray-400">
-              セッション: {idealData.debug_info.sessions_count}, 会場: {idealData.debug_info.venues_count}, 分割: {idealData.debug_info.division_count}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
