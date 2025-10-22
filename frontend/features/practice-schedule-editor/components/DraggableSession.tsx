@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { Session, EditMode } from '../types/session-editor';
 import { Edit, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { InstructorDisplay } from './InstructorDisplay';
 
 interface DraggableSessionProps {
   session: Session;
   edit_mode: EditMode;
+  scheduleId: string;
   onEdit: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
   onMove: (sessionId: string, venueId: string, timeSlot: string) => void;
@@ -16,6 +18,7 @@ interface DraggableSessionProps {
 export const DraggableSession: React.FC<DraggableSessionProps> = ({
   session,
   edit_mode,
+  scheduleId,
   onEdit,
   onDelete,
   onMove,
@@ -82,6 +85,12 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
               パートID: {session.part_id}
             </div>
           )}
+          {/* インストラクター表示 */}
+          <InstructorDisplay
+            scheduleId={scheduleId}
+            slotOrder={session.slot_order}
+            className="mt-1"
+          />
         </div>
         
         {edit_mode === 'edit' && (

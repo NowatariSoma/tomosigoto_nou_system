@@ -62,6 +62,20 @@ export interface SessionFormData {
 }
 
 /**
+ * 出席者情報（インストラクター選択用）
+ */
+export interface AttendanceInfo {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email?: string;
+  practice_schedule_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * 時間スロット情報
  */
 export interface TimeSlot {
