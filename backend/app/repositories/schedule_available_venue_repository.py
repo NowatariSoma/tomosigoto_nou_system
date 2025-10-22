@@ -144,13 +144,24 @@ class ScheduleAvailableVenueRepository:
         """指定したスケジュールの利用可能会場一覧を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("*, venues(*)")
             .eq("schedule_id", str(schedule_id))
             .order("priority", desc=True)
             .order("created_at")
             .execute()
         )
-        return response.data
+        
+        # 会場名を含むようにデータを整形
+        formatted_data = []
+        for item in response.data:
+            formatted_item = dict(item)
+            if item.get("venues"):
+                formatted_item["name"] = item["venues"].get("name")
+                formatted_item["is_preferred"] = item["venues"].get("is_preferred", False)
+                formatted_item["priority"] = item["venues"].get("priority", 0)
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_by_venue")
     async def find_by_venue(self, venue_id: UUID) -> List[Dict[str, Any]]:
