@@ -39,24 +39,32 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
   const { validateSessionForm } = useSessionValidation(venues);
 
-  // 出席者データを取得
+  // インストラクター候補データを取得
   useEffect(() => {
-    const fetchAttendees = async () => {
+    const fetchInstructorCandidates = async () => {
       if (!scheduleId) return;
       
       setAttendeesLoading(true);
       try {
-        const attendees = await attendanceService.getAttendancesByPractice(scheduleId);
+        const candidates = await sessionInstructorService.getInstructorCandidates(scheduleId);
+        // InstructorCandidateをAttendanceInfo形式に変換
+        const attendees: AttendanceInfo[] = candidates.map(candidate => ({
+          id: candidate.attendance_id,
+          user_id: candidate.user_id,
+          user_name: `${candidate.last_name_kanji} ${candidate.first_name_kanji}`,
+          user_email: candidate.email,
+          status: candidate.attendance_status
+        }));
         setAvailableAttendees(attendees);
       } catch (error) {
-        console.error('出席者データの取得に失敗しました:', error);
+        console.error('インストラクター候補データの取得に失敗しました:', error);
         setAvailableAttendees([]);
       } finally {
         setAttendeesLoading(false);
       }
     };
 
-    fetchAttendees();
+    fetchInstructorCandidates();
   }, [scheduleId]);
 
   // セッション情報でフォームを初期化
@@ -115,6 +123,8 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     e.preventDefault();
     setApiError(null);
     console.log('フォーム送信:', formData);
+    console.log('instructor_id:', formData.instructor_id);
+    console.log('instructor_id type:', typeof formData.instructor_id);
     if (validateForm()) {
       console.log('バリデーションOK、API呼び出し開始');
       try {

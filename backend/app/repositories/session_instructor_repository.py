@@ -82,7 +82,7 @@ class SessionInstructorRepository:
             
             # 出席者情報を取得
             try:
-                attendance_response = self.client.table("practice_user_attendance").select("*, users(*, user_profiles(*))").eq("id", item["attendance_id"]).execute()
+                attendance_response = self.client.table("practice_user_attendance").select("*, users(*)").eq("id", item["attendance_id"]).execute()
                 if attendance_response.data:
                     attendance_data = attendance_response.data[0]
                     formatted_item["attendance_status"] = attendance_data.get("status")
@@ -90,25 +90,32 @@ class SessionInstructorRepository:
                         user_data = attendance_data["users"]
                         formatted_item["user_email"] = user_data.get("email")
                         
-                        # 漢字の姓と名を取得
-                        if user_data.get("user_profiles"):
-                            profile_data = user_data["user_profiles"]
-                            first_name_kanji = profile_data.get("first_name_kanji")
-                            last_name_kanji = profile_data.get("last_name_kanji")
-                            if first_name_kanji and last_name_kanji:
-                                formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
-                            elif first_name_kanji:
-                                formatted_item["user_name"] = first_name_kanji
-                            elif last_name_kanji:
-                                formatted_item["user_name"] = last_name_kanji
+                        # ユーザープロフィールを個別に取得
+                        try:
+                            profile_response = self.client.table("user_profiles").select("first_name_kanji, last_name_kanji").eq("user_id", user_data["id"]).execute()
+                            if profile_response.data:
+                                profile_data = profile_response.data[0]
+                                first_name_kanji = profile_data.get("first_name_kanji")
+                                last_name_kanji = profile_data.get("last_name_kanji")
+                                if first_name_kanji and last_name_kanji:
+                                    formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
+                                elif first_name_kanji:
+                                    formatted_item["user_name"] = first_name_kanji
+                                elif last_name_kanji:
+                                    formatted_item["user_name"] = last_name_kanji
+                                else:
+                                    # 漢字の名前がない場合は英語名を使用
+                                    formatted_item["user_name"] = user_data.get("name")
                             else:
-                                # 漢字の名前がない場合は英語名を使用
+                                # プロフィールがない場合は英語名を使用
                                 formatted_item["user_name"] = user_data.get("name")
-                        else:
-                            # プロフィールがない場合は英語名を使用
+                        except Exception as profile_error:
+                            print(f"Error fetching profile data for user {user_data['id']}: {profile_error}")
+                            # プロフィール取得に失敗した場合は英語名を使用
                             formatted_item["user_name"] = user_data.get("name")
-            except Exception:
-                pass  # エラーが発生した場合はデフォルト値のまま
+            except Exception as e:
+                print(f"Error fetching attendance data for {item['attendance_id']}: {e}")
+                formatted_item["attendance_status"] = "unknown"
             
             # スケジュール情報を取得
             try:
@@ -119,8 +126,9 @@ class SessionInstructorRepository:
                     formatted_item["schedule_title"] = schedule_data.get("title")
                     formatted_item["schedule_start_time"] = schedule_data.get("start_time")
                     formatted_item["schedule_end_time"] = schedule_data.get("end_time")
-            except Exception:
-                pass  # エラーが発生した場合はデフォルト値のまま
+            except Exception as e:
+                print(f"Error fetching attendance data for {item['attendance_id']}: {e}")
+                formatted_item["attendance_status"] = "unknown"
             
             # 会場情報を取得（schedule_available_venue_idがある場合）
             if item.get("schedule_available_venue_id"):
@@ -202,7 +210,7 @@ class SessionInstructorRepository:
             
             # 出席者情報を取得
             try:
-                attendance_response = self.client.table("practice_user_attendance").select("*, users(*, user_profiles(*))").eq("id", item["attendance_id"]).execute()
+                attendance_response = self.client.table("practice_user_attendance").select("*, users(*)").eq("id", item["attendance_id"]).execute()
                 if attendance_response.data:
                     attendance_data = attendance_response.data[0]
                     formatted_item["attendance_status"] = attendance_data.get("status")
@@ -210,25 +218,32 @@ class SessionInstructorRepository:
                         user_data = attendance_data["users"]
                         formatted_item["user_email"] = user_data.get("email")
                         
-                        # 漢字の姓と名を取得
-                        if user_data.get("user_profiles"):
-                            profile_data = user_data["user_profiles"]
-                            first_name_kanji = profile_data.get("first_name_kanji")
-                            last_name_kanji = profile_data.get("last_name_kanji")
-                            if first_name_kanji and last_name_kanji:
-                                formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
-                            elif first_name_kanji:
-                                formatted_item["user_name"] = first_name_kanji
-                            elif last_name_kanji:
-                                formatted_item["user_name"] = last_name_kanji
+                        # ユーザープロフィールを個別に取得
+                        try:
+                            profile_response = self.client.table("user_profiles").select("first_name_kanji, last_name_kanji").eq("user_id", user_data["id"]).execute()
+                            if profile_response.data:
+                                profile_data = profile_response.data[0]
+                                first_name_kanji = profile_data.get("first_name_kanji")
+                                last_name_kanji = profile_data.get("last_name_kanji")
+                                if first_name_kanji and last_name_kanji:
+                                    formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
+                                elif first_name_kanji:
+                                    formatted_item["user_name"] = first_name_kanji
+                                elif last_name_kanji:
+                                    formatted_item["user_name"] = last_name_kanji
+                                else:
+                                    # 漢字の名前がない場合は英語名を使用
+                                    formatted_item["user_name"] = user_data.get("name")
                             else:
-                                # 漢字の名前がない場合は英語名を使用
+                                # プロフィールがない場合は英語名を使用
                                 formatted_item["user_name"] = user_data.get("name")
-                        else:
-                            # プロフィールがない場合は英語名を使用
+                        except Exception as profile_error:
+                            print(f"Error fetching profile data for user {user_data['id']}: {profile_error}")
+                            # プロフィール取得に失敗した場合は英語名を使用
                             formatted_item["user_name"] = user_data.get("name")
-            except Exception:
-                pass  # エラーが発生した場合はデフォルト値のまま
+            except Exception as e:
+                print(f"Error fetching attendance data for {item['attendance_id']}: {e}")
+                formatted_item["attendance_status"] = "unknown"
             
             formatted_data.append(formatted_item)
         

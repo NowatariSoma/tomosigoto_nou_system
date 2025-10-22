@@ -291,9 +291,10 @@ export const useSessionEditor = (scheduleId: string) => {
             attendance_id: formData.instructor_id,
             schedule_id: scheduleId,
             schedule_available_venue_id: formData.venue_id || undefined,
-            slot_order: 0, // 更新時はslot_orderを0に設定
+            slot_order: 1, // 更新時はslot_orderを1に設定
           };
           
+          console.log('updateSession - インストラクター登録データ:', instructorData);
           await sessionInstructorService.createSessionInstructor(instructorData);
           console.log('updateSession - インストラクター更新成功');
         } else if (formData.instructor_id === 'none') {

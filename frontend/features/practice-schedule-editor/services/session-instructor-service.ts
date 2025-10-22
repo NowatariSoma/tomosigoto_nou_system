@@ -186,11 +186,23 @@ export class SessionInstructorService {
    * @returns 作成されたセッション指導者
    */
   async createSessionInstructor(data: SessionInstructorCreate): Promise<SessionInstructor> {
+    console.log('SessionInstructorService.createSessionInstructor called with:', {
+      data,
+      basePath: this.basePath,
+      url: `${this.basePath}/`
+    });
+    
     const response = await fetchApi(`${this.basePath}/`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.json();
+    
+    console.log('SessionInstructorService.createSessionInstructor response:', {
+      status: response.status,
+      ok: response.ok
+    });
+    
+    return await response.json();
   }
 
   /**
@@ -203,7 +215,7 @@ export class SessionInstructorService {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.json();
+    return await response.json();
   }
 
   /**
@@ -220,7 +232,7 @@ export class SessionInstructorService {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return response.json();
+    return await response.json();
   }
 
   /**
@@ -232,7 +244,7 @@ export class SessionInstructorService {
     const response = await fetchApi(`${this.basePath}/${sessionInstructorId}`, {
       method: 'DELETE',
     });
-    return response.json();
+    return await response.json();
   }
 
   /**
@@ -244,7 +256,7 @@ export class SessionInstructorService {
     const response = await fetchApi(`${this.basePath}/schedule/${scheduleId}`, {
       method: 'DELETE',
     });
-    return response.json();
+    return await response.json();
   }
 
   /**
@@ -260,7 +272,7 @@ export class SessionInstructorService {
     const response = await fetchApi(`${this.basePath}/schedule/${scheduleId}/slot/${slotOrder}`, {
       method: 'DELETE',
     });
-    return response.json();
+    return await response.json();
   }
 
   /**
