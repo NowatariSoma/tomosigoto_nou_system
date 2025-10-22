@@ -6,7 +6,7 @@ import { UI_TEXT, INITIAL_SESSION_FORM, VALIDATION } from '../constants';
 import { useSessionValidation } from '../hooks/use-session-validation';
 import { Save, X, User, MapPin, Clock, Star, FileText, Users } from 'lucide-react';
 import { Part } from '../services/part-service';
-import { attendanceService } from '../services';
+import { attendanceService, sessionInstructorService } from '../services';
 
 interface SessionEditorModalProps {
   session?: Session | null;
@@ -65,12 +65,41 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
       setFormData({
         title: session.title,
         part_id: session.part_id || '',
-        instructor_ids: [],
+        instructor_id: '', // 単一選択用に変更
         venue_id: session.schedule_available_venue_id || '',
         time_slot: '',
         priority: session.priority,
         notes: '',
       });
+      
+      // 既存のインストラクター情報を取得
+      const fetchExistingInstructor = async () => {
+        try {
+          const instructors = await sessionInstructorService.getSessionInstructors(session.id);
+          if (instructors && instructors.length > 0) {
+            // 最初のインストラクターのattendance_idを設定
+            setFormData(prev => ({
+              ...prev,
+              instructor_id: instructors[0].attendance_id || ''
+            }));
+          } else {
+            // インストラクターがいない場合は「インストラクターなし」を設定
+            setFormData(prev => ({
+              ...prev,
+              instructor_id: 'none'
+            }));
+          }
+        } catch (error) {
+          console.error('既存のインストラクター情報の取得に失敗しました:', error);
+          // エラーの場合も「インストラクターなし」を設定
+          setFormData(prev => ({
+            ...prev,
+            instructor_id: 'none'
+          }));
+        }
+      };
+      
+      fetchExistingInstructor();
     } else {
       setFormData(INITIAL_SESSION_FORM);
     }
@@ -109,14 +138,6 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     }
   };
 
-  const handleInstructorToggle = (attendanceId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      instructor_ids: prev.instructor_ids.includes(attendanceId)
-        ? prev.instructor_ids.filter(id => id !== attendanceId)
-        : [...prev.instructor_ids, attendanceId]
-    }));
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -262,35 +283,29 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
             {attendeesLoading ? (
               <div className="text-sm text-gray-500">出席者データを読み込み中...</div>
             ) : availableAttendees.length > 0 ? (
-              <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto">
-                <div className="space-y-2">
-                  {availableAttendees.map((attendee) => (
-                    <label key={attendee.id} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.instructor_ids.includes(attendee.id)}
-                        onChange={() => handleInstructorToggle(attendee.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        {attendee.user_name}
-                        {attendee.user_email && (
-                          <span className="text-gray-500 ml-1">({attendee.user_email})</span>
-                        )}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <select
+                value={formData.instructor_id}
+                onChange={(e) => handleInputChange('instructor_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">選択してください</option>
+                <option value="none">インストラクターなし</option>
+                {availableAttendees.map((attendee) => (
+                  <option key={attendee.id} value={attendee.id}>
+                    {attendee.user_name}
+                    {attendee.user_email && ` (${attendee.user_email})`}
+                  </option>
+                ))}
+              </select>
             ) : (
-              <div className="text-sm text-gray-500 p-3 border border-gray-300 rounded-md">
-                この練習に出席予定の参加者がいません
-              </div>
-            )}
-            {formData.instructor_ids.length > 0 && (
-              <div className="mt-2 text-sm text-gray-600">
-                {formData.instructor_ids.length}名のインストラクターが選択されています
-              </div>
+              <select
+                value={formData.instructor_id}
+                onChange={(e) => handleInputChange('instructor_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">選択してください</option>
+                <option value="none">インストラクターなし</option>
+              </select>
             )}
           </div>
 

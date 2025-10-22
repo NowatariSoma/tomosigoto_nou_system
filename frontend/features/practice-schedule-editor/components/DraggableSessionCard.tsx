@@ -13,6 +13,7 @@ interface DraggableSessionCardProps {
   onDragStart?: (e: React.DragEvent, session: Session) => void;
   onEdit: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
+  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 /**
@@ -27,6 +28,7 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
   onDragStart,
   onEdit,
   onDelete,
+  fallbackInstructors = [],
 }) => {
   return (
     <div
@@ -65,6 +67,7 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
             scheduleId={scheduleId}
             slotOrder={session.slot_order}
             className="mt-1"
+            fallbackInstructors={fallbackInstructors}
           />
         </div>
 

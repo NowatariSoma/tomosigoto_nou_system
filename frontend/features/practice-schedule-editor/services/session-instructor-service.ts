@@ -23,7 +23,7 @@ export interface SessionInstructor {
  */
 export interface SessionInstructorWithDetails extends SessionInstructor {
   // 出席者情報
-  user_name?: string;
+  user_name?: string; // 漢字の姓と名が組み合わされた値（例: "田中 太郎"）
   user_email?: string;
   // 会場情報
   venue_name?: string;
@@ -68,6 +68,20 @@ export interface InstructorDisplayInfo {
   id: string;
   name: string;
   email?: string;
+}
+
+/**
+ * インストラクター候補情報
+ */
+export interface InstructorCandidate {
+  user_id: string;
+  email: string;
+  first_name_kanji: string;
+  last_name_kanji: string;
+  student_id: string;
+  grade: number;
+  attendance_id: string;
+  attendance_status: string;
 }
 
 /**
@@ -261,6 +275,40 @@ export class SessionInstructorService {
     slotOrder: number
   ): Promise<SessionInstructorWithDetails[]> {
     return this.getSessionInstructors(scheduleId, slotOrder);
+  }
+
+  /**
+   * インストラクター候補を取得（学年4かつ出席記録があるユーザー）
+   * @param practiceScheduleId - 練習スケジュールID
+   * @returns インストラクター候補一覧
+   */
+  async getInstructorCandidates(practiceScheduleId: string): Promise<InstructorCandidate[]> {
+    try {
+      const url = `${this.basePath}/candidates?practice_schedule_id=${practiceScheduleId}`;
+      console.log('SessionInstructorService.getInstructorCandidates called with:', {
+        practiceScheduleId,
+        url
+      });
+      
+      const response = await fetchApi(url);
+      const data = await response.json();
+      
+      console.log('SessionInstructorService.getInstructorCandidates response:', {
+        url,
+        status: response.status,
+        dataLength: Array.isArray(data) ? data.length : 'not array',
+        data
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('SessionInstructorService.getInstructorCandidates error:', {
+        practiceScheduleId,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
   }
 }
 

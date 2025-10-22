@@ -14,6 +14,7 @@ interface SessionCellProps {
   onEditSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
+  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 export const SessionCell: React.FC<SessionCellProps> = ({
@@ -25,6 +26,7 @@ export const SessionCell: React.FC<SessionCellProps> = ({
   onEditSession,
   onDeleteSession,
   onMoveSession,
+  fallbackInstructors = [],
 }) => {
   const handleCellClick = () => {
     if (edit_mode === 'edit' && sessions.length === 0) {
@@ -59,6 +61,7 @@ export const SessionCell: React.FC<SessionCellProps> = ({
               onEdit={onEditSession}
               onDelete={onDeleteSession}
               onMove={handleSessionMove}
+              fallbackInstructors={fallbackInstructors}
             />
           ))}
         </div>

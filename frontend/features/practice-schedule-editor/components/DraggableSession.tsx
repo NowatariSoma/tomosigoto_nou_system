@@ -13,6 +13,7 @@ interface DraggableSessionProps {
   onEdit: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
   onMove: (sessionId: string, venueId: string, timeSlot: string) => void;
+  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 export const DraggableSession: React.FC<DraggableSessionProps> = ({
@@ -22,6 +23,7 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
   onEdit,
   onDelete,
   onMove,
+  fallbackInstructors = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -90,6 +92,7 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
             scheduleId={scheduleId}
             slotOrder={session.slot_order}
             className="mt-1"
+            fallbackInstructors={fallbackInstructors}
           />
         </div>
         

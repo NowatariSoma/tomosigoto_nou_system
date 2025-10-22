@@ -226,21 +226,21 @@ export const useSessionEditor = (scheduleId: string) => {
 
       console.log('createSession - 作成成功:', newSession);
 
-      // インストラクターが選択されている場合、一括登録APIを呼び出す
-      if (formData.instructor_ids && formData.instructor_ids.length > 0) {
-        console.log('createSession - インストラクター登録開始:', formData.instructor_ids);
+      // インストラクターが選択されている場合、登録APIを呼び出す
+      if (formData.instructor_id && formData.instructor_id !== 'none') {
+        console.log('createSession - インストラクター登録開始:', formData.instructor_id);
         
         try {
           const instructorData = {
+            attendance_id: formData.instructor_id,
             schedule_id: scheduleId,
             schedule_available_venue_id: formData.venue_id || undefined,
             slot_order: slotOrder,
-            attendance_ids: formData.instructor_ids,
           };
 
           console.log('createSession - インストラクター登録データ:', instructorData);
           
-          const instructorResult = await sessionInstructorService.createSessionInstructorsBulk(instructorData);
+          const instructorResult = await sessionInstructorService.createSessionInstructor(instructorData);
           
           console.log('createSession - インストラクター登録成功:', instructorResult);
         } catch (instructorError) {
@@ -250,6 +250,8 @@ export const useSessionEditor = (scheduleId: string) => {
           const instructorErrorMessage = instructorError instanceof Error ? instructorError.message : 'インストラクターの登録に失敗しました';
           alert(`⚠️ セッションは作成されましたが、インストラクターの登録に失敗しました\n\n${instructorErrorMessage}\n\n後でインストラクターを手動で設定してください。`);
         }
+      } else if (formData.instructor_id === 'none') {
+        console.log('createSession - インストラクターなしが選択されました');
       }
 
       dispatch({ type: 'ADD_SESSION', payload: newSession });
@@ -278,6 +280,30 @@ export const useSessionEditor = (scheduleId: string) => {
         priority: formData.priority,
       });
 
+      // インストラクターの処理
+      try {
+        // 既存のインストラクターを削除
+        await sessionInstructorService.deleteSessionInstructorsBySchedule(sessionId);
+        
+        // インストラクターが選択されている場合、新しく登録
+        if (formData.instructor_id && formData.instructor_id !== 'none') {
+          const instructorData = {
+            attendance_id: formData.instructor_id,
+            schedule_id: scheduleId,
+            schedule_available_venue_id: formData.venue_id || undefined,
+            slot_order: 0, // 更新時はslot_orderを0に設定
+          };
+          
+          await sessionInstructorService.createSessionInstructor(instructorData);
+          console.log('updateSession - インストラクター更新成功');
+        } else if (formData.instructor_id === 'none') {
+          console.log('updateSession - インストラクターなしが選択されました');
+        }
+      } catch (instructorError) {
+        console.error('updateSession - インストラクター更新エラー:', instructorError);
+        // インストラクター更新に失敗してもセッション更新は成功として扱う
+      }
+
       dispatch({ type: 'UPDATE_SESSION', payload: updatedSession });
       dispatch({ type: 'CLOSE_MODAL' });
     } catch (error) {
@@ -286,7 +312,7 @@ export const useSessionEditor = (scheduleId: string) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, []);
+  }, [scheduleId, sessionInstructorService]);
 
   /**
    * セッションを削除

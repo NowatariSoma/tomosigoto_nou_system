@@ -56,7 +56,7 @@ export interface SessionInstructor {
  */
 export interface SessionInstructorWithDetails extends SessionInstructor {
   // 出席者情報
-  user_name?: string;
+  user_name?: string; // 漢字の姓と名が組み合わされた値（例: "田中 太郎"）
   user_email?: string;
   attendance_status?: string;
   
