@@ -5,6 +5,8 @@ import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor'
 import { timeToMinutes } from '../mappers/time-slot-mapper';
 import { Calendar, Plus, Minus } from 'lucide-react';
 import { DraggableSessionCard } from './DraggableSessionCard';
+import { EditableTimeSlot } from './EditableTimeSlot';
+import { TimeSlotEditorModal } from './TimeSlotEditorModal';
 
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
@@ -17,6 +19,7 @@ interface SessionEditorTableSimpleDndProps {
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
   onAddTimeSlot?: () => void;
   onRemoveTimeSlot?: () => void;
+  onUpdateTimeSlot?: (timeSlot: TimeSlot) => void;
   fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
@@ -31,10 +34,13 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   onMoveSession,
   onAddTimeSlot,
   onRemoveTimeSlot,
+  onUpdateTimeSlot,
   fallbackInstructors = [],
 }) => {
   const [draggedSession, setDraggedSession] = useState<Session | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ venueId: string; timeSlot: string } | null>(null);
+  const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
+  const [editingTimeSlot, setEditingTimeSlot] = useState<TimeSlot | null>(null);
 
   // セッションを会場と時間でグループ化
   const groupedSessions = React.useMemo(() => {
@@ -132,6 +138,24 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
     }
   };
 
+  const handleTimeSlotEdit = (timeSlot: TimeSlot) => {
+    setEditingTimeSlot(timeSlot);
+    setIsTimeSlotModalOpen(true);
+  };
+
+  const handleTimeSlotSave = (updatedTimeSlot: TimeSlot) => {
+    if (onUpdateTimeSlot) {
+      onUpdateTimeSlot(updatedTimeSlot);
+    }
+    setIsTimeSlotModalOpen(false);
+    setEditingTimeSlot(null);
+  };
+
+  const handleTimeSlotModalClose = () => {
+    setIsTimeSlotModalOpen(false);
+    setEditingTimeSlot(null);
+  };
+
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
@@ -150,7 +174,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
+        <div className="w-32 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
         <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
           {venues.map((venue) => (
             <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
@@ -166,9 +190,10 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
           <tbody>
             {time_slots.map((timeSlot) => (
               <tr key={timeSlot.time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-gray-900 align-top border-r border-gray-600 hover:bg-gray-800 transition-colors">
-                  {timeSlot.display_time}
-                </td>
+                <EditableTimeSlot
+                  timeSlot={timeSlot}
+                  onEdit={handleTimeSlotEdit}
+                />
                 {venues.map((venue) => {
                   const venueSessions = groupedSessions[venue.id]?.[timeSlot.time] || [];
                   const isOver = dragOverCell?.venueId === venue.id && dragOverCell?.timeSlot === timeSlot.time;
@@ -277,6 +302,14 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
           </div>
         </div>
       )}
+
+      {/* 時間スロット編集モーダル */}
+      <TimeSlotEditorModal
+        isOpen={isTimeSlotModalOpen}
+        onClose={handleTimeSlotModalClose}
+        onSave={handleTimeSlotSave}
+        timeSlot={editingTimeSlot}
+      />
     </div>
   );
 };
