@@ -151,6 +151,7 @@ export type SessionEditorAction =
   | { type: 'SET_SESSIONS'; payload: Session[] }
   | { type: 'SET_VENUES'; payload: VenueInfo[] }
   | { type: 'SET_TIME_SLOTS'; payload: TimeSlot[] }
+  | { type: 'UPDATE_TIME_SLOT'; payload: TimeSlot }
   | { type: 'SELECT_SESSION'; payload: Session | null }
   | { type: 'OPEN_MODAL' }
   | { type: 'CLOSE_MODAL' }

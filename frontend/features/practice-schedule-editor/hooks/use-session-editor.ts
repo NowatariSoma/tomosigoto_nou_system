@@ -35,6 +35,13 @@ const sessionEditorReducer = (
       return { ...state, venues: action.payload };
     case 'SET_TIME_SLOTS':
       return { ...state, time_slots: action.payload };
+    case 'UPDATE_TIME_SLOT':
+      return { 
+        ...state, 
+        time_slots: state.time_slots.map(ts => 
+          ts.time === action.payload.time ? action.payload : ts
+        ) 
+      };
     case 'SELECT_SESSION':
       return { ...state, selected_session: action.payload };
     case 'OPEN_MODAL':
@@ -427,6 +434,13 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'SET_EDIT_MODE', payload: newMode });
   }, [state.edit_mode]);
 
+  /**
+   * 時間スロットを更新
+   */
+  const updateTimeSlot = useCallback((updatedTimeSlot: TimeSlot) => {
+    dispatch({ type: 'UPDATE_TIME_SLOT', payload: updatedTimeSlot });
+  }, []);
+
   // 初期化
   useEffect(() => {
     console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
@@ -454,5 +468,6 @@ export const useSessionEditor = (scheduleId: string) => {
     openModal,
     closeModal,
     toggleEditMode,
+    updateTimeSlot,
   };
 };
