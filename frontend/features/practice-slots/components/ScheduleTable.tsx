@@ -30,8 +30,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       const targetTime = new Date(`2000-01-01T${timeStr}:00`);
 
       const totalMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-      const timeSlots = Object.keys(scheduleData.time_schedule).length;
-      const slotDuration = totalMinutes / timeSlots;
+      const timeSlots = Object.keys(scheduleData?.time_schedule || {}).length;
+      const slotDuration = timeSlots > 0 ? totalMinutes / timeSlots : 60;
       
       const elapsedMinutes = (targetTime.getTime() - startTime.getTime()) / (1000 * 60);
       const slotOrder = Math.floor(elapsedMinutes / slotDuration) + 1;
@@ -78,7 +78,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   }
 
   // データがない場合の表示
-  if (!idealData) {
+  if (!idealData || !idealData.venues || !Array.isArray(idealData.venues)) {
     return (
       <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
         <div className="text-gray-500">スケジュールデータがありません</div>
@@ -87,11 +87,24 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   }
 
   // 時間スロットを取得
-  const timeSlots = Object.keys(idealData.time_schedule).sort();
+  const timeSlots = Object.keys(idealData?.time_schedule || {}).sort();
   
   // デバッグ: 会場データを確認
-  console.log('会場データ:', idealData.venues);
-  console.log('会場の詳細:', idealData.venues.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
+  console.log('会場データ:', idealData?.venues);
+  console.log('会場の詳細:', idealData?.venues?.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
+  
+  // 重複するvenue.idをチェック
+  const venueIds = idealData?.venues?.map(venue => venue?.id) || [];
+  const uniqueVenueIds = [...new Set(venueIds)];
+  if (venueIds.length !== uniqueVenueIds.length) {
+    console.warn('重複するvenue.idが検出されました:', venueIds);
+    console.warn('重複するID:', venueIds.filter((id, index) => venueIds.indexOf(id) !== index));
+  }
+
+  // 重複を除去した会場データを取得
+  const uniqueVenues = idealData?.venues?.filter((venue, index, self) => 
+    index === self.findIndex(v => v?.id === venue?.id)
+  ) || [];
 
   return (
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
@@ -99,9 +112,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       <div className="flex">
         <div className="w-24 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
         <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
-          {idealData.venues.map((venue) => (
-            <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
-              {venue.name || `会場${venue.id.slice(-4)}`}
+          {uniqueVenues.map((venue) => (
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
+              {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
         </div>
@@ -116,17 +129,17 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-gray-900 align-top border-r border-gray-600 hover:bg-gray-800 transition-colors">
                   {time}
                 </td>
-                {idealData.venues.map((venue) => {
-                  const parts = idealData.time_schedule[time]?.[venue.id] || [];
+                {uniqueVenues.map((venue) => {
+                  const parts = idealData.time_schedule?.[time]?.[venue?.id] || [];
                   return (
                     <td
-                      key={`${time}-${venue.id}`}
+                      key={`${time}-${venue?.id || 'unknown'}`}
                       className={cn(
                         "px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top",
                         "cursor-pointer transition-colors bg-white",
                         parts.length > 0 ? "hover:bg-blue-50" : "hover:bg-gray-50"
                       )}
-                      onClick={() => handleCellClick(time, venue.id, parts)}
+                      onClick={() => handleCellClick(time, venue?.id || '', parts)}
                     >
                       {parts.length > 0 ? (
                         <div 
@@ -137,7 +150,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                             {parts[0].part_name}
                           </div>
                           <InstructorDisplay
-                            scheduleId={idealData.schedule_info.id}
+                            scheduleId={idealData?.schedule_info?.id || ''}
                             slotOrder={parts[0].slot_order || calculateSlotOrder(time, idealData)}
                             fallbackInstructors={parts[0].instructors}
                             maxDisplay={2}
