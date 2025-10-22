@@ -523,19 +523,16 @@ class PracticeScheduleService:
             try:
                 schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 for i, schedule_venue in enumerate(schedule_venues):
-                    # available venueにvenuesテーブルとのJOINデータが含まれている可能性を考慮
-                    venue_name = "会場"
-                    if "venues" in schedule_venue and isinstance(schedule_venue["venues"], dict):
-                        venue_name = schedule_venue["venues"].get("name", f"会場{i+1}")
-                    elif "venue_name" in schedule_venue:
-                        venue_name = schedule_venue["venue_name"]
-                    else:
-                        venue_name = f"会場{i+1}"
+                    # 修正されたfind_by_scheduleメソッドから取得したデータを処理
+                    venue_name = schedule_venue.get("name", f"会場{i+1}")
+                    is_preferred = schedule_venue.get("is_preferred", False)
+                    venue_priority = schedule_venue.get("priority", i+1)
 
                     venue_info = {
-                        "id": str(schedule_venue.get('id')),
+                        "id": str(schedule_venue.get('venue_id', schedule_venue.get('id'))),  # venue_idを優先
                         "name": venue_name,
-                        "priority": schedule_venue.get("priority", i+1),
+                        "is_preferred": is_preferred,
+                        "priority": venue_priority,
                         "color": settings.DEFAULT_VENUE_COLORS[i % len(settings.DEFAULT_VENUE_COLORS)]
                     }
                     venues.append(venue_info)
