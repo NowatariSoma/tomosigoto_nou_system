@@ -52,15 +52,11 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
 
         {/* セッション情報 */}
         <div className="flex-1">
-          {/* タイトル */}
-          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-            {session.title}
-          </div>
-
-          {/* 優先度 */}
-          <div className="text-xs text-gray-700">
-            優先度: {session.priority}
-          </div>
+          {session.part_name && (
+            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+              {session.part_name}
+            </div>
+          )}
 
           {/* インストラクター表示 */}
           <InstructorDisplay

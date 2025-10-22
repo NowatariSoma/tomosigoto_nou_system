@@ -54,6 +54,9 @@ class SessionInstructorWithDetails(SessionInstructorResponse):
     # 会場情報
     venue_name: Optional[str] = Field(None, description="会場名")
     venue_address: Optional[str] = Field(None, description="会場住所")
+    
+    # パート情報
+    part_name: Optional[str] = Field(None, description="パート名")
 
 
 class SessionInstructorListResponse(BaseModel):

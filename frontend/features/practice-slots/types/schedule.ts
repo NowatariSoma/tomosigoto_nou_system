@@ -69,6 +69,9 @@ export interface SessionInstructorWithDetails extends SessionInstructor {
   // 会場情報
   venue_name?: string;
   venue_address?: string;
+  
+  // パート情報
+  part_name?: string;
 }
 
 /**

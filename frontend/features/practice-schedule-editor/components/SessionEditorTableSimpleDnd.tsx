@@ -269,7 +269,6 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                 className="rounded-lg p-2 bg-red-100 border border-red-300 text-sm cursor-pointer hover:bg-red-200"
                 onClick={() => onEditSession(session.id)}
               >
-                <div className="font-bold text-red-800">{session.title}</div>
                 <div className="text-xs text-red-600">
                   slot_order: {session.slot_order} (時間割の範囲外)
                 </div>

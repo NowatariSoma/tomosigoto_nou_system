@@ -3,10 +3,8 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.practice_schedule_repository import (
-    PracticeScheduleRepository,
-    SessionRepository,
-)
+from app.repositories.practice_schedule_repository import PracticeScheduleRepository
+from app.repositories.session_repository import SessionRepository
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.repositories.venue_repository import VenueRepository
 from app.repositories.session_instructor_repository import SessionInstructorRepository
@@ -894,7 +892,7 @@ class PracticeScheduleService:
                     if venue_id:
                         session_info = {
                             "part_id": str(session.get("id", f"part-{slot_order}")),
-                            "part_name": session_title,
+                            "part_name": session.get("part_name", session_title),  # パート名を優先、なければセッションタイトル
                             "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                             "session_title": session_title,
                             "instructors": await self._get_session_instructors(session.get("id")),

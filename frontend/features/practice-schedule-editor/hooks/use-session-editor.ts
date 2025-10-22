@@ -135,7 +135,7 @@ export const useSessionEditor = (scheduleId: string) => {
               id: sessionId,
               schedule_id: details.schedule_info.id,
               part_id: part.part_id,
-              title: part.session_title || part.part_name || 'セッション',
+              part_name: part.part_name, // パート名を追加
               slot_order: part.slot_order || 0,
               schedule_available_venue_id: venueId, // 実際の会場IDを使用
               priority: 1, // デフォルトの優先度
@@ -214,7 +214,6 @@ export const useSessionEditor = (scheduleId: string) => {
       const sessionData = {
         schedule_id: scheduleId,
         part_id: formData.part_id || undefined,
-        title: formData.title,
         slot_order: slotOrder,
         schedule_available_venue_id: formData.venue_id || undefined,
         priority: formData.priority,
@@ -275,7 +274,6 @@ export const useSessionEditor = (scheduleId: string) => {
 
     try {
       const updatedSession = await sessionService.updateSession(sessionId, {
-        title: formData.title,
         schedule_available_venue_id: formData.venue_id,
         priority: formData.priority,
       });
@@ -327,7 +325,7 @@ export const useSessionEditor = (scheduleId: string) => {
       return;
     }
 
-    if (!confirm(`「${session.title}」を削除しますか？`)) {
+    if (!confirm(`セッションを削除しますか？`)) {
       return;
     }
 

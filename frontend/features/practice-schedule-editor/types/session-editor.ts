@@ -9,7 +9,7 @@ export interface Session {
   id: string;
   schedule_id: string;
   part_id?: string;
-  title: string;
+  part_name?: string; // パート名
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
@@ -25,7 +25,6 @@ export interface Session {
 export interface CreateSessionRequest {
   schedule_id: string;
   part_id?: string;
-  title: string;
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
@@ -38,7 +37,6 @@ export interface CreateSessionRequest {
  */
 export interface UpdateSessionRequest {
   part_id?: string;
-  title?: string;
   slot_order?: number;
   schedule_available_venue_id?: string;
   priority?: number;
@@ -50,7 +48,6 @@ export interface UpdateSessionRequest {
  * セッション編集用のフォームデータ
  */
 export interface SessionFormData {
-  title: string;
   part_id: string;
   instructor_id: string; // 単一選択用に変更
   venue_id: string;
