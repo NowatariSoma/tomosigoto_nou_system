@@ -52,7 +52,7 @@ export interface UpdateSessionRequest {
 export interface SessionFormData {
   title: string;
   part_id: string;
-  instructor_ids: string[];
+  instructor_id: string; // 単一選択用に変更
   venue_id: string;
   time_slot: string;
   priority: number;

@@ -17,6 +17,7 @@ interface SessionEditorTableSimpleDndProps {
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
   onAddTimeSlot?: () => void;
   onRemoveTimeSlot?: () => void;
+  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndProps> = ({
@@ -30,6 +31,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   onMoveSession,
   onAddTimeSlot,
   onRemoveTimeSlot,
+  fallbackInstructors = [],
 }) => {
   const [draggedSession, setDraggedSession] = useState<Session | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ venueId: string; timeSlot: string } | null>(null);
@@ -194,6 +196,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 onDragStart={handleDragStart}
                                 onEdit={onEditSession}
                                 onDelete={onDeleteSession}
+                                fallbackInstructors={fallbackInstructors}
                               />
                             ))}
                           </div>

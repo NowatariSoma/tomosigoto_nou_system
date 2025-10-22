@@ -262,6 +262,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         onMoveSession={handleSessionMove}
         onAddTimeSlot={handleAddTimeSlot}
         onRemoveTimeSlot={handleRemoveTimeSlot}
+        fallbackInstructors={[]} // フォールバック用のインストラクター名配列（必要に応じて設定）
       />
 
       {/* セッション編集モーダル */}

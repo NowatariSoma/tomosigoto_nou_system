@@ -54,7 +54,7 @@ export const VALIDATION = {
 export const INITIAL_SESSION_FORM = {
   title: '',
   part_id: '',
-  instructor_ids: [] as string[],
+  instructor_id: '', // 単一選択用に変更
   venue_id: '',
   time_slot: '',
   priority: 0,

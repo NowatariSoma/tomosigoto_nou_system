@@ -82,13 +82,31 @@ class SessionInstructorRepository:
             
             # 出席者情報を取得
             try:
-                attendance_response = self.client.table("practice_user_attendance").select("*, users(*)").eq("id", item["attendance_id"]).execute()
+                attendance_response = self.client.table("practice_user_attendance").select("*, users(*, user_profiles(*))").eq("id", item["attendance_id"]).execute()
                 if attendance_response.data:
                     attendance_data = attendance_response.data[0]
                     formatted_item["attendance_status"] = attendance_data.get("status")
                     if attendance_data.get("users"):
-                        formatted_item["user_name"] = attendance_data["users"].get("name")
-                        formatted_item["user_email"] = attendance_data["users"].get("email")
+                        user_data = attendance_data["users"]
+                        formatted_item["user_email"] = user_data.get("email")
+                        
+                        # 漢字の姓と名を取得
+                        if user_data.get("user_profiles"):
+                            profile_data = user_data["user_profiles"]
+                            first_name_kanji = profile_data.get("first_name_kanji")
+                            last_name_kanji = profile_data.get("last_name_kanji")
+                            if first_name_kanji and last_name_kanji:
+                                formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
+                            elif first_name_kanji:
+                                formatted_item["user_name"] = first_name_kanji
+                            elif last_name_kanji:
+                                formatted_item["user_name"] = last_name_kanji
+                            else:
+                                # 漢字の名前がない場合は英語名を使用
+                                formatted_item["user_name"] = user_data.get("name")
+                        else:
+                            # プロフィールがない場合は英語名を使用
+                            formatted_item["user_name"] = user_data.get("name")
             except Exception:
                 pass  # エラーが発生した場合はデフォルト値のまま
             
@@ -156,7 +174,7 @@ class SessionInstructorRepository:
 
     @handle_supabase_errors("find_by_schedule_and_slot")
     async def find_by_schedule_and_slot(self, schedule_id: UUID, slot_order: int) -> List[Dict[str, Any]]:
-        """指定したスケジュールとコマの指導者一覧を取得"""
+        """指定したスケジュールとコマの指導者一覧を取得（詳細情報付き）"""
         response = (
             self.client.table(self.table_name)
             .select("*")
@@ -164,7 +182,57 @@ class SessionInstructorRepository:
             .eq("slot_order", slot_order)
             .execute()
         )
-        return response.data
+        
+        # データを整形し、関連データを個別に取得
+        formatted_data = []
+        for item in response.data:
+            formatted_item = {
+                "id": item["id"],
+                "attendance_id": item["attendance_id"],
+                "schedule_id": item["schedule_id"],
+                "schedule_available_venue_id": item.get("schedule_available_venue_id"),
+                "slot_order": item["slot_order"],
+                "created_at": item["created_at"],
+                "updated_at": item["updated_at"],
+                # デフォルト値
+                "user_name": None,
+                "user_email": None,
+                "attendance_status": None,
+            }
+            
+            # 出席者情報を取得
+            try:
+                attendance_response = self.client.table("practice_user_attendance").select("*, users(*, user_profiles(*))").eq("id", item["attendance_id"]).execute()
+                if attendance_response.data:
+                    attendance_data = attendance_response.data[0]
+                    formatted_item["attendance_status"] = attendance_data.get("status")
+                    if attendance_data.get("users"):
+                        user_data = attendance_data["users"]
+                        formatted_item["user_email"] = user_data.get("email")
+                        
+                        # 漢字の姓と名を取得
+                        if user_data.get("user_profiles"):
+                            profile_data = user_data["user_profiles"]
+                            first_name_kanji = profile_data.get("first_name_kanji")
+                            last_name_kanji = profile_data.get("last_name_kanji")
+                            if first_name_kanji and last_name_kanji:
+                                formatted_item["user_name"] = f"{last_name_kanji} {first_name_kanji}"
+                            elif first_name_kanji:
+                                formatted_item["user_name"] = first_name_kanji
+                            elif last_name_kanji:
+                                formatted_item["user_name"] = last_name_kanji
+                            else:
+                                # 漢字の名前がない場合は英語名を使用
+                                formatted_item["user_name"] = user_data.get("name")
+                        else:
+                            # プロフィールがない場合は英語名を使用
+                            formatted_item["user_name"] = user_data.get("name")
+            except Exception:
+                pass  # エラーが発生した場合はデフォルト値のまま
+            
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_by_attendance_id")
     async def find_by_attendance_id(self, attendance_id: UUID) -> List[Dict[str, Any]]:
@@ -270,3 +338,43 @@ class SessionInstructorRepository:
         """出席記録の存在確認"""
         response = self.client.table("practice_user_attendance").select("*").eq("id", str(attendance_id)).execute()
         return response.data[0] if response.data else None
+
+    @handle_supabase_errors("find_instructor_candidates")
+    async def find_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+        """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
+        # 学年4のユーザーで、指定された練習スケジュールに出席記録があるユーザーを取得
+        # まず出席記録を取得
+        attendance_response = self.client.table("practice_user_attendance").select(
+            "id, user_id, status"
+        ).eq("practice_schedule_id", str(practice_schedule_id)).execute()
+        
+        candidates = []
+        for attendance in attendance_response.data:
+            if attendance.get("status") in ["present", "late"]:
+                # ユーザー情報を取得
+                user_response = self.client.table("users").select(
+                    "id, email"
+                ).eq("id", attendance["user_id"]).execute()
+                
+                if user_response.data:
+                    user = user_response.data[0]
+                    # ユーザープロフィールを取得
+                    profile_response = self.client.table("user_profiles").select(
+                        "first_name_kanji, last_name_kanji, student_id, grade"
+                    ).eq("user_id", user["id"]).execute()
+                    
+                    if profile_response.data:
+                        profile = profile_response.data[0]
+                        if profile.get("grade") == 4:
+                            candidates.append({
+                                "user_id": user["id"],
+                                "email": user["email"],
+                                "first_name_kanji": profile.get("first_name_kanji"),
+                                "last_name_kanji": profile.get("last_name_kanji"),
+                                "student_id": profile.get("student_id"),
+                                "grade": profile.get("grade"),
+                                "attendance_id": attendance["id"],
+                                "attendance_status": attendance["status"]
+                            })
+        
+        return candidates
