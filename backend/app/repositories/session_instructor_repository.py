@@ -78,6 +78,7 @@ class SessionInstructorRepository:
                 "schedule_end_time": None,
                 "venue_name": None,
                 "venue_address": None,
+                "part_name": None,
             }
             
             # 出席者情報を取得
@@ -127,8 +128,21 @@ class SessionInstructorRepository:
                     formatted_item["schedule_start_time"] = schedule_data.get("start_time")
                     formatted_item["schedule_end_time"] = schedule_data.get("end_time")
             except Exception as e:
-                print(f"Error fetching attendance data for {item['attendance_id']}: {e}")
-                formatted_item["attendance_status"] = "unknown"
+                print(f"Error fetching schedule data for {item['schedule_id']}: {e}")
+            
+            # パート情報を取得（schedule_idとslot_orderからsessionsテーブルを経由）
+            try:
+                # まずsessionsテーブルからpart_idを取得
+                session_response = self.client.table("sessions").select("part_id").eq("schedule_id", item["schedule_id"]).eq("slot_order", item["slot_order"]).execute()
+                if session_response.data:
+                    part_id = session_response.data[0].get("part_id")
+                    if part_id:
+                        # partsテーブルからパート名を取得
+                        part_response = self.client.table("parts").select("name").eq("id", part_id).execute()
+                        if part_response.data:
+                            formatted_item["part_name"] = part_response.data[0].get("name")
+            except Exception as e:
+                print(f"Error fetching part data for schedule {item['schedule_id']} slot {item['slot_order']}: {e}")
             
             # 会場情報を取得（schedule_available_venue_idがある場合）
             if item.get("schedule_available_venue_id"):
@@ -206,6 +220,7 @@ class SessionInstructorRepository:
                 "user_name": None,
                 "user_email": None,
                 "attendance_status": None,
+                "part_name": None,
             }
             
             # 出席者情報を取得
@@ -244,6 +259,20 @@ class SessionInstructorRepository:
             except Exception as e:
                 print(f"Error fetching attendance data for {item['attendance_id']}: {e}")
                 formatted_item["attendance_status"] = "unknown"
+            
+            # パート情報を取得（schedule_idとslot_orderからsessionsテーブルを経由）
+            try:
+                # まずsessionsテーブルからpart_idを取得
+                session_response = self.client.table("sessions").select("part_id").eq("schedule_id", item["schedule_id"]).eq("slot_order", item["slot_order"]).execute()
+                if session_response.data:
+                    part_id = session_response.data[0].get("part_id")
+                    if part_id:
+                        # partsテーブルからパート名を取得
+                        part_response = self.client.table("parts").select("name").eq("id", part_id).execute()
+                        if part_response.data:
+                            formatted_item["part_name"] = part_response.data[0].get("name")
+            except Exception as e:
+                print(f"Error fetching part data for schedule {item['schedule_id']} slot {item['slot_order']}: {e}")
             
             formatted_data.append(formatted_item)
         

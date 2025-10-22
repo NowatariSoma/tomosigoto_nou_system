@@ -52,7 +52,6 @@ export const VALIDATION = {
 
 // セッション編集用の初期値
 export const INITIAL_SESSION_FORM = {
-  title: '',
   part_id: '',
   instructor_id: '', // 単一選択用に変更
   venue_id: '',

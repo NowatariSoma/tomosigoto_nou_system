@@ -71,20 +71,14 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-            {session.title}
-          </div>
-          <div className="text-xs text-gray-600">
-            優先度: {session.priority}
-          </div>
+          {session.part_name && (
+            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+              {session.part_name}
+            </div>
+          )}
           {session.start_time && session.end_time && (
             <div className="text-xs text-gray-500 mt-1">
               {session.start_time} - {session.end_time}
-            </div>
-          )}
-          {session.part_id && (
-            <div className="text-xs text-gray-500 mt-1">
-              パートID: {session.part_id}
             </div>
           )}
           {/* インストラクター表示 */}

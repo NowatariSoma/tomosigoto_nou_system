@@ -266,6 +266,100 @@ def create_attendance_records(user_ids, schedule_id):
         print(f"❌ 出席記録作成エラー: {e}")
         return False
 
+def create_parts():
+    """パートを作成"""
+    try:
+        print("🎵 パートを作成中...")
+        
+        # 既存のパートをチェック
+        existing = supabase.table("parts").select("id").limit(1).execute()
+        
+        if existing.data:
+            print("✅ パートは既に存在します")
+            return existing.data[0]["id"]
+        
+        part_data = {
+            "name": "テストパート",
+            "description": "テスト用のパート"
+        }
+        
+        result = supabase.table("parts").insert(part_data).execute()
+        if result.data:
+            print("✅ パート作成完了")
+            return result.data[0]["id"]
+        else:
+            print("❌ パート作成に失敗")
+            return None
+    except Exception as e:
+        print(f"❌ パート作成エラー: {e}")
+        return None
+
+def create_sessions(schedule_id, part_id):
+    """セッションを作成"""
+    try:
+        print("📅 セッションを作成中...")
+        
+        # 既存のセッションをチェック
+        existing = supabase.table("sessions").select("id").eq("schedule_id", schedule_id).eq("slot_order", 1).execute()
+        
+        if existing.data:
+            print("✅ セッションは既に存在します")
+            return True
+        
+        session_data = {
+            "schedule_id": schedule_id,
+            "part_id": part_id,
+            "title": "テストセッション",
+            "slot_order": 1,
+            "priority": 1
+        }
+        
+        result = supabase.table("sessions").insert(session_data).execute()
+        if result.data:
+            print("✅ セッション作成完了")
+            return True
+        else:
+            print("❌ セッション作成に失敗")
+            return False
+    except Exception as e:
+        print(f"❌ セッション作成エラー: {e}")
+        return False
+
+def create_session_instructors(user_ids, schedule_id):
+    """セッションインストラクターを作成"""
+    try:
+        print("👨‍🏫 セッションインストラクターを作成中...")
+        
+        # 出席記録を取得
+        attendance_response = supabase.table("practice_user_attendance").select("id").eq("practice_schedule_id", schedule_id).limit(2).execute()
+        
+        if not attendance_response.data or len(attendance_response.data) < 2:
+            print("❌ 出席記録が不足しています")
+            return False
+        
+        session_instructors = []
+        for i, attendance in enumerate(attendance_response.data[:2]):
+            session_instructor_data = {
+                "id": str(uuid.uuid4()),
+                "attendance_id": attendance["id"],
+                "schedule_id": schedule_id,
+                "slot_order": 1,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            }
+            session_instructors.append(session_instructor_data)
+        
+        result = supabase.table("session_instructors").upsert(session_instructors).execute()
+        if result.data:
+            print("✅ セッションインストラクター作成完了")
+            return True
+        else:
+            print("❌ セッションインストラクター作成に失敗")
+            return False
+    except Exception as e:
+        print(f"❌ セッションインストラクター作成エラー: {e}")
+        return False
+
 def main():
     """メイン処理"""
     print("🌱 シードデータ作成開始")
@@ -302,12 +396,31 @@ def main():
         print("❌ 出席記録作成に失敗しました")
         return
     
+    # パートを作成
+    part_id = create_parts()
+    if not part_id:
+        print("❌ パート作成に失敗しました")
+        return
+    
+    # セッションを作成
+    if not create_sessions(schedule_id, part_id):
+        print("❌ セッション作成に失敗しました")
+        return
+    
+    # セッションインストラクターを作成
+    if not create_session_instructors(user_ids, schedule_id):
+        print("❌ セッションインストラクター作成に失敗しました")
+        return
+    
     print("=" * 50)
     print("🎉 シードデータ作成完了！")
     print(f"📊 作成されたデータ:")
     print(f"   - 学年4ユーザー: {len(user_ids)}名")
     print(f"   - 練習スケジュールID: {schedule_id}")
     print(f"   - 出席記録: {len(user_ids)}件")
+    print(f"   - パートID: {part_id}")
+    print(f"   - セッション: 1件")
+    print(f"   - セッションインストラクター: 2件")
 
 if __name__ == "__main__":
     main()

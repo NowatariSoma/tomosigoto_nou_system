@@ -30,6 +30,8 @@ export interface SessionInstructorWithDetails extends SessionInstructor {
   // スケジュール情報
   schedule_date?: string;
   schedule_title?: string;
+  // パート情報
+  part_name?: string;
 }
 
 /**

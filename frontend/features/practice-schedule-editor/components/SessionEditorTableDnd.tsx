@@ -76,12 +76,11 @@ const DraggableSession: React.FC<{
           <GripVertical className="h-4 w-4 text-gray-400" />
         </div>
         <div className="flex-1">
-          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-            {session.title}
-          </div>
-          <div className="text-xs text-gray-700">
-            優先度: {session.priority}
-          </div>
+          {session.part_name && (
+            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+              {session.part_name}
+            </div>
+          )}
           {session.start_time && session.end_time && (
             <div className="text-xs text-gray-500 mt-1">
               {session.start_time} - {session.end_time}
@@ -355,12 +354,11 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       <DragOverlay>
         {activeId && activeSession ? (
           <div className="rounded-lg p-3 bg-blue-50 border-2 border-blue-400 shadow-xl cursor-grabbing">
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-              {activeSession.title}
-            </div>
-            <div className="text-xs text-gray-700">
-              優先度: {activeSession.priority}
-            </div>
+            {activeSession.part_name && (
+              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+                {activeSession.part_name}
+              </div>
+            )}
           </div>
         ) : null}
       </DragOverlay>
