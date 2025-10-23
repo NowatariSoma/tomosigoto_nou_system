@@ -33,6 +33,7 @@ from app.repositories.session_instructor_repository import SessionInstructorRepo
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.services.practice_schedule_service import PracticeScheduleService
 from app.services.schedule_available_venue_service import ScheduleAvailableVenueService
+from app.services.scheduling_optimization_service import SchedulingOptimizationService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -303,3 +304,23 @@ def get_schedule_available_venue_service(
 ) -> ScheduleAvailableVenueService:
     """ScheduleAvailableVenueServiceのインスタンスを依存性注入で取得"""
     return ScheduleAvailableVenueService(schedule_available_venue_repository)
+
+
+def get_scheduling_optimization_service(
+    supabase_client: Client = Depends(get_supabase),
+    practice_schedule_repository: PracticeScheduleRepository = Depends(get_practice_schedule_repository),
+    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
+    session_repository: SessionRepository = Depends(get_session_repository),
+    part_repository: PartRepository = Depends(get_part_repository),
+    member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> SchedulingOptimizationService:
+    """SchedulingOptimizationServiceのインスタンスを依存性注入で取得"""
+    return SchedulingOptimizationService(
+        practice_schedule_repository,
+        schedule_available_venue_repository,
+        session_repository,
+        part_repository,
+        member_assignment_repository,
+        user_repository
+    )

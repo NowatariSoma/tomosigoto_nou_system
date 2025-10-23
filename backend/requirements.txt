@@ -20,5 +20,9 @@ pytest-cov==4.1.0
 requests==2.31.0
 
 pydantic-settings>=2.0.0
+
+# OR-Tools for scheduling optimization
+ortools>=9.10.0
+
 # Core dependencies only for Docker
 # Linting tools can be installed separately in development 
