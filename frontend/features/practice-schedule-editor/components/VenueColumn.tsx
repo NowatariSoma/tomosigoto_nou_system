@@ -21,6 +21,9 @@ export const VenueColumn: React.FC<VenueColumnProps> = ({ venue }) => {
         <span>{venue.name}</span>
         {venue.is_preferred && <span className="text-xs">⭐</span>}
       </div>
+      <div className="text-xs text-white font-normal">
+        優先度: {venue.priority}
+      </div>
     </th>
   );
 };

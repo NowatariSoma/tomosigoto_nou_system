@@ -52,7 +52,6 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     openModal,
     closeModal,
     toggleEditMode,
-    updateTimeSlot,
   } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -257,14 +256,11 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         venues={venues}
         time_slots={time_slots}
         edit_mode={edit_mode}
-        scheduleId={currentScheduleId}
         onEditSession={handleEditSession}
         onDeleteSession={handleDeleteSession}
         onMoveSession={handleSessionMove}
         onAddTimeSlot={handleAddTimeSlot}
         onRemoveTimeSlot={handleRemoveTimeSlot}
-        onUpdateTimeSlot={updateTimeSlot}
-        fallbackInstructors={[]} // フォールバック用のインストラクター名配列（必要に応じて設定）
       />
 
       {/* セッション編集モーダル */}
@@ -274,7 +270,6 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           venues={venues}
           time_slots={time_slots}
           parts={parts}
-          scheduleId={currentScheduleId}
           is_creating={isCreating}
           onSubmit={handleSessionSubmit}
           onCancel={closeModal}
