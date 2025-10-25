@@ -96,7 +96,7 @@ class SessionBase(BaseModel):
 
     schedule_id: UUID
     part_id: Optional[UUID] = None
-    title: str
+    part_name: Optional[str] = None  # パート名
     slot_order: int
     schedule_available_venue_id: Optional[UUID] = None
     priority: int = 0
@@ -111,7 +111,6 @@ class SessionUpdate(BaseModel):
     """セッション更新用スキーマ"""
 
     part_id: Optional[UUID] = None
-    title: Optional[str] = None
     slot_order: Optional[int] = None
     schedule_available_venue_id: Optional[UUID] = None
     priority: Optional[int] = None
