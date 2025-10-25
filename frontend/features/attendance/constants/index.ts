@@ -36,6 +36,7 @@ export const INITIAL_ATTENDANCE_FORM = {
   practice_schedule_id: '',
   status: ATTENDANCE_STATUS.PRESENT,
   notes: '',
+  late_time: '',
 } as const;
 
 // UI表示用テキスト

@@ -14,7 +14,7 @@ interface User {
 interface SimpleAttendanceFormProps {
   practiceSchedules: PracticeSchedule[];
   users: User[];
-  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string }) => Promise<void>;
+  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string; lateTime?: string }) => Promise<void>;
   loading?: boolean;
 }
 
@@ -28,11 +28,12 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string }>({});
+  const [lateTime, setLateTime] = useState<string>('');
+  const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; lateTime?: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string } = {};
+    const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; lateTime?: string } = {};
 
     if (!selectedUserId) {
       newErrors.selectedUserId = 'ユーザーを選択してください';
@@ -44,6 +45,10 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
     if (!status) {
       newErrors.status = '出席状況を選択してください';
+    }
+
+    if (status === ATTENDANCE_STATUS.LATE && !lateTime) {
+      newErrors.lateTime = '遅刻時間を入力してください';
     }
 
     if (notes && notes.length > VALIDATION.MAX_NOTES_LENGTH) {
@@ -58,7 +63,13 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       try {
-        await onSubmit({ userId: selectedUserId, practiceScheduleId: selectedPracticeId, status, notes });
+        await onSubmit({
+          userId: selectedUserId,
+          practiceScheduleId: selectedPracticeId,
+          status,
+          notes,
+          lateTime: status === ATTENDANCE_STATUS.LATE ? lateTime : undefined
+        });
         setIsSubmitted(true);
       } catch (error) {
         console.error('Failed to submit attendance:', error);
@@ -84,6 +95,18 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     setStatus(newStatus);
     if (errors.status) {
       setErrors(prev => ({ ...prev, status: undefined }));
+    }
+    // 遅刻以外の場合は遅刻時間をクリア
+    if (newStatus !== ATTENDANCE_STATUS.LATE) {
+      setLateTime('');
+      setErrors(prev => ({ ...prev, lateTime: undefined }));
+    }
+  };
+
+  const handleLateTimeChange = (value: string) => {
+    setLateTime(value);
+    if (errors.lateTime) {
+      setErrors(prev => ({ ...prev, lateTime: undefined }));
     }
   };
 
@@ -216,6 +239,31 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
             <p className="mt-3 text-sm text-red-600 font-medium">{errors.status}</p>
           )}
         </div>
+
+        {/* 遅刻時間入力（遅刻の場合のみ表示） */}
+        {status === ATTENDANCE_STATUS.LATE && (
+          <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-sm">
+            <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
+              <div className="bg-yellow-100 p-2 rounded-lg">
+                <Clock className="h-5 w-5 text-yellow-600" />
+              </div>
+              <span>遅刻時間 <span className="text-red-500">*</span></span>
+            </label>
+            <input
+              type="time"
+              value={lateTime}
+              onChange={(e) => handleLateTimeChange(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-base transition-colors ${
+                errors.lateTime
+                  ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                  : 'border-yellow-300 focus:border-yellow-500 hover:border-yellow-400 bg-white'
+              }`}
+            />
+            {errors.lateTime && (
+              <p className="mt-2 text-sm text-red-600 font-medium">{errors.lateTime}</p>
+            )}
+          </div>
+        )}
 
         {/* 備考 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">

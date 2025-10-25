@@ -4,6 +4,7 @@ export interface Attendance {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
+  late_time?: string; // 遅刻時間（HH:MM形式）
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -15,11 +16,13 @@ export interface AttendanceCreate {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
+  late_time?: string; // 遅刻時間（HH:MM形式）
 }
 
 export interface AttendanceUpdate {
   status?: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
+  late_time?: string; // 遅刻時間（HH:MM形式）
 }
 
 export interface AttendanceResponse {
@@ -28,6 +31,7 @@ export interface AttendanceResponse {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
+  late_time?: string; // 遅刻時間（HH:MM形式）
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -82,10 +86,12 @@ export interface AttendanceFormData {
   practice_schedule_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes: string;
+  late_time?: string; // 遅刻時間（HH:MM形式）
 }
 
 export interface AttendanceFormErrors {
   practice_schedule_id?: string;
   status?: string;
   notes?: string;
+  late_time?: string;
 }
