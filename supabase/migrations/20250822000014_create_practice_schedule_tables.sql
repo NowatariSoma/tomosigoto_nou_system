@@ -12,9 +12,13 @@ CREATE TABLE practice_schedules (
   description text,
   schedule_type varchar(20) NOT NULL,
   status varchar(20),
+  stage_id uuid REFERENCES public.stages(id) ON DELETE SET NULL,
   created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
+
+-- カラムコメント
+COMMENT ON COLUMN practice_schedules.stage_id IS '舞台ID参照（この練習で扱う舞台）';
 
 -- 2) schedule_available_venues
 CREATE TABLE schedule_available_venues (
@@ -67,6 +71,7 @@ CREATE TABLE session_instructors (
 -- インデックス
 CREATE INDEX idx_practice_schedules_date ON practice_schedules(schedule_date);
 CREATE INDEX idx_practice_schedules_status ON practice_schedules(status);
+CREATE INDEX idx_practice_schedules_stage_id ON practice_schedules(stage_id);
 CREATE INDEX idx_schedule_available_venues_schedule_id ON schedule_available_venues(schedule_id);
 CREATE INDEX idx_sessions_schedule_id ON sessions(schedule_id);
 CREATE INDEX idx_sessions_schedule_available_venue_id ON sessions(schedule_available_venue_id);
