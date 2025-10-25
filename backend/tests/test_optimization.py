@@ -5,8 +5,14 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from tests.fixtures.optimization_test_data import create_simple_test_problem
+from tests.fixtures.optimization_test_data import (
+    create_simple_test_problem,
+    create_test_member_assignments_data,
+    create_test_attendance_data,
+    create_test_data_with_categories
+)
 from app.services.optimization.models import PartAssignment, Player
+from app.services.optimization.constants import PriorityConfig
 
 
 class TestDataModels:
@@ -130,5 +136,82 @@ if __name__ == "__main__":
         print("✅ 問題作成テスト: 成功")
     except Exception as e:
         print(f"❌ 問題作成テスト: 失敗 - {e}")
+    
+    print("\n=== テスト完了 ===")
+
+
+class TestPriorityCalculation:
+    """優先度計算のテスト"""
+    
+    def test_mai_category_bonus(self):
+        """舞カテゴリボーナスのテスト"""
+        test_data = create_test_data_with_categories()
+        
+        # 舞カテゴリの優先度ボーナスを確認
+        expected = test_data["expected_priorities"]
+        assert expected["user_1_mai"] == 50 + PriorityConfig.MAI_CATEGORY_BONUS
+        assert expected["user_1_utai"] == 30  # ボーナスなし
+        print("✅ 舞カテゴリボーナステスト: 成功")
+    
+    def test_attendance_filtering(self):
+        """出席フィルタリングのテスト"""
+        test_data = create_test_data_with_categories()
+        attendance_data = test_data["attendance"]
+        
+        # 出席確定ユーザーのみが含まれることを確認
+        filtered_users = []
+        for attendance in attendance_data:
+            if attendance["status"] in PriorityConfig.ATTENDANCE_REQUIRED_STATUSES:
+                filtered_users.append(attendance["user_id"])
+        
+        expected_filtered = test_data["expected_filtered_users"]
+        assert set(filtered_users) == set(expected_filtered)
+        assert "user_3" not in filtered_users  # 欠席ユーザーは除外
+        print("✅ 出席フィルタリングテスト: 成功")
+    
+    def test_priority_range(self):
+        """優先度範囲のテスト"""
+        test_data = create_test_data_with_categories()
+        expected = test_data["expected_priorities"]
+        
+        # 全ての優先度が0-130の範囲内であることを確認
+        for key, priority in expected.items():
+            assert 0 <= priority <= 130, f"{key}の優先度が範囲外: {priority}"
+        print("✅ 優先度範囲テスト: 成功")
+
+
+if __name__ == "__main__":
+    print("=== 最適化システムテスト実行 ===\n")
+    
+    data_test = TestDataModels()
+    problem_test = TestProblemCreation()
+    priority_test = TestPriorityCalculation()
+    
+    # データモデルテスト
+    try:
+        data_test.test_part_assignment_creation()
+        data_test.test_part_assignment_validation()
+        data_test.test_player_creation()
+        print("✅ データモデルテスト: 成功")
+    except Exception as e:
+        print(f"❌ データモデルテスト: 失敗 - {e}")
+    
+    # 問題作成テスト
+    try:
+        problem_test.test_simple_problem_structure()
+        problem_test.test_player_part_assignments()
+        problem_test.test_data_validation()
+        print("✅ 問題作成テスト: 成功")
+    except Exception as e:
+        print(f"❌ 問題作成テスト: 失敗 - {e}")
+    
+    # 優先度計算テスト
+    try:
+        priority_test.test_mai_category_bonus()
+        priority_test.test_attendance_filtering()
+        priority_test.test_priority_range()
+        print("✅ 優先度計算テスト: 成功")
+    except Exception as e:
+        print(f"❌ 優先度計算テスト: 失敗 - {e}")
     
     print("\n=== テスト完了 ===")

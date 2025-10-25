@@ -15,6 +15,7 @@ from app.repositories.session_repository import SessionRepository
 from app.repositories.part_repository import PartRepository
 from app.repositories.member_assignment_repository import MemberAssignmentRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.attendance_repository import AttendanceRepository
 from app.services.optimization.adapters import SchedulingDataAdapter
 from app.services.optimization.optimizer import SchedulingOptimizer
 from app.services.optimization.models import SchedulingProblem, SchedulingSolution
@@ -33,7 +34,8 @@ class SchedulingOptimizationService:
         session_repository: SessionRepository,
         part_repository: PartRepository,
         member_assignment_repository: MemberAssignmentRepository,
-        user_repository: UserRepository
+        user_repository: UserRepository,
+        attendance_repository: AttendanceRepository
     ):
         self.practice_schedule_repository = practice_schedule_repository
         self.schedule_available_venue_repository = schedule_available_venue_repository
@@ -41,6 +43,7 @@ class SchedulingOptimizationService:
         self.part_repository = part_repository
         self.member_assignment_repository = member_assignment_repository
         self.user_repository = user_repository
+        self.attendance_repository = attendance_repository
     
     async def optimize_schedule(
         self, 
@@ -61,7 +64,7 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data = await self._get_related_data(schedule_id)
             
             # データの妥当性を検証
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
@@ -72,7 +75,7 @@ class SchedulingOptimizationService:
             
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, attendance_data=attendance_data
             )
             
             # 最適化を実行
@@ -133,7 +136,7 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data = await self._get_related_data(schedule_id)
             
             # データの妥当性を検証
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
@@ -144,7 +147,7 @@ class SchedulingOptimizationService:
             
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, attendance_data=attendance_data
             )
             
             # 最適化を実行
@@ -202,7 +205,14 @@ class SchedulingOptimizationService:
         # 5. メンバー割り当てデータ
         member_assignments_data = await self.member_assignment_repository.find_all()
         
-        return venues_data, parts_data, users_data, member_assignments_data
+        # 6. 出席データを取得（エラー時は空リストを返す）
+        try:
+            attendance_data = await self.attendance_repository.find_by_practice_schedule(schedule_id)
+        except Exception as e:
+            logger.warning(f"出席データの取得に失敗しました: {e}")
+            attendance_data = []
+        
+        return venues_data, parts_data, users_data, member_assignments_data, attendance_data
     
     async def _create_sessions_from_solution(
         self, 

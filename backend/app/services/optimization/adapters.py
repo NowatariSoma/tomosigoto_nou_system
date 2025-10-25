@@ -7,7 +7,7 @@ from app.services.optimization.models import (
     SchedulingProblem, Player, Room, TimeSlot, 
     PracticeSession, SchedulingSolution, PartAssignment
 )
-from app.services.optimization.constants import ProblemConfig
+from app.services.optimization.constants import ProblemConfig, PriorityConfig
 
 
 class SchedulingDataAdapter:
@@ -22,7 +22,8 @@ class SchedulingDataAdapter:
         member_assignments_data: List[Dict[str, Any]],
         session_instructors_data: List[Dict[str, Any]] = None,
         stage_id: str = None,  # ステージIDを追加
-        sessions_data: List[Dict[str, Any]] = None  # セッションデータを追加
+        sessions_data: List[Dict[str, Any]] = None,  # セッションデータを追加
+        attendance_data: List[Dict[str, Any]] = None  # 出席データを追加
     ) -> SchedulingProblem:
         """データベースデータをSchedulingProblemに変換"""
         
@@ -95,6 +96,12 @@ class SchedulingDataAdapter:
                     # ユーザー情報を取得
                     user_info = next((u for u in users_data if u.get('id') == user_id), None)
                     if user_info:
+                        # 出席データによるフィルタリング（指導者も対象）
+                        if attendance_data:
+                            user_attendance = next((a for a in attendance_data if a.get('user_id') == user_id), None)
+                            if not user_attendance or user_attendance.get('status') not in PriorityConfig.ATTENDANCE_REQUIRED_STATUSES:
+                                continue  # 出席確定でない指導者はスキップ
+                        
                         # 指導者の所属パートと優先度を取得（member_assignmentsから）
                         part_assignments = []
                         for ma in member_assignments_data:
@@ -102,13 +109,18 @@ class SchedulingDataAdapter:
                                 part_data = next((p for p in parts_data if p.get('id') == ma.get('part_id')), None)
                                 if not part_data:
                                     continue
-                                    
-                                # 優先度を取得（DBに存在しない場合はデフォルト50）
-                                priority = ma.get('priority', 50)
+                                
+                                # 基本優先度を取得
+                                base_priority = ma.get('priority', 50)
+                                
+                                # 舞カテゴリボーナスを適用
+                                if ma.get('category') == 'mai':
+                                    base_priority += PriorityConfig.MAI_CATEGORY_BONUS
+                                
                                 part_assignments.append(PartAssignment(
                                     part_id=str(part_data['id']),
                                     part_name=part_data.get('name', ''),
-                                    priority=priority
+                                    priority=base_priority
                                 ))
                         
                         if part_assignments:  # パートが割り当てられている場合のみ追加
@@ -134,6 +146,12 @@ class SchedulingDataAdapter:
             if not user_info:
                 continue
             
+            # 出席データによるフィルタリング
+            if attendance_data:
+                user_attendance = next((a for a in attendance_data if a.get('user_id') == user_id), None)
+                if not user_attendance or user_attendance.get('status') not in PriorityConfig.ATTENDANCE_REQUIRED_STATUSES:
+                    continue  # 出席確定でないユーザーはスキップ
+            
             # このユーザーの全パートと優先度を取得
             part_assignments = []
             for ma in member_assignments_data:
@@ -141,13 +159,18 @@ class SchedulingDataAdapter:
                     part_data = next((p for p in parts_data if p.get('id') == ma.get('part_id')), None)
                     if not part_data:
                         continue
-                        
-                    # 優先度を取得（DBに存在しない場合はデフォルト50）
-                    priority = ma.get('priority', 50)
+                    
+                    # 基本優先度を取得
+                    base_priority = ma.get('priority', 50)
+                    
+                    # 舞カテゴリボーナスを適用
+                    if ma.get('category') == 'mai':
+                        base_priority += PriorityConfig.MAI_CATEGORY_BONUS
+                    
                     part_assignments.append(PartAssignment(
                         part_id=str(part_data['id']),
                         part_name=part_data.get('name', ''),
-                        priority=priority
+                        priority=base_priority
                     ))
             
             if part_assignments:
