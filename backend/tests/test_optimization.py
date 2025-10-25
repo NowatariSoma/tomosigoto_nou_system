@@ -5,8 +5,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from fixtures.optimization_test_data import create_simple_test_problem
-from app.services.optimization.models import PartType, PartAssignment, Player
+from tests.fixtures.optimization_test_data import create_simple_test_problem
+from app.services.optimization.models import PartAssignment, Player
 
 
 class TestDataModels:
@@ -14,19 +14,20 @@ class TestDataModels:
     
     def test_part_assignment_creation(self):
         """PartAssignmentの作成テスト"""
-        assignment = PartAssignment(PartType.A, 80)
-        assert assignment.part == PartType.A
+        assignment = PartAssignment(part_id="uuid-1", part_name="第1バイオリン", priority=80)
+        assert assignment.part_id == "uuid-1"
+        assert assignment.part_name == "第1バイオリン"
         assert assignment.priority == 80
     
     def test_part_assignment_validation(self):
         """PartAssignmentのバリデーションテスト"""
         # 正常な範囲
-        assignment = PartAssignment(PartType.A, 50)
+        assignment = PartAssignment(part_id="uuid-1", part_name="第1バイオリン", priority=50)
         assert 0 <= assignment.priority <= 100
         
         # 境界値テスト
-        PartAssignment(PartType.A, 0)   # 最小値
-        PartAssignment(PartType.A, 100) # 最大値
+        PartAssignment(part_id="uuid-1", part_name="第1バイオリン", priority=0)   # 最小値
+        PartAssignment(part_id="uuid-1", part_name="第1バイオリン", priority=100) # 最大値
     
     def test_player_creation(self):
         """Playerの作成テスト"""
@@ -34,8 +35,8 @@ class TestDataModels:
             id=1,
             name="テストプレイヤー",
             part_assignments=[
-                PartAssignment(PartType.A, 90),
-                PartAssignment(PartType.B, 30)
+                PartAssignment(part_id="part_a", part_name="第1バイオリン", priority=90),
+                PartAssignment(part_id="part_b", part_name="第2バイオリン", priority=30)
             ],
             is_instructor=False
         )
@@ -45,8 +46,8 @@ class TestDataModels:
         assert len(player.part_assignments) == 2
         assert not player.is_instructor
         
-        # 後方互換性の確認
-        assert player.parts == [PartType.A, PartType.B]
+        # パートIDの確認
+        assert player.part_ids == ["part_a", "part_b"]
 
 
 class TestProblemCreation:
@@ -77,13 +78,13 @@ class TestProblemCreation:
         # 指導者のパート割り当て確認
         instructor = next(p for p in problem.players if p.is_instructor)
         assert len(instructor.part_assignments) == 2
-        assert instructor.part_assignments[0].part == PartType.A
+        assert instructor.part_assignments[0].part_id == "part_a"
         assert instructor.part_assignments[0].priority == 80
-        assert instructor.part_assignments[1].part == PartType.B
+        assert instructor.part_assignments[1].part_id == "part_b"
         assert instructor.part_assignments[1].priority == 60
         
-        # 後方互換性の確認
-        assert instructor.parts == [PartType.A, PartType.B]
+        # パートIDの確認
+        assert instructor.part_ids == ["part_a", "part_b"]
     
     def test_data_validation(self):
         """データ検証テスト"""
@@ -100,7 +101,9 @@ class TestProblemCreation:
             assert len(player.part_assignments) > 0
             for assignment in player.part_assignments:
                 assert 0 <= assignment.priority <= 100
-                assert assignment.part in problem.parts
+                # パートIDが問題のパートリストに含まれているか確認
+                part_ids = [part["id"] for part in problem.parts]
+                assert assignment.part_id in part_ids
 
 
 if __name__ == "__main__":

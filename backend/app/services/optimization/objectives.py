@@ -76,12 +76,12 @@ class SchedulingObjectives:
                 # 1. この時間にスケジュールされた所属パートを列挙
                 scheduled_assignments = []
                 for assignment in player.part_assignments:
-                    part = assignment.part
+                    part_id = assignment.part_id
                     for room in self.problem.rooms:
                         for instructor in self.problem.players:
                             if instructor.is_instructor:
-                                var = self.session_vars.get((part, room.id, time_slot.id, instructor.id))
-                                if var:
+                                var = self.session_vars.get((part_id, room.id, time_slot.id, instructor.id))
+                                if var is not None:
                                     scheduled_assignments.append((assignment, var))
                 
                 if len(scheduled_assignments) <= 1:
@@ -90,9 +90,9 @@ class SchedulingObjectives:
                 # 2. 各パートへの参加/不参加を表す変数
                 attend_vars = {}
                 for assignment, session_var in scheduled_assignments:
-                    part = assignment.part
-                    attend_var = model.NewBoolVar(f"attend_{player.id}_{part.value}_{time_slot.id}")
-                    attend_vars[part] = (attend_var, assignment.priority)
+                    part_id = assignment.part_id
+                    attend_var = model.NewBoolVar(f"attend_{player.id}_{part_id}_{time_slot.id}")
+                    attend_vars[part_id] = (attend_var, assignment.priority)
                     
                     # セッションがない場合は参加できない
                     model.Add(attend_var <= session_var)
@@ -101,13 +101,13 @@ class SchedulingObjectives:
                 model.Add(sum(attend_var for attend_var, _ in attend_vars.values()) <= 1)
                 
                 # 4. ペナルティ = 参加しなかったパートの優先度の合計
-                for part, (attend_var, priority) in attend_vars.items():
+                for part_id, (attend_var, priority) in attend_vars.items():
                     # not_attend = 1 - attend
-                    not_attend = model.NewBoolVar(f"not_attend_{player.id}_{part.value}_{time_slot.id}")
+                    not_attend = model.NewBoolVar(f"not_attend_{player.id}_{part_id}_{time_slot.id}")
                     model.Add(not_attend == 1 - attend_var)
                     
                     # penalty = not_attend * priority
-                    penalty_var = model.NewIntVar(0, 100, f"penalty_{player.id}_{part.value}_{time_slot.id}")
+                    penalty_var = model.NewIntVar(0, 100, f"penalty_{player.id}_{part_id}_{time_slot.id}")
                     model.AddMultiplicationEquality(penalty_var, [not_attend, priority])
                     
                     total_penalty.append(penalty_var)
