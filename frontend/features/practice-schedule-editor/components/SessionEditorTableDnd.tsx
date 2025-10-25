@@ -23,8 +23,6 @@ import { timeToMinutes } from '../mappers/time-slot-mapper';
 import { Calendar, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { EditableTimeSlot } from './EditableTimeSlot';
-import { TimeSlotEditorModal } from './TimeSlotEditorModal';
 
 interface SessionEditorTableDndProps {
   sessions: Session[];
@@ -34,7 +32,6 @@ interface SessionEditorTableDndProps {
   onEditSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onMoveSession: (sessionId: string, venueId: string, timeSlot: string, slotOrder: number) => void;
-  onUpdateTimeSlot?: (timeSlot: TimeSlot) => void;
 }
 
 // ドラッグ可能なセッションコンポーネント
@@ -79,11 +76,12 @@ const DraggableSession: React.FC<{
           <GripVertical className="h-4 w-4 text-gray-400" />
         </div>
         <div className="flex-1">
-          {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-              {session.part_name}
-            </div>
-          )}
+          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            {session.title}
+          </div>
+          <div className="text-xs text-gray-700">
+            優先度: {session.priority}
+          </div>
           {session.start_time && session.end_time && (
             <div className="text-xs text-gray-500 mt-1">
               {session.start_time} - {session.end_time}
@@ -164,11 +162,8 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
   onEditSession,
   onDeleteSession,
   onMoveSession,
-  onUpdateTimeSlot,
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
-  const [editingTimeSlot, setEditingTimeSlot] = useState<TimeSlot | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -277,24 +272,6 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
     setActiveId(null);
   };
 
-  const handleTimeSlotEdit = (timeSlot: TimeSlot) => {
-    setEditingTimeSlot(timeSlot);
-    setIsTimeSlotModalOpen(true);
-  };
-
-  const handleTimeSlotSave = (updatedTimeSlot: TimeSlot) => {
-    if (onUpdateTimeSlot) {
-      onUpdateTimeSlot(updatedTimeSlot);
-    }
-    setIsTimeSlotModalOpen(false);
-    setEditingTimeSlot(null);
-  };
-
-  const handleTimeSlotModalClose = () => {
-    setIsTimeSlotModalOpen(false);
-    setEditingTimeSlot(null);
-  };
-
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
@@ -321,7 +298,7 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* テーブルヘッダー */}
         <div className="flex">
-          <div className="w-32 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
+          <div className="w-24 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
           <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
             {venues.map((venue) => (
               <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
@@ -337,10 +314,9 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
             <tbody>
               {time_slots.map((timeSlot) => (
                 <tr key={timeSlot.time} className="border-b border-gray-100">
-                  <EditableTimeSlot
-                    timeSlot={timeSlot}
-                    onEdit={handleTimeSlotEdit}
-                  />
+                  <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-gray-900 align-top border-r border-gray-600 hover:bg-gray-800 transition-colors">
+                    {timeSlot.display_time}
+                  </td>
                   {venues.map((venue) => {
                     const venueSessions = groupedSessions[venue.id]?.[timeSlot.time] || [];
                     return (
@@ -379,22 +355,15 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       <DragOverlay>
         {activeId && activeSession ? (
           <div className="rounded-lg p-3 bg-blue-50 border-2 border-blue-400 shadow-xl cursor-grabbing">
-            {activeSession.part_name && (
-              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-                {activeSession.part_name}
-              </div>
-            )}
+            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+              {activeSession.title}
+            </div>
+            <div className="text-xs text-gray-700">
+              優先度: {activeSession.priority}
+            </div>
           </div>
         ) : null}
       </DragOverlay>
     </DndContext>
-
-    {/* 時間スロット編集モーダル */}
-    <TimeSlotEditorModal
-      isOpen={isTimeSlotModalOpen}
-      onClose={handleTimeSlotModalClose}
-      onSave={handleTimeSlotSave}
-      timeSlot={editingTimeSlot}
-    />
   );
 };

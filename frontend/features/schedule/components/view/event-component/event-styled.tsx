@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/feedback/badge";
 import { Button } from "@/components/ui/forms/button";
 import { useModal } from "@/features/schedule/providers/modal-context";
 import AddEventModal from "@/features/schedule/modals/add-event-modal";
-import PracticeDetailModal from "@/features/schedule/modals/practice-detail-modal";
 import { Event, CustomEventModal } from "@/features/schedule/types";
 import { TrashIcon, CalendarIcon, ClockIcon } from "lucide-react";
 import { useScheduler } from "@/features/schedule/providers/schedular-provider";
@@ -81,76 +80,23 @@ export default function EventStyled({
   // Hide it for minimized events to save space, show on hover instead
   const shouldShowDeleteButton = !event?.minmized;
 
-  // 練習スケジュールかどうかを判定する関数
-  function isPracticeScheduleEvent(event: Event): boolean {
-    // 練習スケジュールイベントはmetadataプロパティを持つ
-    const hasMetadata = (event as any).metadata && (
-      (event as any).metadata.scheduleType || 
-      (event as any).metadata.venues ||
-      (event as any).metadata.sessionCount ||
-      (event as any).metadata.divisionCount
-    );
-    
-    // タイトルに練習関連のキーワードが含まれる
-    const hasPracticeInTitle = (
-      event.title.includes('練習') ||
-      event.title.includes('Practice') ||
-      event.title.includes('practice') ||
-      event.title.includes('レッスン') ||
-      event.title.includes('Lesson')
-    );
-    
-    // 説明に練習関連のキーワードが含まれる
-    const hasPracticeInDescription = event.description && (
-      event.description.includes('練習') ||
-      event.description.includes('Practice') ||
-      event.description.includes('practice') ||
-      event.description.includes('レッスン') ||
-      event.description.includes('Lesson')
-    );
-    
-    // 練習スケジュールサービスから来たイベントかどうか
-    const isFromPracticeService = event.id && (
-      event.id.length === 36 || // UUID形式
-      event.id.startsWith('practice-') ||
-      event.id.includes('schedule')
-    );
-    
-    return hasMetadata || hasPracticeInTitle || hasPracticeInDescription || isFromPracticeService;
-  }
-
   // Handler function
   function handleEditEvent(event: Event) {
-    // 練習スケジュールの場合は練習詳細モーダルを表示
-    if (isPracticeScheduleEvent(event)) {
-      setOpen(
-        <CustomModal title="練習スケジュール詳細">
-          <PracticeDetailModal />
-        </CustomModal>,
-        async () => {
-          return {
-            practiceId: event.id,
-            ...event,
-          };
-        }
-      );
-    } else {
-      // 通常のイベントの場合は編集モーダルを表示
-      setOpen(
-        <CustomModal title="Edit Event">
-          <AddEventModal
-            CustomAddEventModal={
-              CustomEventModal?.CustomAddEventModal?.CustomForm
-            }
-          />
-        </CustomModal>,
-        async () => {
-          return {
-            ...event,
-          };
-        }
-      );
-    }
+    // Open the modal with the content
+    setOpen(
+      <CustomModal title="Edit Event">
+        <AddEventModal
+          CustomAddEventModal={
+            CustomEventModal?.CustomAddEventModal?.CustomForm
+          }
+        />
+      </CustomModal>,
+      async () => {
+        return {
+          ...event,
+        };
+      }
+    );
   }
 
   // Get background color class based on variant
