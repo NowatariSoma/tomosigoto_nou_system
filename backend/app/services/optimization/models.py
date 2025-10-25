@@ -21,18 +21,33 @@ class PartType(Enum):
 
 
 @dataclass
+class PartAssignment:
+    """パート割り当てと優先度"""
+    part: PartType
+    priority: int = 50  # 0-100、デフォルト50
+    
+    def __post_init__(self):
+        if not 0 <= self.priority <= 100:
+            raise ValueError("priority must be between 0 and 100")
+
+
+@dataclass
 class Player:
     """プレイヤー（参加者）"""
     id: int
     name: str
-    parts: List[PartType]  # 所属パート（複数可）
+    part_assignments: List[PartAssignment]  # パート割り当てと優先度
     is_instructor: bool = False  # 指導者かどうか
-    overlap_priority: int = 50  # 個人の重複優先度（0-100、0=制限なし）
 
     def __post_init__(self):
         """初期化後の検証"""
-        if not 0 <= self.overlap_priority <= 100:
-            raise ValueError("overlap_priority must be between 0 and 100")
+        if not self.part_assignments:
+            raise ValueError("part_assignments cannot be empty")
+    
+    @property
+    def parts(self) -> List[PartType]:
+        """後方互換性のためのプロパティ"""
+        return [assignment.part for assignment in self.part_assignments]
 
 
 @dataclass

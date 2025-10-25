@@ -64,36 +64,51 @@ class SchedulingObjectives:
             return -sum(instructor_session_counts)  # 最大化のため負の値を返す
     
     def create_player_penalty(self, model: cp_model.CpModel):
-        """プレイヤー制約違反ペナルティを作成（個人別優先度）"""
-        player_violations = []
+        """パート×個人優先度に基づくペナルティを作成"""
+        total_penalty = []
         
         for player in self.problem.players:
             if player.is_instructor:
                 continue
-                
-            # 個人の優先度を取得（デフォルト50）
-            player_priority = getattr(player, 'overlap_priority', 50)
             
             for time_slot in self.problem.time_slots:
-                # そのプレイヤーの所属パートの練習数
-                player_part_sessions = []
-                for player_part in player.parts:
+                # 1. この時間にスケジュールされた所属パートを列挙
+                scheduled_assignments = []
+                for assignment in player.part_assignments:
+                    part = assignment.part
                     for room in self.problem.rooms:
                         for instructor in self.problem.players:
                             if instructor.is_instructor:
-                                if (player_part, room.id, time_slot.id, instructor.id) in self.session_vars:
-                                    player_part_sessions.append(
-                                        self.session_vars[(player_part, room.id, time_slot.id, instructor.id)]
-                                    )
+                                var = self.session_vars.get((part, room.id, time_slot.id, instructor.id))
+                                if var:
+                                    scheduled_assignments.append((assignment, var))
                 
-                # 違反数 = max(0, 所属パート数 - 1)
-                if player_part_sessions:
-                    violation = model.NewIntVar(0, ConstraintLimits.MAX_VIOLATIONS, f"player_violation_{player.id}_{time_slot.id}")
-                    model.Add(violation >= sum(player_part_sessions) - 1)
+                if len(scheduled_assignments) <= 1:
+                    continue  # 重複なし
+                
+                # 2. 各パートへの参加/不参加を表す変数
+                attend_vars = {}
+                for assignment, session_var in scheduled_assignments:
+                    part = assignment.part
+                    attend_var = model.NewBoolVar(f"attend_{player.id}_{part.value}_{time_slot.id}")
+                    attend_vars[part] = (attend_var, assignment.priority)
                     
-                    # 個人の優先度を適用
-                    weighted_violation = model.NewIntVar(0, ConstraintLimits.MAX_WEIGHTED_VIOLATIONS, f"weighted_violation_{player.id}_{time_slot.id}")
-                    model.Add(weighted_violation == violation * player_priority)
-                    player_violations.append(weighted_violation)
+                    # セッションがない場合は参加できない
+                    model.Add(attend_var <= session_var)
+                
+                # 3. 最大1つのパートにのみ参加
+                model.Add(sum(attend_var for attend_var, _ in attend_vars.values()) <= 1)
+                
+                # 4. ペナルティ = 参加しなかったパートの優先度の合計
+                for part, (attend_var, priority) in attend_vars.items():
+                    # not_attend = 1 - attend
+                    not_attend = model.NewBoolVar(f"not_attend_{player.id}_{part.value}_{time_slot.id}")
+                    model.Add(not_attend == 1 - attend_var)
+                    
+                    # penalty = not_attend * priority
+                    penalty_var = model.NewIntVar(0, 100, f"penalty_{player.id}_{part.value}_{time_slot.id}")
+                    model.AddMultiplicationEquality(penalty_var, [not_attend, priority])
+                    
+                    total_penalty.append(penalty_var)
         
-        return sum(player_violations) if player_violations else None
+        return sum(total_penalty) if total_penalty else None

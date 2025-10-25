@@ -6,7 +6,7 @@ from typing import List, Optional
 from ortools.sat.python import cp_model
 from app.services.optimization.models import (
     SchedulingProblem, SchedulingSolution, PracticeSession, 
-    Player, PartType, Room, TimeSlot
+    Player, PartType, Room, TimeSlot, PartAssignment
 )
 from app.services.optimization.constraints import SchedulingConstraints
 from app.services.optimization.objectives import SchedulingObjectives
@@ -175,30 +175,76 @@ def create_sample_problem() -> SchedulingProblem:
     # プレイヤー定義（指導者含む）
     players = [
         # 指導者（5人、全員2つのパートに所属）
-        Player(id=1, name="田中先生", parts=[PartType.A, PartType.B], is_instructor=True, overlap_priority=100),  # 厳格
-        Player(id=2, name="佐藤先生", parts=[PartType.C, PartType.D], is_instructor=True, overlap_priority=75),   # やや厳格
-        Player(id=3, name="鈴木先生", parts=[PartType.E, PartType.F], is_instructor=True, overlap_priority=50),   # 中程度
-        Player(id=4, name="高橋先生", parts=[PartType.G, PartType.H], is_instructor=True, overlap_priority=25),   # 緩い
-        Player(id=5, name="山田先生", parts=[PartType.I, PartType.A], is_instructor=True, overlap_priority=0),    # 制限なし
-        # 一般プレイヤー（複数パート所属、個人別優先度設定）
-        Player(id=6, name="佐々木さん", parts=[PartType.A, PartType.B], overlap_priority=100),  # 厳格
-        Player(id=7, name="松本さん", parts=[PartType.B, PartType.C], overlap_priority=50),   # 中程度
-        Player(id=8, name="井上さん", parts=[PartType.C, PartType.D], overlap_priority=0),    # 制限なし
-        Player(id=9, name="木村さん", parts=[PartType.D, PartType.E], overlap_priority=100),  # 厳格
-        Player(id=10, name="林さん", parts=[PartType.E, PartType.F], overlap_priority=25),    # 緩い
-        Player(id=11, name="清水さん", parts=[PartType.F, PartType.G], overlap_priority=75),   # やや厳格
-        Player(id=12, name="森さん", parts=[PartType.G, PartType.H], overlap_priority=0),     # 制限なし
-        Player(id=13, name="石川さん", parts=[PartType.H, PartType.I], overlap_priority=100), # 厳格
-        Player(id=14, name="田村さん", parts=[PartType.I, PartType.A], overlap_priority=50),   # 中程度
-        Player(id=15, name="山田さん", parts=[PartType.A, PartType.C], overlap_priority=75),   # やや厳格
-        Player(id=16, name="佐藤さん", parts=[PartType.B, PartType.D], overlap_priority=25),   # 緩い
-        Player(id=17, name="鈴木さん", parts=[PartType.C, PartType.E], overlap_priority=50),   # 中程度
-        Player(id=18, name="高橋さん", parts=[PartType.D, PartType.F], overlap_priority=100),  # 厳格
-        Player(id=19, name="伊藤さん", parts=[PartType.E, PartType.G], overlap_priority=0),    # 制限なし
-        Player(id=20, name="渡辺さん", parts=[PartType.F, PartType.H], overlap_priority=75),   # やや厳格
-        Player(id=21, name="中村さん", parts=[PartType.G, PartType.I], overlap_priority=25),   # 緩い
-        Player(id=22, name="小林さん", parts=[PartType.H, PartType.A], overlap_priority=50),   # 中程度
-        Player(id=23, name="加藤さん", parts=[PartType.I, PartType.B], overlap_priority=100),  # 厳格
+        Player(id=1, name="田中先生", part_assignments=[
+            PartAssignment(PartType.A, 100), PartAssignment(PartType.B, 80)
+        ], is_instructor=True),
+        Player(id=2, name="佐藤先生", part_assignments=[
+            PartAssignment(PartType.C, 90), PartAssignment(PartType.D, 70)
+        ], is_instructor=True),
+        Player(id=3, name="鈴木先生", part_assignments=[
+            PartAssignment(PartType.E, 80), PartAssignment(PartType.F, 60)
+        ], is_instructor=True),
+        Player(id=4, name="高橋先生", part_assignments=[
+            PartAssignment(PartType.G, 70), PartAssignment(PartType.H, 50)
+        ], is_instructor=True),
+        Player(id=5, name="山田先生", part_assignments=[
+            PartAssignment(PartType.I, 60), PartAssignment(PartType.A, 40)
+        ], is_instructor=True),
+        # 一般プレイヤー（複数パート所属、パート別優先度設定）
+        Player(id=6, name="佐々木さん", part_assignments=[
+            PartAssignment(PartType.A, 90), PartAssignment(PartType.B, 30)
+        ]),  # Aパート優先
+        Player(id=7, name="松本さん", part_assignments=[
+            PartAssignment(PartType.B, 60), PartAssignment(PartType.C, 50)
+        ]),  # バランス
+        Player(id=8, name="井上さん", part_assignments=[
+            PartAssignment(PartType.C, 40), PartAssignment(PartType.D, 20)
+        ]),  # 緩い
+        Player(id=9, name="木村さん", part_assignments=[
+            PartAssignment(PartType.D, 95), PartAssignment(PartType.E, 10)
+        ]),  # Dパート優先
+        Player(id=10, name="林さん", part_assignments=[
+            PartAssignment(PartType.E, 30), PartAssignment(PartType.F, 25)
+        ]),  # 緩い
+        Player(id=11, name="清水さん", part_assignments=[
+            PartAssignment(PartType.F, 85), PartAssignment(PartType.G, 15)
+        ]),  # Fパート優先
+        Player(id=12, name="森さん", part_assignments=[
+            PartAssignment(PartType.G, 20), PartAssignment(PartType.H, 10)
+        ]),  # 制限なし
+        Player(id=13, name="石川さん", part_assignments=[
+            PartAssignment(PartType.H, 100), PartAssignment(PartType.I, 5)
+        ]),  # Hパート厳格
+        Player(id=14, name="田村さん", part_assignments=[
+            PartAssignment(PartType.I, 55), PartAssignment(PartType.A, 45)
+        ]),  # バランス
+        Player(id=15, name="山田さん", part_assignments=[
+            PartAssignment(PartType.A, 75), PartAssignment(PartType.C, 25)
+        ]),  # Aパートやや優先
+        Player(id=16, name="佐藤さん", part_assignments=[
+            PartAssignment(PartType.B, 35), PartAssignment(PartType.D, 15)
+        ]),  # 緩い
+        Player(id=17, name="鈴木さん", part_assignments=[
+            PartAssignment(PartType.C, 50), PartAssignment(PartType.E, 50)
+        ]),  # 完全バランス
+        Player(id=18, name="高橋さん", part_assignments=[
+            PartAssignment(PartType.D, 90), PartAssignment(PartType.F, 20)
+        ]),  # Dパート優先
+        Player(id=19, name="伊藤さん", part_assignments=[
+            PartAssignment(PartType.E, 10), PartAssignment(PartType.G, 5)
+        ]),  # 制限なし
+        Player(id=20, name="渡辺さん", part_assignments=[
+            PartAssignment(PartType.F, 80), PartAssignment(PartType.H, 30)
+        ]),  # Fパートやや優先
+        Player(id=21, name="中村さん", part_assignments=[
+            PartAssignment(PartType.G, 25), PartAssignment(PartType.I, 15)
+        ]),  # 緩い
+        Player(id=22, name="小林さん", part_assignments=[
+            PartAssignment(PartType.H, 50), PartAssignment(PartType.A, 50)
+        ]),  # 完全バランス
+        Player(id=23, name="加藤さん", part_assignments=[
+            PartAssignment(PartType.I, 95), PartAssignment(PartType.B, 5)
+        ]),  # Iパート厳格
     ]
     
     return SchedulingProblem(
