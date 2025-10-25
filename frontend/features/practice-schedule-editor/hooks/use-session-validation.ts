@@ -17,12 +17,6 @@ export const useSessionValidation = (venues: VenueInfo[]) => {
     return (formData: SessionFormData): { isValid: boolean; errors: Partial<SessionFormData> } => {
       const errors: Partial<SessionFormData> = {};
 
-      // タイトルの検証
-      if (!formData.title || formData.title.trim().length < VALIDATION.MIN_TITLE_LENGTH) {
-        errors.title = 'タイトルは必須です';
-      } else if (formData.title.length > VALIDATION.MAX_TITLE_LENGTH) {
-        errors.title = `タイトルは${VALIDATION.MAX_TITLE_LENGTH}文字以内で入力してください`;
-      }
 
       // パートの検証
       if (!formData.part_id) {

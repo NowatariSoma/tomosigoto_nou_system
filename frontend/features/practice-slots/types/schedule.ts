@@ -39,6 +39,71 @@ export interface InstructorDisplayInfo {
 }
 
 /**
+ * セッション指導者の基本情報（APIレスポンス用）
+ */
+export interface SessionInstructor {
+  id: string;
+  attendance_id: string;
+  schedule_id: string;
+  schedule_available_venue_id?: string;
+  slot_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * セッション指導者の詳細情報（APIレスポンス用）
+ */
+export interface SessionInstructorWithDetails extends SessionInstructor {
+  // 出席者情報
+  user_name?: string; // 漢字の姓と名が組み合わされた値（例: "田中 太郎"）
+  user_email?: string;
+  attendance_status?: string;
+  
+  // スケジュール情報
+  schedule_date?: string;
+  schedule_title?: string;
+  schedule_start_time?: string;
+  schedule_end_time?: string;
+  
+  // 会場情報
+  venue_name?: string;
+  venue_address?: string;
+  
+  // パート情報
+  part_name?: string;
+}
+
+/**
+ * セッション指導者作成用データ
+ */
+export interface SessionInstructorCreate {
+  attendance_id: string;
+  schedule_id: string;
+  schedule_available_venue_id?: string;
+  slot_order: number;
+}
+
+/**
+ * セッション指導者一括作成用データ
+ */
+export interface SessionInstructorBulkCreate {
+  schedule_id: string;
+  schedule_available_venue_id?: string;
+  slot_order: number;
+  attendance_ids: string[];
+}
+
+/**
+ * セッション指導者一括作成レスポンス
+ */
+export interface SessionInstructorBulkResponse {
+  created_count: number;
+  created_items: SessionInstructor[];
+  errors: string[];
+}
+
+/**
  * セッション表示用情報
  */
 export interface SessionDisplayInfo {
