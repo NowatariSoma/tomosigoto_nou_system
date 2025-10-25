@@ -84,6 +84,17 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
               {getStatusLabel(attendance.status)}
             </span>
           </div>
+          {/* 遅刻時間表示 */}
+          {attendance.status === 'late' && attendance.late_time && (
+            <div className="mt-3 pt-3 border-t border-slate-200">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-yellow-600" />
+                <span className="text-sm text-slate-700">
+                  遅刻時間: <span className="font-semibold text-yellow-700">{attendance.late_time}</span>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 練習情報 */}

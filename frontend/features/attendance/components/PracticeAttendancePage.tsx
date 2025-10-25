@@ -24,7 +24,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
 
   const selectedPractice = practiceSchedules.find(p => p.id === selectedPracticeId);
 
-  const handleSubmit = async (data: { status: string; notes: string }) => {
+  const handleSubmit = async (data: { status: string; notes: string; lateTime?: string }) => {
     if (!selectedPractice || !user) return;
 
     try {
@@ -36,6 +36,7 @@ export const PracticeAttendancePage: React.FC<PracticeAttendancePageProps> = ({
         user_id: user.id,
         status: data.status as 'present' | 'absent' | 'late' | 'undecided',
         notes: data.notes,
+        late_time: data.lateTime,
       });
     } catch (error) {
       console.error('Failed to submit attendance:', error);

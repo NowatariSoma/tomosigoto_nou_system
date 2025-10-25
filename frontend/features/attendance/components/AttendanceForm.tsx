@@ -27,6 +27,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       practice_schedule_id: attendance.practice_schedule_id,
       status: attendance.status,
       notes: attendance.notes || '',
+      late_time: attendance.late_time || '',
     } : INITIAL_ATTENDANCE_FORM
   );
 
@@ -41,6 +42,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 
     if (!formData.status) {
       newErrors.status = '出席状況は必須です';
+    }
+
+    if (formData.status === ATTENDANCE_STATUS.LATE && !formData.late_time) {
+      newErrors.late_time = '遅刻時間を入力してください';
     }
 
     if (formData.notes && formData.notes.length > VALIDATION.MAX_NOTES_LENGTH) {
@@ -59,10 +64,21 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   const handleInputChange = (field: keyof AttendanceFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      // status が変更されて遅刻以外になった場合、late_time をクリア
+      if (field === 'status' && value !== ATTENDANCE_STATUS.LATE) {
+        updated.late_time = '';
+      }
+      return updated;
+    });
     // エラーをクリア
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    // status変更時に遅刻時間のエラーもクリア
+    if (field === 'status' && errors.late_time) {
+      setErrors(prev => ({ ...prev, late_time: undefined }));
     }
   };
 
@@ -221,6 +237,27 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             <p className="mt-2 text-sm text-red-600">{errors.status}</p>
           )}
         </div>
+
+        {/* 遅刻時間入力（遅刻の場合のみ表示） */}
+        {formData.status === ATTENDANCE_STATUS.LATE && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              <span>遅刻時間 <span className="text-red-500">*</span></span>
+            </label>
+            <input
+              type="time"
+              value={formData.late_time || ''}
+              onChange={(e) => handleInputChange('late_time', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white ${
+                errors.late_time ? 'border-red-500' : 'border-yellow-300'
+              }`}
+            />
+            {errors.late_time && (
+              <p className="mt-1 text-sm text-red-600">{errors.late_time}</p>
+            )}
+          </div>
+        )}
 
         {/* 備考 */}
         <div>
