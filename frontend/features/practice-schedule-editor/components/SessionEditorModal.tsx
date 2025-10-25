@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Session, VenueInfo, TimeSlot, SessionFormData } from '../types/session-editor';
+import { Session, VenueInfo, TimeSlot, SessionFormData, AttendanceInfo } from '../types/session-editor';
 import { UI_TEXT, INITIAL_SESSION_FORM, VALIDATION } from '../constants';
 import { useSessionValidation } from '../hooks/use-session-validation';
-import { Save, X, User, MapPin, Clock, Star, FileText } from 'lucide-react';
+import { Save, X, User, MapPin, Clock, Star, FileText, Users } from 'lucide-react';
 import { Part } from '../services/part-service';
+import { attendanceService, sessionInstructorService } from '../services';
 
 interface SessionEditorModalProps {
   session?: Session | null;
   venues: VenueInfo[];
   time_slots: TimeSlot[];
   parts: Part[];
+  scheduleId: string;
   is_creating: boolean;
   onSubmit: (formData: SessionFormData) => Promise<void>;
   onCancel: () => void;
@@ -23,6 +25,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   venues,
   time_slots,
   parts,
+  scheduleId,
   is_creating,
   onSubmit,
   onCancel,
@@ -31,21 +34,79 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   const [formData, setFormData] = useState<SessionFormData>(INITIAL_SESSION_FORM);
   const [errors, setErrors] = useState<Partial<SessionFormData>>({});
   const [apiError, setApiError] = useState<string | null>(null);
+  const [availableAttendees, setAvailableAttendees] = useState<AttendanceInfo[]>([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
 
   const { validateSessionForm } = useSessionValidation(venues);
+
+  // インストラクター候補データを取得
+  useEffect(() => {
+    const fetchInstructorCandidates = async () => {
+      if (!scheduleId) return;
+      
+      setAttendeesLoading(true);
+      try {
+        const candidates = await sessionInstructorService.getInstructorCandidates(scheduleId);
+        // InstructorCandidateをAttendanceInfo形式に変換
+        const attendees: AttendanceInfo[] = candidates.map(candidate => ({
+          id: candidate.attendance_id,
+          user_id: candidate.user_id,
+          user_name: `${candidate.last_name_kanji} ${candidate.first_name_kanji}`,
+          user_email: candidate.email,
+          status: candidate.attendance_status
+        }));
+        setAvailableAttendees(attendees);
+      } catch (error) {
+        console.error('インストラクター候補データの取得に失敗しました:', error);
+        setAvailableAttendees([]);
+      } finally {
+        setAttendeesLoading(false);
+      }
+    };
+
+    fetchInstructorCandidates();
+  }, [scheduleId]);
 
   // セッション情報でフォームを初期化
   useEffect(() => {
     if (session && !is_creating) {
       setFormData({
-        title: session.title,
         part_id: session.part_id || '',
-        instructor_ids: [],
+        instructor_id: '', // 単一選択用に変更
         venue_id: session.schedule_available_venue_id || '',
         time_slot: '',
         priority: session.priority,
         notes: '',
       });
+      
+      // 既存のインストラクター情報を取得
+      const fetchExistingInstructor = async () => {
+        try {
+          const instructors = await sessionInstructorService.getSessionInstructors(session.id);
+          if (instructors && instructors.length > 0) {
+            // 最初のインストラクターのattendance_idを設定
+            setFormData(prev => ({
+              ...prev,
+              instructor_id: instructors[0].attendance_id || ''
+            }));
+          } else {
+            // インストラクターがいない場合は「インストラクターなし」を設定
+            setFormData(prev => ({
+              ...prev,
+              instructor_id: 'none'
+            }));
+          }
+        } catch (error) {
+          console.error('既存のインストラクター情報の取得に失敗しました:', error);
+          // エラーの場合も「インストラクターなし」を設定
+          setFormData(prev => ({
+            ...prev,
+            instructor_id: 'none'
+          }));
+        }
+      };
+      
+      fetchExistingInstructor();
     } else {
       setFormData(INITIAL_SESSION_FORM);
     }
@@ -61,6 +122,8 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     e.preventDefault();
     setApiError(null);
     console.log('フォーム送信:', formData);
+    console.log('instructor_id:', formData.instructor_id);
+    console.log('instructor_id type:', typeof formData.instructor_id);
     if (validateForm()) {
       console.log('バリデーションOK、API呼び出し開始');
       try {
@@ -83,6 +146,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -108,25 +172,6 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
             </div>
           )}
 
-          {/* セッション名 */}
-          <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-              <FileText className="h-4 w-4" />
-              <span>{UI_TEXT.SESSION_TITLE} <span className="text-red-500">*</span></span>
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="セッション名を入力してください"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-            )}
-          </div>
 
           {/* パート選択 */}
           <div>
@@ -217,6 +262,41 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               onChange={(e) => handleInputChange('priority', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* インストラクター選択 */}
+          <div>
+            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <Users className="h-4 w-4" />
+              <span>インストラクター</span>
+            </label>
+            {attendeesLoading ? (
+              <div className="text-sm text-gray-500">出席者データを読み込み中...</div>
+            ) : availableAttendees.length > 0 ? (
+              <select
+                value={formData.instructor_id}
+                onChange={(e) => handleInputChange('instructor_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">選択してください</option>
+                <option value="none">インストラクターなし</option>
+                {availableAttendees.map((attendee) => (
+                  <option key={attendee.id} value={attendee.id}>
+                    {attendee.user_name}
+                    {attendee.user_email && ` (${attendee.user_email})`}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <select
+                value={formData.instructor_id}
+                onChange={(e) => handleInputChange('instructor_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">選択してください</option>
+                <option value="none">インストラクターなし</option>
+              </select>
+            )}
           </div>
 
           {/* 備考 */}

@@ -21,6 +21,16 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 router = APIRouter()
 
 
+@router.get("/candidates", response_model=List[Dict[str, Any]])
+async def get_instructor_candidates(
+    practice_schedule_id: UUID = Query(..., description="練習スケジュールID"),
+    session_instructor_service: SessionInstructorService = Depends(get_session_instructor_service),
+):
+    """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
+    candidates = await session_instructor_service.get_instructor_candidates(practice_schedule_id)
+    return candidates
+
+
 @router.get("/", response_model=List[SessionInstructorWithDetails])
 async def get_session_instructors(
     schedule_id: Optional[UUID] = Query(None, description="練習スケジュールIDでフィルタ"),
