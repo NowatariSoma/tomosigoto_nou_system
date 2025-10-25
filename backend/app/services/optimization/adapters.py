@@ -4,7 +4,7 @@
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from app.services.optimization.models import (
-    SchedulingProblem, Player, Room, TimeSlot, PartType, 
+    SchedulingProblem, Player, Room, TimeSlot, 
     PracticeSession, SchedulingSolution, PartAssignment
 )
 from app.services.optimization.constants import ProblemConfig
@@ -39,12 +39,13 @@ class SchedulingDataAdapter:
                 member_assignments_data, parts_data, stage_id
             )
         
-        # パート変換
+        # パート変換（辞書リスト形式）
         parts = []
         for part_data in parts_data:
-            part_name = part_data.get('name', '').upper()
-            if part_name in [p.value for p in PartType]:
-                parts.append(PartType(part_name))
+            parts.append({
+                "id": str(part_data.get('id')),
+                "name": part_data.get('name', '')
+            })
         
         # 部屋変換
         rooms = []
@@ -55,8 +56,23 @@ class SchedulingDataAdapter:
             )
             rooms.append(room)
         
-        # 時間コマ変換（division_countに基づく）
-        division_count = schedule_data.get('division_count', ProblemConfig.get_num_time_slots())
+        # 時間コマ変換（動的計算）
+        # 1. データベースのdivision_countを優先
+        division_count = schedule_data.get('division_count')
+        
+        # 2. データベースに値がない場合は動的計算
+        if division_count is None or division_count < 1:
+            # パート数と部屋数に基づいて動的計算
+            num_parts = len(parts_data)
+            num_rooms = len(venues_data)
+            
+            if num_parts > 0 and num_rooms > 0:
+                # 計算式: パート数//部屋数+1（最小2コマ）
+                division_count = max(2, num_parts // num_rooms + 1)
+            else:
+                # フォールバック値
+                division_count = ProblemConfig.get_num_time_slots()
+        
         time_slots = []
         for i in range(1, division_count + 1):
             time_slot = TimeSlot(
@@ -87,11 +103,13 @@ class SchedulingDataAdapter:
                                 if not part_data:
                                     continue
                                     
-                                part_name = part_data.get('name', '').upper()
-                                if part_name in [p.value for p in PartType]:
-                                    # 優先度を取得（DBに存在しない場合はデフォルト50）
-                                    priority = ma.get('priority', 50)
-                                    part_assignments.append(PartAssignment(PartType(part_name), priority))
+                                # 優先度を取得（DBに存在しない場合はデフォルト50）
+                                priority = ma.get('priority', 50)
+                                part_assignments.append(PartAssignment(
+                                    part_id=str(part_data['id']),
+                                    part_name=part_data.get('name', ''),
+                                    priority=priority
+                                ))
                         
                         if part_assignments:  # パートが割り当てられている場合のみ追加
                             player = Player(
@@ -124,11 +142,13 @@ class SchedulingDataAdapter:
                     if not part_data:
                         continue
                         
-                    part_name = part_data.get('name', '').upper()
-                    if part_name in [p.value for p in PartType]:
-                        # 優先度を取得（DBに存在しない場合はデフォルト50）
-                        priority = ma.get('priority', 50)
-                        part_assignments.append(PartAssignment(PartType(part_name), priority))
+                    # 優先度を取得（DBに存在しない場合はデフォルト50）
+                    priority = ma.get('priority', 50)
+                    part_assignments.append(PartAssignment(
+                        part_id=str(part_data['id']),
+                        part_name=part_data.get('name', ''),
+                        priority=priority
+                    ))
             
             if part_assignments:
                 player = Player(
@@ -150,8 +170,7 @@ class SchedulingDataAdapter:
     def solution_to_db_sessions(
         solution: SchedulingSolution,
         schedule_id: UUID,
-        venue_mapping: Dict[int, str],  # room_id -> venue_id のマッピング
-        parts_data: List[Dict[str, Any]] = None  # パートデータを追加
+        venue_mapping: Dict[int, str]  # room_id -> venue_id のマッピング
     ) -> List[Dict[str, Any]]:
         """SchedulingSolutionをデータベースのsessions形式に変換"""
         
@@ -162,13 +181,10 @@ class SchedulingDataAdapter:
             if not venue_id:
                 continue  # マッピングが見つからない場合はスキップ
             
-            # パートIDを取得（partsテーブルから実際のUUIDを取得）
-            part_id = self._get_part_id_by_name(session.part.value, parts_data)
-            
             session_data = {
                 "schedule_id": str(schedule_id),
-                "part_id": part_id,
-                "title": f"{session.part.value}パート練習",
+                "part_id": session.part_id,  # UUIDをそのまま使用
+                "title": f"{session.part_name}パート練習",
                 "slot_order": session.time_slot_id,
                 "schedule_available_venue_id": venue_id,
                 "priority": 0

@@ -3,27 +3,14 @@
 """
 from dataclasses import dataclass
 from typing import List, Dict, Optional
-from enum import Enum
 from app.services.optimization.constants import ProblemConfig
-
-
-class PartType(Enum):
-    """パートの種類"""
-    A = "A"
-    B = "B"
-    C = "C"
-    D = "D"
-    E = "E"
-    F = "F"
-    G = "G"
-    H = "H"
-    I = "I"
 
 
 @dataclass
 class PartAssignment:
     """パート割り当てと優先度"""
-    part: PartType
+    part_id: str      # パートID（UUID）
+    part_name: str    # パート名
     priority: int = 50  # 0-100、デフォルト50
 
 
@@ -36,9 +23,9 @@ class Player:
     is_instructor: bool = False  # 指導者かどうか
     
     @property
-    def parts(self) -> List[PartType]:
-        """後方互換性のためのプロパティ"""
-        return [assignment.part for assignment in self.part_assignments]
+    def part_ids(self) -> List[str]:
+        """所属パートIDのリスト"""
+        return [pa.part_id for pa in self.part_assignments]
 
 
 @dataclass
@@ -59,7 +46,8 @@ class TimeSlot:
 class PracticeSession:
     """練習セッション"""
     id: int
-    part: PartType
+    part_id: str      # UUID
+    part_name: str    # 表示用
     room_id: int
     time_slot_id: int
     instructor_id: int
@@ -72,19 +60,15 @@ class SchedulingProblem:
     players: List[Player]  # プレイヤーリスト（指導者含む）
     rooms: List[Room]
     time_slots: List[TimeSlot]
-    parts: List[PartType]
+    parts: List[Dict[str, str]]  # [{"id": "uuid", "name": "第1バイオリン"}, ...]
     
-    def get_players_by_part(self, part: PartType) -> List[Player]:
+    def get_players_by_part(self, part_id: str) -> List[Player]:
         """指定されたパートのプレイヤーリストを取得"""
-        return [player for player in self.players if part in player.parts]
+        return [p for p in self.players if part_id in p.part_ids]
     
-    def get_instructors_by_part(self, part: PartType) -> List[Player]:
+    def get_instructors_by_part(self, part_id: str) -> List[Player]:
         """指定されたパートの指導者リストを取得"""
-        return [player for player in self.players if part in player.parts and player.is_instructor]
-    
-    def get_regular_players_by_part(self, part: PartType) -> List[Player]:
-        """指定されたパートの一般プレイヤーリストを取得"""
-        return [player for player in self.players if part in player.parts and not player.is_instructor]
+        return [p for p in self.players if p.is_instructor and part_id in p.part_ids]
 
 
 @dataclass
@@ -117,10 +101,18 @@ class SchedulingSolution:
             distribution[instructor_id] = distribution.get(instructor_id, 0) + 1
         return distribution
 
-    def get_part_distribution(self) -> Dict[PartType, int]:
-        """パートごとのセッション数を取得"""
+    def get_part_distribution(self) -> Dict[str, int]:
+        """パートIDごとのセッション数を取得"""
         distribution = {}
         for session in self.sessions:
-            part = session.part
-            distribution[part] = distribution.get(part, 0) + 1
+            part_id = session.part_id
+            distribution[part_id] = distribution.get(part_id, 0) + 1
+        return distribution
+    
+    def get_part_distribution_by_name(self) -> Dict[str, int]:
+        """パート名ごとのセッション数を取得"""
+        distribution = {}
+        for session in self.sessions:
+            part_name = session.part_name
+            distribution[part_name] = distribution.get(part_name, 0) + 1
         return distribution

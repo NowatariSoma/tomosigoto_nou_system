@@ -183,17 +183,23 @@ class SchedulingOptimizationService:
     
     async def _get_related_data(self, schedule_id: UUID) -> tuple:
         """関連データを取得"""
-        # 利用可能会場
+        # 1. スケジュール情報を取得（stage_id含む）
+        schedule_data = await self.practice_schedule_repository.find_by_id(schedule_id)
+        stage_id = schedule_data.get('stage_id')
+        
+        if not stage_id:
+            raise APIException("スケジュールにステージが設定されていません")
+        
+        # 2. 利用可能会場を取得
         venues_data = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
         
-        # パートデータ（現在のスケジュールに関連するパートを取得）
-        # 実際の実装では、スケジュールに関連するパートを特定する必要がある
-        parts_data = await self.part_repository.find_all()
+        # 3. ステージに紐づく全パートを取得
+        parts_data = await self.part_repository.find_by_stage_id(stage_id)
         
-        # ユーザーデータ
+        # 4. ユーザーデータ
         users_data = await self.user_repository.find_all()
         
-        # メンバー割り当てデータ
+        # 5. メンバー割り当てデータ
         member_assignments_data = await self.member_assignment_repository.find_all()
         
         return venues_data, parts_data, users_data, member_assignments_data
@@ -216,17 +222,11 @@ class SchedulingOptimizationService:
                 logger.warning(f"会場マッピングが見つかりません: room_id={session.room_id}")
                 continue
             
-            # パートIDを取得
-            part_id = part_mapping.get(session.part.value)
-            if not part_id:
-                logger.warning(f"パートマッピングが見つかりません: part={session.part.value}")
-                continue
-            
             # セッションデータを作成
             session_data = {
                 "schedule_id": str(schedule_id),
-                "part_id": part_id,
-                "title": f"{session.part.value}パート練習",
+                "part_id": session.part_id,  # UUIDをそのまま使用
+                "title": f"{session.part_name}パート練習",
                 "slot_order": session.time_slot_id,
                 "schedule_available_venue_id": venue_id,
                 "priority": 0

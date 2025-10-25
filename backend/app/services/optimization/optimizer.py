@@ -55,18 +55,21 @@ class SchedulingOptimizer:
         session_id = 0
         
         for part in self.problem.parts:
+            part_id = part["id"]
+            part_name = part["name"]
             for room in self.problem.rooms:
                 for time_slot in self.problem.time_slots:
                     for instructor in self.problem.players:
                         if instructor.is_instructor:
-                            var = self.constraints.session_vars.get((part, room.id, time_slot.id, instructor.id))
+                            var = self.constraints.session_vars.get((part_id, room.id, time_slot.id, instructor.id))
                             if var is not None and solver.Value(var) == 1:
                                 # 参加プレイヤーを取得
-                                player_ids = [p.id for p in self.problem.get_players_by_part(part)]
+                                player_ids = [p.id for p in self.problem.get_players_by_part(part_id)]
                                 
                                 session = PracticeSession(
                                     id=session_id,
-                                    part=part,
+                                    part_id=part_id,
+                                    part_name=part_name,
                                     room_id=room.id,
                                     time_slot_id=time_slot.id,
                                     instructor_id=instructor.id,
