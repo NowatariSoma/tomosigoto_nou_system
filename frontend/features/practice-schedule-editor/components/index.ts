@@ -8,3 +8,5 @@ export { DraggableSessionCard } from './DraggableSessionCard';
 export { SessionCell } from './SessionCell';
 export { TimeSlotHeader } from './TimeSlotHeader';
 export { VenueColumn } from './VenueColumn';
+export { InstructorDisplay } from './InstructorDisplay';
+export { InstructorSelector } from './InstructorSelector';
