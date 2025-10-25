@@ -197,7 +197,7 @@ class SchedulingOptimizationService:
         parts_data = await self.part_repository.find_by_stage_id(stage_id)
         
         # 4. ユーザーデータ
-        users_data = await self.user_repository.find_all()
+        users_data = await self.user_repository.get_all_users()
         
         # 5. メンバー割り当てデータ
         member_assignments_data = await self.member_assignment_repository.find_all()

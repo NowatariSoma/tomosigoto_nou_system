@@ -6,7 +6,7 @@ from typing import List, Optional
 from ortools.sat.python import cp_model
 from app.services.optimization.models import (
     SchedulingProblem, SchedulingSolution, PracticeSession, 
-    Player, PartType, Room, TimeSlot
+    Player, Room, TimeSlot
 )
 from app.services.optimization.constraints import SchedulingConstraints
 from app.services.optimization.objectives import SchedulingObjectives

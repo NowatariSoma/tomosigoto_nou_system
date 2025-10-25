@@ -104,11 +104,12 @@ class SchedulingConstraints:
                 
             sessions = []
             for part in self.problem.parts:
+                part_id = part["id"]
                 for room in self.problem.rooms:
                     for time_slot in self.problem.time_slots:
-                        if (part, room.id, time_slot.id, instructor.id) in self.session_vars:
+                        if (part_id, room.id, time_slot.id, instructor.id) in self.session_vars:
                             sessions.append(
-                                self.session_vars[(part, room.id, time_slot.id, instructor.id)]
+                                self.session_vars[(part_id, room.id, time_slot.id, instructor.id)]
                             )
             instructor_session_counts.append(sum(sessions))
         

@@ -16,6 +16,12 @@ class SchedulingConfig:
     DEFAULT_EQUALITY_WEIGHT = 100  # デフォルト均等性重み
     DEFAULT_PART_PRIORITY = 50  # デフォルトパート優先度（0-100）
 
+# 優先度・出席関連設定
+class PriorityConfig:
+    """優先度と出席に関する設定"""
+    MAI_CATEGORY_BONUS = 30  # 舞カテゴリの優先度ボーナス
+    ATTENDANCE_REQUIRED_STATUSES = ['present', 'late']  # 出席必須ステータス
+
 # パート・部屋・時間コマ設定
 class ProblemConfig:
     """問題設定"""
