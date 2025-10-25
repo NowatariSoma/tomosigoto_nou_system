@@ -36,6 +36,10 @@ const nextConfig = {
         source: '/api/:path*',
         destination: 'http://localhost:8000/api/:path*',
       },
+      {
+        source: '/events/:path*',
+        destination: 'http://localhost:8000/api/v1/events/:path*',
+      },
     ];
   },
   // Skip trailing slash redirect for API routes
