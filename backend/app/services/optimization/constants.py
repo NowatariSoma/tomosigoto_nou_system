@@ -16,7 +16,7 @@ class SchedulingConfig:
     """スケジューリング設定"""
     DEFAULT_TIME_LIMIT = 30    # デフォルト時間制限（秒）
     DEFAULT_EQUALITY_WEIGHT = 100  # デフォルト均等性重み
-    DEFAULT_PRIORITY = 50  # デフォルト優先度
+    DEFAULT_PART_PRIORITY = 50  # デフォルトパート優先度（0-100）
 
 # パート・部屋・時間コマ設定
 class ProblemConfig:
@@ -38,7 +38,8 @@ DEFAULT_OPTIMIZATION_PARAMS: Dict[str, Any] = {
     "equality_weight": SchedulingConfig.DEFAULT_EQUALITY_WEIGHT,
     "allow_overlap": False,
     "max_iterations": 1000,
-    "solution_limit": 10
+    "solution_limit": 10,
+    "default_part_priority": SchedulingConfig.DEFAULT_PART_PRIORITY
 }
 
 # エラーメッセージ

@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from uuid import UUID
 from app.services.optimization.models import (
     SchedulingProblem, Player, Room, TimeSlot, PartType, 
-    PracticeSession, SchedulingSolution
+    PracticeSession, SchedulingSolution, PartAssignment
 )
 from app.services.optimization.constants import ProblemConfig
 
@@ -64,21 +64,22 @@ class SchedulingDataAdapter:
                     # ユーザー情報を取得
                     user_info = next((u for u in users_data if u.get('id') == user_id), None)
                     if user_info:
-                        # 指導者の所属パートを取得（member_assignmentsから）
-                        user_parts = []
+                        # 指導者の所属パートと優先度を取得（member_assignmentsから）
+                        part_assignments = []
                         for ma in member_assignments_data:
                             if ma.get('user_id') == user_id:
                                 part_name = next((p.get('name', '').upper() for p in parts_data if p.get('id') == ma.get('part_id')), '')
                                 if part_name in [p.value for p in PartType]:
-                                    user_parts.append(PartType(part_name))
+                                    # 優先度を取得（DBに存在しない場合はデフォルト50）
+                                    priority = ma.get('priority', 50)
+                                    part_assignments.append(PartAssignment(PartType(part_name), priority))
                         
-                        if user_parts:  # パートが割り当てられている場合のみ追加
+                        if part_assignments:  # パートが割り当てられている場合のみ追加
                             player = Player(
                                 id=len(players) + 1,
                                 name=user_info.get('name', f'指導者{len(players) + 1}'),
-                                parts=user_parts,
-                                is_instructor=True,
-                                overlap_priority=50  # デフォルト値
+                                part_assignments=part_assignments,
+                                is_instructor=True
                             )
                             players.append(player)
         
@@ -96,21 +97,22 @@ class SchedulingDataAdapter:
             if not user_info:
                 continue
             
-            # このユーザーの全パートを取得
-            user_parts = []
+            # このユーザーの全パートと優先度を取得
+            part_assignments = []
             for ma in member_assignments_data:
                 if ma.get('user_id') == user_id:
                     part_name = next((p.get('name', '').upper() for p in parts_data if p.get('id') == ma.get('part_id')), '')
                     if part_name in [p.value for p in PartType]:
-                        user_parts.append(PartType(part_name))
+                        # 優先度を取得（DBに存在しない場合はデフォルト50）
+                        priority = ma.get('priority', 50)
+                        part_assignments.append(PartAssignment(PartType(part_name), priority))
             
-            if user_parts:
+            if part_assignments:
                 player = Player(
                     id=len(players) + 1,
                     name=user_info.get('name', f'プレイヤー{len(players) + 1}'),
-                    parts=user_parts,
-                    is_instructor=False,
-                    overlap_priority=50  # デフォルト値、将来的にはユーザープロファイルから取得
+                    part_assignments=part_assignments,
+                    is_instructor=False
                 )
                 players.append(player)
         
