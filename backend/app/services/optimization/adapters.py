@@ -89,7 +89,19 @@ class SchedulingDataAdapter:
         if session_instructors_data:
             instructor_ids = set()
             for si_data in session_instructors_data:
-                user_id = si_data.get('user_id')
+                # attendance_idから出席データを取得し、user_idを取得
+                attendance_id = si_data.get('attendance_id')
+                if not attendance_id:
+                    continue
+                
+                # 出席データからuser_idを取得
+                if not attendance_data:
+                    continue
+                user_attendance = next((a for a in attendance_data if a.get('id') == attendance_id), None)
+                if not user_attendance:
+                    continue
+                
+                user_id = user_attendance.get('user_id')
                 if user_id and user_id not in instructor_ids:
                     instructor_ids.add(user_id)
                     
@@ -110,8 +122,8 @@ class SchedulingDataAdapter:
                                 if not part_data:
                                     continue
                                 
-                                # 基本優先度を取得
-                                base_priority = ma.get('priority', 50)
+                                # 基本優先度を取得（デフォルト50）
+                                base_priority = ma.get('priority') or 50
                                 
                                 # 舞カテゴリボーナスを適用
                                 if ma.get('category') == 'mai':
@@ -126,7 +138,7 @@ class SchedulingDataAdapter:
                         if part_assignments:  # パートが割り当てられている場合のみ追加
                             player = Player(
                                 id=len(players) + 1,
-                                name=user_info.get('name', f'指導者{len(players) + 1}'),
+                                name=user_info.get('name') or f'指導者{len(players) + 1}',
                                 part_assignments=part_assignments,
                                 is_instructor=True
                             )
@@ -160,8 +172,8 @@ class SchedulingDataAdapter:
                     if not part_data:
                         continue
                     
-                    # 基本優先度を取得
-                    base_priority = ma.get('priority', 50)
+                    # 基本優先度を取得（デフォルト50）
+                    base_priority = ma.get('priority') or 50
                     
                     # 舞カテゴリボーナスを適用
                     if ma.get('category') == 'mai':
@@ -173,14 +185,14 @@ class SchedulingDataAdapter:
                         priority=base_priority
                     ))
             
-            if part_assignments:
-                player = Player(
-                    id=len(players) + 1,
-                    name=user_info.get('name', f'プレイヤー{len(players) + 1}'),
-                    part_assignments=part_assignments,
-                    is_instructor=False
-                )
-                players.append(player)
+                if part_assignments:
+                    player = Player(
+                        id=len(players) + 1,
+                        name=user_info.get('name') or f'プレイヤー{len(players) + 1}',
+                        part_assignments=part_assignments,
+                        is_instructor=False
+                    )
+                    players.append(player)
         
         return SchedulingProblem(
             players=players,
