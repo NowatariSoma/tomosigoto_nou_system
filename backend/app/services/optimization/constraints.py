@@ -89,10 +89,6 @@ class SchedulingConstraints:
                 if instructor_sessions:
                     self.model.Add(sum(instructor_sessions) <= 1)
     
-    def add_player_constraints(self):
-        """プレイヤーに関する制約条件を追加"""
-        # プレイヤー制約はペナルティ制約として目的関数で処理するため、ここでは何もしない
-        pass
     
     def add_equality_constraints(self):
         """均等割り振りのための制約条件を追加"""
@@ -127,7 +123,6 @@ class SchedulingConstraints:
         self.create_variables()
         self.add_basic_constraints()
         self.add_instructor_constraints()
-        self.add_player_constraints()
         self.add_equality_constraints()
         
         return self.model

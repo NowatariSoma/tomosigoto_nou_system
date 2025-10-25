@@ -25,10 +25,6 @@ class PartAssignment:
     """パート割り当てと優先度"""
     part: PartType
     priority: int = 50  # 0-100、デフォルト50
-    
-    def __post_init__(self):
-        if not 0 <= self.priority <= 100:
-            raise ValueError("priority must be between 0 and 100")
 
 
 @dataclass
@@ -38,11 +34,6 @@ class Player:
     name: str
     part_assignments: List[PartAssignment]  # パート割り当てと優先度
     is_instructor: bool = False  # 指導者かどうか
-
-    def __post_init__(self):
-        """初期化後の検証"""
-        if not self.part_assignments:
-            raise ValueError("part_assignments cannot be empty")
     
     @property
     def parts(self) -> List[PartType]:
@@ -56,22 +47,12 @@ class Room:
     id: int
     name: str
 
-    def __post_init__(self):
-        """初期化後の検証"""
-        if self.id <= 0:
-            raise ValueError("Room ID must be positive")
-
 
 @dataclass
 class TimeSlot:
     """時間コマ"""
     id: int
     name: str  # 例: "1限目", "2限目", "3限目"
-
-    def __post_init__(self):
-        """初期化後の検証"""
-        if self.id <= 0:
-            raise ValueError("TimeSlot ID must be positive")
 
 
 @dataclass
@@ -84,17 +65,6 @@ class PracticeSession:
     instructor_id: int
     player_ids: List[int]  # 参加プレイヤーのIDリスト
 
-    def __post_init__(self):
-        """初期化後の検証"""
-        if self.id < 0:
-            raise ValueError("Session ID must be non-negative")
-        if self.room_id <= 0:
-            raise ValueError("Room ID must be positive")
-        if self.time_slot_id <= 0:
-            raise ValueError("TimeSlot ID must be positive")
-        if self.instructor_id <= 0:
-            raise ValueError("Instructor ID must be positive")
-
 
 @dataclass
 class SchedulingProblem:
@@ -103,13 +73,6 @@ class SchedulingProblem:
     rooms: List[Room]
     time_slots: List[TimeSlot]
     parts: List[PartType]
-    
-    def __post_init__(self):
-        """初期化後の検証"""
-        assert len(self.rooms) > 0, "部屋が設定されていません"
-        assert len(self.time_slots) > 0, "時間コマが設定されていません"
-        assert len(self.parts) > 0, "パートが設定されていません"
-        assert len(self.players) > 0, "プレイヤーが設定されていません"
     
     def get_players_by_part(self, part: PartType) -> List[Player]:
         """指定されたパートのプレイヤーリストを取得"""
