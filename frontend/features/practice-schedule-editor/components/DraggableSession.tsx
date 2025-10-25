@@ -4,26 +4,21 @@ import React, { useState } from 'react';
 import { Session, EditMode } from '../types/session-editor';
 import { Edit, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { InstructorDisplay } from './InstructorDisplay';
 
 interface DraggableSessionProps {
   session: Session;
   edit_mode: EditMode;
-  scheduleId: string;
   onEdit: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
   onMove: (sessionId: string, venueId: string, timeSlot: string) => void;
-  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 export const DraggableSession: React.FC<DraggableSessionProps> = ({
   session,
   edit_mode,
-  scheduleId,
   onEdit,
   onDelete,
   onMove,
-  fallbackInstructors = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -71,23 +66,22 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-              {session.part_name}
-            </div>
-          )}
+          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            {session.title}
+          </div>
+          <div className="text-xs text-gray-600">
+            優先度: {session.priority}
+          </div>
           {session.start_time && session.end_time && (
             <div className="text-xs text-gray-500 mt-1">
               {session.start_time} - {session.end_time}
             </div>
           )}
-          {/* インストラクター表示 */}
-          <InstructorDisplay
-            scheduleId={scheduleId}
-            slotOrder={session.slot_order}
-            className="mt-1"
-            fallbackInstructors={fallbackInstructors}
-          />
+          {session.part_id && (
+            <div className="text-xs text-gray-500 mt-1">
+              パートID: {session.part_id}
+            </div>
+          )}
         </div>
         
         {edit_mode === 'edit' && (

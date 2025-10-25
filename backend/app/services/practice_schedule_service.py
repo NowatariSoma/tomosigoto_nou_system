@@ -3,8 +3,10 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.practice_schedule_repository import PracticeScheduleRepository
-from app.repositories.session_repository import SessionRepository
+from app.repositories.practice_schedule_repository import (
+    PracticeScheduleRepository,
+    SessionRepository,
+)
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.repositories.venue_repository import VenueRepository
 from app.repositories.session_instructor_repository import SessionInstructorRepository
@@ -523,16 +525,19 @@ class PracticeScheduleService:
             try:
                 schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 for i, schedule_venue in enumerate(schedule_venues):
-                    # 修正されたfind_by_scheduleメソッドから取得したデータを処理
-                    venue_name = schedule_venue.get("name", f"会場{i+1}")
-                    is_preferred = schedule_venue.get("is_preferred", False)
-                    venue_priority = schedule_venue.get("priority", i+1)
+                    # available venueにvenuesテーブルとのJOINデータが含まれている可能性を考慮
+                    venue_name = "会場"
+                    if "venues" in schedule_venue and isinstance(schedule_venue["venues"], dict):
+                        venue_name = schedule_venue["venues"].get("name", f"会場{i+1}")
+                    elif "venue_name" in schedule_venue:
+                        venue_name = schedule_venue["venue_name"]
+                    else:
+                        venue_name = f"会場{i+1}"
 
                     venue_info = {
-                        "id": str(schedule_venue.get('venue_id', schedule_venue.get('id'))),  # venue_idを優先
+                        "id": str(schedule_venue.get('id')),
                         "name": venue_name,
-                        "is_preferred": is_preferred,
-                        "priority": venue_priority,
+                        "priority": schedule_venue.get("priority", i+1),
                         "color": settings.DEFAULT_VENUE_COLORS[i % len(settings.DEFAULT_VENUE_COLORS)]
                     }
                     venues.append(venue_info)
@@ -889,7 +894,7 @@ class PracticeScheduleService:
                     if venue_id:
                         session_info = {
                             "part_id": str(session.get("id", f"part-{slot_order}")),
-                            "part_name": session.get("part_name", session_title),  # パート名を優先、なければセッションタイトル
+                            "part_name": session_title,
                             "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                             "session_title": session_title,
                             "instructors": await self._get_session_instructors(session.get("id")),
