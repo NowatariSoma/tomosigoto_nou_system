@@ -125,3 +125,12 @@ class ErrorMessage:
     class INVALID_DATE_FORMAT(BaseMessage):
         status_code = status.HTTP_400_BAD_REQUEST
         text = "日付はYYYY-MM-DD形式で指定してください"
+
+    # イベント関連
+    class EVENT_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "イベントが見つかりません"
+
+    class ROUND_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "ラウンドが見つかりません"

@@ -33,6 +33,9 @@ from app.repositories.session_instructor_repository import SessionInstructorRepo
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.services.practice_schedule_service import PracticeScheduleService
 from app.services.schedule_available_venue_service import ScheduleAvailableVenueService
+from app.repositories.event_repository import EventRepository
+from app.repositories.round_repository import RoundRepository
+from app.services.event_service import EventService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -303,3 +306,25 @@ def get_schedule_available_venue_service(
 ) -> ScheduleAvailableVenueService:
     """ScheduleAvailableVenueServiceのインスタンスを依存性注入で取得"""
     return ScheduleAvailableVenueService(schedule_available_venue_repository)
+
+
+def get_event_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> EventRepository:
+    """EventRepositoryのインスタンスを取得"""
+    return EventRepository(supabase_client)
+
+
+def get_round_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> RoundRepository:
+    """RoundRepositoryのインスタンスを取得"""
+    return RoundRepository(supabase_client)
+
+
+def get_event_service(
+    event_repository: EventRepository = Depends(get_event_repository),
+    round_repository: RoundRepository = Depends(get_round_repository),
+) -> EventService:
+    """EventServiceのインスタンスを依存性注入で取得"""
+    return EventService(event_repository, round_repository)
