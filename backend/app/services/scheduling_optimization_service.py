@@ -64,7 +64,7 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data = await self._get_related_data(schedule_id)
             
             # データの妥当性を検証
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
@@ -136,7 +136,7 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data = await self._get_related_data(schedule_id)
             
             # データの妥当性を検証
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
@@ -212,7 +212,16 @@ class SchedulingOptimizationService:
             logger.warning(f"出席データの取得に失敗しました: {e}")
             attendance_data = []
         
-        return venues_data, parts_data, users_data, member_assignments_data, attendance_data
+        # 7. 指導者データを取得（エラー時は空リストを返す）
+        try:
+            from app.repositories.session_instructor_repository import SessionInstructorRepository
+            session_instructor_repo = SessionInstructorRepository(self.session_repository.client)
+            session_instructors_data = await session_instructor_repo.find_by_schedule(schedule_id)
+        except Exception as e:
+            logger.warning(f"指導者データの取得に失敗しました: {e}")
+            session_instructors_data = []
+        
+        return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data
     
     async def _create_sessions_from_solution(
         self, 
