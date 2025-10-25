@@ -314,6 +314,7 @@ def get_scheduling_optimization_service(
     part_repository: PartRepository = Depends(get_part_repository),
     member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
     user_repository: UserRepository = Depends(get_user_repository),
+    attendance_repository: AttendanceRepository = Depends(get_attendance_repository),
 ) -> SchedulingOptimizationService:
     """SchedulingOptimizationServiceのインスタンスを依存性注入で取得"""
     return SchedulingOptimizationService(
@@ -322,5 +323,6 @@ def get_scheduling_optimization_service(
         session_repository,
         part_repository,
         member_assignment_repository,
-        user_repository
+        user_repository,
+        attendance_repository
     )

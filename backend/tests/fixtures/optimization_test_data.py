@@ -1,10 +1,11 @@
 """
 テスト用サンプルデータ生成
 """
+from typing import List, Dict, Any
 from app.services.optimization.models import (
     SchedulingProblem, Player, Room, TimeSlot, PartAssignment
 )
-from app.services.optimization.constants import ProblemConfig
+from app.services.optimization.constants import ProblemConfig, PriorityConfig
 
 
 def create_full_sample_problem() -> SchedulingProblem:
@@ -99,3 +100,41 @@ def create_simple_test_problem() -> SchedulingProblem:
         time_slots=time_slots,
         parts=parts
     )
+
+
+def create_test_member_assignments_data() -> List[Dict[str, Any]]:
+    """舞/謡カテゴリを含むテスト用メンバー割り当てデータ"""
+    return [
+        {"user_id": "user_1", "part_id": "part_a", "category": "mai", "priority": 50},
+        {"user_id": "user_1", "part_id": "part_b", "category": "mai", "priority": 30},
+        {"user_id": "user_2", "part_id": "part_a", "category": "utai", "priority": 60},
+        {"user_id": "user_2", "part_id": "part_c", "category": "utai", "priority": 40},
+        {"user_id": "user_3", "part_id": "part_b", "category": "mai", "priority": 70},
+        {"user_id": "user_4", "part_id": "part_c", "category": "utai", "priority": 55},
+    ]
+
+
+def create_test_attendance_data() -> List[Dict[str, Any]]:
+    """テスト用出席データ"""
+    return [
+        {"user_id": "user_1", "status": "present"},  # 出席
+        {"user_id": "user_2", "status": "late"},     # 遅刻（出席扱い）
+        {"user_id": "user_3", "status": "absent"},   # 欠席（除外）
+        {"user_id": "user_4", "status": "present"},  # 出席
+    ]
+
+
+def create_test_data_with_categories() -> Dict[str, Any]:
+    """舞/謡カテゴリと出席データを含む統合テストデータ"""
+    return {
+        "member_assignments": create_test_member_assignments_data(),
+        "attendance": create_test_attendance_data(),
+        "expected_priorities": {
+            "user_1_mai": 50 + PriorityConfig.MAI_CATEGORY_BONUS,  # 80
+            "user_1_utai": 30,  # ボーナスなし
+            "user_2_utai": 60,  # ボーナスなし
+            "user_3_mai": 70 + PriorityConfig.MAI_CATEGORY_BONUS,  # 100（ただし欠席で除外）
+            "user_4_utai": 55,  # ボーナスなし
+        },
+        "expected_filtered_users": ["user_1", "user_2", "user_4"],  # user_3は欠席で除外
+    }
