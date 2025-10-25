@@ -142,11 +142,12 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
                                 onEditSession(session.id);
                               }}
                             >
-                              {session.part_name && (
-                                <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-                                  {session.part_name}
-                                </div>
-                              )}
+                              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+                                {session.title}
+                              </div>
+                              <div className="text-xs text-gray-700">
+                                優先度: {session.priority}
+                              </div>
                               {session.start_time && session.end_time && (
                                 <div className="text-xs text-gray-500 mt-1">
                                   {session.start_time} - {session.end_time}

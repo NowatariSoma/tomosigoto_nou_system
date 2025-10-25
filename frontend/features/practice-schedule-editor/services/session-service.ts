@@ -109,7 +109,7 @@ export class SessionService {
       id: apiResponse.id,
       schedule_id: apiResponse.schedule_id,
       part_id: apiResponse.part_id,
-      part_name: apiResponse.part_name,
+      title: apiResponse.title,
       slot_order: apiResponse.slot_order,
       schedule_available_venue_id: apiResponse.schedule_available_venue_id,
       priority: apiResponse.priority,
@@ -124,6 +124,7 @@ export class SessionService {
   private mapCreateRequestToApiRequest(request: CreateSessionRequest): SessionApiCreateRequest {
     const apiRequest: SessionApiCreateRequest = {
       schedule_id: request.schedule_id,
+      title: request.title,
       slot_order: request.slot_order,
       priority: request.priority,
     };
@@ -141,6 +142,7 @@ export class SessionService {
     const apiRequest: SessionApiUpdateRequest = {};
     
     if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
+    if (request.title !== undefined) apiRequest.title = request.title;
     if (request.slot_order !== undefined) apiRequest.slot_order = request.slot_order;
     if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
     if (request.priority !== undefined) apiRequest.priority = request.priority;

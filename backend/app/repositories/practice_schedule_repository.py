@@ -235,25 +235,7 @@ class SessionRepository:
             .order("slot_order", desc=False)
             .execute()
         )
-        
-        # パート名を取得して追加
-        formatted_data = []
-        for item in response.data:
-            formatted_item = dict(item)
-            formatted_item["part_name"] = None
-            
-            # パート情報を取得
-            if item.get("part_id"):
-                try:
-                    part_response = self.client.table("parts").select("name").eq("id", item["part_id"]).execute()
-                    if part_response.data:
-                        formatted_item["part_name"] = part_response.data[0].get("name")
-                except Exception as e:
-                    print(f"Error fetching part data: {e}")
-            
-            formatted_data.append(formatted_item)
-        
-        return formatted_data
+        return response.data
 
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, session_id: UUID) -> Dict[str, Any]:

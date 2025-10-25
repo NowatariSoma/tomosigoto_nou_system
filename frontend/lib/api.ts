@@ -19,103 +19,38 @@ export class ApiError extends Error {
 }
 
 export async function fetchApi(url: string, options: RequestInit = {}) {
-  try {
-    // サーバーサイドかクライアントサイドかを判定
-    const isServer = typeof window === 'undefined';
-    
-    // サーバーサイド（Docker内）では backend:8000 を使用
-    // クライアントサイド（ブラウザ）では localhost:8000 を使用
-    const baseUrl = isServer 
-      ? 'http://backend:8000/api/v1'  // Docker内のサービス名を使用
-      : API_BASE_URL;  // ブラウザからは localhost を使用
-    
-    // トークンの取得（サーバーサイドでは localStorage が使えないため）
-    let token = null;
-    if (!isServer && typeof localStorage !== 'undefined') {
-      token = localStorage.getItem('authToken');
-    }
-    
-    // URLが相対パスの場合、baseUrlを前に付ける
-    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-    
-    // デバッグ用ログ
-    console.log('fetchApi called with:', {
-      url,
-      fullUrl,
-      isServer,
-      baseUrl,
-      hasToken: !!token,
-      options: {
-        method: options.method || 'GET',
-        headers: options.headers
-      }
-    });
-    
-    const response = await fetch(fullUrl, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
-
-    console.log('fetchApi response:', {
-      url: fullUrl,
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
-    if (!response.ok) {
-      // レスポンスボディからエラー詳細を取得
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      let errorData = null;
-      
-      try {
-        const responseText = await response.text();
-        console.log('Error response body:', responseText);
-        
-        if (responseText) {
-          errorData = JSON.parse(responseText);
-          if (errorData.detail) {
-            errorMessage = errorData.detail;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        }
-      } catch (parseError) {
-        // JSONパースに失敗した場合はデフォルトメッセージを使用
-        console.warn('Error response parsing failed:', parseError);
-      }
-      
-      console.error('API Error:', {
-        url: fullUrl,
-        status: response.status,
-        statusText: response.statusText,
-        errorMessage,
-        errorData
-      });
-      
-      throw new ApiError(response.status, errorMessage);
-    }
-
-    return response;
-  } catch (error) {
-    // ネットワークエラーやその他の例外をキャッチ
-    if (error instanceof ApiError) {
-      throw error; // ApiErrorはそのまま再スロー
-    }
-    
-    // その他のエラー（ネットワークエラーなど）
-    console.error('fetchApi error:', {
-      url,
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    throw new ApiError(0, error instanceof Error ? error.message : 'Network error occurred');
+  // サーバーサイドかクライアントサイドかを判定
+  const isServer = typeof window === 'undefined';
+  
+  // サーバーサイド（Docker内）では backend:8000 を使用
+  // クライアントサイド（ブラウザ）では localhost:8000 を使用
+  const baseUrl = isServer 
+    ? 'http://backend:8000/api/v1'  // Docker内のサービス名を使用
+    : API_BASE_URL;  // ブラウザからは localhost を使用
+  
+  // トークンの取得（サーバーサイドでは localStorage が使えないため）
+  let token = null;
+  if (!isServer && typeof localStorage !== 'undefined') {
+    token = localStorage.getItem('authToken');
   }
+  
+  // URLが相対パスの場合、baseUrlを前に付ける
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  
+  const response = await fetch(fullUrl, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+  }
+
+  return response;
 }
 
 // Authentication

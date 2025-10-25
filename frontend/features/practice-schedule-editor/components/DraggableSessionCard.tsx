@@ -3,17 +3,14 @@
 import React from 'react';
 import { Session, EditMode } from '../types/session-editor';
 import { GripVertical, Trash2 } from 'lucide-react';
-import { InstructorDisplay } from './InstructorDisplay';
 
 interface DraggableSessionCardProps {
   session: Session;
   edit_mode: EditMode;
-  scheduleId: string;
   is_dragging?: boolean;
   onDragStart?: (e: React.DragEvent, session: Session) => void;
   onEdit: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
-  fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
 /**
@@ -23,12 +20,10 @@ interface DraggableSessionCardProps {
 export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
   session,
   edit_mode,
-  scheduleId,
   is_dragging = false,
   onDragStart,
   onEdit,
   onDelete,
-  fallbackInstructors = [],
 }) => {
   return (
     <div
@@ -52,19 +47,15 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
 
         {/* セッション情報 */}
         <div className="flex-1">
-          {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
-              {session.part_name}
-            </div>
-          )}
+          {/* タイトル */}
+          <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            {session.title}
+          </div>
 
-          {/* インストラクター表示 */}
-          <InstructorDisplay
-            scheduleId={scheduleId}
-            slotOrder={session.slot_order}
-            className="mt-1"
-            fallbackInstructors={fallbackInstructors}
-          />
+          {/* 優先度 */}
+          <div className="text-xs text-gray-700">
+            優先度: {session.priority}
+          </div>
         </div>
 
         {/* 削除ボタン（編集モード時のみ） */}
