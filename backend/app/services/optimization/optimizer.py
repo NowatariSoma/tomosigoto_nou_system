@@ -6,7 +6,7 @@ from typing import List, Optional
 from ortools.sat.python import cp_model
 from app.services.optimization.models import (
     SchedulingProblem, SchedulingSolution, PracticeSession, 
-    Player, PartType, Room, TimeSlot, PartAssignment
+    Player, PartType, Room, TimeSlot
 )
 from app.services.optimization.constraints import SchedulingConstraints
 from app.services.optimization.objectives import SchedulingObjectives
@@ -23,14 +23,11 @@ class SchedulingOptimizer:
         
     def solve(self, time_limit_seconds: int = SchedulingConfig.DEFAULT_TIME_LIMIT, equality_weight: int = SchedulingConfig.DEFAULT_EQUALITY_WEIGHT) -> Optional[SchedulingSolution]:
         """スケジューリング問題を解く"""
-        print("制約条件を設定中...")
         model = self.constraints.setup_all_constraints()
         
-        print("目的関数を設定中...")
         self.objectives = SchedulingObjectives(self.problem, self.constraints.session_vars)
         self.objectives.setup_objective(model, equality_weight)
         
-        print("ソルバーを実行中...")
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = time_limit_seconds
         
@@ -39,9 +36,6 @@ class SchedulingOptimizer:
         solve_time = time.time() - start_time
         
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            print(f"解が見つかりました (ステータス: {status})")
-            print(f"求解時間: {solve_time:.2f}秒")
-            
             sessions = self._extract_solution(solver)
             objective_value = self._calculate_objective_value(sessions)
             
@@ -52,7 +46,6 @@ class SchedulingOptimizer:
                 solve_time_seconds=solve_time
             )
         else:
-            print(f"解が見つかりませんでした (ステータス: {status})")
             return None
     
     
@@ -103,16 +96,9 @@ class SchedulingOptimizer:
         return -variance  # 分散を最小化したいので負の値を返す
     
     def print_solution(self, solution: SchedulingSolution):
-        """解を分かりやすく表示"""
+        """解を分かりやすく表示（デバッグ用）"""
         if not solution:
-            print("解がありません")
             return
-        
-        print(f"\n=== スケジュール結果 ===")
-        print(f"総セッション数: {len(solution.sessions)}")
-        print(f"目的関数値: {solution.objective_value:.2f}")
-        print(f"最適解: {'はい' if solution.is_optimal else 'いいえ'}")
-        print(f"求解時間: {solution.solve_time_seconds:.2f}秒")
         
         # 指導者ごとのセッション数
         instructor_counts = {}
@@ -120,14 +106,7 @@ class SchedulingOptimizer:
             instructor_id = session.instructor_id
             instructor_counts[instructor_id] = instructor_counts.get(instructor_id, 0) + 1
         
-        print(f"\n=== 指導者別セッション数 ===")
-        for instructor in self.problem.players:
-            if instructor.is_instructor:
-                count = instructor_counts.get(instructor.id, 0)
-                print(f"{instructor.name} ({instructor.parts}): {count}セッション")
-        
         # スケジュール表を表示
-        print(f"\n=== スケジュール表 ===")
         schedule_matrix = solution.get_schedule_matrix()
         
         # ヘッダー
@@ -153,103 +132,3 @@ class SchedulingOptimizer:
             print()
 
 
-def create_sample_problem() -> SchedulingProblem:
-    """サンプル問題を作成"""
-    # パート定義
-    parts = [
-        PartType.A, PartType.B, PartType.C, PartType.D, PartType.E,
-        PartType.F, PartType.G, PartType.H, PartType.I
-    ]
-    
-    # 部屋定義
-    rooms = []
-    for i in range(1, ProblemConfig.NUM_ROOMS + 1):
-        rooms.append(Room(id=i, name=f"練習室{chr(64 + i)}"))  # A, B, C, D
-    
-    # 時間コマ定義
-    time_slots = []
-    num_time_slots = ProblemConfig.get_num_time_slots()
-    for i in range(1, num_time_slots + 1):
-        time_slots.append(TimeSlot(id=i, name=f"{i}限目"))
-    
-    # プレイヤー定義（指導者含む）
-    players = [
-        # 指導者（5人、全員2つのパートに所属）
-        Player(id=1, name="田中先生", part_assignments=[
-            PartAssignment(PartType.A, 100), PartAssignment(PartType.B, 80)
-        ], is_instructor=True),
-        Player(id=2, name="佐藤先生", part_assignments=[
-            PartAssignment(PartType.C, 90), PartAssignment(PartType.D, 70)
-        ], is_instructor=True),
-        Player(id=3, name="鈴木先生", part_assignments=[
-            PartAssignment(PartType.E, 80), PartAssignment(PartType.F, 60)
-        ], is_instructor=True),
-        Player(id=4, name="高橋先生", part_assignments=[
-            PartAssignment(PartType.G, 70), PartAssignment(PartType.H, 50)
-        ], is_instructor=True),
-        Player(id=5, name="山田先生", part_assignments=[
-            PartAssignment(PartType.I, 60), PartAssignment(PartType.A, 40)
-        ], is_instructor=True),
-        # 一般プレイヤー（複数パート所属、パート別優先度設定）
-        Player(id=6, name="佐々木さん", part_assignments=[
-            PartAssignment(PartType.A, 90), PartAssignment(PartType.B, 30)
-        ]),  # Aパート優先
-        Player(id=7, name="松本さん", part_assignments=[
-            PartAssignment(PartType.B, 60), PartAssignment(PartType.C, 50)
-        ]),  # バランス
-        Player(id=8, name="井上さん", part_assignments=[
-            PartAssignment(PartType.C, 40), PartAssignment(PartType.D, 20)
-        ]),  # 緩い
-        Player(id=9, name="木村さん", part_assignments=[
-            PartAssignment(PartType.D, 95), PartAssignment(PartType.E, 10)
-        ]),  # Dパート優先
-        Player(id=10, name="林さん", part_assignments=[
-            PartAssignment(PartType.E, 30), PartAssignment(PartType.F, 25)
-        ]),  # 緩い
-        Player(id=11, name="清水さん", part_assignments=[
-            PartAssignment(PartType.F, 85), PartAssignment(PartType.G, 15)
-        ]),  # Fパート優先
-        Player(id=12, name="森さん", part_assignments=[
-            PartAssignment(PartType.G, 20), PartAssignment(PartType.H, 10)
-        ]),  # 制限なし
-        Player(id=13, name="石川さん", part_assignments=[
-            PartAssignment(PartType.H, 100), PartAssignment(PartType.I, 5)
-        ]),  # Hパート厳格
-        Player(id=14, name="田村さん", part_assignments=[
-            PartAssignment(PartType.I, 55), PartAssignment(PartType.A, 45)
-        ]),  # バランス
-        Player(id=15, name="山田さん", part_assignments=[
-            PartAssignment(PartType.A, 75), PartAssignment(PartType.C, 25)
-        ]),  # Aパートやや優先
-        Player(id=16, name="佐藤さん", part_assignments=[
-            PartAssignment(PartType.B, 35), PartAssignment(PartType.D, 15)
-        ]),  # 緩い
-        Player(id=17, name="鈴木さん", part_assignments=[
-            PartAssignment(PartType.C, 50), PartAssignment(PartType.E, 50)
-        ]),  # 完全バランス
-        Player(id=18, name="高橋さん", part_assignments=[
-            PartAssignment(PartType.D, 90), PartAssignment(PartType.F, 20)
-        ]),  # Dパート優先
-        Player(id=19, name="伊藤さん", part_assignments=[
-            PartAssignment(PartType.E, 10), PartAssignment(PartType.G, 5)
-        ]),  # 制限なし
-        Player(id=20, name="渡辺さん", part_assignments=[
-            PartAssignment(PartType.F, 80), PartAssignment(PartType.H, 30)
-        ]),  # Fパートやや優先
-        Player(id=21, name="中村さん", part_assignments=[
-            PartAssignment(PartType.G, 25), PartAssignment(PartType.I, 15)
-        ]),  # 緩い
-        Player(id=22, name="小林さん", part_assignments=[
-            PartAssignment(PartType.H, 50), PartAssignment(PartType.A, 50)
-        ]),  # 完全バランス
-        Player(id=23, name="加藤さん", part_assignments=[
-            PartAssignment(PartType.I, 95), PartAssignment(PartType.B, 5)
-        ]),  # Iパート厳格
-    ]
-    
-    return SchedulingProblem(
-        players=players,
-        rooms=rooms,
-        time_slots=time_slots,
-        parts=parts
-    )

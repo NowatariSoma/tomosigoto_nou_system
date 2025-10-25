@@ -20,9 +20,24 @@ class SchedulingDataAdapter:
         parts_data: List[Dict[str, Any]],
         users_data: List[Dict[str, Any]],
         member_assignments_data: List[Dict[str, Any]],
-        session_instructors_data: List[Dict[str, Any]] = None
+        session_instructors_data: List[Dict[str, Any]] = None,
+        stage_id: str = None,  # ステージIDを追加
+        sessions_data: List[Dict[str, Any]] = None  # セッションデータを追加
     ) -> SchedulingProblem:
         """データベースデータをSchedulingProblemに変換"""
+        
+        # ステージIDが指定されていない場合は自動解決
+        if not stage_id:
+            stage_id = SchedulingDataAdapter._get_stage_id_from_schedule(
+                schedule_data, sessions_data, parts_data
+            )
+        
+        # ステージに紐づくパートのみを取得
+        if stage_id:
+            parts_data = SchedulingDataAdapter._get_parts_by_stage_id(parts_data, stage_id)
+            member_assignments_data = SchedulingDataAdapter._get_member_assignments_by_stage_id(
+                member_assignments_data, parts_data, stage_id
+            )
         
         # パート変換
         parts = []
@@ -68,7 +83,11 @@ class SchedulingDataAdapter:
                         part_assignments = []
                         for ma in member_assignments_data:
                             if ma.get('user_id') == user_id:
-                                part_name = next((p.get('name', '').upper() for p in parts_data if p.get('id') == ma.get('part_id')), '')
+                                part_data = next((p for p in parts_data if p.get('id') == ma.get('part_id')), None)
+                                if not part_data:
+                                    continue
+                                    
+                                part_name = part_data.get('name', '').upper()
                                 if part_name in [p.value for p in PartType]:
                                     # 優先度を取得（DBに存在しない場合はデフォルト50）
                                     priority = ma.get('priority', 50)
@@ -101,7 +120,11 @@ class SchedulingDataAdapter:
             part_assignments = []
             for ma in member_assignments_data:
                 if ma.get('user_id') == user_id:
-                    part_name = next((p.get('name', '').upper() for p in parts_data if p.get('id') == ma.get('part_id')), '')
+                    part_data = next((p for p in parts_data if p.get('id') == ma.get('part_id')), None)
+                    if not part_data:
+                        continue
+                        
+                    part_name = part_data.get('name', '').upper()
                     if part_name in [p.value for p in PartType]:
                         # 優先度を取得（DBに存在しない場合はデフォルト50）
                         priority = ma.get('priority', 50)
@@ -127,7 +150,8 @@ class SchedulingDataAdapter:
     def solution_to_db_sessions(
         solution: SchedulingSolution,
         schedule_id: UUID,
-        venue_mapping: Dict[int, str]  # room_id -> venue_id のマッピング
+        venue_mapping: Dict[int, str],  # room_id -> venue_id のマッピング
+        parts_data: List[Dict[str, Any]] = None  # パートデータを追加
     ) -> List[Dict[str, Any]]:
         """SchedulingSolutionをデータベースのsessions形式に変換"""
         
@@ -138,13 +162,12 @@ class SchedulingDataAdapter:
             if not venue_id:
                 continue  # マッピングが見つからない場合はスキップ
             
-            # パートIDを取得（実際の実装ではpartsテーブルから取得）
-            # ここでは仮の実装として、パート名から推測
-            part_id = f"part_{session.part.value.lower()}"
+            # パートIDを取得（partsテーブルから実際のUUIDを取得）
+            part_id = self._get_part_id_by_name(session.part.value, parts_data)
             
             session_data = {
                 "schedule_id": str(schedule_id),
-                "part_id": part_id,  # 実際の実装ではUUIDに変換
+                "part_id": part_id,
                 "title": f"{session.part.value}パート練習",
                 "slot_order": session.time_slot_id,
                 "schedule_available_venue_id": venue_id,
@@ -153,6 +176,20 @@ class SchedulingDataAdapter:
             sessions.append(session_data)
         
         return sessions
+    
+    @staticmethod
+    def _get_part_id_by_name(part_name: str, parts_data: List[Dict[str, Any]]) -> str:
+        """パート名からパートIDを取得"""
+        if not parts_data:
+            # パートデータがない場合は仮のIDを生成
+            return f"part_{part_name.lower()}"
+        
+        for part_data in parts_data:
+            if part_data.get('name', '').upper() == part_name.upper():
+                return str(part_data.get('id', f"part_{part_name.lower()}"))
+        
+        # マッチするパートが見つからない場合は仮のIDを生成
+        return f"part_{part_name.lower()}"
     
     @staticmethod
     def create_venue_mapping(venues_data: List[Dict[str, Any]]) -> Dict[int, str]:
@@ -223,3 +260,105 @@ class SchedulingDataAdapter:
             errors.append("指導者が設定されていません")
         
         return errors
+    
+    @staticmethod
+    def _get_stage_id_from_schedule(
+        schedule_data: Dict[str, Any],
+        sessions_data: List[Dict[str, Any]] = None,
+        parts_data: List[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """
+        スケジュールからステージIDを取得
+        
+        Args:
+            schedule_data: スケジュールデータ
+            sessions_data: セッションデータ（オプション）
+            parts_data: パートデータ（オプション）
+            
+        Returns:
+            ステージID（見つからない場合はNone）
+        """
+        # 方法1: スケジュールデータにstage_idが直接含まれている場合
+        if 'stage_id' in schedule_data:
+            return schedule_data['stage_id']
+        
+        # 方法2: セッションデータからパートIDを取得し、パートデータからステージIDを取得
+        if sessions_data and parts_data:
+            # セッションからパートIDを取得
+            part_ids = set()
+            for session in sessions_data:
+                part_id = session.get('part_id')
+                if part_id:
+                    part_ids.add(part_id)
+            
+            # パートデータからステージIDを取得
+            stage_ids = set()
+            for part_data in parts_data:
+                if part_data.get('id') in part_ids:
+                    stage_id = part_data.get('stage_id')
+                    if stage_id:
+                        stage_ids.add(stage_id)
+            
+            # 複数のステージIDが見つかった場合は最初のものを返す
+            if stage_ids:
+                return list(stage_ids)[0]
+        
+        # 方法3: パートデータから最も一般的なステージIDを取得
+        if parts_data:
+            stage_counts = {}
+            for part_data in parts_data:
+                stage_id = part_data.get('stage_id')
+                if stage_id:
+                    stage_counts[stage_id] = stage_counts.get(stage_id, 0) + 1
+            
+            if stage_counts:
+                # 最も多くのパートを持つステージIDを返す
+                return max(stage_counts, key=stage_counts.get)
+        
+        return None
+    
+    @staticmethod
+    def _get_parts_by_stage_id(
+        parts_data: List[Dict[str, Any]], 
+        stage_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        指定されたステージIDのパートのみを取得
+        
+        Args:
+            parts_data: 全パートデータ
+            stage_id: ステージID
+            
+        Returns:
+            指定されたステージのパートデータ
+        """
+        return [part for part in parts_data if part.get('stage_id') == stage_id]
+    
+    @staticmethod
+    def _get_member_assignments_by_stage_id(
+        member_assignments_data: List[Dict[str, Any]],
+        parts_data: List[Dict[str, Any]],
+        stage_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        指定されたステージIDのパートに属するメンバー割り当てのみを取得
+        
+        Args:
+            member_assignments_data: 全メンバー割り当てデータ
+            parts_data: 全パートデータ
+            stage_id: ステージID
+            
+        Returns:
+            指定されたステージのパートに属するメンバー割り当てデータ
+        """
+        # ステージのパートIDを取得
+        stage_part_ids = set()
+        for part_data in parts_data:
+            if part_data.get('stage_id') == stage_id:
+                stage_part_ids.add(part_data.get('id'))
+        
+        # そのパートに属するメンバー割り当てを取得
+        return [
+            ma for ma in member_assignments_data 
+            if ma.get('part_id') in stage_part_ids
+        ]
