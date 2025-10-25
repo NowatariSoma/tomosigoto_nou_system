@@ -52,7 +52,34 @@ class SessionRepository:
             .order("slot_order", desc=False)
             .execute()
         )
-        return response.data
+        
+        # パート名を取得して追加
+        print(f"Processing {len(response.data)} sessions")
+        formatted_data = []
+        for item in response.data:
+            print(f"Processing session: {item.get('id')}, part_id: {item.get('part_id')}")
+            formatted_item = dict(item)
+            formatted_item["part_name"] = None
+            
+            # パート情報を取得
+            if item.get("part_id"):
+                try:
+                    print(f"Fetching part name for part_id: {item['part_id']}")
+                    part_response = self.client.table("parts").select("name").eq("id", item["part_id"]).execute()
+                    print(f"Part response: {part_response.data}")
+                    if part_response.data:
+                        formatted_item["part_name"] = part_response.data[0].get("name")
+                        print(f"Part name: {formatted_item['part_name']}")
+                    else:
+                        print("No part data found")
+                except Exception as e:
+                    print(f"Error fetching part data: {e}")
+            else:
+                print("No part_id found")
+            
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_with_details")
     async def find_with_details(
