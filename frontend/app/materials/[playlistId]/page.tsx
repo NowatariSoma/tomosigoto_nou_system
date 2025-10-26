@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/feedback/badge';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { VideoPlaylist, PlaylistVideo, Video } from '@/features/materials/types/material_types';
+import { Playlist, SubPlaylist, Video } from '@/features/materials/types/material_types';
 import { mockData } from '@/features/materials/data/material_data';
 import { playlistVideos } from '@/features/materials/data/playlist_data';
 import { videos } from '@/features/materials/data/video_data';
@@ -30,12 +30,11 @@ export default function PlaylistDetailPage() {
   ];
   
   // 年度+舞台データを取得
-  const stageData = mockData.find((item: VideoPlaylist) => item.playlistId === playlistId);
+  const stageData = mockData.find((item: Playlist) => item.id === playlistId);
   
   // その年度+舞台のプレイリスト一覧を取得
-  const stagePlaylists = playlistVideos.filter((playlist: PlaylistVideo) => 
-    playlist.stage === stageData?.stage && 
-    playlist.playlistId.startsWith(stageData?.playlistId + '-')
+  const stagePlaylists = playlistVideos.filter((playlist: SubPlaylist) => 
+    playlist.playlistId === stageData?.id
   );
   
   if (!stageData) {
@@ -69,11 +68,10 @@ export default function PlaylistDetailPage() {
     );
   }
 
-  // 検索クエリが演目名やフェーズを含むかチェック
+  // 検索クエリが演目名を含むかチェック
   const isVideoSearch = searchQuery !== '' && (
     videos.some(video => 
-      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.phase.toLowerCase().includes(searchQuery.toLowerCase())
+      video.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
   ) && !stagePlaylists.some(playlist => 
     playlist.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,22 +83,22 @@ export default function PlaylistDetailPage() {
   if (isVideoSearch) {
     filteredVideos = videos.filter((video: Video) => {
       // 現在の年度+舞台の動画のみを対象
-      const playlist = mockData.find(item => video.playlistId.startsWith(item.playlistId + '-'));
-      if (!playlist || playlist.playlistId !== playlistId) return false;
+      const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
+      if (!subPlaylist || subPlaylist.playlistId !== playlistId) return false;
       
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = video.title.toLowerCase().includes(searchLower) ||
-        video.phase.toLowerCase().includes(searchLower) ||
-        playlist.title.toLowerCase().includes(searchLower) ||
-        playlist.stage.toLowerCase().includes(searchLower);
-      const matchesPhase = selectedPhase === 'all' || video.phase === selectedPhase;
+        subPlaylist.title.toLowerCase().includes(searchLower) ||
+        stageData?.title.toLowerCase().includes(searchLower) ||
+        stageData?.stage.toLowerCase().includes(searchLower);
+      const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
       
       return matchesSearch && matchesPhase;
     });
   }
 
   // プレイリスト検索の場合
-  const filteredPlaylists = stagePlaylists.filter((playlist: PlaylistVideo) => {
+  const filteredPlaylists = stagePlaylists.filter((playlist: SubPlaylist) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' ||
       playlist.title.toLowerCase().includes(searchLower) ||
@@ -194,30 +192,35 @@ export default function PlaylistDetailPage() {
           {isVideoSearch ? (
             // 動画検索結果の表示
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredVideos.map((video) => (
-                <Card
-                  key={video.id}
-                  className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                  onClick={() => window.open(video.url, '_blank')}
-                >
-                  <div className="relative h-32 overflow-hidden bg-slate-200">
-                    <img
-                      src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                      <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {filteredVideos.map((video) => {
+                const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
+                if (!subPlaylist) return null;
+                
+                return (
+                  <Card
+                    key={video.id}
+                    className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                    onClick={() => window.open(video.videoUrl, '_blank')}
+                  >
+                    <div className="relative h-32 overflow-hidden bg-slate-200">
+                      <img
+                        src={video.thumbnailUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                        <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
                     </div>
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
-                    <CardDescription className="text-xs line-clamp-2">
-                      {stageData?.year}年 {video.stage} • {formatDate(video.recorded_date)} • YouTubeで視聴
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
+                      <CardDescription className="text-xs line-clamp-2">
+                        {stageData?.year}年 {stageData?.stage} • {formatDate(video.recordedDate)} • {subPlaylist.phase} • YouTubeで視聴
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             // プレイリスト検索結果の表示
@@ -226,7 +229,7 @@ export default function PlaylistDetailPage() {
                 <Card
                   key={playlist.id}
                   className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                  onClick={() => router.push(`/materials/${playlistId}/${playlist.playlistId}`)}
+                  onClick={() => router.push(`/materials/${playlistId}/${playlist.id}`)}
                 >
                   <div className="relative h-32 overflow-hidden bg-slate-200">
                     <img
@@ -238,7 +241,7 @@ export default function PlaylistDetailPage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm line-clamp-2">{playlist.title}</CardTitle>
                     <CardDescription className="text-xs line-clamp-2">
-                      {stageData?.year}年 {playlist.stage} • YouTubeで視聴
+                      {stageData?.year}年 {stageData?.stage} • {playlist.phase} • YouTubeで視聴
                     </CardDescription>
                   </CardHeader>
                 </Card>

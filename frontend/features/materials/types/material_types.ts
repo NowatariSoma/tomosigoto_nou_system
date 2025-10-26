@@ -1,30 +1,32 @@
-export interface VideoPlaylist {
-    id: string;
-    playlistId: string;
-    year: number;
-    title: string;
-    stage: string;
-    thumbnailUrl: string;
-  }
+export interface Playlist {
+  id: string;
+  title: string;
+  year: number;
+  stage: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubPlaylist {
+  id: string;
+  playlistId: string;
+  title: string;
+  recordedDate: string;
+  phase: string;
+  playlistUrl: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Video {
-    id: string;
-    title: string;
-    url: string;
-    playlistId: string;
-    recorded_date: string;
-    stage: string;
-    phase: '稽古' | '本番';
-    thumbnailUrl: string;
-  }
-
-export interface PlaylistVideo {
-    id: string;
-    title: string;
-    playlistId: string;
-    stage: string;
-    thumbnailUrl: string;
-    phase: '稽古' | '本番';
-    youtubeUrl: string;
-    recorded_date: string;
-  }
+  id: string;
+  subPlaylistId: string;
+  title: string;
+  videoUrl: string;
+  recordedDate?: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}

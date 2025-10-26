@@ -9,8 +9,9 @@ import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MaterialFilterSelects } from '@/features/materials/components/MaterialFilterSelects';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
 import { FilterOption } from '@/shared/types/filter_types';
-import { VideoPlaylist, Video } from '@/features/materials/types/material_types';
+import { Playlist, Video } from '@/features/materials/types/material_types';
 import { mockData } from '@/features/materials/data/material_data';
+import { playlistVideos } from '@/features/materials/data/playlist_data';
 import { videos } from '@/features/materials/data/video_data';
 
 
@@ -32,8 +33,8 @@ export default function Home() {
   };
 
 
-  const years = Array.from(new Set(mockData.map((item: VideoPlaylist) => item.year))).sort((a: number, b: number) => b - a);
-  const stages = Array.from(new Set(mockData.map((item: VideoPlaylist) => item.stage))).sort();
+  const years = Array.from(new Set(mockData.map((item: Playlist) => item.year))).sort((a: number, b: number) => b - a);
+  const stages = Array.from(new Set(mockData.map((item: Playlist) => item.stage))).sort();
 
   // フィルター設定の定義
   const yearOptions: FilterOption[] = [
@@ -77,11 +78,10 @@ export default function Home() {
     }
   ];
 
-  // 検索クエリが演目名やフェーズを含むかチェック
+  // 検索クエリが演目名を含むかチェック
   const isVideoSearch = searchQuery !== '' && (
     videos.some(video => 
-      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.phase.toLowerCase().includes(searchQuery.toLowerCase())
+      video.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
   ) && !mockData.some(item => 
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,18 +96,21 @@ export default function Home() {
   let filteredVideos: Video[] = [];
   if (isVideoSearch) {
     filteredVideos = videos.filter((video: Video) => {
-      // playlistIdの部分一致でプレイリストを検索
-      const playlist = mockData.find(item => video.playlistId.startsWith(item.playlistId + '-'));
+      // subPlaylistIdでプレイリストを検索
+      const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
+      if (!subPlaylist) return false;
+      
+      const playlist = mockData.find(item => item.id === subPlaylist.playlistId);
       if (!playlist) return false;
       
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = video.title.toLowerCase().includes(searchLower) ||
-        video.phase.toLowerCase().includes(searchLower) ||
+        subPlaylist.title.toLowerCase().includes(searchLower) ||
         playlist.title.toLowerCase().includes(searchLower) ||
         playlist.stage.toLowerCase().includes(searchLower);
       const matchesYear = selectedYear === 'all' || playlist.year.toString() === selectedYear;
       const matchesStage = selectedStage === 'all' || playlist.stage === selectedStage;
-      const matchesPhase = selectedPhase === 'all' || video.phase === selectedPhase;
+      const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
       
       return matchesSearch && matchesYear && matchesStage && matchesPhase;
     });
@@ -118,7 +121,7 @@ export default function Home() {
   }
 
   // プレイリスト検索の場合
-  const filteredData = mockData.filter((item: VideoPlaylist) => {
+  const filteredData = mockData.filter((item: Playlist) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' || 
       item.title.toLowerCase().includes(searchLower) || 
@@ -176,14 +179,15 @@ export default function Home() {
           // 動画検索結果の表示
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVideos.map((video: Video) => {
-              const playlist = mockData.find(item => video.playlistId.startsWith(item.playlistId + '-'));
-              if (!playlist) return null;
+              const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
+              const playlist = mockData.find(item => item.id === subPlaylist?.playlistId);
+              if (!playlist || !subPlaylist) return null;
               
               return (
                 <Card
                   key={video.id}
                   className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                  onClick={() => window.open(video.url, '_blank')}
+                  onClick={() => window.open(video.videoUrl, '_blank')}
                 >
                   <div className="relative h-48 overflow-hidden bg-slate-200">
                     <img
@@ -200,8 +204,8 @@ export default function Home() {
                       <span>{video.title}</span>
                       <span className="text-sm font-normal text-slate-500">{playlist.year}年</span>
                     </CardTitle>
-                    <CardDescription>
-                      {playlist.year}年 {video.stage} • {formatDate(video.recorded_date)} • YouTubeで視聴
+                    <CardDescription className="text-xs line-clamp-2">
+                      {playlist.year}年 {playlist.stage} • {formatDate(video.recordedDate)} • {subPlaylist.phase} • YouTubeで視聴
                     </CardDescription>
                   </CardHeader>
                 </Card>
@@ -211,11 +215,11 @@ export default function Home() {
         ) : (
           // プレイリスト検索結果の表示
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredData.map((item: VideoPlaylist) => (
+            {filteredData.map((item: Playlist) => (
               <Card
                 key={item.id}
                 className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => router.push(`/materials/${item.playlistId}`)}
+                onClick={() => router.push(`/materials/${item.id}`)}
               >
                 <div className="relative h-48 overflow-hidden bg-slate-200">
                   <img
@@ -226,7 +230,7 @@ export default function Home() {
                 </div>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>{item.title}</span>
+                    <span>{item.year}年 {item.stage}</span>
                     <span className="text-sm font-normal text-slate-500">{item.year}年</span>
                   </CardTitle>
                   <CardDescription>
