@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/inputs/input';
 import { SearchInputProps } from '@/shared/types/filter_types';
+import { X } from 'lucide-react';
 
 export const MaterialSearchInput = ({ 
   value, 
@@ -37,6 +38,15 @@ export const MaterialSearchInput = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 };

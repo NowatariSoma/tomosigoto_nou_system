@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink, Play, Search, Archive } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { VideoPlaylist, PlaylistVideo, Video } from '@/features/materials/types/material_types';
+import { Playlist, SubPlaylist, Video } from '@/features/materials/types/material_types';
 import { mockData } from '@/features/materials/data/material_data';
 import { playlistVideos } from '@/features/materials/data/playlist_data';
 import { videos } from '@/features/materials/data/video_data';
@@ -22,16 +22,16 @@ export default function VideoListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // 年度+舞台データを取得
-  const stageData = mockData.find((item: VideoPlaylist) => item.playlistId === playlistId);
+  const stageData = mockData.find((item: Playlist) => item.id === playlistId);
   
   // プレイリストデータを取得（videoIdは実際にはプレイリストID）
-  const playlistData = playlistVideos.find((playlist: PlaylistVideo) => 
-    playlist.playlistId === videoId
+  const playlistData = playlistVideos.find((playlist: SubPlaylist) => 
+    playlist.id === videoId
   );
   
   // そのプレイリストの動画一覧を取得
   const playlistVideosList = videos.filter((video: Video) => 
-    video.playlistId === videoId
+    video.subPlaylistId === videoId
   );
   
   console.log('Debug info:', {
@@ -85,8 +85,7 @@ export default function VideoListPage() {
   const filteredVideos = playlistVideosList.filter((video: Video) => {
     const searchLower = searchQuery.toLowerCase();
     return searchQuery === '' ||
-      video.title.toLowerCase().includes(searchLower) ||
-      video.stage.toLowerCase().includes(searchLower);
+      video.title.toLowerCase().includes(searchLower);
   });
 
   // 日付フォーマット関数
@@ -148,7 +147,7 @@ export default function VideoListPage() {
               </div>
             </div>
             <Button
-              onClick={() => window.open(playlistData.youtubeUrl, '_blank')}
+              onClick={() => window.open(playlistData.playlistUrl, '_blank')}
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
@@ -180,7 +179,7 @@ export default function VideoListPage() {
               <Card
                 key={video.id}
                 className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => window.open(video.url, '_blank')}
+                onClick={() => window.open(video.videoUrl, '_blank')}
               >
                 <div className="relative h-32 overflow-hidden bg-slate-200">
                   <img
@@ -195,7 +194,7 @@ export default function VideoListPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
                   <CardDescription className="text-xs line-clamp-2">
-                    {stageData?.year}年 {video.stage} • {formatDate(video.recorded_date)} • YouTubeで視聴
+                    {stageData?.year}年 {stageData?.stage} • {formatDate(video.recordedDate)} • {playlistData.phase} • YouTubeで視聴
                   </CardDescription>
                 </CardHeader>
               </Card>
