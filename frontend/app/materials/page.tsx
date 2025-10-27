@@ -1,141 +1,38 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Archive, Plus, Edit, Heart } from 'lucide-react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MaterialFilterSelects } from '@/features/materials/components/MaterialFilterSelects';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
-import { FilterOption } from '@/shared/types/filter_types';
 import { Playlist, Video } from '@/features/materials/types/material_types';
-import { mockData } from '@/features/materials/data/material_data';
 import { playlistVideos } from '@/features/materials/data/playlist_data';
-import { videos } from '@/features/materials/data/video_data';
+import { mockData } from '@/features/materials/data/material_data';
 import { Button } from '@/components/ui/forms/button';
-import { useFavoriteVideos } from '@/features/materials/hooks/useFavoriteVideos';
-import { SubPlaylist } from '@/features/materials/types/material_types';
 import { VideoCard } from '@/features/materials/components/VideoCard';
 import { PlaylistCard } from '@/features/materials/components/PlaylistCard';
 import { FavoriteFilterToggle } from '@/features/materials/components/FavoriteFilterToggle';
 import { SearchResultCount } from '@/features/materials/components/SearchResultCount';
 import { EmptyState } from '@/features/materials/components/EmptyState';
+import { useMaterialListPage } from '@/features/materials/hooks/useMaterialListPage';
 
 
 export default function Home() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedStage, setSelectedStage] = useState<string>('all');
-  const [selectedPhase, setSelectedPhase] = useState<string>('all');
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const { isFavorite, toggleFavorite, getFavoriteCount } = useFavoriteVideos();
 
-  // お気に入り切り替え
-  const handleToggleFavorite = (videoId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleFavorite(videoId);
-  };
-
-
-  const years = Array.from(new Set(mockData.map((item: Playlist) => item.year))).sort((a: number, b: number) => b - a);
-  const stages = Array.from(new Set(mockData.map((item: Playlist) => item.stage))).sort();
-
-  // フィルター設定の定義
-  const yearOptions: FilterOption[] = [
-    { value: 'all', label: 'すべての年度' },
-    ...years.map((year: number) => ({ value: year.toString(), label: `${year}年` }))
-  ];
-
-  const stageOptions: FilterOption[] = [
-    { value: 'all', label: 'すべての舞台' },
-    ...stages.map((stage: string) => ({ value: stage, label: stage }))
-  ];
-
-  const phaseOptions: FilterOption[] = [
-    { value: 'all', label: 'すべてのフェーズ' },
-    { value: '稽古', label: '稽古' },
-    { value: '本番', label: '本番' }
-  ];
-
-
-  const filterConfigs = [
-    {
-      id: 'year',
-      placeholder: '年度を選択',
-      options: yearOptions,
-      value: selectedYear,
-      onValueChange: setSelectedYear
-    },
-    {
-      id: 'stage',
-      placeholder: '舞台を選択',
-      options: stageOptions,
-      value: selectedStage,
-      onValueChange: setSelectedStage
-    },
-    {      
-      id: 'phase',
-      placeholder: 'フェーズを選択',
-      options: phaseOptions,
-      value: selectedPhase,
-      onValueChange: setSelectedPhase
-    }
-  ];
-
-  // 検索クエリが演目名を含むかチェック
-  const isVideoSearch = searchQuery !== '' && (
-    videos.some(video => 
-      video.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  ) && !mockData.some(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.stage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // デバッグ用ログ
-  console.log('Search Query:', searchQuery);
-  console.log('Is Video Search:', isVideoSearch);
-
-  // 動画検索の場合
-  let filteredVideos: Video[] = [];
-  if (isVideoSearch) {
-    filteredVideos = videos.filter((video: Video) => {
-      // subPlaylistIdでプレイリストを検索
-      const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
-      if (!subPlaylist) return false;
-      
-      const playlist = mockData.find(item => item.id === subPlaylist.playlistId);
-      if (!playlist) return false;
-      
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = video.title.toLowerCase().includes(searchLower) ||
-        subPlaylist.title.toLowerCase().includes(searchLower) ||
-        playlist.title.toLowerCase().includes(searchLower) ||
-        playlist.stage.toLowerCase().includes(searchLower);
-      const matchesYear = selectedYear === 'all' || playlist.year.toString() === selectedYear;
-      const matchesStage = selectedStage === 'all' || playlist.stage === selectedStage;
-      const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
-      const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
-      
-      return matchesSearch && matchesYear && matchesStage && matchesPhase && matchesFavorite;
-    });
-    
-    // デバッグ用ログ
-    console.log('Filtered Videos:', filteredVideos.length);
-    console.log('Sample Video:', filteredVideos[0]);
-  }
-
-  // プレイリスト検索の場合
-  const filteredData = mockData.filter((item: Playlist) => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = searchQuery === '' || 
-      item.title.toLowerCase().includes(searchLower) || 
-      (item.stage && item.stage.toLowerCase().includes(searchLower));
-    const matchesYear = selectedYear === 'all' || item.year.toString() === selectedYear;
-    const matchesStage = selectedStage === 'all' || (item.stage && item.stage === selectedStage);
-    const matchesPhase = selectedPhase === 'all' || true; // プレイリスト検索ではフェーズフィルターは無視
-    return matchesSearch && matchesYear && matchesStage && matchesPhase;
-  });
+  const {
+    searchQuery,
+    setSearchQuery,
+    showFavoritesOnly,
+    setShowFavoritesOnly,
+    filterConfigs,
+    isVideoSearch,
+    filteredVideos,
+    filteredData,
+    getFavoriteCount,
+    handleToggleFavorite,
+    isFavorite,
+  } = useMaterialListPage();
 
   return (
     <AppTemplate
@@ -243,7 +140,7 @@ export default function Home() {
         ) : (
           // プレイリスト検索結果の表示
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredData.map((item: Playlist) => (
+            {filteredData.map(item => (
               <PlaylistCard
                 key={item.id}
                 playlist={item}

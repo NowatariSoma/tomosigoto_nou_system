@@ -1,5 +1,7 @@
 import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
+import { Button } from '@/components/ui/forms/button';
 
 type FormType = 'playlist' | 'subPlaylist' | 'video' | null;
 
@@ -8,9 +10,18 @@ interface NewMaterialTypeSelectorProps {
 }
 
 export function NewMaterialTypeSelector({ onSelectType }: NewMaterialTypeSelectorProps) {
+  const router = useRouter();
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="outline"
+          onClick={() => router.push('/materials')}
+          className="flex items-center gap-2"
+        >
+          ← 戻る
+        </Button>
         <h1 className="text-3xl font-bold text-slate-900">新しく追加</h1>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
