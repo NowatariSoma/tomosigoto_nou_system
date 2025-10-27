@@ -12,7 +12,7 @@ class AttendanceStatus(str, Enum):
     ABSENT = "absent"        # 欠席
     LATE = "late"           # 遅刻
     NO_SHOW = "no_show"     # 無断欠席
-    UNDECIDED = "undecided"  # 未定
+    UNDECIDED = "undecided"  # 未定（後方互換性のため残す、新規作成では使用しない）
 
 
 class AttendanceBase(BaseModel):

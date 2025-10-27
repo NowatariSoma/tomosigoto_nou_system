@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, CheckCircle } from 'lucide-react';
@@ -14,6 +14,7 @@ interface User {
 interface SimpleAttendanceFormProps {
   practiceSchedules: PracticeSchedule[];
   users: User[];
+  currentUserId?: string;
   onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => Promise<void>;
   loading?: boolean;
 }
@@ -21,10 +22,11 @@ interface SimpleAttendanceFormProps {
 export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   practiceSchedules,
   users,
+  currentUserId,
   onSubmit,
   loading = false,
 }) => {
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>(currentUserId || '');
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -32,6 +34,13 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   const [availableTo, setAvailableTo] = useState<string>('');
   const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // 練習が1つだけの場合は自動選択
+  useEffect(() => {
+    if (practiceSchedules.length === 1 && !selectedPracticeId) {
+      setSelectedPracticeId(practiceSchedules[0].id);
+    }
+  }, [practiceSchedules, selectedPracticeId]);
 
   const validateForm = (): boolean => {
     const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string } = {};
@@ -56,7 +65,15 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
       }
     }
 
-    if (notes && notes.length > VALIDATION.MAX_NOTES_LENGTH) {
+    if (status === ATTENDANCE_STATUS.ABSENT) {
+      if (!notes || notes.trim().length === 0) {
+        newErrors.notes = '欠席の場合は謝罪文を入力してください';
+      } else if (notes.trim().length < 30) {
+        newErrors.notes = '謝罪文は30文字以上入力してください';
+      } else if (notes.length > VALIDATION.MAX_NOTES_LENGTH) {
+        newErrors.notes = `謝罪文は${VALIDATION.MAX_NOTES_LENGTH}文字以内で入力してください`;
+      }
+    } else if (notes && notes.length > VALIDATION.MAX_NOTES_LENGTH) {
       newErrors.notes = `備考は${VALIDATION.MAX_NOTES_LENGTH}文字以内で入力してください`;
     }
 
@@ -73,8 +90,8 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
           practiceScheduleId: selectedPracticeId,
           status,
           notes,
-          availableFrom: status === ATTENDANCE_STATUS.LATE ? availableFrom : undefined,
-          availableTo: status === ATTENDANCE_STATUS.LATE ? availableTo : undefined
+          availableFrom: status === ATTENDANCE_STATUS.LATE && availableFrom ? availableFrom : undefined,
+          availableTo: status === ATTENDANCE_STATUS.LATE && availableTo ? availableTo : undefined
         });
         setIsSubmitted(true);
       } catch (error) {
@@ -151,14 +168,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-      {/* ヘッダー */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">出席登録</h1>
-        <p className="text-gray-600">練習への出席状況を登録してください</p>
-      </div>
-
-
+    <div>
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* 練習選択 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
@@ -191,43 +201,69 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
           )}
         </div>
 
-        {/* ユーザー選択 */}
-        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
-          <label className="block text-lg font-semibold text-slate-900 mb-4">
-            ユーザー選択 <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={selectedUserId}
-            onChange={(e) => handleUserChange(e.target.value)}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-colors ${
-              errors.selectedUserId 
-                ? 'border-red-500 bg-red-50 focus:ring-red-500' 
-                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
-            }`}
-          >
-            <option value="">ユーザーを選択してください</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} ({user.email})
-              </option>
-            ))}
-          </select>
-          {errors.selectedUserId && (
-            <p className="mt-2 text-sm text-red-600 font-medium">{errors.selectedUserId}</p>
-          )}
-        </div>
+        {/* ユーザー選択（currentUserIdが指定されていない場合のみ表示） */}
+        {!currentUserId && (
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <label className="block text-lg font-semibold text-slate-900 mb-4">
+              ユーザー選択 <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => handleUserChange(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-colors ${
+                errors.selectedUserId
+                  ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                  : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
+              }`}
+            >
+              <option value="">ユーザーを選択してください</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+            {errors.selectedUserId && (
+              <p className="mt-2 text-sm text-red-600 font-medium">{errors.selectedUserId}</p>
+            )}
+          </div>
+        )}
 
         {/* 出席状況選択 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="block text-lg font-semibold text-slate-900 mb-6">
             出席状況 <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(ATTENDANCE_STATUS).map(([key, value]) => (
+          <div className="space-y-4">
+            {/* 出席（全幅） */}
+            <label
+              className={`group relative inline-flex items-center justify-center w-full px-6 py-4 rounded-lg text-lg font-medium cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                status === ATTENDANCE_STATUS.PRESENT
+                  ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300 scale-105'
+                  : 'bg-white text-slate-700 hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-400 shadow-sm hover:shadow-md'
+              }`}
+            >
+              <input
+                type="radio"
+                name="status"
+                value={ATTENDANCE_STATUS.PRESENT}
+                checked={status === ATTENDANCE_STATUS.PRESENT}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                className="sr-only"
+              />
+              <span className="relative z-10">
+                {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.PRESENT]}
+              </span>
+              {status === ATTENDANCE_STATUS.PRESENT && (
+                <div className="absolute inset-0 bg-blue-600 rounded-lg opacity-10 group-hover:opacity-20 transition-opacity"></div>
+              )}
+            </label>
+
+            {/* 遅刻と欠席（横並び） */}
+            <div className="grid grid-cols-2 gap-4">
               <label
-                key={key}
                 className={`group relative inline-flex items-center justify-center px-6 py-4 rounded-lg text-lg font-medium cursor-pointer transition-all duration-200 transform hover:scale-105 ${
-                  status === value
+                  status === ATTENDANCE_STATUS.LATE
                     ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300 scale-105'
                     : 'bg-white text-slate-700 hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-400 shadow-sm hover:shadow-md'
                 }`}
@@ -235,19 +271,42 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                 <input
                   type="radio"
                   name="status"
-                  value={value}
-                  checked={status === value}
+                  value={ATTENDANCE_STATUS.LATE}
+                  checked={status === ATTENDANCE_STATUS.LATE}
                   onChange={(e) => handleStatusChange(e.target.value)}
                   className="sr-only"
                 />
                 <span className="relative z-10">
-                  {ATTENDANCE_STATUS_LABELS[value as keyof typeof ATTENDANCE_STATUS_LABELS]}
+                  {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.LATE]}
                 </span>
-                {status === value && (
+                {status === ATTENDANCE_STATUS.LATE && (
                   <div className="absolute inset-0 bg-blue-600 rounded-lg opacity-10 group-hover:opacity-20 transition-opacity"></div>
                 )}
               </label>
-            ))}
+
+              <label
+                className={`group relative inline-flex items-center justify-center px-6 py-4 rounded-lg text-lg font-medium cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                  status === ATTENDANCE_STATUS.ABSENT
+                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300 scale-105'
+                    : 'bg-white text-slate-700 hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-400 shadow-sm hover:shadow-md'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value={ATTENDANCE_STATUS.ABSENT}
+                  checked={status === ATTENDANCE_STATUS.ABSENT}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="sr-only"
+                />
+                <span className="relative z-10">
+                  {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.ABSENT]}
+                </span>
+                {status === ATTENDANCE_STATUS.ABSENT && (
+                  <div className="absolute inset-0 bg-blue-600 rounded-lg opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                )}
+              </label>
+            </div>
           </div>
           {errors.status && (
             <p className="mt-3 text-sm text-red-600 font-medium">{errors.status}</p>
@@ -256,7 +315,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
         {/* 参加可能時間入力（遅刻の場合のみ表示） */}
         {status === ATTENDANCE_STATUS.LATE && (
-          <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-sm">
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
             <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
               <div className="bg-yellow-100 p-2 rounded-lg">
                 <Clock className="h-5 w-5 text-yellow-600" />
@@ -277,10 +336,10 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   type="time"
                   value={availableFrom}
                   onChange={(e) => handleAvailableFromChange(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-base transition-colors ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 text-base transition-colors ${
                     errors.availableFrom
                       ? 'border-red-500 bg-red-50 focus:ring-red-500'
-                      : 'border-yellow-300 focus:border-yellow-500 hover:border-yellow-400 bg-white'
+                      : 'border-slate-300 focus:border-blue-500 hover:border-slate-400 bg-white focus:ring-blue-500'
                   }`}
                 />
               </div>
@@ -292,10 +351,10 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   type="time"
                   value={availableTo}
                   onChange={(e) => handleAvailableToChange(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-base transition-colors ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 text-base transition-colors ${
                     errors.availableTo
                       ? 'border-red-500 bg-red-50 focus:ring-red-500'
-                      : 'border-yellow-300 focus:border-yellow-500 hover:border-yellow-400 bg-white'
+                      : 'border-slate-300 focus:border-blue-500 hover:border-slate-400 bg-white focus:ring-blue-500'
                   }`}
                 />
               </div>
@@ -309,23 +368,41 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
           </div>
         )}
 
-        {/* 備考 */}
+        {/* 備考 / 謝罪文 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
           <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
-            <div className="bg-slate-100 p-2 rounded-lg">
-              <FileText className="h-5 w-5 text-slate-600" />
+            <div className={`p-2 rounded-lg ${
+              status === ATTENDANCE_STATUS.ABSENT
+                ? 'bg-red-100'
+                : 'bg-slate-100'
+            }`}>
+              <FileText className={`h-5 w-5 ${
+                status === ATTENDANCE_STATUS.ABSENT
+                  ? 'text-red-600'
+                  : 'text-slate-600'
+              }`} />
             </div>
-            <span>備考（任意）</span>
+            <span>
+              {status === ATTENDANCE_STATUS.ABSENT ? '謝罪文' : '備考（任意）'}
+              {status === ATTENDANCE_STATUS.ABSENT && <span className="text-red-500"> *</span>}
+            </span>
           </label>
+          {status === ATTENDANCE_STATUS.ABSENT && (
+            <p className="text-sm text-red-700 mb-3 font-medium">
+              欠席の場合は謝罪文を30文字以上入力してください（現在: {notes.trim().length}文字）
+            </p>
+          )}
           <textarea
             value={notes}
             onChange={(e) => handleNotesChange(e.target.value)}
-            rows={4}
-            placeholder="備考があれば入力してください"
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base resize-none transition-colors ${
-              errors.notes 
-                ? 'border-red-500 bg-red-50 focus:ring-red-500' 
-                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400'
+            rows={status === ATTENDANCE_STATUS.ABSENT ? 6 : 4}
+            placeholder={status === ATTENDANCE_STATUS.ABSENT ? '謝罪文を入力してください（30文字以上）' : '備考があれば入力してください'}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 text-base resize-none transition-colors ${
+              errors.notes
+                ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                : status === ATTENDANCE_STATUS.ABSENT
+                ? 'border-red-300 focus:border-red-500 hover:border-red-400 bg-white focus:ring-red-500'
+                : 'border-slate-300 focus:border-blue-500 hover:border-slate-400 focus:ring-blue-500'
             }`}
           />
           {errors.notes && (
