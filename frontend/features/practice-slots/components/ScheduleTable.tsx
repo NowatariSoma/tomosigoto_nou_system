@@ -142,10 +142,17 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                       onClick={() => handleCellClick(time, venue?.id || '', parts)}
                     >
                       {parts.length > 0 ? (
-                        <div 
+                        <div
                           className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
+                          {/* セッションタイトル */}
+                          {parts[0].session_title && (
+                            <div className="text-xs font-semibold text-blue-700 mb-1">
+                              {parts[0].session_title}
+                            </div>
+                          )}
+                          {/* パート名 */}
                           <div className="text-sm font-medium text-gray-900 mb-1">
                             {parts[0].part_name}
                           </div>
