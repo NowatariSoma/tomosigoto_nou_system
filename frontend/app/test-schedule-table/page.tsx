@@ -143,7 +143,7 @@ export default function TestScheduleTablePage() {
 
     try {
       const dateStr = testDate.toISOString().split('T')[0];
-      const response = await fetch(`/api/practice-slots/date/${dateStr}/ideal`);
+      const response = await fetch(`/api/v1/practice_schedules/date/${dateStr}/ideal`);
 
       if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -281,13 +281,7 @@ export default function TestScheduleTablePage() {
       {/* ScheduleTableコンポーネント */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-xl font-semibold mb-4">ScheduleTable コンポーネント表示</h2>
-        {displayData ? (
-          <ScheduleTable currentDate={testDate} />
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            データを取得してください
-          </div>
-        )}
+        <ScheduleTable currentDate={testDate} />
       </div>
     </div>
   );

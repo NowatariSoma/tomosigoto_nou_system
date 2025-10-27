@@ -35,10 +35,10 @@ function recordTest(testName: string, success: boolean, message: string, data?: 
  * Ideal形式のスケジュールデータを取得してテスト
  */
 async function testIdealScheduleEndpoint(date: string) {
-  console.log('\n=== Testing /practice-slots/date/{date}/ideal endpoint ===\n');
+  console.log('\n=== Testing /practice_schedules/date/{date}/ideal endpoint ===\n');
 
   try {
-    const response = await fetch(`${API_BASE_URL}/practice-slots/date/${date}/ideal`);
+    const response = await fetch(`${API_BASE_URL}/practice_schedules/date/${date}/ideal`);
 
     // レスポンスステータスを確認
     if (!response.ok) {
