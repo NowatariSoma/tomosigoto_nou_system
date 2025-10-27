@@ -26,6 +26,7 @@ export interface CreateSessionRequest {
   schedule_id: string;
   part_id?: string;
   slot_order: number;
+  venue_id?: string;
   schedule_available_venue_id?: string;
   priority: number;
   start_time?: string;
@@ -135,6 +136,7 @@ export type EditMode = 'view' | 'edit';
  */
 export interface SessionEditorState {
   sessions: Session[];
+  instructors: any[]; // SessionInstructorWithDetails[]
   venues: VenueInfo[];
   time_slots: TimeSlot[];
   selected_session: Session | null;
@@ -149,6 +151,8 @@ export interface SessionEditorState {
  */
 export type SessionEditorAction =
   | { type: 'SET_SESSIONS'; payload: Session[] }
+  | { type: 'SET_INSTRUCTORS'; payload: any[] } // SessionInstructorWithDetails[]
+  | { type: 'UPDATE_INSTRUCTOR'; payload: any } // SessionInstructorWithDetails
   | { type: 'SET_VENUES'; payload: VenueInfo[] }
   | { type: 'SET_TIME_SLOTS'; payload: TimeSlot[] }
   | { type: 'UPDATE_TIME_SLOT'; payload: TimeSlot }
