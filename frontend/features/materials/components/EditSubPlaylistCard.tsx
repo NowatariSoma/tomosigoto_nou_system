@@ -10,7 +10,7 @@
  * - 動画数のカウント表示
  */
 import { useState } from 'react';
-import { Edit, Trash2, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ChevronRight, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/inputs/input';
@@ -23,6 +23,7 @@ interface EditSubPlaylistCardProps {
   videoCount: number;
   onMove: (id: string) => void;
   onDelete: (id: string) => void;
+  onVideoAdd?: (id: string) => void;
   formatDate?: (dateString?: string) => string;
   getVideosForSubPlaylist: (subPlaylistId: string) => any[];
   onVideoDelete: (id: string) => void;
@@ -33,6 +34,7 @@ export const EditSubPlaylistCard = ({
   videoCount,
   onMove,
   onDelete,
+  onVideoAdd,
   formatDate,
   getVideosForSubPlaylist,
   onVideoDelete
@@ -92,6 +94,17 @@ export const EditSubPlaylistCard = ({
               <ChevronRight className="h-4 w-4" />
               移動
             </Button>
+            {onVideoAdd && (
+              <Button
+                variant="outline"
+                onClick={() => onVideoAdd(subPlaylist.id)}
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                追加
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
