@@ -18,7 +18,7 @@ export interface SessionApiResponse {
   id: string;
   schedule_id: string;
   part_id?: string;
-  title: string;
+  part_name?: string; // パート名
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
@@ -34,7 +34,6 @@ export interface SessionApiResponse {
 export interface SessionApiCreateRequest {
   schedule_id: string;
   part_id?: string;
-  title: string;
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
@@ -47,7 +46,6 @@ export interface SessionApiCreateRequest {
  */
 export interface SessionApiUpdateRequest {
   part_id?: string;
-  title?: string;
   slot_order?: number;
   schedule_available_venue_id?: string;
   priority?: number;
