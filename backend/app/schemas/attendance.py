@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from typing import Optional
 from uuid import UUID
 from enum import Enum
@@ -17,11 +17,13 @@ class AttendanceStatus(str, Enum):
 
 class AttendanceBase(BaseModel):
     """出欠記録の基本情報"""
-    
+
     practice_schedule_id: UUID
     user_id: UUID
     status: AttendanceStatus
     notes: Optional[str] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
 
 
 class AttendanceCreate(AttendanceBase):
@@ -31,9 +33,11 @@ class AttendanceCreate(AttendanceBase):
 
 class AttendanceUpdate(BaseModel):
     """出欠記録更新用スキーマ"""
-    
+
     status: Optional[AttendanceStatus] = None
     notes: Optional[str] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
 
 
 class AttendanceResponse(AttendanceBase):
@@ -67,13 +71,15 @@ class AttendanceSummary(BaseModel):
 
 class UserAttendanceHistory(BaseModel):
     """ユーザー別出欠履歴用スキーマ"""
-    
+
     user_id: UUID
     email: str
     first_name_kanji: Optional[str] = None
     last_name_kanji: Optional[str] = None
     student_id: Optional[str] = None
     attendance_status: Optional[AttendanceStatus] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
     schedule_date: Optional[datetime] = None
     description: Optional[str] = None
     venue_name: Optional[str] = None

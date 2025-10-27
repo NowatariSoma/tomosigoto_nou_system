@@ -14,7 +14,7 @@ interface User {
 interface SimpleAttendanceFormProps {
   practiceSchedules: PracticeSchedule[];
   users: User[];
-  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string }) => Promise<void>;
+  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => Promise<void>;
   loading?: boolean;
 }
 
@@ -28,11 +28,13 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string }>({});
+  const [availableFrom, setAvailableFrom] = useState<string>('');
+  const [availableTo, setAvailableTo] = useState<string>('');
+  const [errors, setErrors] = useState<{ selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string } = {};
+    const newErrors: { selectedUserId?: string; selectedPracticeId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string } = {};
 
     if (!selectedUserId) {
       newErrors.selectedUserId = 'ユーザーを選択してください';
@@ -44,6 +46,14 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
     if (!status) {
       newErrors.status = '出席状況を選択してください';
+    }
+
+    if (status === ATTENDANCE_STATUS.LATE) {
+      if (!availableFrom && !availableTo) {
+        newErrors.availableFrom = '参加可能時間を入力してください';
+      } else if (availableFrom && availableTo && availableFrom >= availableTo) {
+        newErrors.availableFrom = '開始時刻は終了時刻より前にしてください';
+      }
     }
 
     if (notes && notes.length > VALIDATION.MAX_NOTES_LENGTH) {
@@ -58,7 +68,14 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       try {
-        await onSubmit({ userId: selectedUserId, practiceScheduleId: selectedPracticeId, status, notes });
+        await onSubmit({
+          userId: selectedUserId,
+          practiceScheduleId: selectedPracticeId,
+          status,
+          notes,
+          availableFrom: status === ATTENDANCE_STATUS.LATE ? availableFrom : undefined,
+          availableTo: status === ATTENDANCE_STATUS.LATE ? availableTo : undefined
+        });
         setIsSubmitted(true);
       } catch (error) {
         console.error('Failed to submit attendance:', error);
@@ -84,6 +101,26 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
     setStatus(newStatus);
     if (errors.status) {
       setErrors(prev => ({ ...prev, status: undefined }));
+    }
+    // 遅刻以外の場合は時間フィールドをクリア
+    if (newStatus !== ATTENDANCE_STATUS.LATE) {
+      setAvailableFrom('');
+      setAvailableTo('');
+      setErrors(prev => ({ ...prev, availableFrom: undefined, availableTo: undefined }));
+    }
+  };
+
+  const handleAvailableFromChange = (value: string) => {
+    setAvailableFrom(value);
+    if (errors.availableFrom) {
+      setErrors(prev => ({ ...prev, availableFrom: undefined }));
+    }
+  };
+
+  const handleAvailableToChange = (value: string) => {
+    setAvailableTo(value);
+    if (errors.availableTo) {
+      setErrors(prev => ({ ...prev, availableTo: undefined }));
     }
   };
 
@@ -216,6 +253,61 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
             <p className="mt-3 text-sm text-red-600 font-medium">{errors.status}</p>
           )}
         </div>
+
+        {/* 参加可能時間入力（遅刻の場合のみ表示） */}
+        {status === ATTENDANCE_STATUS.LATE && (
+          <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-sm">
+            <label className="flex items-center space-x-3 text-lg font-semibold text-slate-900 mb-4">
+              <div className="bg-yellow-100 p-2 rounded-lg">
+                <Clock className="h-5 w-5 text-yellow-600" />
+              </div>
+              <span>参加可能時間 <span className="text-red-500">*</span></span>
+            </label>
+            {selectedPracticeId && (
+              <p className="text-sm text-gray-600 mb-4">
+                練習時間: {practiceSchedules.find(p => p.id === selectedPracticeId)?.start_time} - {practiceSchedules.find(p => p.id === selectedPracticeId)?.end_time}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  何時から
+                </label>
+                <input
+                  type="time"
+                  value={availableFrom}
+                  onChange={(e) => handleAvailableFromChange(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-base transition-colors ${
+                    errors.availableFrom
+                      ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                      : 'border-yellow-300 focus:border-yellow-500 hover:border-yellow-400 bg-white'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  何時まで
+                </label>
+                <input
+                  type="time"
+                  value={availableTo}
+                  onChange={(e) => handleAvailableToChange(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-base transition-colors ${
+                    errors.availableTo
+                      ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                      : 'border-yellow-300 focus:border-yellow-500 hover:border-yellow-400 bg-white'
+                  }`}
+                />
+              </div>
+            </div>
+            {errors.availableFrom && (
+              <p className="mt-2 text-sm text-red-600 font-medium">{errors.availableFrom}</p>
+            )}
+            {errors.availableTo && (
+              <p className="mt-1 text-sm text-red-600 font-medium">{errors.availableTo}</p>
+            )}
+          </div>
+        )}
 
         {/* 備考 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
