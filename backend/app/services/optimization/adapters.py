@@ -185,14 +185,14 @@ class SchedulingDataAdapter:
                         priority=base_priority
                     ))
             
-                if part_assignments:
-                    player = Player(
-                        id=len(players) + 1,
-                        name=user_info.get('name') or f'プレイヤー{len(players) + 1}',
-                        part_assignments=part_assignments,
-                        is_instructor=False
-                    )
-                    players.append(player)
+            if part_assignments:
+                player = Player(
+                    id=len(players) + 1,
+                    name=user_info.get('name') or f'プレイヤー{len(players) + 1}',
+                    part_assignments=part_assignments,
+                    is_instructor=False
+                )
+                players.append(player)
         
         return SchedulingProblem(
             players=players,
