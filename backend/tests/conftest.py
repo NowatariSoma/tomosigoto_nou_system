@@ -327,3 +327,73 @@ def sample_sessions():
             "instructors": []
         }
     ]
+
+
+@pytest.fixture
+def sample_ideal_schedule_data():
+    """Sample ideal format schedule data for testing"""
+    return {
+        "schedule_info": {
+            "id": "schedule-1",
+            "schedule_date": "2024-02-15",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "title": "練習セッション",
+            "description": "2月15日の練習"
+        },
+        "venues": [
+            {
+                "id": "venue-1",
+                "name": "第1会場",
+                "priority": 1,
+                "color": "#FF6B6B"
+            },
+            {
+                "id": "venue-2",
+                "name": "第2会場",
+                "priority": 2,
+                "color": "#4ECDC4"
+            }
+        ],
+        "time_schedule": {
+            "09:00": {
+                "venue-1": [
+                    {
+                        "part_id": "part-1",
+                        "part_name": "セッション1",
+                        "part_color": "#FFD93D",
+                        "session_title": "セッション1",
+                        "instructors": ["田中先生", "佐藤先生"],
+                        "participants": 8,
+                        "status": "confirmed",
+                        "slot_order": 1,
+                        "schedule_available_venue_id": "venue-1"
+                    }
+                ],
+                "venue-2": []
+            },
+            "11:00": {
+                "venue-1": [],
+                "venue-2": [
+                    {
+                        "part_id": "part-2",
+                        "part_name": "セッション2",
+                        "part_color": "#6BCF7F",
+                        "session_title": "セッション2",
+                        "instructors": ["山田先生"],
+                        "participants": 5,
+                        "status": "confirmed",
+                        "slot_order": 2,
+                        "schedule_available_venue_id": "venue-2"
+                    }
+                ]
+            }
+        },
+        "debug_info": {
+            "sessions_count": 2,
+            "sessions_data": [],
+            "venues_count": 2,
+            "division_count": 6,
+            "session_processing_details": []
+        }
+    }
