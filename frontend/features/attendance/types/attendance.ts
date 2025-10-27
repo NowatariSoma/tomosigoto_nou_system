@@ -4,7 +4,8 @@ export interface Attendance {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
-  late_time?: string; // 遅刻時間（HH:MM形式）
+  available_from?: string; // 参加開始時刻（HH:MM形式）
+  available_to?: string; // 参加終了時刻（HH:MM形式）
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -16,13 +17,15 @@ export interface AttendanceCreate {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
-  late_time?: string; // 遅刻時間（HH:MM形式）
+  available_from?: string; // 参加開始時刻（HH:MM形式）
+  available_to?: string; // 参加終了時刻（HH:MM形式）
 }
 
 export interface AttendanceUpdate {
   status?: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
-  late_time?: string; // 遅刻時間（HH:MM形式）
+  available_from?: string; // 参加開始時刻（HH:MM形式）
+  available_to?: string; // 参加終了時刻（HH:MM形式）
 }
 
 export interface AttendanceResponse {
@@ -31,7 +34,8 @@ export interface AttendanceResponse {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes?: string;
-  late_time?: string; // 遅刻時間（HH:MM形式）
+  available_from?: string; // 参加開始時刻（HH:MM形式）
+  available_to?: string; // 参加終了時刻（HH:MM形式）
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -86,12 +90,14 @@ export interface AttendanceFormData {
   practice_schedule_id: string;
   status: 'present' | 'absent' | 'late' | 'undecided';
   notes: string;
-  late_time?: string; // 遅刻時間（HH:MM形式）
+  available_from?: string; // 参加開始時刻（HH:MM形式）
+  available_to?: string; // 参加終了時刻（HH:MM形式）
 }
 
 export interface AttendanceFormErrors {
   practice_schedule_id?: string;
   status?: string;
   notes?: string;
-  late_time?: string;
+  available_from?: string;
+  available_to?: string;
 }
