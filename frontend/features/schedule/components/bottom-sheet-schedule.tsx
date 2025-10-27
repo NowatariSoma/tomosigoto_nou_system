@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,13 @@ interface BottomSheetScheduleProps {
 
 export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps) {
   const router = useRouter();
-  const currentDate = new Date(date);
+  // dateプロップが変わった時に再計算されるように useMemo を使用
+  // YYYY-MM-DD形式をローカルタイムゾーンとして正しく解釈
+  const currentDate = useMemo(() => {
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }, [date]);
+
   const y = useMotionValue(0);
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
