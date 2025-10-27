@@ -382,7 +382,7 @@ async def update_session(
     session_id: UUID,
     session_data: SessionUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     指定したセッションを更新
@@ -397,6 +397,30 @@ async def update_session(
     """
     # セッションデータを取得（updated_byは不要）
     session_dict = session_data.model_dump(exclude_unset=True)
+    
+    # venue_idが指定されている場合は、schedule_available_venue_idに変換
+    if session_dict.get("venue_id"):
+        # まず、schedule_idを取得
+        session = await practice_schedule_service.session_repository.find_by_id(session_id)
+        if session:
+            schedule_id = session.get("schedule_id")
+            
+            # venue_idとして検索
+            schedule_available_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+                schedule_id, session_dict["venue_id"]
+            )
+            
+            if schedule_available_venue:
+                # venue_idだった場合、schedule_available_venue_idに変換
+                session_dict["schedule_available_venue_id"] = str(schedule_available_venue.get("id"))
+                print(f"DEBUG update_session endpoint: venue_id -> schedule_available_venue_id = {session_dict['schedule_available_venue_id']}")
+            else:
+                # schedule_available_venue_idだった場合、そのまま使用
+                session_dict["schedule_available_venue_id"] = str(session_dict["venue_id"])
+                print(f"DEBUG update_session endpoint: schedule_available_venue_idを直接使用 = {session_dict['schedule_available_venue_id']}")
+    
+    # venue_idを削除（sessionsテーブルには存在しない）
+    session_dict.pop("venue_id", None)
 
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse.model_validate(updated_session)
@@ -422,8 +446,11 @@ async def move_session(
     Returns:
         更新されたセッション
     """
+    print(f"DEBUG move_session: 開始 - session_id={session_id}, target_venue_id={target_venue_id}, target_slot_order={target_slot_order}")
+    
     # セッション情報を取得
     session = await practice_schedule_service.session_repository.find_by_id(session_id)
+    print(f"DEBUG move_session: セッション情報取得 - session={session}")
     if not session:
         raise APIException(ErrorMessage.SESSION_NOT_FOUND)
     
