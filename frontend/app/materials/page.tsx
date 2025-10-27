@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Archive, Play } from 'lucide-react';
+import { Search, Archive, Play, Plus, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Badge } from '@/components/ui/feedback/badge';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
@@ -13,6 +13,7 @@ import { Playlist, Video } from '@/features/materials/types/material_types';
 import { mockData } from '@/features/materials/data/material_data';
 import { playlistVideos } from '@/features/materials/data/playlist_data';
 import { videos } from '@/features/materials/data/video_data';
+import { Button } from '@/components/ui/forms/button';
 
 
 export default function Home() {
@@ -23,7 +24,8 @@ export default function Home() {
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
 
   // 日付フォーマット関数
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '日付未設定';
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
       year: 'numeric',
@@ -150,6 +152,30 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 space-y-4">
+        <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">youtubeプレイリスト</h1>
+              <div className="flex items-center gap-4 text-slate-600">
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => router.push('/materials/new')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                新しく追加
+              </Button>
+              <Button
+                onClick={() => router.push('/materials/edit')}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                編集
+              </Button>
+            </div>
+          </div>
           <MaterialSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
