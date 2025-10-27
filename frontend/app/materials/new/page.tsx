@@ -21,6 +21,7 @@ export default function NewMaterialPage() {
     thumbnailUrl: '',
   });
   const [subPlaylistData, setSubPlaylistData] = useState({
+    playlistId: '',
     title: '',
     recordedDate: '',
     phase: '',

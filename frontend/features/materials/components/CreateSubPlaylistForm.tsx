@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/inputs/input';
 import { Label } from '@/components/ui/inputs/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/inputs/select';
+import { mockData } from '@/features/materials/data/material_data';
 
 interface SubPlaylistData {
+  playlistId: string;
   title: string;
   recordedDate: string;
   phase: string;
@@ -44,6 +46,26 @@ export function CreateSubPlaylistForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="playlistSelect">親プレイリスト（年度と舞台）</Label>
+              <Select
+                value={subPlaylistData.playlistId}
+                onValueChange={(value) => setSubPlaylistData({ ...subPlaylistData, playlistId: value })}
+                required
+              >
+                <SelectTrigger id="playlistSelect">
+                  <SelectValue placeholder="年度と舞台を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockData.map((playlist) => (
+                    <SelectItem key={playlist.id} value={playlist.id}>
+                      {playlist.year}年 {playlist.stage}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="subTitle">タイトル</Label>
               <Input

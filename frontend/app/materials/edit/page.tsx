@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive } from 'lucide-react';
+import { Archive, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Playlist, SubPlaylist, Video } from '@/features/materials/types/material_types';
@@ -12,6 +12,7 @@ import { FilterOption } from '@/shared/types/filter_types';
 import { PlaylistEditView } from '@/features/materials/components/PlaylistEditView';
 import { SubPlaylistEditView } from '@/features/materials/components/SubPlaylistEditView';
 import { PlaylistEditListView } from '@/features/materials/components/PlaylistEditListView';
+import { CreatePlaylistDialog } from '@/features/materials/components/CreatePlaylistDialog';
 
 type EditMode = 'list' | 'playlist' | 'subPlaylist' | null;
 
@@ -22,6 +23,12 @@ export default function EditMaterialPage() {
   const [selectedSubPlaylist, setSelectedSubPlaylist] = useState<SubPlaylist | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
+  const [isPlaylistDialogOpen, setIsPlaylistDialogOpen] = useState(false);
+  const [playlistFormData, setPlaylistFormData] = useState({
+    title: '',
+    year: '',
+    stage: '',
+  });
 
   const handleSavePlaylist = (data: { title: string; year: number; stage: string }) => {
     // TODO: API integration
@@ -62,6 +69,23 @@ export default function EditMaterialPage() {
     // TODO: API integration
     console.log('Moving sub-playlist:', subPlaylistId);
     alert('別のプレイリストに移動しますか？\n（実際のAPI連携は未実装）');
+  };
+
+  const handleCreatePlaylistSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: API integration
+    console.log('Creating playlist:', playlistFormData);
+    alert('プレイリストを作成しました\n（実際のAPI連携は未実装）');
+    
+    // Reset form
+    setPlaylistFormData({ title: '', year: '', stage: '' });
+    setIsPlaylistDialogOpen(false);
+  };
+
+  const handleCreateSubPlaylist = (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => {
+    // TODO: API integration
+    console.log('Creating sub-playlist:', data, 'for playlist:', selectedPlaylist?.id);
+    alert('サブプレイリストを作成しました\n（実際のAPI連携は未実装）');
   };
 
   const formatDate = (dateString?: string) => {
@@ -136,15 +160,24 @@ export default function EditMaterialPage() {
       <main className="container mx-auto px-4 py-8">
         {editMode === 'list' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/materials')}
+                  className="flex items-center gap-2"
+                >
+                  ← 戻る
+                </Button>
+                <h1 className="text-3xl font-bold text-slate-900">プレイリストを編集</h1>
+              </div>
               <Button
-                variant="outline"
-                onClick={() => router.push('/materials')}
+                onClick={() => setIsPlaylistDialogOpen(true)}
                 className="flex items-center gap-2"
               >
-                ← 戻る
+                <Plus className="h-4 w-4" />
+                プレイリストを追加
               </Button>
-              <h1 className="text-3xl font-bold text-slate-900">プレイリストを編集</h1>
             </div>
 
             <MaterialFilterSelects filters={filterConfigs} />
@@ -171,6 +204,8 @@ export default function EditMaterialPage() {
             onDeleteSubPlaylist={handleDeleteSubPlaylist}
             onDeleteVideo={handleDeleteVideo}
             onMoveSubPlaylist={handleMoveSubPlaylist}
+            onSubPlaylistCreate={handleCreateSubPlaylist}
+            onVideoAdd={true}
             formatDate={formatDate}
           />
         )}
@@ -188,6 +223,14 @@ export default function EditMaterialPage() {
           />
         )}
       </main>
+
+      <CreatePlaylistDialog
+        open={isPlaylistDialogOpen}
+        onOpenChange={setIsPlaylistDialogOpen}
+        playlistData={playlistFormData}
+        setPlaylistData={setPlaylistFormData}
+        onSubmit={handleCreatePlaylistSubmit}
+      />
     </AppTemplate>
   );
 }
