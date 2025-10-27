@@ -1,3 +1,12 @@
+/**
+ * MaterialSearchInput - 資料検索入力コンポーネント
+ * 
+ * 資料管理機能で使用する検索入力フィールドを表示します。
+ * - アイコン付き検索バー（左または右に配置可能）
+ * - 入力クリアボタン付き
+ * - プレースホルダーのカスタマイズ対応
+ * - カスタムアイコンの指定が可能
+ */
 import { Input } from '@/components/ui/inputs/input';
 import { SearchInputProps } from '@/shared/types/filter_types';
 import { X } from 'lucide-react';

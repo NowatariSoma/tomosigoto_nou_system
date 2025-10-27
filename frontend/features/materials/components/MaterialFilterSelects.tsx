@@ -1,3 +1,12 @@
+/**
+ * MaterialFilterSelects - 資料フィルター選択コンポーネント
+ * 
+ * 資料管理機能で使用する複数のフィルター選択UIを表示します。
+ * - 年度、舞台、フェーズなどの複数フィルターを同時に表示
+ * - 各フィルターの幅をカスタマイズ可能
+ * - オプションの動的表示に対応
+ * - フィルター値の変更時に関連データを再フィルタリング
+ */
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/inputs/select';
 import { FilterSelectsProps } from '@/shared/types/filter_types';
 

@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Archive, Play, Plus, Edit } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
-import { Badge } from '@/components/ui/feedback/badge';
+import { Search, Archive, Plus, Edit, Heart } from 'lucide-react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MaterialFilterSelects } from '@/features/materials/components/MaterialFilterSelects';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
@@ -14,6 +12,13 @@ import { mockData } from '@/features/materials/data/material_data';
 import { playlistVideos } from '@/features/materials/data/playlist_data';
 import { videos } from '@/features/materials/data/video_data';
 import { Button } from '@/components/ui/forms/button';
+import { useFavoriteVideos } from '@/features/materials/hooks/useFavoriteVideos';
+import { SubPlaylist } from '@/features/materials/types/material_types';
+import { VideoCard } from '@/features/materials/components/VideoCard';
+import { PlaylistCard } from '@/features/materials/components/PlaylistCard';
+import { FavoriteFilterToggle } from '@/features/materials/components/FavoriteFilterToggle';
+import { SearchResultCount } from '@/features/materials/components/SearchResultCount';
+import { EmptyState } from '@/features/materials/components/EmptyState';
 
 
 export default function Home() {
@@ -22,16 +27,13 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { isFavorite, toggleFavorite, getFavoriteCount } = useFavoriteVideos();
 
-  // 日付フォーマット関数
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '日付未設定';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // お気に入り切り替え
+  const handleToggleFavorite = (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(videoId);
   };
 
 
@@ -113,8 +115,9 @@ export default function Home() {
       const matchesYear = selectedYear === 'all' || playlist.year.toString() === selectedYear;
       const matchesStage = selectedStage === 'all' || playlist.stage === selectedStage;
       const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
+      const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
       
-      return matchesSearch && matchesYear && matchesStage && matchesPhase;
+      return matchesSearch && matchesYear && matchesStage && matchesPhase && matchesFavorite;
     });
     
     // デバッグ用ログ
@@ -185,21 +188,31 @@ export default function Home() {
             iconPosition="left"
           />
 
-          <MaterialFilterSelects filters={filterConfigs} />
+          <div className="flex items-center gap-4 flex-wrap">
+            <MaterialFilterSelects filters={filterConfigs} />
+            
+            <Button
+              onClick={() => router.push('/materials/favorites')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-4 w-4" />
+              お気に入り ({getFavoriteCount()})
+            </Button>
+            
+            {isVideoSearch && (
+              <FavoriteFilterToggle
+                showFavoritesOnly={showFavoritesOnly}
+                onToggle={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              />
+            )}
+          </div>
         </div>
 
-        <div className="mb-4">
-          <p className="text-slate-600">
-            {isVideoSearch ? filteredVideos.length : filteredData.length}件の記録が見つかりました
-            {isVideoSearch && <span className="text-sm text-slate-500 ml-2">(動画検索結果)</span>}
-          </p>
-          {/* デバッグ用 */}
-          {/* {isVideoSearch && (
-            <p className="text-xs text-slate-400">
-              デバッグ: 検索クエリ="{searchQuery}", 動画検索={isVideoSearch ? 'Yes' : 'No'}, 結果数={filteredVideos.length}
-            </p>
-          )} */}
-        </div>
+        <SearchResultCount
+          count={isVideoSearch ? filteredVideos.length : filteredData.length}
+          isVideoSearch={isVideoSearch}
+        />
 
         {isVideoSearch ? (
           // 動画検索結果の表示
@@ -209,32 +222,21 @@ export default function Home() {
               const playlist = mockData.find(item => item.id === subPlaylist?.playlistId);
               if (!playlist || !subPlaylist) return null;
               
+              const isFavoriteVideo = isFavorite(video.id);
+              
               return (
-                <Card
+                <VideoCard
                   key={video.id}
-                  className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                  onClick={() => window.open(video.videoUrl, '_blank')}
-                >
-                  <div className="relative h-48 overflow-hidden bg-slate-200">
-                    <img
-                      src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                      <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{video.title}</span>
-                      <span className="text-sm font-normal text-slate-500">{playlist.year}年</span>
-                    </CardTitle>
-                    <CardDescription className="text-xs line-clamp-2">
-                      {playlist.year}年 {playlist.stage} • {formatDate(video.recordedDate)} • {subPlaylist.phase} • YouTubeで視聴
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                  video={video}
+                  playlistTitle={playlist.title}
+                  playlistYear={playlist.year}
+                  playlistStage={playlist.stage}
+                  subPlaylistPhase={subPlaylist.phase}
+                  recordedDate={video.recordedDate}
+                  showFavorite={true}
+                  isFavorite={isFavoriteVideo}
+                  onToggleFavorite={(e) => handleToggleFavorite(video.id, e)}
+                />
               );
             })}
           </div>
@@ -242,36 +244,18 @@ export default function Home() {
           // プレイリスト検索結果の表示
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredData.map((item: Playlist) => (
-              <Card
+              <PlaylistCard
                 key={item.id}
-                className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                playlist={item}
+                showYear={true}
                 onClick={() => router.push(`/materials/${item.id}`)}
-              >
-                <div className="relative h-48 overflow-hidden bg-slate-200">
-                  <img
-                    src={item.thumbnailUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{item.year}年 {item.stage}</span>
-                    <span className="text-sm font-normal text-slate-500">{item.year}年</span>
-                  </CardTitle>
-                  <CardDescription>
-                    {item.stage} - プレイリスト詳細を見る
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              />
             ))}
           </div>
         )}
 
         {(isVideoSearch ? filteredVideos.length === 0 : filteredData.length === 0) && (
-          <div className="text-center py-16">
-            <p className="text-slate-500 text-lg">該当する記録が見つかりませんでした</p>
-          </div>
+          <EmptyState message="該当する記録が見つかりませんでした" />
         )}
       </main>
     </AppTemplate>
