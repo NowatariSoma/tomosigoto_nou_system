@@ -31,6 +31,24 @@ const sessionEditorReducer = (
   switch (action.type) {
     case 'SET_SESSIONS':
       return { ...state, sessions: action.payload };
+    case 'SET_INSTRUCTORS':
+      return { ...state, instructors: action.payload };
+    case 'UPDATE_INSTRUCTOR':
+      console.log('DEBUG UPDATE_INSTRUCTOR: action.payload =', action.payload);
+      console.log('DEBUG UPDATE_INSTRUCTOR: state.instructors =', state.instructors);
+      const updatedInstructors = state.instructors.map(i => {
+        console.log(`DEBUG UPDATE_INSTRUCTOR: 比較 ${i.id} === ${action.payload.id}`);
+        if (i.id === action.payload.id) {
+          console.log('DEBUG UPDATE_INSTRUCTOR: マッチしました。更新:', action.payload);
+          return action.payload;
+        }
+        return i;
+      });
+      console.log('DEBUG UPDATE_INSTRUCTOR: updatedInstructors =', updatedInstructors);
+      return {
+        ...state,
+        instructors: updatedInstructors
+      };
     case 'SET_VENUES':
       return { ...state, venues: action.payload };
     case 'SET_TIME_SLOTS':
@@ -79,6 +97,7 @@ const sessionEditorReducer = (
 export const useSessionEditor = (scheduleId: string) => {
   const [state, dispatch] = useReducer(sessionEditorReducer, {
     sessions: [],
+    instructors: [],
     venues: [],
     time_slots: [],
     selected_session: null,
@@ -202,6 +221,15 @@ export const useSessionEditor = (scheduleId: string) => {
       }
 
       dispatch({ type: 'SET_TIME_SLOTS', payload: timeSlots });
+
+      // インストラクター情報を取得
+      try {
+        const instructors = await sessionInstructorService.getSessionInstructors(scheduleId);
+        dispatch({ type: 'SET_INSTRUCTORS', payload: instructors });
+      } catch (instructorError) {
+        console.error('インストラクター情報の取得に失敗しました:', instructorError);
+        dispatch({ type: 'SET_INSTRUCTORS', payload: [] });
+      }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'スケジュール詳細の取得に失敗しました';
@@ -428,6 +456,57 @@ export const useSessionEditor = (scheduleId: string) => {
   }, [state.sessions, state.time_slots]);
 
   /**
+   * インストラクターを移動（ドラッグ&ドロップ用）
+   */
+  const moveInstructor = useCallback(async (
+    instructorId: string,
+    venueId: string,
+    slotOrder: number
+  ) => {
+    // 現在のインストラクター状態を保存（ロールバック用）
+    const originalInstructor = state.instructors.find(i => i.id === instructorId);
+    if (!originalInstructor) {
+      console.error('移動対象のインストラクターが見つかりません:', instructorId);
+      return;
+    }
+
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    try {
+      console.log('DEBUG moveInstructor: 移動前のインストラクター情報', originalInstructor);
+      
+      const updatedInstructor = await sessionInstructorService.moveSessionInstructor(
+        instructorId,
+        venueId,
+        slotOrder
+      );
+      
+      console.log('DEBUG moveInstructor: APIレスポンス', updatedInstructor);
+      
+      // APIレスポンスにuser_nameやuser_emailが含まれていない場合は元の情報をマージ
+      const mergedInstructor = {
+        ...updatedInstructor,
+        user_name: updatedInstructor.user_name || originalInstructor.user_name,
+        user_email: updatedInstructor.user_email || originalInstructor.user_email,
+      };
+      
+      console.log('DEBUG moveInstructor: マージ後のインストラクター情報', mergedInstructor);
+      
+      // API成功: サーバーの最新データで更新
+      dispatch({ type: 'UPDATE_INSTRUCTOR', payload: mergedInstructor });
+    } catch (error) {
+      // API失敗: エラーメッセージを表示
+      console.error('インストラクター移動API失敗:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'インストラクターの移動に失敗しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+
+      // エラー通知（アラート）
+      alert(`❌ インストラクターの移動に失敗しました\n\n${errorMessage}`);
+    }
+  }, [state.instructors]);
+
+  /**
    * セッション選択
    */
   const selectSession = useCallback((session: Session | null) => {
@@ -486,6 +565,7 @@ export const useSessionEditor = (scheduleId: string) => {
     updateSession,
     deleteSession,
     moveSession,
+    moveInstructor,
     selectSession,
     openModal,
     closeModal,
