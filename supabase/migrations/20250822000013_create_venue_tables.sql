@@ -1,6 +1,6 @@
 -- 1. venues テーブル
 create table venues (
-    id uuid primary key default gen_random_uuid(),
+0    id uuid primary key default gen_random_uuid(),
     name text not null,
     code text unique not null,
     campus text not null,

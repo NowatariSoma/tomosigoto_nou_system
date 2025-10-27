@@ -39,7 +39,25 @@ class SessionRepository:
         """指定されたIDのセッションを取得"""
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = self.client.table(self.table_name).select("*").eq("id", session_id_str).execute()
-        return response.data[0] if response.data else None
+        
+        if not response.data:
+            return None
+        
+        # パート情報を取得して追加
+        item = response.data[0]
+        formatted_item = dict(item)
+        formatted_item["part_name"] = None
+        
+        # パート情報を取得
+        if item.get("part_id"):
+            try:
+                part_response = self.client.table("parts").select("name").eq("id", item["part_id"]).execute()
+                if part_response.data:
+                    formatted_item["part_name"] = part_response.data[0].get("name")
+            except Exception as e:
+                print(f"Error fetching part data in find_by_id: {e}")
+        
+        return formatted_item
 
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:

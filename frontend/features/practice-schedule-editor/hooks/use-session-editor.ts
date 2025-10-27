@@ -158,13 +158,23 @@ export const useSessionEditor = (scheduleId: string) => {
       dispatch({ type: 'SET_SESSIONS', payload: sessions });
 
       // 会場情報を設定（idealフォーマットから変換）
-      const venues: VenueInfo[] = details.venues.map(venue => ({
-        id: venue.id,
-        name: venue.name,
-        is_preferred: false, // デフォルト値
-        priority: venue.priority,
-        notes: '',
-      }));
+      // details.venuesにはvenue_idが含まれているが、フロントエンドでは
+      // schedule_available_venue_idを使用する必要がある
+      // ここでは、venue.idをschedule_available_venue_idとして扱う
+      const venueMap = new Map<string, VenueInfo>();
+      details.venues.forEach(venue => {
+        // venue.idは実際にはschedule_available_venue_idを表している
+        if (!venueMap.has(venue.id)) {
+          venueMap.set(venue.id, {
+            id: venue.id, // schedule_available_venue_idとして使用
+            name: venue.name,
+            is_preferred: false, // デフォルト値
+            priority: venue.priority,
+            notes: '',
+          });
+        }
+      });
+      const venues: VenueInfo[] = Array.from(venueMap.values());
 
       // 会場が空の場合、デフォルト会場を設定
       if (venues.length === 0 && basicSchedule) {
@@ -222,7 +232,7 @@ export const useSessionEditor = (scheduleId: string) => {
         schedule_id: scheduleId,
         part_id: formData.part_id || undefined,
         slot_order: slotOrder,
-        schedule_available_venue_id: formData.venue_id || undefined,
+        venue_id: formData.venue_id || undefined,
         priority: formData.priority,
       };
 
@@ -260,8 +270,19 @@ export const useSessionEditor = (scheduleId: string) => {
         console.log('createSession - インストラクターなしが選択されました');
       }
 
-      dispatch({ type: 'ADD_SESSION', payload: newSession });
+      // セッションのstart_timeとend_timeを設定
+      const timeSlotObj = state.time_slots.find(slot => slot.time === formData.time_slot);
+      const sessionWithTime = {
+        ...newSession,
+        start_time: formData.time_slot,
+        end_time: timeSlotObj?.end_time || formData.time_slot,
+      };
+
+      dispatch({ type: 'ADD_SESSION', payload: sessionWithTime });
       dispatch({ type: 'CLOSE_MODAL' });
+      
+      // 最新のスケジュール詳細を取得して状態を更新
+      fetchScheduleDetails();
     } catch (error) {
       console.error('createSession - エラー:', error);
       const errorMessage = error instanceof Error ? error.message : 'セッションの作成に失敗しました';
@@ -287,11 +308,15 @@ export const useSessionEditor = (scheduleId: string) => {
 
       // インストラクターの処理
       try {
-        // 既存のインストラクターを削除
-        await sessionInstructorService.deleteSessionInstructorsBySchedule(sessionId);
-        
-        // インストラクターが選択されている場合、新しく登録
-        if (formData.instructor_id && formData.instructor_id !== 'none') {
+        // インストラクターが明示的に選択された場合のみ処理
+        if (formData.instructor_id === 'none') {
+          // 「インストラクターなし」が選択された場合、既存のインストラクターを削除
+          await sessionInstructorService.deleteSessionInstructorsBySchedule(sessionId);
+          console.log('updateSession - インストラクターなしが選択されました');
+        } else if (formData.instructor_id && formData.instructor_id !== '') {
+          // 具体的なインストラクターが選択された場合、削除してから新しく登録
+          await sessionInstructorService.deleteSessionInstructorsBySchedule(sessionId);
+          
           const instructorData = {
             attendance_id: formData.instructor_id,
             schedule_id: scheduleId,
@@ -302,8 +327,9 @@ export const useSessionEditor = (scheduleId: string) => {
           console.log('updateSession - インストラクター登録データ:', instructorData);
           await sessionInstructorService.createSessionInstructor(instructorData);
           console.log('updateSession - インストラクター更新成功');
-        } else if (formData.instructor_id === 'none') {
-          console.log('updateSession - インストラクターなしが選択されました');
+        } else {
+          // instructor_idが空文字列の場合は、何もしない（既存のインストラクターを保持）
+          console.log('updateSession - インストラクターは変更されません（既存のまま）');
         }
       } catch (instructorError) {
         console.error('updateSession - インストラクター更新エラー:', instructorError);
@@ -374,34 +400,30 @@ export const useSessionEditor = (scheduleId: string) => {
       return;
     }
 
-    // 楽観的UI更新: 即座にセッションを更新
-    const timeSlotObj = state.time_slots.find(slot => slot.time === timeSlot);
-    const optimisticSession: Session = {
-      ...originalSession,
-      schedule_available_venue_id: venueId,
-      slot_order: slotOrder,
-      start_time: timeSlot,
-      end_time: timeSlotObj?.end_time || originalSession.end_time,
-    };
-
-    dispatch({ type: 'UPDATE_SESSION', payload: optimisticSession });
     dispatch({ type: 'SET_ERROR', payload: null });
 
-    // バックグラウンドでAPI呼び出し
+    // API呼び出し
     try {
       const updatedSession = await sessionService.moveSession(sessionId, venueId, slotOrder);
-      // API成功: サーバーの最新データで再度更新
-      dispatch({ type: 'UPDATE_SESSION', payload: updatedSession });
+      console.log('DEBUG moveSession: updatedSession =', updatedSession);
+      
+      // part_nameが失われている場合は元のセッションから復元
+      const sessionWithPartName = {
+        ...updatedSession,
+        part_name: updatedSession.part_name || originalSession.part_name,
+      };
+      
+      // API成功: サーバーの最新データで更新
+      dispatch({ type: 'UPDATE_SESSION', payload: sessionWithPartName });
     } catch (error) {
-      // API失敗: 元の状態にロールバック
-      console.error('セッション移動API失敗、ロールバックします:', error);
-      dispatch({ type: 'UPDATE_SESSION', payload: originalSession });
+      // API失敗: エラーメッセージを表示
+      console.error('セッション移動API失敗:', error);
 
       const errorMessage = error instanceof Error ? error.message : 'セッションの移動に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
 
       // エラー通知（アラート）
-      alert(`❌ セッションの移動に失敗しました\n\n${errorMessage}\n\n元の位置に戻しました。`);
+      alert(`❌ セッションの移動に失敗しました\n\n${errorMessage}`);
     }
   }, [state.sessions, state.time_slots]);
 

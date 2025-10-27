@@ -366,6 +366,9 @@ class PracticeScheduleService:
         """セッションを作成"""
         print(f"DEBUG create_session: 受信データ = {session_data}")
 
+        # sessionsテーブルに存在しないカラムを削除
+        session_data = {k: v for k, v in session_data.items() if k != "part_name"}
+
         # UUIDフィールドを文字列に変換
         if "schedule_id" in session_data and isinstance(session_data["schedule_id"], UUID):
             session_data["schedule_id"] = str(session_data["schedule_id"])
@@ -398,28 +401,71 @@ class PracticeScheduleService:
         if not session:
             raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-        old_venue_id = session.get("schedule_available_venue_id")
+        old_schedule_available_venue_id = session.get("schedule_available_venue_id")
         old_slot_order = session.get("slot_order")
         schedule_id = session.get("schedule_id")
 
-        if str(old_venue_id) == str(target_venue_id) and old_slot_order == target_slot_order:
+        # target_venue_idは既にschedule_available_venue_idである可能性が高い
+        # まず、schedule_available_venuesテーブルでIDを検索
+        schedule_available_venue = None
+        try:
+            if isinstance(target_venue_id, UUID):
+                search_id = target_venue_id
+            else:
+                search_id = UUID(target_venue_id)
+                
+            schedule_available_venue = await self.schedule_available_venue_repository.find_by_id(search_id)
+        except Exception as e:
+            print(f"DEBUG move_session: find_by_idエラー: {e}")
+        
+        if schedule_available_venue:
+            target_schedule_available_venue_id = schedule_available_venue.get("id")
+        else:
+            # find_by_idで見つからない場合は、venue_idから変換を試みる
+            schedule_available_venue = await self.schedule_available_venue_repository.find_by_schedule_and_venue(
+                schedule_id, target_venue_id
+            )
+            if schedule_available_venue:
+                target_schedule_available_venue_id = schedule_available_venue.get("id")
+            else:
+                raise APIException(ErrorMessage.SCHEDULE_VENUE_NOT_FOUND)
+
+        if str(old_schedule_available_venue_id) == str(target_schedule_available_venue_id) and old_slot_order == target_slot_order:
             return session
 
         sessions_in_old_venue = await self.session_repository.find_by_schedule(schedule_id)
         sessions_in_old_venue = [
             s for s in sessions_in_old_venue
-            if str(s.get("schedule_available_venue_id")) == str(old_venue_id)
+            if str(s.get("schedule_available_venue_id")) == str(old_schedule_available_venue_id)
             and str(s.get("id")) != str(session_id)
         ]
 
+        # 新しいvenue側のセッションを取得
+        sessions_in_new_venue = await self.session_repository.find_by_schedule(schedule_id)
+        sessions_in_new_venue = [
+            s for s in sessions_in_new_venue
+            if str(s.get("schedule_available_venue_id")) == str(target_schedule_available_venue_id)
+            and str(s.get("id")) != str(session_id)
+        ]
+
+        # 新しいvenue側で、target_slot_order以上のセッションのslot_orderを+1
+        for s in sessions_in_new_venue:
+            if s.get("slot_order", 0) >= target_slot_order:
+                await self.session_repository.update(
+                    s["id"],
+                    {"slot_order": s["slot_order"] + 1}
+                )
+
+        # セッションを更新
         updated_session = await self.session_repository.update(
             session_id,
             {
-                "schedule_available_venue_id": str(target_venue_id),
+                "schedule_available_venue_id": str(target_schedule_available_venue_id),
                 "slot_order": target_slot_order
             }
         )
 
+        # 古いvenue側で、old_slot_orderより後のセッションのslot_orderを-1
         for s in sessions_in_old_venue:
             if s.get("slot_order", 0) > old_slot_order:
                 await self.session_repository.update(
@@ -427,7 +473,10 @@ class PracticeScheduleService:
                     {"slot_order": s["slot_order"] - 1}
                 )
 
-        return updated_session
+        # 更新後のセッションを取得し、パート名を含む詳細情報を追加
+        # session_repository.find_by_idはpart_nameを含めて返すため、そのまま使用
+        detailed_session = await self.session_repository.find_by_id(session_id)
+        return detailed_session if detailed_session else updated_session
 
     async def remove_session(self, session_id: UUID) -> bool:
         """指定したセッションを削除"""
@@ -529,7 +578,7 @@ class PracticeScheduleService:
                     venue_priority = schedule_venue.get("priority", i+1)
 
                     venue_info = {
-                        "id": str(schedule_venue.get('venue_id', schedule_venue.get('id'))),  # venue_idを優先
+                        "id": str(schedule_venue.get('id')),  # schedule_available_venue_idを使用
                         "name": venue_name,
                         "is_preferred": is_preferred,
                         "priority": venue_priority,

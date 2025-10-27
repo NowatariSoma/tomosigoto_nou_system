@@ -129,6 +129,7 @@ export class SessionService {
     };
 
     if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
+    if (request.venue_id !== undefined) apiRequest.venue_id = request.venue_id;
     if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
 
     return apiRequest;

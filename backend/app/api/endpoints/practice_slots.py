@@ -311,7 +311,7 @@ async def get_session(
         指定したIDのセッション
     """
     session = await practice_schedule_service.get_session(session_id)
-    return SessionResponse(**session)
+    return SessionResponse.model_validate(session)
 
 
 @router.post("/sessions", response_model=SessionResponse)
@@ -337,9 +337,44 @@ async def create_session(
     session_dict = session_data.model_dump()
     print(f"DEBUG create_session endpoint: session_dict = {session_dict}")
 
+    # venue_idが指定されている場合は、schedule_available_venue_idに変換
+    if session_dict.get("venue_id") and not session_dict.get("schedule_available_venue_id"):
+        # まず、venue_idとして検索
+        schedule_available_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+            session_dict["schedule_id"], session_dict["venue_id"]
+        )
+        
+        if schedule_available_venue:
+            # venue_idだった場合、schedule_available_venue_idに変換
+            session_dict["schedule_available_venue_id"] = str(schedule_available_venue.get("id"))
+            print(f"DEBUG create_session endpoint: venue_id -> schedule_available_venue_id = {session_dict['schedule_available_venue_id']}")
+        else:
+            # venue_idで見つからない場合は、schedule_available_venue_idである可能性
+            # schedule_available_venuesテーブルで直接検索
+            try:
+                # session_dict["venue_id"]がすでにUUIDの場合とstrの場合を両方対応
+                venue_id_value = session_dict["venue_id"]
+                if isinstance(venue_id_value, UUID):
+                    search_id = venue_id_value
+                else:
+                    search_id = UUID(venue_id_value)
+                    
+                schedule_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_id(search_id)
+                if schedule_venue:
+                    session_dict["schedule_available_venue_id"] = str(schedule_venue.get("id"))
+                    print(f"DEBUG create_session endpoint: schedule_available_venue_idを直接使用 = {session_dict['schedule_available_venue_id']}")
+                else:
+                    raise APIException(ErrorMessage.SCHEDULE_VENUE_NOT_FOUND)
+            except Exception as e:
+                print(f"DEBUG create_session endpoint: ID検索エラー: {e}")
+                raise APIException(ErrorMessage.SCHEDULE_VENUE_NOT_FOUND)
+    
+    # venue_idを削除（sessionsテーブルには存在しない）
+    session_dict.pop("venue_id", None)
+
     created_session = await practice_schedule_service.create_session(session_dict)
     print(f"DEBUG create_session endpoint: created_session = {created_session}")
-    return SessionResponse(**created_session)
+    return SessionResponse.model_validate(created_session)
 
 
 @router.put("/sessions/{session_id}", response_model=SessionResponse)
@@ -364,14 +399,14 @@ async def update_session(
     session_dict = session_data.model_dump(exclude_unset=True)
 
     updated_session = await practice_schedule_service.update_session(session_id, session_dict)
-    return SessionResponse(**updated_session)
+    return SessionResponse.model_validate(updated_session)
 
 
 @router.put("/sessions/{session_id}/move", response_model=SessionResponse)
 async def move_session(
     session_id: UUID,
-    target_venue_id: UUID,
-    target_slot_order: int,
+    target_venue_id: UUID = Query(..., description="移動先会場ID"),
+    target_slot_order: int = Query(..., description="移動先時限番号"),
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     # current_user: Dict[str, Any] = Depends(get_current_user),
 ):
@@ -380,17 +415,41 @@ async def move_session(
 
     Args:
         session_id: セッションID
-        target_venue_id: 移動先会場ID
+        target_venue_id: 移動先会場ID（venue_idまたはschedule_available_venue_id）
         target_slot_order: 移動先時限番号
         practice_schedule_service: 練習スケジュール管理サービス
 
     Returns:
         更新されたセッション
     """
-    updated_session = await practice_schedule_service.move_session(
-        session_id, target_venue_id, target_slot_order
+    # セッション情報を取得
+    session = await practice_schedule_service.session_repository.find_by_id(session_id)
+    if not session:
+        raise APIException(ErrorMessage.SESSION_NOT_FOUND)
+    
+    schedule_id = session.get("schedule_id")
+    
+    # target_venue_idがvenue_idの場合はschedule_available_venue_idに変換
+    # target_venue_idが既にschedule_available_venue_idの場合はそのまま使用
+    # まず、schedule_available_venuesテーブルでIDを検索
+    schedule_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+        schedule_id, target_venue_id
     )
-    return SessionResponse(**updated_session)
+    
+    if schedule_venue:
+        # venue_idだった場合、schedule_available_venue_idに変換
+        actual_target_venue_id = schedule_venue.get("id")
+        print(f"DEBUG move_session: venue_id -> schedule_available_venue_id = {actual_target_venue_id}")
+    else:
+        # schedule_available_venue_idだった場合、そのまま使用
+        actual_target_venue_id = target_venue_id
+        print(f"DEBUG move_session: schedule_available_venue_idを直接使用 = {actual_target_venue_id}")
+    
+    updated_session = await practice_schedule_service.move_session(
+        session_id, actual_target_venue_id, target_slot_order
+    )
+    # Pydantic v2では、dictからモデルを作成する際にmodel_validate()を使用
+    return SessionResponse.model_validate(updated_session)
 
 
 @router.delete("/sessions/{session_id}")
