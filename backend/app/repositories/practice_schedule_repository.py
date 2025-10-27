@@ -46,6 +46,45 @@ class PracticeScheduleRepository:
         )
         return response.data
 
+    @handle_supabase_errors("find_by_date_range_with_relations")
+    async def find_by_date_range_with_relations(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """日付範囲のスケジュールを関連データと一緒に取得（最適化版 - N+1問題を解決）
+
+        このメソッドは1回のクエリで以下のデータを取得します：
+        - 練習スケジュール本体
+        - 会場情報（schedule_available_venues + venues）
+        - セッション情報（sessions + parts）
+
+        従来のfind_by_date_rangeの後に各スケジュールごとにループでクエリを実行していた
+        N+1問題を解決します。
+        """
+        response = (
+            self.client.table(self.table_name)
+            .select("""
+                *,
+                schedule_available_venues(
+                    id,
+                    venue_id,
+                    is_preferred,
+                    priority,
+                    venues(id, name, campus)
+                ),
+                sessions(
+                    id,
+                    title,
+                    slot_order,
+                    schedule_available_venue_id,
+                    part_id,
+                    parts(id, name)
+                )
+            """)
+            .gte("schedule_date", start_date)
+            .lt("schedule_date", end_date)
+            .order("schedule_date", desc=False)
+            .execute()
+        )
+        return response.data
+
     @handle_supabase_errors("create")
     async def create(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
         """新しい練習スケジュールを作成"""
