@@ -22,7 +22,8 @@ class AttendanceBase(BaseModel):
     user_id: UUID
     status: AttendanceStatus
     notes: Optional[str] = None
-    late_time: Optional[time] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
 
 
 class AttendanceCreate(AttendanceBase):
@@ -35,7 +36,8 @@ class AttendanceUpdate(BaseModel):
 
     status: Optional[AttendanceStatus] = None
     notes: Optional[str] = None
-    late_time: Optional[time] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
 
 
 class AttendanceResponse(AttendanceBase):
@@ -76,7 +78,8 @@ class UserAttendanceHistory(BaseModel):
     last_name_kanji: Optional[str] = None
     student_id: Optional[str] = None
     attendance_status: Optional[AttendanceStatus] = None
-    late_time: Optional[time] = None
+    available_from: Optional[time] = None
+    available_to: Optional[time] = None
     schedule_date: Optional[datetime] = None
     description: Optional[str] = None
     venue_name: Optional[str] = None
