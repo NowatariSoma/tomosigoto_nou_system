@@ -2,8 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ArrowLeft, ExternalLink, Play, Search, Archive } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
+import { ArrowLeft, ExternalLink, Search, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Playlist, SubPlaylist, Video } from '@/features/materials/types/material_types';
@@ -13,6 +12,10 @@ import { videos } from '@/features/materials/data/video_data';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
 import { MaterialFilterSelects } from '@/features/materials/components/MaterialFilterSelects';
 import { FilterOption } from '@/shared/types/filter_types';
+import { useFavoriteVideos } from '@/features/materials/hooks/useFavoriteVideos';
+import { VideoCard } from '@/features/materials/components/VideoCard';
+import { FavoriteFilterToggle } from '@/features/materials/components/FavoriteFilterToggle';
+import { EmptyState } from '@/features/materials/components/EmptyState';
 
 export default function VideoListPage() {
   const params = useParams();
@@ -20,6 +23,8 @@ export default function VideoListPage() {
   const playlistId = params.playlistId as string;
   const videoId = params.videoId as string;
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavoriteVideos();
   
   // 年度+舞台データを取得
   const stageData = mockData.find((item: Playlist) => item.id === playlistId);
@@ -81,21 +86,18 @@ export default function VideoListPage() {
     );
   }
 
-  // 検索でフィルタリング
+  // 検索・フィルタリング
   const filteredVideos = playlistVideosList.filter((video: Video) => {
     const searchLower = searchQuery.toLowerCase();
-    return searchQuery === '' ||
-      video.title.toLowerCase().includes(searchLower);
+    const matchesSearch = searchQuery === '' || video.title.toLowerCase().includes(searchLower);
+    const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
+    return matchesSearch && matchesFavorite;
   });
 
-  // 日付フォーマット関数
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // お気に入り切り替え
+  const handleToggleFavorite = (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(videoId);
   };
 
   return (
@@ -156,7 +158,7 @@ export default function VideoListPage() {
           </div>
         </div>
 
-        {/* 検索フィールド */}
+        {/* 検索フィールドとフィルタ */}
         <div className="mb-8 space-y-4">
           <MaterialSearchInput
             value={searchQuery}
@@ -166,6 +168,13 @@ export default function VideoListPage() {
             icon={<Search className="h-5 w-5 text-slate-400" />}
             iconPosition="left"
           />
+          
+          <div className="flex items-center gap-4">
+            <FavoriteFilterToggle
+              showFavoritesOnly={showFavoritesOnly}
+              onToggle={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            />
+          </div>
         </div>
 
         {/* 動画一覧 */}
@@ -175,37 +184,28 @@ export default function VideoListPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVideos.map((video) => (
-              <Card
-                key={video.id}
-                className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => window.open(video.videoUrl, '_blank')}
-              >
-                <div className="relative h-32 overflow-hidden bg-slate-200">
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                    <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
-                  <CardDescription className="text-xs line-clamp-2">
-                    {stageData?.year}年 {stageData?.stage} • {formatDate(video.recordedDate)} • {playlistData.phase} • YouTubeで視聴
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+            {filteredVideos.map((video) => {
+              const isFavoriteVideo = isFavorite(video.id);
+              return (
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  playlistTitle={stageData?.title || ''}
+                  playlistYear={stageData?.year || 0}
+                  playlistStage={stageData?.stage || ''}
+                  subPlaylistPhase={playlistData.phase}
+                  recordedDate={video.recordedDate}
+                  showFavorite={true}
+                  isFavorite={isFavoriteVideo}
+                  onToggleFavorite={(e) => handleToggleFavorite(video.id, e)}
+                />
+              );
+            })}
           </div>
         </div>
 
         {filteredVideos.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-slate-500 text-lg">該当する動画が見つかりませんでした</p>
-          </div>
+          <EmptyState message="該当する動画が見つかりませんでした" />
         )}
       </main>
     </AppTemplate>
