@@ -107,9 +107,19 @@ class SchedulingObjectives:
                     model.Add(not_attend == 1 - attend_var)
                     
                     # penalty = not_attend * priority
-                    penalty_var = model.NewIntVar(0, 100, f"penalty_{player.id}_{part_id}_{time_slot.id}")
-                    model.AddMultiplicationEquality(penalty_var, [not_attend, priority])
+                    # priority は定数なので、正確には次のように表現:
+                    # penalty は not_attend=1 のとき priority、not_attend=0 のとき 0
+                    penalty_contribution = model.NewIntVar(0, priority, f"penalty_{player.id}_{part_id}_{time_slot.id}")
                     
-                    total_penalty.append(penalty_var)
+                    # 制約: penalty_contribution >= priority * not_attend
+                    # これにより、not_attend=1 のとき penalty_contribution >= priority
+                    # not_attend=0 のとき penalty_contribution >= 0
+                    # さらに上限制約を追加して、正確な値を保証
+                    model.Add(penalty_contribution >= priority * not_attend)
+                    # 上限制約: penalty_contribution <= priority（常に）
+                    # これで、not_attend=1 のとき penalty_contribution = priority
+                    # not_attend=0 のとき penalty_contribution = 0 になる
+                    
+                    total_penalty.append(penalty_contribution)
         
         return sum(total_penalty) if total_penalty else None
