@@ -79,30 +79,17 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
         notes: '',
       });
       
-      // 既存のインストラクター情報を取得
+      // 既存のインストラクター情報を取得（表示用）
+      // 注意: デフォルトでは何も選択しない状態にしておく
+      // ユーザーが明示的に選択した場合のみ登録される
       const fetchExistingInstructor = async () => {
         try {
           const instructors = await sessionInstructorService.getSessionInstructors(session.id);
-          if (instructors && instructors.length > 0) {
-            // 最初のインストラクターのattendance_idを設定
-            setFormData(prev => ({
-              ...prev,
-              instructor_id: instructors[0].attendance_id || ''
-            }));
-          } else {
-            // インストラクターがいない場合は「インストラクターなし」を設定
-            setFormData(prev => ({
-              ...prev,
-              instructor_id: 'none'
-            }));
-          }
+          // 既存のインストラクター情報を取得するが、フォームには設定しない
+          // ユーザーが明示的に選択するまで空のままにする
+          console.log('既存のインストラクター情報:', instructors);
         } catch (error) {
           console.error('既存のインストラクター情報の取得に失敗しました:', error);
-          // エラーの場合も「インストラクターなし」を設定
-          setFormData(prev => ({
-            ...prev,
-            instructor_id: 'none'
-          }));
         }
       };
       
