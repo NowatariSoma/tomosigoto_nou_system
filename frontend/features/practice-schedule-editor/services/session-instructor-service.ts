@@ -324,6 +324,27 @@ export class SessionInstructorService {
       throw error;
     }
   }
+
+  /**
+   * インストラクターを別の会場・時限に移動
+   * @param sessionInstructorId - セッション指導者ID
+   * @param venueId - 移動先会場ID
+   * @param slotOrder - 移動先スロット順序
+   * @returns 更新されたセッション指導者
+   */
+  async moveSessionInstructor(
+    sessionInstructorId: string,
+    venueId: string,
+    slotOrder: number
+  ): Promise<SessionInstructor> {
+    const response = await fetchApi(
+      `${this.basePath}/${sessionInstructorId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`,
+      {
+        method: 'PUT',
+      }
+    );
+    return await response.json();
+  }
 }
 
 // インスタンスをエクスポート

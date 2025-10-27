@@ -72,33 +72,53 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
       // レスポンスボディからエラー詳細を取得
       let errorMessage = `HTTP error! status: ${response.status}`;
       let errorData = null;
+      let responseText = '';
       
       try {
-        const responseText = await response.text();
-        console.log('Error response body:', responseText);
+        responseText = await response.text();
+        console.log('Error response body (raw):', responseText);
+        console.log('Error response body length:', responseText.length);
         
-        if (responseText) {
-          errorData = JSON.parse(responseText);
-          if (errorData.detail) {
-            errorMessage = errorData.detail;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
+        if (responseText && responseText.trim() !== '') {
+          try {
+            errorData = JSON.parse(responseText);
+            console.log('Error response body (parsed):', errorData);
+            
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            } else if (errorData.message) {
+              errorMessage = errorData.message;
+            } else if (errorData.error) {
+              errorMessage = errorData.error;
+            }
+          } catch (jsonError) {
+            console.warn('JSON parse error:', jsonError);
+            // JSONパースに失敗した場合は生のテキストをエラーメッセージにする
+            errorMessage = responseText || errorMessage;
           }
+        } else {
+          console.warn('Error response body is empty');
         }
-      } catch (parseError) {
-        // JSONパースに失敗した場合はデフォルトメッセージを使用
-        console.warn('Error response parsing failed:', parseError);
+      } catch (textError) {
+        // レスポンステキストの取得に失敗した場合
+        console.warn('Error response text retrieval failed:', textError);
       }
       
-      console.error('API Error:', {
+      const errorDetails = {
         url: fullUrl,
         status: response.status,
         statusText: response.statusText,
         errorMessage,
-        errorData
-      });
+        errorData,
+        responseHeaders: Object.fromEntries(response.headers.entries())
+      };
       
-      throw new ApiError(response.status, errorMessage);
+      console.error('API Error:', errorDetails);
+      
+      // エラーメッセージが空の場合は詳細な情報を表示
+      const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
+      
+      throw new ApiError(response.status, finalErrorMessage);
     }
 
     return response;

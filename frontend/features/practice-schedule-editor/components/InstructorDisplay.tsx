@@ -33,7 +33,7 @@ export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
   // ローディング中の表示
   if (loading) {
     return (
-      <div className={`text-xs text-gray-500 ${className}`}>
+      <div className={`text-xs text-gray-600 ${className}`}>
         <Users className="h-3 w-3 inline mr-1" />
         読み込み中...
       </div>
@@ -106,16 +106,16 @@ const InstructorApiDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={`text-xs text-gray-600 ${className}`}>
+    <div className={`text-xs text-gray-800 ${className}`}>
       <span className="mr-1">🎭</span>
       {displayInstructors.map((instructor, index) => (
         <span key={instructor.id}>
-          <span className="font-medium">
+          <span className="font-semibold">
             {instructor.user_name || 
              (instructor.user_email ? instructor.user_email.split('@')[0] : `指導者${instructor.id.slice(-4)}`)}
           </span>
           {showEmail && instructor.user_email && !instructor.user_name && (
-            <span className="text-gray-500 ml-1">
+            <span className="text-gray-700 ml-1">
               ({instructor.user_email})
             </span>
           )}
@@ -123,7 +123,7 @@ const InstructorApiDisplay: React.FC<{
         </span>
       ))}
       {remainingCount > 0 && (
-        <span className="text-gray-500 ml-1">
+        <span className="text-gray-700 ml-1">
           他{remainingCount}名
         </span>
       )}
@@ -148,16 +148,16 @@ const InstructorFallbackDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={`text-xs text-gray-600 ${className}`}>
+    <div className={`text-xs text-gray-800 ${className}`}>
       <span className="mr-1">🎭</span>
       {displayInstructors.map((instructor, index) => (
         <span key={index}>
-          <span className="font-medium">{instructor}</span>
+          <span className="font-semibold">{instructor}</span>
           {index < displayInstructors.length - 1 && ', '}
         </span>
       ))}
       {remainingCount > 0 && (
-        <span className="text-gray-500 ml-1">
+        <span className="text-gray-700 ml-1">
           他{remainingCount}名
         </span>
       )}
