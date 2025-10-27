@@ -10,10 +10,6 @@ function AttendanceContent() {
   const searchParams = useSearchParams();
   const practiceId = searchParams.get('practice');
 
-  if (practiceId) {
-    return <PracticeAttendancePage practiceId={practiceId} />;
-  }
-
   return (
     <AppTemplate
       title="出席登録"
@@ -29,7 +25,11 @@ function AttendanceContent() {
       }}
       maxWidth="7xl"
     >
-      <AttendancePage />
+      {practiceId ? (
+        <PracticeAttendancePage practiceId={practiceId} />
+      ) : (
+        <AttendancePage />
+      )}
     </AppTemplate>
   );
 }

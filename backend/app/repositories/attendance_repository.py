@@ -14,13 +14,16 @@ class AttendanceRepository:
         self.table_name = "practice_user_attendance"
     
     def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """UUID型とEnum型を文字列に変換"""
+        """UUID型とEnum型を文字列に変換、空文字列をNoneに変換"""
         serialized_data = {}
         for key, value in data.items():
             if isinstance(value, UUID):
                 serialized_data[key] = str(value)
             elif isinstance(value, Enum):
                 serialized_data[key] = value.value
+            elif value == "":
+                # 空文字列はNoneに変換（available_from, available_toなど）
+                serialized_data[key] = None
             else:
                 serialized_data[key] = value
         return serialized_data
