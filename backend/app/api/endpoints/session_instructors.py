@@ -149,7 +149,13 @@ async def delete_session_instructor(
     session_instructor_service: SessionInstructorService = Depends(get_session_instructor_service),
 ):
     """セッション指導者を削除"""
-    success = await session_instructor_service.delete_session_instructor(session_instructor_id)
+    print(f"DEBUG delete_session_instructor: session_instructor_id={session_instructor_id}")
+    try:
+        success = await session_instructor_service.delete_session_instructor(session_instructor_id)
+        print(f"DEBUG delete_session_instructor: success={success}")
+    except Exception as e:
+        print(f"DEBUG delete_session_instructor: エラー発生 - {str(e)}")
+        raise
     
     if not success:
         raise APIException("削除に失敗しました")
@@ -188,3 +194,17 @@ async def delete_session_instructors_by_schedule_and_slot(
         "message": f"スケジュール {schedule_id} コマ {slot_order} の指導者割り当て {deleted_count} 件を削除しました",
         "deleted_count": deleted_count
     }
+
+
+@router.put("/{session_instructor_id}/move")
+async def move_session_instructor(
+    session_instructor_id: UUID,
+    target_venue_id: UUID = Query(..., description="移動先会場ID"),
+    target_slot_order: int = Query(..., description="移動先時限番号"),
+    session_instructor_service: SessionInstructorService = Depends(get_session_instructor_service),
+):
+    """インストラクターを別の会場・時限に移動"""
+    updated_session_instructor = await session_instructor_service.move_session_instructor(
+        session_instructor_id, target_venue_id, target_slot_order
+    )
+    return SessionInstructorResponse.model_validate(updated_session_instructor)

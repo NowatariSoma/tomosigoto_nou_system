@@ -98,6 +98,7 @@ class SessionBase(BaseModel):
     part_id: Optional[UUID] = None
     part_name: Optional[str] = None  # パート名
     slot_order: int
+    venue_id: Optional[UUID] = None  # フロントエンドから送信される会場ID
     schedule_available_venue_id: Optional[UUID] = None
     priority: int = 0
 

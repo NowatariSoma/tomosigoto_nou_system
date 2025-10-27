@@ -94,7 +94,15 @@ export class SessionService {
     venueId: string,
     slotOrder: number
   ): Promise<Session> {
-    const response = await fetchApi(`${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`, {
+    const url = `${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`;
+    console.log('DEBUG SessionService.moveSession:', {
+      sessionId,
+      venueId,
+      slotOrder,
+      url
+    });
+    
+    const response = await fetchApi(url, {
       method: 'PUT',
     });
     const apiSession: SessionApiResponse = await response.json();
@@ -129,6 +137,7 @@ export class SessionService {
     };
 
     if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
+    if (request.venue_id !== undefined) apiRequest.venue_id = request.venue_id;
     if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
 
     return apiRequest;
