@@ -35,6 +35,7 @@ export interface SessionApiCreateRequest {
   schedule_id: string;
   part_id?: string;
   slot_order: number;
+  venue_id?: string;
   schedule_available_venue_id?: string;
   priority: number;
   start_time?: string;
