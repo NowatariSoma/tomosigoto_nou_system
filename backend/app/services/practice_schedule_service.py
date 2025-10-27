@@ -594,8 +594,46 @@ class PracticeScheduleService:
         return venues
 
     async def _get_session_instructors(self, session_id: UUID) -> List[str]:
-        """セッションの指導者名を取得（一旦実装しない）"""
-        return []
+        """セッションの指導者名を取得"""
+        try:
+            # session_instructorsテーブルからセッションの指導者を取得
+            instructors_data = await self.session_instructor_repository.find_by_attendance_id(session_id)
+            
+            # ユーザー名を抽出
+            instructors = []
+            for instructor in instructors_data:
+                # user_nameがあればそれを使い、なければuser_emailからユーザー名部分を抽出
+                user_name = instructor.get('user_name')
+                if not user_name and instructor.get('user_email'):
+                    user_name = instructor['user_email'].split('@')[0]
+                if user_name:
+                    instructors.append(user_name)
+            
+            return instructors
+        except Exception as e:
+            print(f"Warning: Could not fetch instructors for session {session_id}: {e}")
+            return []
+
+    async def _get_instructors_for_slot(self, schedule_id: UUID, slot_order: int) -> List[str]:
+        """指定したスケジュールとコマの指導者名を取得"""
+        try:
+            # session_instructorsテーブルから該当スロットの指導者を取得
+            instructors_data = await self.session_instructor_repository.find_by_schedule_and_slot(schedule_id, slot_order)
+            
+            # ユーザー名を抽出
+            instructors = []
+            for instructor in instructors_data:
+                # user_nameがあればそれを使い、なければuser_emailからユーザー名部分を抽出
+                user_name = instructor.get('user_name')
+                if not user_name and instructor.get('user_email'):
+                    user_name = instructor['user_email'].split('@')[0]
+                if user_name:
+                    instructors.append(user_name)
+            
+            return instructors
+        except Exception as e:
+            print(f"Warning: Could not fetch instructors for schedule {schedule_id} slot {slot_order}: {e}")
+            return []
 
     async def _get_session_participants_count(self, schedule_id: UUID) -> int:
         """セッションの参加者数を取得（估算値）"""
@@ -675,8 +713,14 @@ class PracticeScheduleService:
             debug_logs.append(f"ERROR fetching venues: {e}")
             venues = []
 
-        # Instructors　TODO: 指導者情報を取得
-        instructors = []
+        # Instructors: 指導者情報を取得
+        try:
+            debug_logs.append("Attempting to fetch instructors...")
+            instructors = await self.session_instructor_repository.find_by_schedule(schedule["id"])
+            debug_logs.append(f"Instructors fetched: {len(instructors)} items")
+        except Exception as e:
+            debug_logs.append(f"ERROR fetching instructors: {e}")
+            instructors = []
 
         # データベースからdivision_countを取得
         division_count = schedule.get("division_count", 6)
@@ -941,7 +985,7 @@ class PracticeScheduleService:
                             "part_name": session.get("part_name", session_title),  # パート名を優先、なければセッションタイトル
                             "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                             "session_title": session_title,
-                            "instructors": await self._get_session_instructors(session.get("id")),
+                            "instructors": await self._get_instructors_for_slot(schedule["id"], slot_order),
                             "participants": await self._get_session_participants_count(schedule["id"]),
                             "status": "confirmed",
                             "slot_order": slot_order,
