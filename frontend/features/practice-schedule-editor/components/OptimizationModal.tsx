@@ -82,7 +82,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
                 <p className="text-base font-semibold text-black">最適化の内容</p>
                 <ul className="list-disc list-inside space-y-1.5 text-base text-black">
                   <li>講師の配置を最適化</li>
-                  <li>時間帯のバランスを調整</li>
+                  <li>コマ数を調整</li>
                   <li>利用可能な会場を考慮</li>
                 </ul>
               </div>
