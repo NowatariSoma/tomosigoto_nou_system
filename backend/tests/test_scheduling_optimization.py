@@ -5,10 +5,83 @@ import pytest
 from unittest.mock import Mock, AsyncMock
 from uuid import uuid4
 
-from app.services.optimization.models import SchedulingProblem, Player, Room, TimeSlot, PartType
+from app.services.optimization.models import SchedulingProblem, Player, Room, TimeSlot, PartAssignment
 from app.services.optimization.optimizer import SchedulingOptimizer
 from app.services.optimization.adapters import SchedulingDataAdapter
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
+
+
+def create_simple_test_problem() -> SchedulingProblem:
+    """シンプルなテスト用問題を作成"""
+    # パートデータ
+    parts = [
+        {"id": "part-1", "name": "シテ方"},
+        {"id": "part-2", "name": "地謡"},
+        {"id": "part-3", "name": "囃子方"}
+    ]
+    
+    # 部屋データ
+    rooms = [
+        Room(id=1, name="会場1"),
+        Room(id=2, name="会場2")
+    ]
+    
+    # 時間コマデータ
+    time_slots = [
+        TimeSlot(id=1, name="1限目"),
+        TimeSlot(id=2, name="2限目"),
+        TimeSlot(id=3, name="3限目")
+    ]
+    
+    # プレイヤーデータ（指導者1人、一般プレイヤー2人）
+    players = []
+    
+    # 指導者
+    instructor_assignments = [
+        PartAssignment(part_id="part-1", part_name="シテ方", priority=80),
+        PartAssignment(part_id="part-2", part_name="地謡", priority=70)
+    ]
+    instructor = Player(
+        id=1,
+        name="指導者1",
+        part_assignments=instructor_assignments,
+        is_instructor=True,
+        user_id="user-instructor-1"
+    )
+    players.append(instructor)
+    
+    # 一般プレイヤー1
+    player1_assignments = [
+        PartAssignment(part_id="part-1", part_name="シテ方", priority=60)
+    ]
+    player1 = Player(
+        id=2,
+        name="プレイヤー1",
+        part_assignments=player1_assignments,
+        is_instructor=False,
+        user_id="user-player-1"
+    )
+    players.append(player1)
+    
+    # 一般プレイヤー2
+    player2_assignments = [
+        PartAssignment(part_id="part-3", part_name="囃子方", priority=50)
+    ]
+    player2 = Player(
+        id=3,
+        name="プレイヤー2",
+        part_assignments=player2_assignments,
+        is_instructor=False,
+        user_id="user-player-2"
+    )
+    players.append(player2)
+    
+    return SchedulingProblem(
+        parts=parts,
+        rooms=rooms,
+        time_slots=time_slots,
+        players=players
+    )
 
 
 class TestSchedulingOptimizer:
@@ -16,7 +89,7 @@ class TestSchedulingOptimizer:
     
     def test_create_sample_problem(self):
         """サンプル問題の作成テスト"""
-        problem = SchedulingOptimizer.create_sample_problem()
+        problem = create_simple_test_problem()
         
         assert isinstance(problem, SchedulingProblem)
         assert len(problem.players) > 0
@@ -34,7 +107,7 @@ class TestSchedulingOptimizer:
     
     def test_solve_sample_problem(self):
         """サンプル問題の求解テスト"""
-        problem = SchedulingOptimizer.create_sample_problem()
+        problem = create_simple_test_problem()
         optimizer = SchedulingOptimizer(problem)
         
         solution = optimizer.solve(time_limit_seconds=10)

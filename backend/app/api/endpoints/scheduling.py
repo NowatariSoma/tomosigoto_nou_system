@@ -9,7 +9,7 @@ from app.schemas.scheduling import (
     OptimizationRequest, OptimizationResponse, PreviewRequest, PreviewResponse, ErrorResponse
 )
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
-from app.api.deps import get_scheduling_optimization_service
+from app.api.deps import get_scheduling_optimization_service, get_current_user
 from app.core.exceptions import APIException
 
 router = APIRouter()
@@ -24,6 +24,7 @@ router = APIRouter()
 )
 async def optimize_schedule(
     request: OptimizationRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
 ) -> OptimizationResponse:
     """スケジュールを最適化"""
@@ -70,6 +71,7 @@ async def optimize_schedule(
 )
 async def preview_optimization(
     request: PreviewRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
 ) -> PreviewResponse:
     """最適化結果をプレビュー"""
