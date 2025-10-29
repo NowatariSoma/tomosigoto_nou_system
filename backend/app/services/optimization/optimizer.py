@@ -2,6 +2,7 @@
 メインのスケジューリング最適化クラス
 """
 import time
+import logging
 from typing import List, Optional
 from ortools.sat.python import cp_model
 from app.services.optimization.models import (
@@ -11,6 +12,8 @@ from app.services.optimization.models import (
 from app.services.optimization.constraints import SchedulingConstraints
 from app.services.optimization.objectives import SchedulingObjectives
 from app.services.optimization.constants import SchedulingConfig, ProblemConfig
+
+logger = logging.getLogger(__name__)
 
 
 class SchedulingOptimizer:
@@ -112,26 +115,41 @@ class SchedulingOptimizer:
         # スケジュール表を表示
         schedule_matrix = solution.get_schedule_matrix()
         
+        # デバッグレベルのログに変更
+        debug_lines = []
+        
         # ヘッダー
-        print("時間\\部屋", end="")
+        header = "時間\\部屋"
         for room in self.problem.rooms:
-            print(f"\t{room.name}", end="")
-        print()
+            header += f"\t{room.name}"
+        debug_lines.append(header)
         
         # 各行
         for time_slot in self.problem.time_slots:
-            print(f"{time_slot.name}", end="")
+            row = f"{time_slot.name}"
             for room in self.problem.rooms:
                 sessions = schedule_matrix.get(time_slot.id, {}).get(room.id, [])
                 if sessions:
                     # 複数セッションがある場合はカンマ区切りで表示
                     session_strs = []
                     for session in sessions:
-                        instructor = next(i for i in self.problem.players if i.id == session.instructor_id)
-                        session_strs.append(f"{session.part_name}({instructor.name})")
-                    print(f"\t{','.join(session_strs)}", end="")
+                        instructor = next(
+                            (i for i in self.problem.players if i.id == session.instructor_id),
+                            None
+                        )
+                        if instructor:
+                            # 型安全性を確保（nameは常にstr）
+                            instructor_name = str(instructor.name) if instructor.name else f"指導者{instructor.id}"
+                            session_strs.append(f"{session.part_name}({instructor_name})")
+                        else:
+                            # 指導者が見つからない場合のフォールバック
+                            session_strs.append(f"{session.part_name}(指導者{session.instructor_id})")
+                    row += f"\t{','.join(session_strs)}"
                 else:
-                    print(f"\t-", end="")
-            print()
+                    row += "\t-"
+            debug_lines.append(row)
+        
+        # ロガーでデバッグ出力（本番環境では無効化される）
+        logger.debug("最適化解のスケジュール表:\n%s", "\n".join(debug_lines))
 
 

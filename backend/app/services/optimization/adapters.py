@@ -8,7 +8,7 @@ from app.services.optimization.models import (
     SchedulingProblem, Player, Room, TimeSlot, 
     PracticeSession, SchedulingSolution, PartAssignment
 )
-from app.services.optimization.constants import ProblemConfig, PriorityConfig
+from app.services.optimization.constants import ProblemConfig, PriorityConfig, SchedulingConfig
 
 
 class SchedulingDataAdapter:
@@ -139,8 +139,8 @@ class SchedulingDataAdapter:
                                 if not part_data:
                                     continue
                                 
-                                # 基本優先度を取得（デフォルト50）
-                                base_priority = ma.get('priority') or 50
+                                # 基本優先度を取得（デフォルトは定数から取得）
+                                base_priority = ma.get('priority') or SchedulingConfig.DEFAULT_PART_PRIORITY
                                 
                                 # 舞カテゴリボーナスを適用
                                 if ma.get('category') == 'mai':
@@ -189,8 +189,8 @@ class SchedulingDataAdapter:
                                     if not part_data:
                                         continue
                                     
-                                    # 基本優先度を取得（デフォルト50）
-                                    base_priority = ma.get('priority') or 50
+                                    # 基本優先度を取得（デフォルトは定数から取得）
+                                    base_priority = ma.get('priority') or SchedulingConfig.DEFAULT_PART_PRIORITY
                                     
                                     # 舞カテゴリボーナスを適用
                                     if ma.get('category') == 'mai':
@@ -240,8 +240,8 @@ class SchedulingDataAdapter:
                     if not part_data:
                         continue
                     
-                    # 基本優先度を取得（デフォルト50）
-                    base_priority = ma.get('priority') or 50
+                    # 基本優先度を取得（デフォルトは定数から取得）
+                    base_priority = ma.get('priority') or SchedulingConfig.DEFAULT_PART_PRIORITY
                     
                     # 舞カテゴリボーナスを適用
                     if ma.get('category') == 'mai':

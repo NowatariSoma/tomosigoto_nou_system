@@ -1,14 +1,23 @@
 """
 スケジューリング最適化関連のスキーマ定義
 """
+import os
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from uuid import UUID
+
+# 環境変数から最大タイムアウト値を取得（デフォルト600秒）
+MAX_TIME_LIMIT_SECONDS = int(os.getenv("OPTIMIZATION_MAX_TIME_LIMIT_SECONDS", "600"))
 
 
 class OptimizationParams(BaseModel):
     """最適化パラメータ"""
-    time_limit_seconds: int = Field(default=30, ge=1, le=300, description="時間制限（秒）")
+    time_limit_seconds: int = Field(
+        default=30,
+        ge=1,
+        le=MAX_TIME_LIMIT_SECONDS,
+        description=f"時間制限（秒、最大{MAX_TIME_LIMIT_SECONDS}秒）"
+    )
     equality_weight: int = Field(default=100, ge=0, le=1000, description="均等性重み")
     allow_overlap: bool = Field(default=False, description="重複を許可するか")
     max_iterations: int = Field(default=1000, ge=100, le=10000, description="最大反復回数")

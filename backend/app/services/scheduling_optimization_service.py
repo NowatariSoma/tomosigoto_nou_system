@@ -6,6 +6,7 @@
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 import logging
+import asyncio
 
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
@@ -206,50 +207,65 @@ class SchedulingOptimizationService:
         return await self.practice_schedule_repository.find_by_id(schedule_id)
     
     async def _get_related_data(self, schedule_id: UUID) -> tuple:
-        """関連データを取得"""
-        # 1. スケジュール情報を取得（stage_id含む）
+        """関連データを取得（並列実行でパフォーマンス最適化）"""
+        # 1. スケジュール情報を取得（stage_id含む）- 他のクエリに依存するため先に実行
         schedule_data = await self.practice_schedule_repository.find_by_id(schedule_id)
         stage_id = schedule_data.get('stage_id')
         
         if not stage_id:
             raise APIException("スケジュールにステージが設定されていません")
         
-        # 2. 利用可能会場を取得
-        venues_data = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+        # 2-5. 依存関係のないクエリを並列実行
+        async def get_venues():
+            return await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
         
-        # 3. ステージに紐づく全パートを取得
-        parts_data = await self.part_repository.find_by_stage_id(stage_id)
+        async def get_parts():
+            return await self.part_repository.find_by_stage_id(stage_id)
         
-        # 4. ユーザーデータ
-        users_data = await self.user_repository.get_all_users()
+        async def get_users():
+            return await self.user_repository.get_all_users()
         
-        # 5. メンバー割り当てデータ
-        member_assignments_data = await self.member_assignment_repository.find_all()
+        async def get_member_assignments():
+            return await self.member_assignment_repository.find_all()
         
-        # 6. 出席データを取得（エラー時は空リストを返す）
-        try:
-            attendance_data = await self.attendance_repository.find_by_practice_schedule(schedule_id)
-        except Exception as e:
-            logger.warning(f"出席データの取得に失敗しました: {e}")
-            attendance_data = []
+        async def get_attendance():
+            """出席データを取得（エラー時は空リストを返す）"""
+            try:
+                return await self.attendance_repository.find_by_practice_schedule(schedule_id)
+            except Exception as e:
+                logger.warning(f"出席データの取得に失敗しました: {e}")
+                return []
         
-        # 7. 指導者データを取得（エラー時は空リストを返す）
-        try:
-            from app.repositories.session_instructor_repository import SessionInstructorRepository
-            session_instructor_repo = SessionInstructorRepository(self.session_repository.client)
-            session_instructors_data = await session_instructor_repo.find_by_schedule(schedule_id)
-        except Exception as e:
-            logger.warning(f"指導者データの取得に失敗しました: {e}")
-            session_instructors_data = []
+        async def get_session_instructors():
+            """指導者データを取得（エラー時は空リストを返す）"""
+            try:
+                from app.repositories.session_instructor_repository import SessionInstructorRepository
+                session_instructor_repo = SessionInstructorRepository(self.session_repository.client)
+                return await session_instructor_repo.find_by_schedule(schedule_id)
+            except Exception as e:
+                logger.warning(f"指導者データの取得に失敗しました: {e}")
+                return []
         
-        # 8. ユーザーロールデータを取得（指導者判定用）
-        try:
-            from app.repositories.user_role_repository import UserRoleRepository
-            user_role_repo = UserRoleRepository(self.user_repository.client)
-            user_roles_data = await user_role_repo.get_all_roles(include_hidden=True)
-        except Exception as e:
-            logger.warning(f"ユーザーロールデータの取得に失敗しました: {e}")
-            user_roles_data = []
+        async def get_user_roles():
+            """ユーザーロールデータを取得（エラー時は空リストを返す）"""
+            try:
+                from app.repositories.user_role_repository import UserRoleRepository
+                user_role_repo = UserRoleRepository(self.user_repository.client)
+                return await user_role_repo.get_all_roles(include_hidden=True)
+            except Exception as e:
+                logger.warning(f"ユーザーロールデータの取得に失敗しました: {e}")
+                return []
+        
+        # 並列実行
+        venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await asyncio.gather(
+            get_venues(),
+            get_parts(),
+            get_users(),
+            get_member_assignments(),
+            get_attendance(),
+            get_session_instructors(),
+            get_user_roles()
+        )
         
         return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data
     
