@@ -128,7 +128,7 @@ class SchedulingOptimizer:
                     session_strs = []
                     for session in sessions:
                         instructor = next(i for i in self.problem.players if i.id == session.instructor_id)
-                        session_strs.append(f"{session.part.value}({instructor.name})")
+                        session_strs.append(f"{session.part_name}({instructor.name})")
                     print(f"\t{','.join(session_strs)}", end="")
                 else:
                     print(f"\t-", end="")
