@@ -9,7 +9,7 @@ export interface Session {
   id: string;
   schedule_id: string;
   part_id?: string;
-  title: string;
+  part_name?: string; // パート名
   slot_order: number;
   schedule_available_venue_id?: string;
   priority: number;
@@ -25,8 +25,8 @@ export interface Session {
 export interface CreateSessionRequest {
   schedule_id: string;
   part_id?: string;
-  title: string;
   slot_order: number;
+  venue_id?: string;
   schedule_available_venue_id?: string;
   priority: number;
   start_time?: string;
@@ -38,7 +38,6 @@ export interface CreateSessionRequest {
  */
 export interface UpdateSessionRequest {
   part_id?: string;
-  title?: string;
   slot_order?: number;
   schedule_available_venue_id?: string;
   priority?: number;
@@ -50,15 +49,28 @@ export interface UpdateSessionRequest {
  * セッション編集用のフォームデータ
  */
 export interface SessionFormData {
-  title: string;
   part_id: string;
-  instructor_ids: string[];
+  instructor_id: string; // 単一選択用に変更
   venue_id: string;
   time_slot: string;
   priority: number;
   notes: string;
   start_time?: string;
   end_time?: string;
+}
+
+/**
+ * 出席者情報（インストラクター選択用）
+ */
+export interface AttendanceInfo {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email?: string;
+  practice_schedule_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -124,6 +136,7 @@ export type EditMode = 'view' | 'edit';
  */
 export interface SessionEditorState {
   sessions: Session[];
+  instructors: any[]; // SessionInstructorWithDetails[]
   venues: VenueInfo[];
   time_slots: TimeSlot[];
   selected_session: Session | null;
@@ -138,8 +151,11 @@ export interface SessionEditorState {
  */
 export type SessionEditorAction =
   | { type: 'SET_SESSIONS'; payload: Session[] }
+  | { type: 'SET_INSTRUCTORS'; payload: any[] } // SessionInstructorWithDetails[]
+  | { type: 'UPDATE_INSTRUCTOR'; payload: any } // SessionInstructorWithDetails
   | { type: 'SET_VENUES'; payload: VenueInfo[] }
   | { type: 'SET_TIME_SLOTS'; payload: TimeSlot[] }
+  | { type: 'UPDATE_TIME_SLOT'; payload: TimeSlot }
   | { type: 'SELECT_SESSION'; payload: Session | null }
   | { type: 'OPEN_MODAL' }
   | { type: 'CLOSE_MODAL' }

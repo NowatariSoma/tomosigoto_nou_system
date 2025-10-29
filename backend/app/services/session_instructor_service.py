@@ -163,11 +163,15 @@ class SessionInstructorService:
 
     async def delete_session_instructor(self, session_instructor_id: UUID) -> bool:
         """セッション指導者を削除"""
+        print(f"DEBUG delete_session_instructor service: session_instructor_id={session_instructor_id}")
         existing = await self.repository.find_by_id(session_instructor_id)
+        print(f"DEBUG delete_session_instructor service: existing={existing}")
         if not existing:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         
-        return await self.repository.delete(session_instructor_id)
+        result = await self.repository.delete(session_instructor_id)
+        print(f"DEBUG delete_session_instructor service: delete result={result}")
+        return result
 
     async def delete_session_instructors_by_schedule(self, schedule_id: UUID) -> int:
         """指定したスケジュールの指導者割り当てをすべて削除"""
@@ -217,3 +221,70 @@ class SessionInstructorService:
                 )
         
         return True
+
+    async def get_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+        """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
+        return await self.repository.find_instructor_candidates(practice_schedule_id)
+    
+    async def move_session_instructor(
+        self,
+        session_instructor_id: UUID,
+        target_venue_id: UUID,
+        target_slot_order: int
+    ) -> Dict[str, Any]:
+        """インストラクターを別の会場・時限に移動"""
+        # インストラクター情報を取得
+        session_instructor = await self.repository.find_by_id(session_instructor_id)
+        if not session_instructor:
+            raise APIException(ErrorMessage.USER_NOT_FOUND)
+        
+        schedule_id = session_instructor.get("schedule_id")
+        
+        # venue_idの変換（session_instructorsテーブルはschedule_available_venue_idを使用）
+        # まず、schedule_available_venue_idとして直接検索
+        schedule_available_venue = None
+        try:
+            if isinstance(target_venue_id, UUID):
+                search_id = target_venue_id
+            else:
+                search_id = UUID(target_venue_id)
+                
+            schedule_available_venue = await self.repository.find_schedule_available_venue_by_id(search_id)
+        except Exception as e:
+            print(f"DEBUG move_session_instructor: find_by_idエラー: {e}")
+        
+        if schedule_available_venue:
+            actual_target_venue_id = schedule_available_venue.get("id")
+        else:
+            # 見つからない場合は、そのまま使用
+            actual_target_venue_id = target_venue_id
+        
+        # 更新
+        updated_data = {
+            "schedule_available_venue_id": str(actual_target_venue_id),
+            "slot_order": target_slot_order
+        }
+        
+        updated_session_instructor = await self.repository.update(session_instructor_id, updated_data)
+        
+        # 詳細情報を取得して返す（limit=1000で全件取得を試みる）
+        detailed_instructors = await self.repository.find_all_with_details(
+            limit=1000, 
+            offset=0,
+            schedule_id=schedule_id, 
+            slot_order=target_slot_order
+        )
+        print(f"DEBUG move_session_instructor: 詳細情報取得完了。件数={len(detailed_instructors)}, session_instructor_id={session_instructor_id}")
+        
+        # 更新したインストラクターを探して返す
+        for instructor in detailed_instructors:
+            instructor_id_str = instructor.get("id")
+            target_id_str = str(session_instructor_id)
+            print(f"DEBUG move_session_instructor: 比較 {instructor_id_str} === {target_id_str}")
+            if instructor_id_str == target_id_str:
+                print(f"DEBUG move_session_instructor: マッチしたインストラクター情報={instructor}")
+                return instructor
+        
+        # 見つからなければ更新後のデータをそのまま返す
+        print(f"DEBUG move_session_instructor: マッチするインストラクターが見つかりません。updated_session_instructorを返します={updated_session_instructor}")
+        return updated_session_instructor

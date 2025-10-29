@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Session, VenueInfo, TimeSlot, SessionFormData } from '../types/session-editor';
+import { Session, VenueInfo, TimeSlot, SessionFormData, AttendanceInfo } from '../types/session-editor';
 import { UI_TEXT, INITIAL_SESSION_FORM, VALIDATION } from '../constants';
 import { useSessionValidation } from '../hooks/use-session-validation';
 import { Save, X, User, MapPin, Clock, Star, FileText } from 'lucide-react';
 import { Part } from '../services/part-service';
+import { attendanceService } from '../services';
 
 interface SessionEditorModalProps {
   session?: Session | null;
   venues: VenueInfo[];
   time_slots: TimeSlot[];
   parts: Part[];
+  scheduleId: string;
   is_creating: boolean;
   onSubmit: (formData: SessionFormData) => Promise<void>;
   onCancel: () => void;
@@ -23,6 +25,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   venues,
   time_slots,
   parts,
+  scheduleId,
   is_creating,
   onSubmit,
   onCancel,
@@ -34,18 +37,22 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
   const { validateSessionForm } = useSessionValidation(venues);
 
+
   // セッション情報でフォームを初期化
   useEffect(() => {
+    console.log('SessionEditorModal useEffect:', { session, is_creating, session_parts: session?.part_id });
+    
     if (session && !is_creating) {
-      setFormData({
-        title: session.title,
+      console.log('Setting form data with session:', session);
+      const initialFormData = {
         part_id: session.part_id || '',
-        instructor_ids: [],
         venue_id: session.schedule_available_venue_id || '',
         time_slot: '',
         priority: session.priority,
         notes: '',
-      });
+      };
+      console.log('Initial form data:', initialFormData);
+      setFormData(initialFormData);
     } else {
       setFormData(INITIAL_SESSION_FORM);
     }
@@ -65,9 +72,9 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
       console.log('バリデーションOK、API呼び出し開始');
       try {
         await onSubmit(formData);
-        console.log('セッション作成成功');
+        console.log('セッション保存成功');
       } catch (error) {
-        console.error('セッション作成エラー:', error);
+        console.error('セッション保存エラー:', error);
         const errorMessage = error instanceof Error ? error.message : 'セッションの保存に失敗しました';
         setApiError(errorMessage);
       }
@@ -83,6 +90,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -108,25 +116,6 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
             </div>
           )}
 
-          {/* セッション名 */}
-          <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-              <FileText className="h-4 w-4" />
-              <span>{UI_TEXT.SESSION_TITLE} <span className="text-red-500">*</span></span>
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="セッション名を入力してください"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-            )}
-          </div>
 
           {/* パート選択 */}
           <div>
