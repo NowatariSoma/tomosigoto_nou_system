@@ -2,14 +2,13 @@
  * インストラクター表示コンポーネント
  */
 
-import React, { useEffect } from 'react';
-import { Users } from 'lucide-react';
-import { useSlotInstructors } from '../hooks';
+import React from 'react';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
 
 interface InstructorDisplayProps {
-  scheduleId: string;
-  slotOrder: number;
+  scheduleId?: string;
+  slotOrder?: number;
+  instructors?: SessionInstructorWithDetails[]; // 直接指導者データを渡す場合はこちらを使用
   className?: string;
   fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
   showEmail?: boolean;
@@ -19,79 +18,68 @@ interface InstructorDisplayProps {
 export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
   scheduleId,
   slotOrder,
+  instructors: providedInstructors,
   className = '',
   fallbackInstructors = [],
   showEmail = false,
   maxDisplay = 3,
 }) => {
-  const { instructors, loading, error, fetchData } = useSlotInstructors(scheduleId, slotOrder);
+  // propsで指導者データが直接渡されている場合はそれを使用（API呼び出しなし）
+  const instructors = providedInstructors || [];
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // ローディング中の表示
-  if (loading) {
-    return (
-      <div className={`text-xs text-gray-600 ${className}`}>
-        <Users className="h-3 w-3 inline mr-1" />
-        読み込み中...
-      </div>
-    );
-  }
-
-  // エラー時はフォールバック表示
-  if (error) {
-    console.warn('指導者情報の取得に失敗:', error);
-    // 開発環境でのみ詳細なエラー情報を表示
-    if (process.env.NODE_ENV === 'development') {
-      console.error('InstructorDisplay API Error:', {
-        scheduleId,
-        slotOrder,
-        error,
-        fallbackInstructors
-      });
+  // propsで指導者データが直接渡されている場合（推奨）
+  if (providedInstructors !== undefined) {
+    if (instructors.length > 0) {
+      return (
+        <InstructorApiDisplay 
+          instructors={instructors}
+          className={className}
+          showEmail={showEmail}
+          maxDisplay={maxDisplay}
+        />
+      );
     }
+    // フォールバック表示
+    if (fallbackInstructors.length > 0) {
+      return (
+        <InstructorFallbackDisplay 
+          instructors={fallbackInstructors} 
+          className={className}
+          maxDisplay={maxDisplay}
+        />
+      );
+    }
+    return null;
+  }
+
+  // scheduleIdとslotOrderが指定されている場合はAPI呼び出し（後方互換性のため）
+  // ただし、この方法は非推奨（パフォーマンスの問題があるため）
+  if (scheduleId && slotOrder !== undefined) {
+    // 動的インポートでuseSlotInstructorsを使用（条件付きフック呼び出しを避けるため）
+    const DynamicInstructorDisplay = React.lazy(() => 
+      import('./InstructorDisplayWithAPI').then(module => ({ default: module.InstructorDisplayWithAPI }))
+    );
     return (
-      <InstructorFallbackDisplay 
-        instructors={fallbackInstructors} 
-        className={className}
-        maxDisplay={maxDisplay}
-      />
+      <React.Suspense fallback={<div className={className}>読み込み中...</div>}>
+        <DynamicInstructorDisplay
+          scheduleId={scheduleId}
+          slotOrder={slotOrder}
+          className={className}
+          fallbackInstructors={fallbackInstructors}
+          showEmail={showEmail}
+          maxDisplay={maxDisplay}
+        />
+      </React.Suspense>
     );
   }
 
-  // APIから取得した指導者情報がある場合
-  if (instructors && instructors.length > 0) {
-    return (
-      <InstructorApiDisplay 
-        instructors={instructors}
-        className={className}
-        showEmail={showEmail}
-        maxDisplay={maxDisplay}
-      />
-    );
-  }
-
-  // APIから取得した指導者情報がない場合はフォールバック表示
-  if (fallbackInstructors.length > 0) {
-    return (
-      <InstructorFallbackDisplay 
-        instructors={fallbackInstructors} 
-        className={className}
-        maxDisplay={maxDisplay}
-      />
-    );
-  }
-
-  // 指導者情報が全くない場合は何も表示しない
   return null;
 };
 
 /**
  * APIから取得した指導者情報を表示
  */
-const InstructorApiDisplay: React.FC<{
+export const InstructorApiDisplay: React.FC<{
   instructors: SessionInstructorWithDetails[];
   className?: string;
   showEmail?: boolean;
@@ -134,7 +122,7 @@ const InstructorApiDisplay: React.FC<{
 /**
  * フォールバック用の指導者情報表示（既存のstring[]形式）
  */
-const InstructorFallbackDisplay: React.FC<{
+export const InstructorFallbackDisplay: React.FC<{
   instructors: string[];
   className?: string;
   maxDisplay?: number;
