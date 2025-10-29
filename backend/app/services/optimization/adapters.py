@@ -152,7 +152,8 @@ class SchedulingDataAdapter:
                                 id=len(players) + 1,
                                 name=user_info.get('name') or f'指導者{len(players) + 1}',
                                 part_assignments=part_assignments,
-                                is_instructor=True
+                                is_instructor=True,
+                                user_id=str(user_id)
                             )
                             players.append(player)
         
@@ -201,7 +202,8 @@ class SchedulingDataAdapter:
                                     id=len(players) + 1,
                                     name=user_info.get('name') or user_info.get('email') or f'指導者{len(players) + 1}',
                                     part_assignments=part_assignments,
-                                    is_instructor=True
+                                    is_instructor=True,
+                                    user_id=str(user_id)
                                 )
                                 players.append(player)
         
@@ -251,7 +253,8 @@ class SchedulingDataAdapter:
                     id=len(players) + 1,
                     name=user_info.get('name') or f'プレイヤー{len(players) + 1}',
                     part_assignments=part_assignments,
-                    is_instructor=False
+                    is_instructor=False,
+                    user_id=str(user_id)
                 )
                 players.append(player)
         

@@ -108,7 +108,7 @@ class SchedulingOptimizationService:
             part_mapping = SchedulingDataAdapter.create_part_mapping(parts_data)
             
             sessions_created = await self._create_sessions_from_solution(
-                solution, schedule_id, venue_mapping, part_mapping
+                solution, problem, schedule_id, venue_mapping, part_mapping
             )
             
             # 結果を返す
@@ -249,14 +249,21 @@ class SchedulingOptimizationService:
     
     async def _create_sessions_from_solution(
         self, 
-        solution: SchedulingSolution, 
+        solution: SchedulingSolution,
+        problem: SchedulingProblem,
         schedule_id: UUID, 
         venue_mapping: Dict[int, str],
         part_mapping: Dict[str, str]
     ) -> int:
         """最適化結果からセッションを作成"""
+        from app.repositories.session_instructor_repository import SessionInstructorRepository
+        from uuid import UUID as UUIDType
         
         sessions_created = 0
+        session_instructor_repo = SessionInstructorRepository(self.session_repository.client)
+        
+        # instructor_idからPlayerを逆引きするためのマッピングを作成
+        instructor_map = {p.id: p for p in problem.players if p.is_instructor}
         
         for session in solution.sessions:
             # 会場IDを取得
@@ -278,6 +285,56 @@ class SchedulingOptimizationService:
             try:
                 await self.session_repository.create(session_data)
                 sessions_created += 1
+                
+                # 指導者情報を取得
+                instructor_player = instructor_map.get(session.instructor_id)
+                if not instructor_player:
+                    logger.warning(f"指導者Playerが見つかりません: instructor_id={session.instructor_id}")
+                    continue
+                
+                if not instructor_player.user_id:
+                    logger.warning(f"指導者Playerにuser_idが設定されていません: instructor_id={session.instructor_id}")
+                    continue
+                
+                # user_idからattendance_idを取得または作成
+                user_id = UUIDType(instructor_player.user_id)
+                attendance = await self.attendance_repository.find_by_practice_and_user(
+                    schedule_id, user_id
+                )
+                
+                if not attendance:
+                    # 出席記録が存在しない場合は作成
+                    try:
+                        attendance_data = {
+                            "practice_schedule_id": str(schedule_id),
+                            "user_id": str(user_id),
+                            "status": "present"
+                        }
+                        attendance = await self.attendance_repository.create(attendance_data)
+                        logger.info(f"出席記録を作成しました: user_id={user_id}, schedule_id={schedule_id}")
+                    except Exception as e:
+                        logger.error(f"出席記録の作成に失敗しました: user_id={user_id}, schedule_id={schedule_id}, error={e}")
+                        continue
+                
+                attendance_id = attendance.get('id')
+                if not attendance_id:
+                    logger.error(f"出席記録にidがありません: attendance={attendance}")
+                    continue
+                
+                # session_instructorを作成
+                try:
+                    session_instructor_data = {
+                        "attendance_id": str(attendance_id),
+                        "schedule_id": str(schedule_id),
+                        "schedule_available_venue_id": venue_id,
+                        "slot_order": session.time_slot_id
+                    }
+                    await session_instructor_repo.create(session_instructor_data)
+                    logger.info(f"指導者を保存しました: user_id={user_id}, part={session.part_name}, slot={session.time_slot_id}")
+                except Exception as e:
+                    logger.error(f"指導者の保存に失敗しました: user_id={user_id}, part={session.part_name}, error={e}")
+                    # セッションは既に作成されているため、警告のみで継続
+                    
             except Exception as e:
                 logger.error(f"セッション作成エラー: {e}")
                 continue
