@@ -21,6 +21,7 @@ class Player:
     name: str
     part_assignments: List[PartAssignment]  # パート割り当てと優先度
     is_instructor: bool = False  # 指導者かどうか
+    user_id: Optional[str] = None  # ユーザーID（UUID）- データベース保存時に使用
     
     @property
     def part_ids(self) -> List[str]:
