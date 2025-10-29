@@ -259,13 +259,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   };
 
   const handleAutoOptimize = () => {
-    if (sessions.length > 0) {
-      if (window.confirm('既存のセッションを削除して自動最適化を実行しますか？')) {
-        setIsOptimizationModalOpen(true);
-      }
-    } else {
-      setIsOptimizationModalOpen(true);
-    }
+    setIsOptimizationModalOpen(true);
   };
 
   const handleOptimizationComplete = async () => {

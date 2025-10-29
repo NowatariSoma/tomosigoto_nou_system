@@ -58,13 +58,8 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
             </div>
           )}
 
-          {/* インストラクター表示 */}
-          <InstructorDisplay
-            scheduleId={scheduleId}
-            slotOrder={session.slot_order}
-            className="mt-1"
-            fallbackInstructors={fallbackInstructors}
-          />
+          {/* インストラクター表示 - 指導者データは親から渡されることを想定 */}
+          {/* 注意: 親コンポーネントからinstructors propを渡す必要があります */}
         </div>
 
         {/* 削除ボタン（編集モード時のみ） */}

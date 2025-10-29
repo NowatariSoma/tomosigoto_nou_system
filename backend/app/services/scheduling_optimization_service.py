@@ -100,6 +100,12 @@ class SchedulingOptimizationService:
                 {"division_count": division_count}
             )
             
+            # 既存のセッションインストラクタを削除
+            from app.repositories.session_instructor_repository import SessionInstructorRepository
+            session_instructor_repo = SessionInstructorRepository(self.session_repository.client)
+            deleted_instructors = await session_instructor_repo.delete_by_schedule(schedule_id)
+            logger.info(f"既存のセッションインストラクタを削除しました: {deleted_instructors}件")
+            
             # 既存のセッションを削除
             await self.session_repository.delete_by_schedule(schedule_id)
             
