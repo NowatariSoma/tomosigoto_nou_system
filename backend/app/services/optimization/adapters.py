@@ -1,6 +1,7 @@
 """
 データベースとOR-Toolsデータモデル間の変換アダプター
 """
+import math
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from app.services.optimization.models import (
@@ -25,14 +26,18 @@ class SchedulingDataAdapter:
             venues_data: 会場データのリスト
             
         Returns:
-            計算された時間コマ数
+            計算された時間コマ数（最小2コマ）
+        
+        計算式: パート数を部屋数で割って切り上げ
+        例: パート数10、部屋数3の場合 → ceil(10/3) = 4コマ
         """
         num_parts = len(parts_data)
         num_rooms = len(venues_data)
         
         if num_parts > 0 and num_rooms > 0:
-            # 計算式: パート数//部屋数+1（最小2コマ）
-            return max(2, num_parts // num_rooms + 1)
+            # 計算式: パート数÷部屋数を切り上げ（最小2コマ）
+            division_count = math.ceil(num_parts / num_rooms)
+            return max(2, division_count)
         else:
             # フォールバック値
             return ProblemConfig.get_num_time_slots()
