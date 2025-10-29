@@ -14,6 +14,30 @@ class SchedulingDataAdapter:
     """データベースとOR-Toolsデータモデル間の変換を行うアダプター"""
     
     @staticmethod
+    def calculate_division_count(
+        parts_data: List[Dict[str, Any]],
+        venues_data: List[Dict[str, Any]]
+    ) -> int:
+        """時間コマ数を動的計算
+        
+        Args:
+            parts_data: パートデータのリスト
+            venues_data: 会場データのリスト
+            
+        Returns:
+            計算された時間コマ数
+        """
+        num_parts = len(parts_data)
+        num_rooms = len(venues_data)
+        
+        if num_parts > 0 and num_rooms > 0:
+            # 計算式: パート数//部屋数+1（最小2コマ）
+            return max(2, num_parts // num_rooms + 1)
+        else:
+            # フォールバック値
+            return ProblemConfig.get_num_time_slots()
+    
+    @staticmethod
     def db_to_scheduling_problem(
         schedule_data: Dict[str, Any],
         venues_data: List[Dict[str, Any]],
@@ -23,7 +47,8 @@ class SchedulingDataAdapter:
         session_instructors_data: List[Dict[str, Any]] = None,
         stage_id: str = None,  # ステージIDを追加
         sessions_data: List[Dict[str, Any]] = None,  # セッションデータを追加
-        attendance_data: List[Dict[str, Any]] = None  # 出席データを追加
+        attendance_data: List[Dict[str, Any]] = None,  # 出席データを追加
+        user_roles_data: List[Dict[str, Any]] = None  # ユーザーロールデータを追加
     ) -> SchedulingProblem:
         """データベースデータをSchedulingProblemに変換"""
         
@@ -57,22 +82,8 @@ class SchedulingDataAdapter:
             )
             rooms.append(room)
         
-        # 時間コマ変換（動的計算）
-        # 1. データベースのdivision_countを優先
-        division_count = schedule_data.get('division_count')
-        
-        # 2. データベースに値がない場合は動的計算
-        if division_count is None or division_count < 1:
-            # パート数と部屋数に基づいて動的計算
-            num_parts = len(parts_data)
-            num_rooms = len(venues_data)
-            
-            if num_parts > 0 and num_rooms > 0:
-                # 計算式: パート数//部屋数+1（最小2コマ）
-                division_count = max(2, num_parts // num_rooms + 1)
-            else:
-                # フォールバック値
-                division_count = ProblemConfig.get_num_time_slots()
+        # 時間コマ変換（動的計算のみ）
+        division_count = SchedulingDataAdapter.calculate_division_count(parts_data, venues_data)
         
         time_slots = []
         for i in range(1, division_count + 1):
@@ -85,7 +96,8 @@ class SchedulingDataAdapter:
         # プレイヤー変換
         players = []
         
-        # 指導者を追加
+        # 指導者を追加（user_rolesからも取得を試みる）
+        # まずsession_instructors_dataから指導者を取得
         if session_instructors_data:
             instructor_ids = set()
             for si_data in session_instructors_data:
@@ -143,6 +155,55 @@ class SchedulingDataAdapter:
                                 is_instructor=True
                             )
                             players.append(player)
+        
+        # user_rolesから指導者を追加（session_instructors_dataが空の場合のフォールバック）
+        if (not session_instructors_data or len(session_instructors_data) == 0) and user_roles_data:
+            instructor_ids = set(str(p.id) for p in players if p.is_instructor)  # 既存の指導者ID
+            
+            for role_data in user_roles_data:
+                if role_data.get('role_type') == 'instructor':
+                    user_id = role_data.get('user_id')
+                    if user_id and user_id not in instructor_ids:
+                        instructor_ids.add(user_id)
+                        
+                        # ユーザー情報を取得
+                        user_info = next((u for u in users_data if u.get('id') == user_id), None)
+                        if user_info:
+                            # 出席データによるフィルタリング
+                            if attendance_data:
+                                user_attendance = next((a for a in attendance_data if a.get('user_id') == user_id), None)
+                                if not user_attendance or user_attendance.get('status') not in PriorityConfig.ATTENDANCE_REQUIRED_STATUSES:
+                                    continue  # 出席確定でない指導者はスキップ
+                            
+                            # 指導者の所属パートと優先度を取得（member_assignmentsから）
+                            part_assignments = []
+                            for ma in member_assignments_data:
+                                if ma.get('user_id') == user_id:
+                                    part_data = next((p for p in parts_data if p.get('id') == ma.get('part_id')), None)
+                                    if not part_data:
+                                        continue
+                                    
+                                    # 基本優先度を取得（デフォルト50）
+                                    base_priority = ma.get('priority') or 50
+                                    
+                                    # 舞カテゴリボーナスを適用
+                                    if ma.get('category') == 'mai':
+                                        base_priority += PriorityConfig.MAI_CATEGORY_BONUS
+                                    
+                                    part_assignments.append(PartAssignment(
+                                        part_id=str(part_data['id']),
+                                        part_name=part_data.get('name', ''),
+                                        priority=base_priority
+                                    ))
+                            
+                            if part_assignments:  # パートが割り当てられている場合のみ追加
+                                player = Player(
+                                    id=len(players) + 1,
+                                    name=user_info.get('name') or user_info.get('email') or f'指導者{len(players) + 1}',
+                                    part_assignments=part_assignments,
+                                    is_instructor=True
+                                )
+                                players.append(player)
         
         # 一般プレイヤーを追加
         for ma_data in member_assignments_data:
@@ -270,45 +331,48 @@ class SchedulingDataAdapter:
         venues_data: List[Dict[str, Any]],
         parts_data: List[Dict[str, Any]],
         users_data: List[Dict[str, Any]],
-        member_assignments_data: List[Dict[str, Any]]
+        member_assignments_data: List[Dict[str, Any]],
+        session_instructors_data: List[Dict[str, Any]] = None
     ) -> List[str]:
         """スケジューリングデータの妥当性を検証し、エラーメッセージを返す"""
+        from app.services.optimization.constants import ErrorMessages
+        
         errors = []
         
         # スケジュールデータの検証
         if not schedule_data.get('id'):
             errors.append("スケジュールIDが設定されていません")
         
-        if not schedule_data.get('division_count', 0) > 0:
-            errors.append("division_countが正しく設定されていません")
-        
         # 会場データの検証
-        if not venues_data:
-            errors.append("利用可能な会場が設定されていません")
+        if not venues_data or len(venues_data) == 0:
+            errors.append(ErrorMessages.INSUFFICIENT_VENUES)
         
         # パートデータの検証
-        if not parts_data:
-            errors.append("パートデータが設定されていません")
+        if not parts_data or len(parts_data) == 0:
+            errors.append("パートが登録されていません。ステージにパートを追加してください。")
         
         # ユーザーデータの検証
-        if not users_data:
-            errors.append("ユーザーデータが設定されていません")
+        if not users_data or len(users_data) == 0:
+            errors.append(ErrorMessages.INSUFFICIENT_USERS)
         
         # メンバー割り当てデータの検証
-        if not member_assignments_data:
-            errors.append("メンバー割り当てデータが設定されていません")
+        if not member_assignments_data or len(member_assignments_data) == 0:
+            errors.append("メンバー割り当てが設定されていません。パートにメンバーを割り当ててください。")
         
         # 指導者の存在確認
-        instructor_count = 0
-        for ma in member_assignments_data:
-            user_id = ma.get('user_id')
-            if user_id:
-                # ここでは簡易的に、ユーザーが存在するかチェック
-                if any(u.get('id') == user_id for u in users_data):
-                    instructor_count += 1
+        has_instructors = False
+        if session_instructors_data and len(session_instructors_data) > 0:
+            has_instructors = True
+        elif member_assignments_data and users_data:
+            # メンバー割り当てから指導者候補を確認
+            for ma in member_assignments_data:
+                user_id = ma.get('user_id')
+                if user_id and any(u.get('id') == user_id for u in users_data):
+                    has_instructors = True
+                    break
         
-        if instructor_count == 0:
-            errors.append("指導者が設定されていません")
+        if not has_instructors and not errors:
+            errors.append("指導者が設定されていません。セッションに指導者を割り当ててください。")
         
         return errors
     

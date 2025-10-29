@@ -49,3 +49,8 @@ class ErrorMessages:
     """エラーメッセージ定数"""
     NO_SOLUTION_FOUND = "最適解が見つかりませんでした。制約条件を緩和してください。"
     OPTIMIZATION_FAILED = "最適化処理に失敗しました。"
+    INSUFFICIENT_PARTS = "パートが登録されていません。"
+    INSUFFICIENT_VENUES = "利用可能な会場が設定されていません。"
+    INSUFFICIENT_USERS = "ユーザーが登録されていません。"
+    INSUFFICIENT_ASSIGNMENTS = "メンバー割り当てが設定されていません。"
+    INSUFFICIENT_INSTRUCTORS = "指導者が設定されていません。"

@@ -35,7 +35,8 @@ class SchedulingOptimizationService:
         part_repository: PartRepository,
         member_assignment_repository: MemberAssignmentRepository,
         user_repository: UserRepository,
-        attendance_repository: AttendanceRepository
+        attendance_repository: AttendanceRepository,
+        user_role_repository
     ):
         self.practice_schedule_repository = practice_schedule_repository
         self.schedule_available_venue_repository = schedule_available_venue_repository
@@ -44,6 +45,7 @@ class SchedulingOptimizationService:
         self.member_assignment_repository = member_assignment_repository
         self.user_repository = user_repository
         self.attendance_repository = attendance_repository
+        self.user_role_repository = user_role_repository
     
     async def optimize_schedule(
         self, 
@@ -64,18 +66,22 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await self._get_related_data(schedule_id)
             
-            # データの妥当性を検証
+            # データの妥当性を検証（session_instructors_dataも渡す）
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, session_instructors_data
             )
             if validation_errors:
-                raise APIException(f"データ検証エラー: {'; '.join(validation_errors)}")
+                raise APIException(f"最適化に必要なデータが不足しています:\n" + "\n".join(f"・{err}" for err in validation_errors))
+            
+            # 時間コマ数を計算
+            division_count = SchedulingDataAdapter.calculate_division_count(parts_data, venues_data)
             
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data, attendance_data=attendance_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
+                attendance_data=attendance_data, user_roles_data=user_roles_data
             )
             
             # 最適化を実行
@@ -87,6 +93,12 @@ class SchedulingOptimizationService:
             
             if not solution:
                 raise APIException(ErrorMessages.NO_SOLUTION_FOUND)
+            
+            # 計算したdivision_countをデータベースに保存
+            await self.practice_schedule_repository.update(
+                schedule_id,
+                {"division_count": division_count}
+            )
             
             # 既存のセッションを削除
             await self.session_repository.delete_by_schedule(schedule_id)
@@ -107,14 +119,16 @@ class SchedulingOptimizationService:
                 "objective_value": solution.objective_value,
                 "is_optimal": solution.is_optimal,
                 "solve_time_seconds": solution.solve_time_seconds,
-                "instructor_distribution": solution.get_instructor_distribution(),
-                "part_distribution": {part.value: count for part, count in solution.get_part_distribution().items()}
+                "instructor_distribution": {str(k): v for k, v in solution.get_instructor_distribution().items()},
+                "part_distribution": {part: count for part, count in solution.get_part_distribution().items()}
             }
             
         except APIException:
             raise
         except Exception as e:
+            import traceback
             logger.error(f"スケジュール最適化エラー: {e}")
+            logger.error(f"トレースバック:\n{traceback.format_exc()}")
             raise APIException(ErrorMessages.OPTIMIZATION_FAILED)
     
     async def preview_optimization(
@@ -136,18 +150,19 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await self._get_related_data(schedule_id)
             
-            # データの妥当性を検証
+            # データの妥当性を検証（session_instructors_dataも渡す）
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, session_instructors_data
             )
             if validation_errors:
-                raise APIException(f"データ検証エラー: {'; '.join(validation_errors)}")
+                raise APIException(f"最適化に必要なデータが不足しています:\n" + "\n".join(f"・{err}" for err in validation_errors))
             
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data, attendance_data=attendance_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
+                attendance_data=attendance_data, user_roles_data=user_roles_data
             )
             
             # 最適化を実行
@@ -169,8 +184,8 @@ class SchedulingOptimizationService:
                 "objective_value": solution.objective_value,
                 "is_optimal": solution.is_optimal,
                 "solve_time_seconds": solution.solve_time_seconds,
-                "instructor_distribution": solution.get_instructor_distribution(),
-                "part_distribution": {part.value: count for part, count in solution.get_part_distribution().items()},
+                "instructor_distribution": {str(k): v for k, v in solution.get_instructor_distribution().items()},
+                "part_distribution": {part: count for part, count in solution.get_part_distribution().items()},
                 "schedule_matrix": solution.get_schedule_matrix()
             }
             
@@ -221,7 +236,16 @@ class SchedulingOptimizationService:
             logger.warning(f"指導者データの取得に失敗しました: {e}")
             session_instructors_data = []
         
-        return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data
+        # 8. ユーザーロールデータを取得（指導者判定用）
+        try:
+            from app.repositories.user_role_repository import UserRoleRepository
+            user_role_repo = UserRoleRepository(self.user_repository.client)
+            user_roles_data = await user_role_repo.get_all_roles(include_hidden=True)
+        except Exception as e:
+            logger.warning(f"ユーザーロールデータの取得に失敗しました: {e}")
+            user_roles_data = []
+        
+        return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data
     
     async def _create_sessions_from_solution(
         self, 
