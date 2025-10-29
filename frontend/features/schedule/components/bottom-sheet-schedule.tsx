@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,10 +15,22 @@ interface BottomSheetScheduleProps {
 
 export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps) {
   const router = useRouter();
-  const currentDate = new Date(date);
+  // dateプロップが変わった時に再計算されるように useMemo を使用
+  // YYYY-MM-DD形式をローカルタイムゾーンとして正しく解釈
+  const currentDate = useMemo(() => {
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }, [date]);
+
   const y = useMotionValue(0);
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [screenHeight, setScreenHeight] = useState(1000); // デフォルト値
+
+  // 画面の高さを取得
+  useEffect(() => {
+    setScreenHeight(window.innerHeight);
+  }, []);
 
   // 日付のフォーマット
   const formatDate = (date: Date) => {
@@ -97,8 +109,8 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           ease: 'easeOut'
         }}
         drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.5 }}
+        dragConstraints={{ top: 0, bottom: screenHeight }}
+        dragElastic={0}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         style={{ y }}

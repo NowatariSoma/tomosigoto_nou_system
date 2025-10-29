@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { SessionEditorTableSimpleDnd } from './SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from './SessionEditorModal';
+import { InstructorEditorModal } from './InstructorEditorModal';
 import { ScheduleSelector } from './ScheduleSelector';
 import { ScheduleTimeEditor } from './ScheduleTimeEditor';
 import { OptimizationModal } from './OptimizationModal';
 import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
 import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
+import { sessionInstructorService } from '../services';
 
 interface PracticeScheduleEditorPageProps {
   scheduleId?: string;
@@ -36,6 +38,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
 
   const {
     sessions,
+    instructors,
     venues,
     time_slots,
     parts,
@@ -49,14 +52,17 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     updateSession,
     deleteSession,
     moveSession,
+    moveInstructor,
     selectSession,
     openModal,
     closeModal,
     toggleEditMode,
+    updateTimeSlot,
   } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
+  const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
 
   const handleCreateSession = () => {
     setIsCreating(true);
@@ -64,12 +70,50 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     openModal();
   };
 
+  const handleCreateInstructor = () => {
+    setIsCreatingInstructor(true);
+  };
+
+  const handleCloseInstructorModal = () => {
+    setIsCreatingInstructor(false);
+  };
+
+  const handleInstructorSubmit = async (data: any) => {
+    try {
+      const slotIndex = time_slots.findIndex(slot => slot.time === data.time_slot);
+      const slotOrder = slotIndex + 1;
+
+      const instructorData = {
+        attendance_id: data.attendance_id,
+        schedule_id: currentScheduleId,
+        schedule_available_venue_id: data.venue_id,
+        slot_order: slotOrder,
+      };
+
+      await sessionInstructorService.createSessionInstructor(instructorData);
+      
+      // スケジュール詳細を再取得
+      fetchScheduleDetails();
+      
+      setIsCreatingInstructor(false);
+    } catch (error) {
+      console.error('インストラクター追加エラー:', error);
+      alert('インストラクターの追加に失敗しました');
+    }
+  };
+
   const handleEditSession = (sessionId: string) => {
+    console.log('handleEditSession called with sessionId:', sessionId);
+    console.log('Available sessions:', sessions);
     const session = sessions.find(s => s.id === sessionId);
+    console.log('Found session:', session);
     if (session) {
       setIsCreating(false);
       selectSession(session);
       openModal();
+    } else {
+      console.error('Session not found:', sessionId);
+      alert('セッション情報が見つかりません');
     }
   };
 
@@ -92,6 +136,30 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     slotOrder: number
   ) => {
     await moveSession(sessionId, venueId, timeSlot, slotOrder);
+  };
+
+  const handleInstructorMove = async (
+    instructorId: string,
+    venueId: string,
+    slotOrder: number
+  ) => {
+    await moveInstructor(instructorId, venueId, slotOrder);
+  };
+
+  const handleDeleteInstructor = async (instructorId: string) => {
+    if (!confirm('インストラクターを削除しますか？')) {
+      return;
+    }
+    
+    try {
+      const { sessionInstructorService } = await import('../services/session-instructor-service');
+      await sessionInstructorService.deleteSessionInstructor(instructorId);
+      // 削除後、スケジュール詳細を再取得
+      fetchScheduleDetails();
+    } catch (error) {
+      console.error('インストラクター削除エラー:', error);
+      alert('インストラクターの削除に失敗しました');
+    }
   };
 
   const handleScheduleSelect = (scheduleId: string, scheduleDate: string) => {
@@ -271,20 +339,33 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             <Plus className="h-4 w-4" />
             <span>{UI_TEXT.ADD_SESSION}</span>
           </button>
+          <button
+            onClick={handleCreateInstructor}
+            className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>インストラクターを追加</span>
+          </button>
         </div>
       </div>
 
       {/* 編集テーブル */}
       <SessionEditorTableSimpleDnd
         sessions={sessions}
+        instructors={instructors}
         venues={venues}
         time_slots={time_slots}
         edit_mode={edit_mode}
+        scheduleId={currentScheduleId}
         onEditSession={handleEditSession}
         onDeleteSession={handleDeleteSession}
         onMoveSession={handleSessionMove}
+        onMoveInstructor={handleInstructorMove}
+        onDeleteInstructor={handleDeleteInstructor}
         onAddTimeSlot={handleAddTimeSlot}
         onRemoveTimeSlot={handleRemoveTimeSlot}
+        onUpdateTimeSlot={updateTimeSlot}
+        fallbackInstructors={[]} // フォールバック用のインストラクター名配列（必要に応じて設定）
       />
 
       {/* セッション編集モーダル */}
@@ -294,6 +375,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           venues={venues}
           time_slots={time_slots}
           parts={parts}
+          scheduleId={currentScheduleId}
           is_creating={isCreating}
           onSubmit={handleSessionSubmit}
           onCancel={closeModal}
@@ -307,6 +389,18 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           scheduleId={currentScheduleId}
           onOptimizationComplete={handleOptimizationComplete}
           onClose={() => setIsOptimizationModalOpen(false)}
+        />
+      )}
+
+      {/* インストラクター追加モーダル */}
+      {isCreatingInstructor && (
+        <InstructorEditorModal
+          isOpen={isCreatingInstructor}
+          onClose={handleCloseInstructorModal}
+          onSubmit={handleInstructorSubmit}
+          venues={venues}
+          time_slots={time_slots}
+          scheduleId={currentScheduleId}
         />
       )}
     </div>

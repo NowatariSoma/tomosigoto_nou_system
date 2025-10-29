@@ -10,7 +10,6 @@ export const ATTENDANCE_STATUS = {
   PRESENT: 'present',
   ABSENT: 'absent',
   LATE: 'late',
-  UNDECIDED: 'undecided',
 } as const;
 
 export type AttendanceStatus = typeof ATTENDANCE_STATUS[keyof typeof ATTENDANCE_STATUS];
@@ -18,9 +17,8 @@ export type AttendanceStatus = typeof ATTENDANCE_STATUS[keyof typeof ATTENDANCE_
 // 出席ステータス表示用
 export const ATTENDANCE_STATUS_LABELS = {
   [ATTENDANCE_STATUS.PRESENT]: '出席',
-  [ATTENDANCE_STATUS.ABSENT]: '無断欠席',
+  [ATTENDANCE_STATUS.ABSENT]: '欠席',
   [ATTENDANCE_STATUS.LATE]: '遅刻',
-  [ATTENDANCE_STATUS.UNDECIDED]: '公欠',
 } as const;
 
 // 出席ステータス色
@@ -28,7 +26,6 @@ export const ATTENDANCE_STATUS_COLORS = {
   [ATTENDANCE_STATUS.PRESENT]: 'text-green-600 bg-green-50',
   [ATTENDANCE_STATUS.ABSENT]: 'text-red-600 bg-red-50',
   [ATTENDANCE_STATUS.LATE]: 'text-yellow-600 bg-yellow-50',
-  [ATTENDANCE_STATUS.UNDECIDED]: 'text-gray-600 bg-gray-50',
 } as const;
 
 // フォーム初期値
@@ -36,6 +33,8 @@ export const INITIAL_ATTENDANCE_FORM = {
   practice_schedule_id: '',
   status: ATTENDANCE_STATUS.PRESENT,
   notes: '',
+  available_from: '',
+  available_to: '',
 } as const;
 
 // UI表示用テキスト

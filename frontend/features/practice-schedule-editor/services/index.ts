@@ -7,3 +7,5 @@ export {
   type OptimizationResult,
   type PreviewResult
 } from './scheduling-optimization-service';
+export { sessionInstructorService } from './session-instructor-service';
+export { attendanceService } from './attendance-service';

@@ -27,6 +27,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       practice_schedule_id: attendance.practice_schedule_id,
       status: attendance.status,
       notes: attendance.notes || '',
+      available_from: attendance.available_from || '',
+      available_to: attendance.available_to || '',
     } : INITIAL_ATTENDANCE_FORM
   );
 
@@ -41,6 +43,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 
     if (!formData.status) {
       newErrors.status = '出席状況は必須です';
+    }
+
+    if (formData.status === ATTENDANCE_STATUS.LATE) {
+      if (!formData.available_from && !formData.available_to) {
+        newErrors.available_from = '参加可能時間を入力してください';
+      } else if (formData.available_from && formData.available_to && formData.available_from >= formData.available_to) {
+        newErrors.available_from = '開始時刻は終了時刻より前にしてください';
+      }
     }
 
     if (formData.notes && formData.notes.length > VALIDATION.MAX_NOTES_LENGTH) {
@@ -59,10 +69,22 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   const handleInputChange = (field: keyof AttendanceFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      // status が変更されて遅刻以外になった場合、時間フィールドをクリア
+      if (field === 'status' && value !== ATTENDANCE_STATUS.LATE) {
+        updated.available_from = '';
+        updated.available_to = '';
+      }
+      return updated;
+    });
     // エラーをクリア
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    // status変更時に時間のエラーもクリア
+    if (field === 'status' && (errors.available_from || errors.available_to)) {
+      setErrors(prev => ({ ...prev, available_from: undefined, available_to: undefined }));
     }
   };
 
@@ -221,6 +243,53 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             <p className="mt-2 text-sm text-red-600">{errors.status}</p>
           )}
         </div>
+
+        {/* 参加可能時間入力（遅刻の場合のみ表示） */}
+        {formData.status === ATTENDANCE_STATUS.LATE && selectedPractice && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-3">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              <span>参加可能時間 <span className="text-red-500">*</span></span>
+            </label>
+            <p className="text-sm text-gray-600 mb-3">
+              練習時間: {selectedPractice.start_time} - {selectedPractice.end_time}
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  何時から
+                </label>
+                <input
+                  type="time"
+                  value={formData.available_from || ''}
+                  onChange={(e) => handleInputChange('available_from', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white ${
+                    errors.available_from ? 'border-red-500' : 'border-yellow-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  何時まで
+                </label>
+                <input
+                  type="time"
+                  value={formData.available_to || ''}
+                  onChange={(e) => handleInputChange('available_to', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white ${
+                    errors.available_to ? 'border-red-500' : 'border-yellow-300'
+                  }`}
+                />
+              </div>
+            </div>
+            {errors.available_from && (
+              <p className="mt-2 text-sm text-red-600">{errors.available_from}</p>
+            )}
+            {errors.available_to && (
+              <p className="mt-1 text-sm text-red-600">{errors.available_to}</p>
+            )}
+          </div>
+        )}
 
         {/* 備考 */}
         <div>

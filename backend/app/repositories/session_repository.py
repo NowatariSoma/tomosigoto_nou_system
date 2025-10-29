@@ -39,20 +39,58 @@ class SessionRepository:
         """指定されたIDのセッションを取得"""
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = self.client.table(self.table_name).select("*").eq("id", session_id_str).execute()
-        return response.data[0] if response.data else None
+        
+        if not response.data:
+            return None
+        
+        # パート情報を取得して追加
+        item = response.data[0]
+        formatted_item = dict(item)
+        formatted_item["part_name"] = None
+        
+        # パート情報を取得
+        if item.get("part_id"):
+            try:
+                part_response = self.client.table("parts").select("name").eq("id", item["part_id"]).execute()
+                if part_response.data:
+                    formatted_item["part_name"] = part_response.data[0].get("name")
+            except Exception as e:
+                print(f"Error fetching part data in find_by_id: {e}")
+        
+        return formatted_item
 
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたスケジュールのセッションを取得"""
+        """指定されたスケジュールのセッションを取得（最適化版 - N+1問題を解決）
+
+        JOINを使用してパート情報を一度に取得することで、
+        ループ内での個別クエリ実行を回避します。
+        """
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("*, parts(id, name)")  # JOINでパート情報も一度に取得
             .eq("schedule_id", schedule_id_str)
             .order("slot_order", desc=False)
             .execute()
         )
-        return response.data
+
+        # パート名を設定（追加のクエリは不要）
+        print(f"Processing {len(response.data)} sessions (optimized)")
+        formatted_data = []
+        for item in response.data:
+            formatted_item = dict(item)
+            # JOINされたパート情報から名前を取得
+            if item.get("parts"):
+                formatted_item["part_name"] = item["parts"].get("name")
+                print(f"Session {item.get('id')}: part_name = {formatted_item['part_name']}")
+            else:
+                formatted_item["part_name"] = None
+                print(f"Session {item.get('id')}: No part data")
+
+            formatted_data.append(formatted_item)
+
+        return formatted_data
 
     @handle_supabase_errors("find_with_details")
     async def find_with_details(

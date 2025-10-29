@@ -94,7 +94,15 @@ export class SessionService {
     venueId: string,
     slotOrder: number
   ): Promise<Session> {
-    const response = await fetchApi(`${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`, {
+    const url = `${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`;
+    console.log('DEBUG SessionService.moveSession:', {
+      sessionId,
+      venueId,
+      slotOrder,
+      url
+    });
+    
+    const response = await fetchApi(url, {
       method: 'PUT',
     });
     const apiSession: SessionApiResponse = await response.json();
@@ -109,7 +117,7 @@ export class SessionService {
       id: apiResponse.id,
       schedule_id: apiResponse.schedule_id,
       part_id: apiResponse.part_id,
-      title: apiResponse.title,
+      part_name: apiResponse.part_name,
       slot_order: apiResponse.slot_order,
       schedule_available_venue_id: apiResponse.schedule_available_venue_id,
       priority: apiResponse.priority,
@@ -124,12 +132,12 @@ export class SessionService {
   private mapCreateRequestToApiRequest(request: CreateSessionRequest): SessionApiCreateRequest {
     const apiRequest: SessionApiCreateRequest = {
       schedule_id: request.schedule_id,
-      title: request.title,
       slot_order: request.slot_order,
       priority: request.priority,
     };
 
     if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
+    if (request.venue_id !== undefined) apiRequest.venue_id = request.venue_id;
     if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
 
     return apiRequest;
@@ -142,7 +150,6 @@ export class SessionService {
     const apiRequest: SessionApiUpdateRequest = {};
     
     if (request.part_id !== undefined) apiRequest.part_id = request.part_id;
-    if (request.title !== undefined) apiRequest.title = request.title;
     if (request.slot_order !== undefined) apiRequest.slot_order = request.slot_order;
     if (request.schedule_available_venue_id !== undefined) apiRequest.schedule_available_venue_id = request.schedule_available_venue_id;
     if (request.priority !== undefined) apiRequest.priority = request.priority;

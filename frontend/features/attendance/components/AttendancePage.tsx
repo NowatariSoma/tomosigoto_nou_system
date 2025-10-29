@@ -71,14 +71,16 @@ export const AttendancePage: React.FC = () => {
     setEditingAttendance(null);
   };
 
-  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userId: string; practiceScheduleId: string }) => {
+  const handleSimpleFormSubmit = async (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => {
     try {
       setFormLoading(true);
       await upsertAttendance({
         practice_schedule_id: data.practiceScheduleId,
         user_id: data.userId,
-        status: data.status as "present" | "absent" | "late" | "undecided",
+        status: data.status as "present" | "absent" | "late" | "no_show",
         notes: data.notes,
+        available_from: data.availableFrom,
+        available_to: data.availableTo,
       });
     } catch (error) {
       console.error('Failed to save attendance:', error);
@@ -164,6 +166,7 @@ export const AttendancePage: React.FC = () => {
       <SimpleAttendanceForm
         practiceSchedules={practiceSchedules}
         users={users}
+        currentUserId={user?.id}
         onSubmit={handleSimpleFormSubmit}
         loading={formLoading}
       />
