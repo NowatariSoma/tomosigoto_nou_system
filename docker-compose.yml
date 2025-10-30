@@ -10,6 +10,7 @@ services:
       - .env
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ORTOOLS_ENGINE_URL=http://ortools-engine:8001
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
@@ -48,6 +49,8 @@ services:
       - .env
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_ORTOOLS_ENGINE_URL=http://localhost:8001
     volumes:
       # フロントエンドのソースコードをマウント
       - ./frontend:/app
