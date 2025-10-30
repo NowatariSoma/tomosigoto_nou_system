@@ -6,9 +6,10 @@ import { SessionEditorModal } from './SessionEditorModal';
 import { InstructorEditorModal } from './InstructorEditorModal';
 import { ScheduleSelector } from './ScheduleSelector';
 import { ScheduleTimeEditor } from './ScheduleTimeEditor';
+import { OptimizationModal } from './OptimizationModal';
 import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
-import { Edit, Eye, Plus, Calendar, ArrowLeft } from 'lucide-react';
+import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
 import { sessionInstructorService } from '../services';
 
 interface PracticeScheduleEditorPageProps {
@@ -60,6 +61,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
+  const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
   const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
 
   const handleCreateSession = () => {
@@ -256,6 +258,15 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     }
   };
 
+  const handleAutoOptimize = () => {
+    setIsOptimizationModalOpen(true);
+  };
+
+  const handleOptimizationComplete = async () => {
+    setIsOptimizationModalOpen(false);
+    await fetchScheduleDetails();
+  };
+
   // スケジュールが選択されていない場合は選択画面を表示
   if (!isScheduleSelected) {
     return <ScheduleSelector onScheduleSelect={handleScheduleSelect} />;
@@ -309,6 +320,13 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         </div>
         <div className="flex items-center space-x-3">
           <button
+            onClick={handleAutoOptimize}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>自動最適化</span>
+          </button>
+          <button
             onClick={handleCreateSession}
             className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
           >
@@ -356,6 +374,15 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           onSubmit={handleSessionSubmit}
           onCancel={closeModal}
           loading={loading}
+        />
+      )}
+
+      {/* 自動最適化モーダル */}
+      {isOptimizationModalOpen && (
+        <OptimizationModal
+          scheduleId={currentScheduleId}
+          onOptimizationComplete={handleOptimizationComplete}
+          onClose={() => setIsOptimizationModalOpen(false)}
         />
       )}
 
