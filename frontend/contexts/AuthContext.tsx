@@ -18,7 +18,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  fetchUserRole: () => Promise<void>;
+  refreshUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = userRole?.role_type === 'admin';
 
-  const fetchUserRole = async () => {
-    if (!user) {
+  const fetchUserRole = async (currentUser: User | null) => {
+    if (!currentUser) {
       setUserRole(null);
       return;
     }
@@ -71,7 +71,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.access_token) {
           localStorage.setItem('authToken', session.access_token);
         }
-        await fetchUserRole();
+        await fetchUserRole(user);
+      } else {
+        setUserRole(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -94,14 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(error.message);
       }
 
-      setUser(data.user);
-      if (data.user) {
-        // Supabaseの認証トークンをlocalStorageに保存
-        if (data.session?.access_token) {
-          localStorage.setItem('authToken', data.session.access_token);
-        }
-        await fetchUserRole();
-      }
+      // onAuthStateChangeで処理されるため、ここでは何もしない
+      // setUser(data.user);
+      // if (data.user) {
+      //   // Supabaseの認証トークンをlocalStorageに保存
+      //   if (data.session?.access_token) {
+      //     localStorage.setItem('authToken', data.session.access_token);
+      //   }
+      //   await fetchUserRole(data.user);
+      // }
     } finally {
       setIsLoading(false);
     }
@@ -121,10 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(error.message);
       }
 
-      setUser(data.user);
-      if (data.user) {
-        await fetchUserRole();
-      }
+      // onAuthStateChangeで処理されるため、ここでは何もしない
+      // setUser(data.user);
+      // if (data.user) {
+      //   await fetchUserRole(data.user);
+      // }
     } finally {
       setIsLoading(false);
     }
@@ -155,13 +159,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Supabaseの認証状態変化を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
           // Supabaseの認証トークンをlocalStorageに保存
           if (session?.access_token) {
             localStorage.setItem('authToken', session.access_token);
           }
-          await fetchUserRole();
+          await fetchUserRole(currentUser);
         } else {
           setUserRole(null);
           // localStorageから認証トークンを削除
@@ -174,8 +179,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 外部から呼び出し可能なラッパー関数
+  const refreshUserRole = async () => {
+    await fetchUserRole(user);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userRole, isAdmin, isLoading, login, signUp, logout, checkAuth, fetchUserRole }}>
+    <AuthContext.Provider value={{ user, userRole, isAdmin, isLoading, login, signUp, logout, checkAuth, refreshUserRole }}>
       {children}
     </AuthContext.Provider>
   );

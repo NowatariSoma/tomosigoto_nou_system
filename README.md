@@ -20,18 +20,18 @@ docker compose up -d
 
 ### 4. Docker停止
 ```bash
-docker-compose down
+docker compose down
 ```
 ### 5. 本番環境
 
 #### 1. 本番環境でのビルド
 ```bash
-docker compose -f docker-compose.prod.yml build --no-cache
+docker compose --env-file .env.production -f docker-compose.prod.yml build --no-cache
 ```
 
 #### 2. 本番環境での起動
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 #### 3. 本番環境での停止
 ```bash
