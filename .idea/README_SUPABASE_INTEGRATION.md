@@ -33,8 +33,8 @@ API_BASE_URL=http://localhost:8000
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=***REMOVED***
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=***REMOVED***
 ```
 
 ### 3. Docker起動
