@@ -46,6 +46,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
       console.log('Setting form data with session:', session);
       const initialFormData = {
         part_id: session.part_id || '',
+        instructor_id: '', // TODO: セッションからインストラクター情報を取得
         venue_id: session.schedule_available_venue_id || '',
         time_slot: '',
         priority: session.priority,

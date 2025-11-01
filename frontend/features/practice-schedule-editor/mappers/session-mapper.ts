@@ -33,14 +33,14 @@ export const mapSessionToDisplayInfo = (
 
   return {
     id: session.id,
-    title: session.title,
+    // title: session.title, // Session型にtitleプロパティは存在しない
     part_name: '', // パート名は別途取得が必要
     instructor_names: sessionInstructors.map(i => i.name),
     venue_name: venue?.name,
     time_slot: '', // 時間スロットは別途計算が必要
     priority: session.priority,
     notes: '', // 備考は別途取得が必要
-  };
+  } as SessionDisplayInfo;
 };
 
 /**
@@ -70,7 +70,7 @@ export const mapApiResponseToSession = (apiResponse: SessionApiResponse): Sessio
     id: apiResponse.id,
     schedule_id: apiResponse.schedule_id,
     part_id: apiResponse.part_id,
-    title: apiResponse.title,
+    // title: apiResponse.title, // Session型にtitleプロパティは存在しない
     slot_order: apiResponse.slot_order,
     schedule_available_venue_id: apiResponse.schedule_available_venue_id,
     priority: apiResponse.priority,

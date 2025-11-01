@@ -312,12 +312,13 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
   const activeSession = sessions.find(s => s.id === activeId);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* テーブルヘッダー */}
         <div className="flex">
@@ -389,12 +390,13 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       </DragOverlay>
     </DndContext>
 
-    {/* 時間スロット編集モーダル */}
-    <TimeSlotEditorModal
-      isOpen={isTimeSlotModalOpen}
-      onClose={handleTimeSlotModalClose}
-      onSave={handleTimeSlotSave}
-      timeSlot={editingTimeSlot}
-    />
+      {/* 時間スロット編集モーダル */}
+      <TimeSlotEditorModal
+        isOpen={isTimeSlotModalOpen}
+        onClose={handleTimeSlotModalClose}
+        onSave={handleTimeSlotSave}
+        timeSlot={editingTimeSlot}
+      />
+    </>
   );
 };

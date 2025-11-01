@@ -31,10 +31,16 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
+    // プロダクション環境ではNginxがリバースプロキシとして機能するため、
+    // rewritesは開発環境でのみ有効化
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
+
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/:path*`,
       },
     ];
   },

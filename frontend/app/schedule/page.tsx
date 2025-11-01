@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Brain } from 'lucide-react';
 import SchedulePage from '@/features/schedule/components/schedulePage';
@@ -18,7 +19,9 @@ export default function Home() {
       maxWidth="7xl"
     >
       <SchedulerProvider weekStartsOn="sunday">
-        <SchedulePage />
+        <Suspense fallback={<div className="flex items-center justify-center h-64">読み込み中...</div>}>
+          <SchedulePage />
+        </Suspense>
       </SchedulerProvider>
     </AppTemplate>
   );
