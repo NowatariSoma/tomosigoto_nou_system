@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me/role`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/role`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
