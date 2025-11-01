@@ -34,6 +34,11 @@ async def root():
     return {"message": f"{settings.PROJECT_NAME} is running"}
 
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+
 # favicon.ico エンドポイント（404エラーを防ぐため）
 @app.get("/favicon.ico")
 async def favicon():

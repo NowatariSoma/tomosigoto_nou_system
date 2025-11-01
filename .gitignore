@@ -4,4 +4,3 @@ venv
 .venv
 .next
 .pytest_cache
-.env.production

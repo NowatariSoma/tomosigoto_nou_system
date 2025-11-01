@@ -486,8 +486,8 @@ export const useSessionEditor = (scheduleId: string) => {
       // APIレスポンスにuser_nameやuser_emailが含まれていない場合は元の情報をマージ
       const mergedInstructor = {
         ...updatedInstructor,
-        user_name: updatedInstructor.user_name || originalInstructor.user_name,
-        user_email: updatedInstructor.user_email || originalInstructor.user_email,
+        user_name: (updatedInstructor as any).user_name || (originalInstructor as any).user_name,
+        user_email: (updatedInstructor as any).user_email || (originalInstructor as any).user_email,
       };
       
       console.log('DEBUG moveInstructor: マージ後のインストラクター情報', mergedInstructor);

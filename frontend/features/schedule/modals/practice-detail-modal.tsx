@@ -114,8 +114,8 @@ export default function PracticeDetailModal() {
 
         <TabsContent value="details" className="mt-6">
           <div className="space-y-4">
-            <PracticeScheduleCard 
-              schedule={practiceSchedule}
+            <PracticeScheduleCard
+              schedule={practiceSchedule as any}
               onEdit={undefined}
               onDelete={undefined}
             />
