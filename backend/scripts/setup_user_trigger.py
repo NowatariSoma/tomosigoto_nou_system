@@ -12,7 +12,7 @@ def setup_user_sync_trigger():
     """auth.usersとpublic.usersを同期するトリガーを設定"""
 
     # Supabase接続（サービスロールキーが必要）
-    url = os.getenv("SUPABASE_URL", "https://uilydqaqephxtcnnqihy.supabase.co")
+    url = os.getenv("SUPABASE_URL")
     service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
     if not service_key:

@@ -12,7 +12,7 @@ from supabase import create_client
 def activate_user(email: str):
     """指定されたメールアドレスのユーザーを有効化"""
     # Supabase接続
-    url = os.getenv("SUPABASE_URL", "https://uilydqaqephxtcnnqihy.supabase.co")
+    url = os.getenv("SUPABASE_URL")
     service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
     if not service_key:
