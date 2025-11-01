@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+// ルートディレクトリの.envファイルを読み込む
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const nextConfig = {
   // Dockerでのスタンドアロンビルドを有効化
   output: 'standalone',
@@ -15,6 +18,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   },
