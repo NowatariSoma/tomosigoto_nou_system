@@ -95,7 +95,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   
   // 重複するvenue.idをチェック
   const venueIds = idealData?.venues?.map(venue => venue?.id) || [];
-  const uniqueVenueIds = [...new Set(venueIds)];
+  const uniqueVenueIds = Array.from(new Set(venueIds));
   if (venueIds.length !== uniqueVenueIds.length) {
     console.warn('重複するvenue.idが検出されました:', venueIds);
     console.warn('重複するID:', venueIds.filter((id, index) => venueIds.indexOf(id) !== index));

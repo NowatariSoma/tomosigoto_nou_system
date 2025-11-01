@@ -4,6 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "8000:8000"
     env_file:
@@ -14,24 +15,8 @@ services:
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
-      
       - ./.env:/.env
     restart: unless-stopped
-    command: >
-      sh -c "
-      if [ ! -f /.env ]; then
-        cp /env.example /.env
-      fi &&
-      if [ \"$${ENVIRONMENT:-development}\" = \"development\" ]; then
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      else
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-      fi"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     labels:
       - "project=tomosigoto-supabase"
       - "description=FastAPI Backend with Supabase integration"
@@ -41,6 +26,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
       args:
         - NODE_ENV=${NODE_ENV:-development}
     ports:
@@ -61,21 +47,6 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    command: >
-      sh -c "
-      if [ ! -f /.env ]; then
-        cp /env.example /.env
-      fi &&
-      if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then
-        npm run dev
-      else
-        npm start
-      fi"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     labels:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
