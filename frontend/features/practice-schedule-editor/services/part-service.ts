@@ -11,7 +11,7 @@ export interface Part {
 }
 
 export class PartService {
-  private readonly basePath = '/parts';
+  private readonly basePath = '/parts/';
 
   async getAllParts(): Promise<Part[]> {
     const response = await fetchApi(this.basePath);
