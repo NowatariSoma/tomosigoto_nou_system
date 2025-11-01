@@ -19,7 +19,6 @@ export default function Home() {
     <div className="w-full relative">
       {/* カレンダー（常に表示） */}
       <SchedulerWrapper
-        stopDayEventSummary={true}
         classNames={{
           tabs: {
             panel: "p-0",
