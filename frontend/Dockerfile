@@ -29,13 +29,13 @@ COPY . .
 
 # 環境変数（ビルド時に必要な場合）
 ARG NODE_ENV=production
-ARG SUPABASE_URL
-ARG SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_API_URL
 
 ENV NODE_ENV=${NODE_ENV}
-ENV SUPABASE_URL=${SUPABASE_URL}
-ENV SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Next.jsをビルド
@@ -86,9 +86,9 @@ USER nextjs
 # ポート3000を公開
 EXPOSE 3000
 
-# ヘルスチェック
+# ヘルスチェック（200 OKまたは3xxリダイレクトを成功とする）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode >= 200 && r.statusCode < 400 ? 0 : 1)})"
 
 # 本番サーバーを起動
 CMD ["npm", "start"] 
