@@ -27,6 +27,10 @@ class AttendanceService:
         """指定した練習スケジュールの出欠記録を取得"""
         return await self.repository.find_by_practice_schedule(practice_schedule_id)
 
+    async def get_attendances_by_practice_with_users(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+        """指定した練習スケジュールの出欠記録をユーザー情報付きで取得"""
+        return await self.repository.find_by_practice_schedule_with_users(practice_schedule_id)
+
     async def get_attendances_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:
         """指定したユーザーの出欠記録を取得"""
         return await self.repository.find_by_user(user_id)

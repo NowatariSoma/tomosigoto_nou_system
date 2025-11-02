@@ -65,6 +65,19 @@ export interface UserAttendanceHistory {
   attendance_rate: number;
 }
 
+export interface UserProfile {
+  user_id: string;
+  first_name_kanji?: string;
+  last_name_kanji?: string;
+  first_name_kana?: string;
+  last_name_kana?: string;
+  student_id?: string;
+}
+
+export interface AttendanceWithUser extends Attendance {
+  user_profiles?: UserProfile;
+}
+
 export interface PracticeSchedule {
   id: string;
   schedule_date: string;

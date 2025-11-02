@@ -51,6 +51,17 @@ class AttendanceRepository:
         )
         return response.data
 
+    @handle_supabase_errors("find_by_practice_schedule_with_users")
+    async def find_by_practice_schedule_with_users(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+        """指定した練習スケジュールの出欠記録をユーザー情報付きで取得"""
+        response = (
+            self.client.table(self.table_name)
+            .select("*, user_profiles(user_id, first_name_kanji, last_name_kanji, first_name_kana, last_name_kana, student_id)")
+            .eq("practice_schedule_id", practice_schedule_id)
+            .execute()
+        )
+        return response.data
+
     @handle_supabase_errors("find_by_user")
     async def find_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:
         """指定したユーザーの出欠記録を取得"""

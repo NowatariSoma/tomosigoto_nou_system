@@ -1,4 +1,4 @@
-import { Attendance, AttendanceCreate, AttendanceUpdate, AttendanceResponse, PracticeSchedule } from '../types';
+import { Attendance, AttendanceCreate, AttendanceUpdate, AttendanceResponse, PracticeSchedule, AttendanceWithUser } from '../types';
 import { API_ENDPOINTS } from '../constants';
 import { fetchApi } from '../../../lib/api';
 
@@ -23,6 +23,11 @@ export class AttendanceService {
 
   async getAttendancesByPractice(practiceScheduleId: string): Promise<Attendance[]> {
     const response = await fetchApi(`${this.basePath}practice/${practiceScheduleId}`);
+    return await response.json();
+  }
+
+  async getAttendancesByPracticeWithUsers(practiceScheduleId: string): Promise<AttendanceWithUser[]> {
+    const response = await fetchApi(`${this.basePath}practice/${practiceScheduleId}/with-users`);
     return await response.json();
   }
 

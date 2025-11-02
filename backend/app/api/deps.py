@@ -18,12 +18,14 @@ from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_role_repository import UserRoleRepository
 from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
+from app.repositories.practice_notes_repository import PracticeNotesRepository
 
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
 from app.services.attendance_service import AttendanceService
 from app.services.account_setting_service import AccountSettingService
 from app.services.session_instructor_service import SessionInstructorService
+from app.services.practice_notes_service import PracticeNotesService
 from app.repositories.practice_schedule_repository import (
     PracticeScheduleRepository,
     SessionRepository,
@@ -328,3 +330,17 @@ def get_scheduling_optimization_service(
         attendance_repository,
         user_role_repository
     )
+
+
+def get_practice_notes_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> PracticeNotesRepository:
+    """PracticeNotesRepositoryのインスタンスを取得"""
+    return PracticeNotesRepository(supabase_client)
+
+
+def get_practice_notes_service(
+    practice_notes_repository: PracticeNotesRepository = Depends(get_practice_notes_repository),
+) -> PracticeNotesService:
+    """PracticeNotesServiceのインスタンスを依存性注入で取得"""
+    return PracticeNotesService(practice_notes_repository)

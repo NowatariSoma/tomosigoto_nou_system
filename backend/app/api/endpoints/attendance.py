@@ -74,6 +74,25 @@ async def get_attendances_by_practice(
     return [AttendanceResponse(**attendance) for attendance in attendances]
 
 
+@router.get("/practice/{practice_schedule_id}/with-users")
+async def get_attendances_by_practice_with_users(
+    practice_schedule_id: UUID,
+    attendance_service: AttendanceService = Depends(get_attendance_service),
+):
+    """
+    指定した練習スケジュールの出欠記録をユーザー情報付きで取得
+
+    Args:
+        practice_schedule_id: 練習スケジュールID
+        attendance_service: 出欠管理サービス
+
+    Returns:
+        指定した練習の出欠記録のリスト（ユーザー情報付き）
+    """
+    attendances = await attendance_service.get_attendances_by_practice_with_users(practice_schedule_id)
+    return attendances
+
+
 @router.get("/user/{user_id}", response_model=List[AttendanceResponse])
 async def get_attendances_by_user(
     user_id: UUID,
