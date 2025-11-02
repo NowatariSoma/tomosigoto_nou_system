@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { PracticeSchedule } from '../types';
-import { Calendar, Clock, MapPin, Edit, Trash2, Link, Check } from 'lucide-react';
+import { Calendar, Clock, MapPin, Edit, Trash2, Link, Check, Edit3 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface PracticeScheduleCardProps {
   schedule: PracticeSchedule;
@@ -16,6 +17,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   onDelete,
 }) => {
   const [copied, setCopied] = useState(false);
+  const router = useRouter();
 
   // デバッグ用: 会場情報をコンソールに出力
   React.useEffect(() => {
@@ -52,6 +54,10 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
     }
   };
 
+  const handleDetailEdit = () => {
+    router.push(`/practice-schedule?scheduleId=${schedule.id}&date=${schedule.date}`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
@@ -80,11 +86,18 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
           >
             {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
           </button>
+          <button
+            onClick={handleDetailEdit}
+            className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+            title="詳細編集（セッション・インストラクター管理）"
+          >
+            <Edit3 className="h-4 w-4" />
+          </button>
           {onEdit && (
             <button
               onClick={() => onEdit(schedule)}
               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-              title="編集"
+              title="基本情報編集"
             >
               <Edit className="h-4 w-4" />
             </button>

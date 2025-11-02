@@ -11,6 +11,7 @@ import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
 import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
 import { sessionInstructorService } from '../services';
+import { useRouter } from 'next/navigation';
 
 interface PracticeScheduleEditorPageProps {
   scheduleId?: string;
@@ -21,6 +22,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   scheduleId: initialScheduleId,
   scheduleDate: initialScheduleDate,
 }) => {
+  const router = useRouter();
   const [currentScheduleId, setCurrentScheduleId] = useState(initialScheduleId || '');
   const [currentScheduleDate, setCurrentScheduleDate] = useState(initialScheduleDate || '');
   const [isScheduleSelected, setIsScheduleSelected] = useState(!!initialScheduleId);
@@ -185,9 +187,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   };
 
   const handleBackToSelection = () => {
-    setIsScheduleSelected(false);
-    setCurrentScheduleId('');
-    setCurrentScheduleDate('');
+    // /practice-scheduleの一覧画面に戻る
+    router.push('/practice-schedule');
   };
 
   const handleAddTimeSlot = async () => {

@@ -1,8 +1,30 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { Calendar } from 'lucide-react';
+import { Calendar, Edit3 } from 'lucide-react';
 import { PracticeSchedulePage } from '@/features/practice-schedule/components';
+import { PracticeScheduleEditorPage } from '@/features/practice-schedule-editor/components';
+import { useSearchParams } from 'next/navigation';
+
+function PracticeScheduleContent() {
+  const searchParams = useSearchParams();
+  const scheduleId = searchParams.get('scheduleId') || undefined;
+  const scheduleDate = searchParams.get('date') || undefined;
+
+  // スケジュールIDが指定されている場合は編集画面を表示
+  if (scheduleId) {
+    return (
+      <PracticeScheduleEditorPage
+        scheduleId={scheduleId}
+        scheduleDate={scheduleDate}
+      />
+    );
+  }
+
+  // それ以外は一覧画面を表示
+  return <PracticeSchedulePage />;
+}
 
 export default function Page() {
   return (
@@ -20,7 +42,9 @@ export default function Page() {
       }}
       maxWidth="7xl"
     >
-      <PracticeSchedulePage />
+      <Suspense fallback={<div>読み込み中...</div>}>
+        <PracticeScheduleContent />
+      </Suspense>
     </AppTemplate>
   );
 }
