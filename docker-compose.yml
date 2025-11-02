@@ -1,6 +1,7 @@
 services:
   # FastAPI バックエンド
   backend:
+    container_name: tomosigoto-backend-dev
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -23,6 +24,7 @@ services:
 
   # Next.js フロントエンド
   frontend:
+    container_name: tomosigoto-frontend-dev
     build:
       context: ./frontend
       dockerfile: Dockerfile

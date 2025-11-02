@@ -1,8 +1,9 @@
-version: '3.8'
+name: tomosigoto-prod
 
 services:
   # FastAPI バックエンド
   backend:
+    container_name: tomosigoto-backend-prod
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -18,13 +19,14 @@ services:
     restart: unless-stopped
     networks:
       tomosigoto-network:
-        ipv4_address: 172.19.0.2
+        ipv4_address: 172.23.0.2
     labels:
       - "project=tomosigoto-supabase"
       - "description=FastAPI Backend with Supabase integration"
 
   # Next.js フロントエンド
   frontend:
+    container_name: tomosigoto-frontend-prod
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -48,15 +50,16 @@ services:
       - backend
     networks:
       tomosigoto-network:
-        ipv4_address: 172.19.0.3
+        ipv4_address: 172.23.0.3
     labels:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
 
 networks:
   tomosigoto-network:
+    name: tomosigoto-network-prod
     driver: bridge
     ipam:
       config:
-        - subnet: 172.19.0.0/16
-          gateway: 172.19.0.1
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1
