@@ -16,12 +16,15 @@ app = FastAPI(
 )
 
 # CORS設定
+# 開発環境ではすべてのオリジンを許可（本番環境では適切に制限すること）
+cors_origins = settings.BACKEND_CORS_ORIGINS if settings.BACKEND_CORS_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Supabase連携APIルーターを有効にする

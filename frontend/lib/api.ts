@@ -38,19 +38,6 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
     // URLが相対パスの場合、baseUrlを前に付ける
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
     
-    // デバッグ用ログ
-    console.log('fetchApi called with:', {
-      url,
-      fullUrl,
-      isServer,
-      baseUrl,
-      hasToken: !!token,
-      options: {
-        method: options.method || 'GET',
-        headers: options.headers
-      }
-    });
-    
     const response = await fetch(fullUrl, {
       ...options,
       headers: {
@@ -60,15 +47,14 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
       },
     });
 
-    console.log('fetchApi response:', {
-      url: fullUrl,
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
     if (!response.ok) {
+      // 404エラーの場合は早期リターン（サービス層で適切に処理される）
+      if (response.status === 404) {
+        const errorMessage = `HTTP error! status: ${response.status}`;
+        throw new ApiError(404, errorMessage);
+      }
+      
+      // 404以外のエラーのみ詳細なログを取得
       // レスポンスボディからエラー詳細を取得
       let errorMessage = `HTTP error! status: ${response.status}`;
       let errorData = null;
@@ -84,8 +70,17 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
             errorData = JSON.parse(responseText);
             console.log('Error response body (parsed):', errorData);
             
+            // detailがオブジェクトの場合（FastAPIのエラーレスポンス形式）
             if (errorData.detail) {
-              errorMessage = errorData.detail;
+              if (typeof errorData.detail === 'string') {
+                errorMessage = errorData.detail;
+              } else if (typeof errorData.detail === 'object') {
+                // detailがオブジェクトの場合、error_msgまたはmessageを優先
+                errorMessage = errorData.detail.error_msg || 
+                               errorData.detail.message || 
+                               errorData.detail.error_code ||
+                               JSON.stringify(errorData.detail);
+              }
             } else if (errorData.message) {
               errorMessage = errorData.message;
             } else if (errorData.error) {
@@ -104,19 +99,19 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
         console.warn('Error response text retrieval failed:', textError);
       }
       
+      // エラーメッセージが空の場合は詳細な情報を表示
+      const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
+      
       const errorDetails = {
         url: fullUrl,
         status: response.status,
         statusText: response.statusText,
-        errorMessage,
-        errorData,
+        errorMessage: finalErrorMessage,
+        errorData: errorData || null,
         responseHeaders: Object.fromEntries(response.headers.entries())
       };
       
       console.error('API Error:', errorDetails);
-      
-      // エラーメッセージが空の場合は詳細な情報を表示
-      const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
       
       throw new ApiError(response.status, finalErrorMessage);
     }

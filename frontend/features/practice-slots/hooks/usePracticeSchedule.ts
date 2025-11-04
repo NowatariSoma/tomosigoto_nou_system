@@ -45,11 +45,23 @@ export const usePracticeSchedule = () => {
     
     try {
       const data = await practiceScheduleService.getPracticeScheduleByDate(date);
+      // データがnullの場合はスケジュールが存在しない（404エラー）
+      if (data === null) {
+        setScheduleData(null);
+        setError(null); // エラーを設定しない（スケジュールが存在しないだけ）
+        return;
+      }
       setScheduleData(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました';
-      setError(errorMessage);
-      setScheduleData(null);
+    } catch (err: any) {
+      // 404エラーの場合はスケジュールが存在しないだけなので、エラーを表示しない
+      if (err.status === 404 || (err instanceof Error && err.message.includes('404'))) {
+        setScheduleData(null);
+        setError(null);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : '練習スケジュールの取得に失敗しました';
+        setError(errorMessage);
+        setScheduleData(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -137,11 +149,24 @@ export const useIdealSchedule = () => {
     try {
       const data = await practiceScheduleService.getPracticeScheduleIdealFormat(date);
       
+      // データがnullの場合はスケジュールが存在しない（404エラー）
+      if (data === null) {
+        setIdealData(null);
+        setError(null); // エラーを設定しない（スケジュールが存在しないだけ）
+        return;
+      }
+      
       // データの検証
       if (data && typeof data === 'object') {
         // エラーレスポンスのチェック
         if ('error' in data && data.error) {
-          console.warn('理想形式スケジュール取得でエラー:', data.error, 'debug_info' in data ? data.debug_info : '');
+          const errorStr = String(data.error);
+          // "Schedule not found"や404関連のエラーは警告を出さない（正常な動作）
+          if (!errorStr.toLowerCase().includes('not found') && 
+              !errorStr.toLowerCase().includes('schedule not found') &&
+              !errorStr.includes('404')) {
+            console.warn('理想形式スケジュール取得でエラー:', data.error, 'debug_info' in data ? data.debug_info : '');
+          }
           setError(data.error as string);
           setIdealData(null);
           return;
@@ -164,11 +189,17 @@ export const useIdealSchedule = () => {
       } else {
         setIdealData(null);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '理想形式スケジュールの取得に失敗しました';
-      console.error('理想形式スケジュール取得エラー:', err);
-      setError(errorMessage);
-      setIdealData(null);
+    } catch (err: any) {
+      // 404エラーの場合はスケジュールが存在しないだけなので、エラーを表示しない
+      if (err.status === 404 || (err instanceof Error && err.message.includes('404'))) {
+        setIdealData(null);
+        setError(null);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : '理想形式スケジュールの取得に失敗しました';
+        console.error('理想形式スケジュール取得エラー:', err);
+        setError(errorMessage);
+        setIdealData(null);
+      }
     } finally {
       setLoading(false);
     }

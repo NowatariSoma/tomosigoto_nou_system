@@ -263,6 +263,14 @@ export interface IdealVenue {
   color: string;
 }
 
+export interface AbsentMember {
+  user_id: string;
+  name: string;
+  status: 'absent' | 'late' | 'no_show';
+  notes?: string;
+  attendance_id: string;
+}
+
 export interface IdealPartInfo {
   part_id: string;
   part_name: string;
@@ -273,6 +281,7 @@ export interface IdealPartInfo {
   status: string;
   slot_order?: number;
   schedule_available_venue_id?: string;
+  absent_members?: AbsentMember[];
 }
 
 export interface IdealScheduleData {
