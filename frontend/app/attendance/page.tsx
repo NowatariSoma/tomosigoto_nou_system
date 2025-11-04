@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation';
 
 function AttendanceContent() {
   const searchParams = useSearchParams();
-  const practiceId = searchParams.get('practice');
+  const practiceId = searchParams?.get('practice') || null;
 
   return (
     <AppTemplate
