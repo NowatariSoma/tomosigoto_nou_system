@@ -1,9 +1,17 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useIdealSchedule } from '../hooks';
-import { IdealScheduleData } from '../types/schedule';
+import { IdealScheduleData, AbsentMember } from '../types/schedule';
 import { InstructorDisplay } from './InstructorDisplay';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/overlays/dialog';
 
 interface ScheduleTableProps {
   className?: string;
@@ -16,6 +24,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 }) => {
   // 理想的な形式のスケジュール管理フック
   const { idealData, loading, error, fetchIdealScheduleByDate } = useIdealSchedule();
+  // 認証情報を取得
+  const { isAdmin } = useAuth();
 
   /**
    * 時間文字列からslot_orderを計算する
@@ -57,6 +67,76 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const handlePartClick = (e: React.MouseEvent, part: any) => {
     e.stopPropagation();
     console.log('パートクリック:', part);
+    setSelectedPart(part);
+    setIsModalOpen(true);
+  };
+
+  // 備考編集用の状態
+  const [editingNotes, setEditingNotes] = useState<{ attendanceId: string; notes: string } | null>(null);
+
+  // ローディング状態管理
+  const [updatingAttendance, setUpdatingAttendance] = useState<string | null>(null);
+
+  // モーダル表示用の状態
+  const [selectedPart, setSelectedPart] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 欠席メンバーのステータス変更ハンドラー
+  const handleAbsentMemberStatusChange = async (
+    member: AbsentMember,
+    newStatus: 'present' | 'absent' | 'late' | 'no_show'
+  ) => {
+    if (updatingAttendance === member.attendance_id) {
+      return; // 既に更新中
+    }
+
+    setUpdatingAttendance(member.attendance_id);
+    try {
+      const { attendanceService } = await import('../services');
+      await attendanceService.updateAttendance(member.attendance_id, {
+        status: newStatus,
+      });
+      // データを再取得
+      const dateString = currentDate.toISOString().split('T')[0];
+      await fetchIdealScheduleByDate(dateString);
+    } catch (error) {
+      console.error('出欠ステータスの更新に失敗しました:', error);
+      const errorMessage = error instanceof Error ? error.message : '出欠ステータスの更新に失敗しました';
+      alert(errorMessage);
+    } finally {
+      setUpdatingAttendance(null);
+    }
+  };
+
+  // 備考編集ハンドラー
+  const handleNotesEdit = async (attendanceId: string, notes: string) => {
+    if (updatingAttendance === attendanceId) {
+      return; // 既に更新中
+    }
+
+    // バリデーション
+    if (notes && notes.length > 500) {
+      alert('備考は500文字以内で入力してください');
+      return;
+    }
+
+    setUpdatingAttendance(attendanceId);
+    try {
+      const { attendanceService } = await import('../services');
+      await attendanceService.updateAttendance(attendanceId, {
+        notes: notes.trim() || undefined,
+      });
+      setEditingNotes(null);
+      // データを再取得
+      const dateString = currentDate.toISOString().split('T')[0];
+      await fetchIdealScheduleByDate(dateString);
+    } catch (error) {
+      console.error('備考の更新に失敗しました:', error);
+      const errorMessage = error instanceof Error ? error.message : '備考の更新に失敗しました';
+      alert(errorMessage);
+    } finally {
+      setUpdatingAttendance(null);
+    }
   };
 
   // ローディング状態の表示
@@ -131,6 +211,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 </td>
                 {uniqueVenues.map((venue) => {
                   const parts = idealData.time_schedule?.[time]?.[venue?.id] || [];
+                  // デバッグ: 欠席メンバーデータを確認
+                  if (parts.length > 0) {
+                    console.log('Parts data for', time, venue?.id, ':', {
+                      part_name: parts[0].part_name,
+                      absent_members: parts[0].absent_members,
+                      absent_members_length: parts[0].absent_members?.length
+                    });
+                  }
                   return (
                     <td
                       key={`${time}-${venue?.id || 'unknown'}`}
@@ -162,6 +250,145 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                             fallbackInstructors={parts[0].instructors}
                             maxDisplay={2}
                           />
+                          
+                          {/* 欠席メンバー表示 */}
+                          {parts[0].absent_members && parts[0].absent_members.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <div className="text-xs font-medium text-red-600 mb-1">欠席メンバー:</div>
+                              <div className="space-y-1">
+                                {parts[0].absent_members.map((member) => (
+                                  <div
+                                    key={member.user_id}
+                                    className={`text-xs ${
+                                      isAdmin
+                                        ? 'cursor-pointer hover:bg-red-50 px-1 py-0.5 rounded transition-colors'
+                                        : ''
+                                    }`}
+                                    onClick={
+                                      isAdmin && updatingAttendance !== member.attendance_id
+                                        ? async (e) => {
+                                            e.stopPropagation();
+                                            // ステータス変更の確認
+                                            const statusText = member.status === 'absent' ? '欠席' : member.status === 'late' ? '遅刻' : '無断欠席';
+                                            const confirmMessage = `${member.name} (${statusText}) のステータスを「出席」に変更しますか？`;
+                                            if (window.confirm(confirmMessage)) {
+                                              await handleAbsentMemberStatusChange(member, 'present');
+                                            }
+                                          }
+                                        : undefined
+                                    }
+                                    title={
+                                      isAdmin
+                                        ? 'クリックして出席に変更'
+                                        : `${member.name} (${member.status === 'absent' ? '欠席' : member.status === 'late' ? '遅刻' : '無断欠席'})`
+                                    }
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <span className="text-red-700">
+                                          {member.name}
+                                          {member.status === 'late' && ' (遅刻)'}
+                                          {member.status === 'no_show' && ' (無断)'}
+                                        </span>
+                                        {editingNotes?.attendanceId === member.attendance_id ? (
+                                          <div className="mt-1">
+                                            <textarea
+                                              value={editingNotes.notes}
+                                              onChange={(e) => {
+                                                const newNotes = e.target.value;
+                                                if (newNotes.length <= 500) {
+                                                  setEditingNotes({
+                                                    attendanceId: member.attendance_id,
+                                                    notes: newNotes,
+                                                  });
+                                                } else {
+                                                  // 文字数制限に達した場合の視覚的フィードバック
+                                                  const textarea = e.target;
+                                                  textarea.style.borderColor = '#ef4444';
+                                                  setTimeout(() => {
+                                                    textarea.style.borderColor = '';
+                                                  }, 300);
+                                                }
+                                              }}
+                                              className="w-full text-xs border border-gray-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                              rows={2}
+                                              placeholder="備考を入力（最大500文字）"
+                                              onClick={(e) => e.stopPropagation()}
+                                              disabled={updatingAttendance === member.attendance_id}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && e.ctrlKey) {
+                                                  e.preventDefault();
+                                                  handleNotesEdit(member.attendance_id, editingNotes.notes);
+                                                }
+                                                if (e.key === 'Escape') {
+                                                  setEditingNotes(null);
+                                                }
+                                              }}
+                                            />
+                                            <div className="flex items-center justify-between mt-1">
+                                              <div className={`text-xs ${
+                                                editingNotes.notes.length > 480
+                                                  ? 'text-red-600 font-medium'
+                                                  : editingNotes.notes.length > 450
+                                                  ? 'text-orange-600 font-medium'
+                                                  : 'text-gray-500'
+                                              }`}>
+                                                {editingNotes.notes.length}/500文字
+                                              </div>
+                                              <div className="flex gap-1">
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleNotesEdit(member.attendance_id, editingNotes.notes);
+                                                  }}
+                                                  disabled={updatingAttendance === member.attendance_id}
+                                                  className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                                >
+                                                  {updatingAttendance === member.attendance_id ? '保存中...' : '保存'}
+                                                </button>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingNotes(null);
+                                                  }}
+                                                  disabled={updatingAttendance === member.attendance_id}
+                                                  className="text-xs bg-gray-300 text-gray-700 px-2 py-0.5 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                                                >
+                                                  キャンセル
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {member.notes && (
+                                              <div className="text-gray-500 text-xs mt-0.5">
+                                                {member.notes}
+                                              </div>
+                                            )}
+                                            {isAdmin && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setEditingNotes({
+                                                    attendanceId: member.attendance_id,
+                                                    notes: member.notes || '',
+                                                  });
+                                                }}
+                                                className="text-xs text-blue-600 hover:text-blue-800 ml-1 underline"
+                                              >
+                                                備考{member.notes ? '編集' : '追加'}
+                                              </button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="text-center text-gray-400 py-6">
@@ -176,6 +403,193 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* パート詳細モーダル */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {selectedPart?.part_name || 'パート詳細'}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPart?.session_title && (
+                <span className="text-sm text-gray-600">{selectedPart.session_title}</span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* 講師情報 */}
+            {selectedPart?.instructors && selectedPart.instructors.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">講師</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedPart.instructors.map((instructor: string, index: number) => (
+                    <span key={index} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {instructor}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 欠席メンバー */}
+            {selectedPart?.absent_members && selectedPart.absent_members.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-red-600 mb-2">欠席メンバー</h3>
+                <div className="space-y-2">
+                  {selectedPart.absent_members.map((member: AbsentMember) => (
+                    <div
+                      key={member.user_id}
+                      className={`p-3 border border-gray-200 rounded-lg ${
+                        isAdmin
+                          ? 'cursor-pointer hover:bg-red-50 transition-colors'
+                          : ''
+                      }`}
+                      onClick={
+                        isAdmin && updatingAttendance !== member.attendance_id
+                          ? async () => {
+                              const statusText = 
+                                member.status === 'absent' ? '欠席' : 
+                                member.status === 'late' ? '遅刻' : 
+                                '無断欠席';
+                              const confirmMessage = `${member.name} (${statusText}) のステータスを「出席」に変更しますか？`;
+                              if (window.confirm(confirmMessage)) {
+                                await handleAbsentMemberStatusChange(member, 'present');
+                                // モーダルを閉じてデータを再取得
+                                const dateString = currentDate.toISOString().split('T')[0];
+                                await fetchIdealScheduleByDate(dateString);
+                                // モーダルを再度開く（更新後のデータで）
+                                setIsModalOpen(true);
+                              }
+                            }
+                          : undefined
+                      }
+                      title={isAdmin ? 'クリックして出席に変更' : undefined}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-red-700">
+                              {member.name}
+                            </span>
+                            <span className="text-xs text-red-600">
+                              {member.status === 'absent' && '(欠席)'}
+                              {member.status === 'late' && '(遅刻)'}
+                              {member.status === 'no_show' && '(無断欠席)'}
+                            </span>
+                          </div>
+                          
+                          {/* 備考表示・編集 */}
+                          {editingNotes?.attendanceId === member.attendance_id ? (
+                            <div className="mt-2">
+                              <textarea
+                                value={editingNotes.notes}
+                                onChange={(e) => {
+                                  const newNotes = e.target.value;
+                                  if (newNotes.length <= 500) {
+                                    setEditingNotes({
+                                      attendanceId: member.attendance_id,
+                                      notes: newNotes,
+                                    });
+                                  } else {
+                                    const textarea = e.target;
+                                    textarea.style.borderColor = '#ef4444';
+                                    setTimeout(() => {
+                                      textarea.style.borderColor = '';
+                                    }, 300);
+                                  }
+                                }}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                rows={3}
+                                placeholder="備考を入力（最大500文字）"
+                                disabled={updatingAttendance === member.attendance_id}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && e.ctrlKey) {
+                                    e.preventDefault();
+                                    handleNotesEdit(member.attendance_id, editingNotes.notes);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingNotes(null);
+                                  }
+                                }}
+                              />
+                              <div className="flex items-center justify-between mt-1">
+                                <div className={`text-xs ${
+                                  editingNotes.notes.length > 480
+                                    ? 'text-red-600 font-medium'
+                                    : editingNotes.notes.length > 450
+                                    ? 'text-orange-600 font-medium'
+                                    : 'text-gray-500'
+                                }`}>
+                                  {editingNotes.notes.length}/500文字
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await handleNotesEdit(member.attendance_id, editingNotes.notes);
+                                      // データを再取得
+                                      const dateString = currentDate.toISOString().split('T')[0];
+                                      await fetchIdealScheduleByDate(dateString);
+                                      // モーダルを再度開く（更新後のデータで）
+                                      setIsModalOpen(true);
+                                    }}
+                                    disabled={updatingAttendance === member.attendance_id}
+                                    className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                  >
+                                    {updatingAttendance === member.attendance_id ? '保存中...' : '保存'}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingNotes(null);
+                                    }}
+                                    disabled={updatingAttendance === member.attendance_id}
+                                    className="text-xs bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                                  >
+                                    キャンセル
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {member.notes && (
+                                <div className="text-sm text-gray-600 mt-1 p-2 bg-gray-50 rounded">
+                                  {member.notes}
+                                </div>
+                              )}
+                              {isAdmin && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingNotes({
+                                      attendanceId: member.attendance_id,
+                                      notes: member.notes || '',
+                                    });
+                                  }}
+                                  className="text-xs text-blue-600 hover:text-blue-800 mt-1 underline"
+                                >
+                                  備考{member.notes ? '編集' : '追加'}
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-4">
+                欠席メンバーはいません
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
