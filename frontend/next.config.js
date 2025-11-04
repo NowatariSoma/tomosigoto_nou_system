@@ -37,6 +37,10 @@ const nextConfig = {
     // }
     return config;
   },
+  // エラーページの静的生成を完全にスキップ
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   // 静的生成時のエラーを無視（開発用）
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
