@@ -31,7 +31,13 @@ async def get_attendances(
         すべての出欠記録のリスト
     """
     all_attendance_data = await attendance_service.get_all_attendances()
-    return all_attendance_data
+    # undecidedステータスを除外（古いデータの互換性のため）
+    valid_statuses = {'present', 'absent', 'late', 'no_show'}
+    filtered_data = [
+        attendance for attendance in all_attendance_data
+        if attendance.get('status') in valid_statuses
+    ]
+    return [AttendanceResponse(**attendance) for attendance in filtered_data]
 
 
 @router.get("/{attendance_id}", response_model=AttendanceResponse)
@@ -51,6 +57,13 @@ async def get_attendance(
         指定したIDの出欠記録
     """
     attendance_data = await attendance_service.get_attendance(attendance_id)
+    # undecidedステータスの場合はエラーを返す
+    valid_statuses = {'present', 'absent', 'late', 'no_show'}
+    if attendance_data.get('status') not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid attendance status: {attendance_data.get('status')}. Valid statuses are: {', '.join(valid_statuses)}"
+        )
     return AttendanceResponse(**attendance_data)
 
 
@@ -71,7 +84,13 @@ async def get_attendances_by_practice(
         指定した練習の出欠記録のリスト
     """
     attendances = await attendance_service.get_attendances_by_practice(practice_schedule_id)
-    return [AttendanceResponse(**attendance) for attendance in attendances]
+    # undecidedステータスを除外（古いデータの互換性のため）
+    valid_statuses = {'present', 'absent', 'late', 'no_show'}
+    filtered_attendances = [
+        attendance for attendance in attendances
+        if attendance.get('status') in valid_statuses
+    ]
+    return [AttendanceResponse(**attendance) for attendance in filtered_attendances]
 
 
 @router.get("/user/{user_id}", response_model=List[AttendanceResponse])
@@ -91,30 +110,33 @@ async def get_attendances_by_user(
         指定したユーザーの出欠記録のリスト
     """
     attendances = await attendance_service.get_attendances_by_user(user_id)
-    return [AttendanceResponse(**attendance) for attendance in attendances]
+    # undecidedステータスを除外（古いデータの互換性のため）
+    valid_statuses = {'present', 'absent', 'late', 'no_show'}
+    filtered_attendances = [
+        attendance for attendance in attendances
+        if attendance.get('status') in valid_statuses
+    ]
+    return [AttendanceResponse(**attendance) for attendance in filtered_attendances]
 
 
 @router.post("/", response_model=AttendanceResponse)
 async def create_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
 ):
     """
     新しい出欠記録を作成
 
     Args:
         attendance_data: 作成する出欠記録のデータ
-        current_user: 現在のユーザー
         attendance_service: 出欠管理サービス
 
     Returns:
         作成された出欠記録
     """
-    # 作成者と更新者を設定
     attendance_dict = attendance_data.model_dump()
-    attendance_dict["created_by"] = str(current_user["id"])
-    attendance_dict["updated_by"] = str(current_user["id"])
+    attendance_dict["created_by"] = str(attendance_dict["user_id"])
+    attendance_dict["updated_by"] = str(attendance_dict["user_id"])
     
     created_attendance = await attendance_service.create_attendance(attendance_dict)
     return AttendanceResponse(**created_attendance)
