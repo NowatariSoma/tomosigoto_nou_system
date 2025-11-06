@@ -180,31 +180,6 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
             </div>
             
             <div className="space-y-4">
-              {groupedAttendances.present.length > 0 && (
-                <div className="bg-white border-2 border-green-400 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-white border-2 border-green-400 p-1.5 rounded">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    </div>
-                    <h5 className="font-semibold text-slate-900">
-                      出席 ({groupedAttendances.present.length}名)
-                    </h5>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {groupedAttendances.present.map((attendance) => (
-                      <div
-                        key={attendance.id}
-                        className="bg-white px-3 py-1.5 rounded border-2 border-green-400 text-sm"
-                      >
-                        <span className="text-slate-900">
-                          {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {groupedAttendances.absent.length > 0 && (
                 <div className="bg-white border-2 border-red-400 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -259,6 +234,31 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
                         {attendance.notes && (
                           <p className="text-xs text-slate-600 mt-1">{attendance.notes}</p>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {groupedAttendances.present.length > 0 && (
+                <div className="bg-white border-2 border-green-400 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-white border-2 border-green-400 p-1.5 rounded">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </div>
+                    <h5 className="font-semibold text-slate-900">
+                      出席 ({groupedAttendances.present.length}名)
+                    </h5>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {groupedAttendances.present.map((attendance) => (
+                      <div
+                        key={attendance.id}
+                        className="bg-white px-3 py-1.5 rounded border-2 border-green-400 text-sm"
+                      >
+                        <span className="text-slate-900">
+                          {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
+                        </span>
                       </div>
                     ))}
                   </div>
