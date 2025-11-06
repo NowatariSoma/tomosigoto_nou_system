@@ -55,6 +55,8 @@ class AttendanceResponse(AttendanceBase):
     updated_at: Optional[datetime] = None
     created_by: Optional[UUID] = None
     updated_by: Optional[UUID] = None
+    user_name: Optional[str] = None  # ユーザー名
+    user_email: Optional[str] = None  # ユーザーメールアドレス
 
     model_config = ConfigDict(from_attributes=True)
 

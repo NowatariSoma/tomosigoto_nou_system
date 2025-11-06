@@ -10,6 +10,8 @@ export interface Attendance {
   updated_at: string;
   created_by: string;
   updated_by: string;
+  user_name?: string; // ユーザー名
+  user_email?: string; // ユーザーメールアドレス
 }
 
 export interface AttendanceCreate {

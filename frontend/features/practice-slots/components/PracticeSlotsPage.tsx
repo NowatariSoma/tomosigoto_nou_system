@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Information } from './Information';
 import { ScheduleTable } from './ScheduleTable';
 import { DateButton } from './DateButton';
+import { AttendanceSummary } from './AttendanceSummary';
 
 import { useDateNavigation } from '../hooks';
 
@@ -39,6 +40,9 @@ export const PracticeSlotsPage: React.FC = () => {
 
       {/* Information */}
       <Information currentDate={currentDate} />
+
+      {/* Attendance Summary */}
+      <AttendanceSummary currentDate={currentDate} />
     </div>
   );
 };
