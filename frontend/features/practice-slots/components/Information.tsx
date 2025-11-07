@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { InformationProps } from '@/features/practice-slots/types/schedule';
 import { useEffect } from 'react';
 import { usePracticeSchedule } from '../hooks';
+import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 
 const Information: React.FC<InformationProps> = ({ 
   className,
@@ -14,7 +15,7 @@ const Information: React.FC<InformationProps> = ({
 
   // 日付が変更されたときにスケジュールデータを取得
   useEffect(() => {
-    const dateString = currentDate.toISOString().split('T')[0];
+    const dateString = formatDateToYYYYMMDD(currentDate);
     fetchPracticeScheduleByDate(dateString);
   }, [currentDate, fetchPracticeScheduleByDate]);
   // 日付をフォーマットする関数
