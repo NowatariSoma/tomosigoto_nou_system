@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
 import { Information } from '@/features/practice-slots/components/Information';
 import { Button } from '@/components/ui/forms/button';
+import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 
 interface BottomSheetScheduleProps {
   date: string; // YYYY-MM-DD形式
@@ -19,7 +20,18 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   // YYYY-MM-DD形式をローカルタイムゾーンとして正しく解釈
   const currentDate = useMemo(() => {
     const [year, month, day] = date.split('-').map(Number);
-    return new Date(year, month - 1, day);
+    const parsedDate = new Date(year, month - 1, day, 12, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
+    console.log('BottomSheetSchedule - Date parsing:', {
+      dateParam: date,
+      year,
+      month,
+      day,
+      parsedDate,
+      parsedDateYear: parsedDate.getFullYear(),
+      parsedDateMonth: parsedDate.getMonth(),
+      parsedDateDay: parsedDate.getDate()
+    });
+    return parsedDate;
   }, [date]);
 
   const y = useMotionValue(0);
@@ -45,16 +57,18 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   // 前日に移動
   const goToPrevDay = () => {
     const prevDate = new Date(currentDate);
+    prevDate.setHours(12, 0, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
     prevDate.setDate(prevDate.getDate() - 1);
-    const dateStr = prevDate.toISOString().split('T')[0];
+    const dateStr = formatDateToYYYYMMDD(prevDate);
     router.push(`/schedule?date=${dateStr}`);
   };
 
   // 翌日に移動
   const goToNextDay = () => {
     const nextDate = new Date(currentDate);
+    nextDate.setHours(12, 0, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
     nextDate.setDate(nextDate.getDate() + 1);
-    const dateStr = nextDate.toISOString().split('T')[0];
+    const dateStr = formatDateToYYYYMMDD(nextDate);
     router.push(`/schedule?date=${dateStr}`);
   };
 
