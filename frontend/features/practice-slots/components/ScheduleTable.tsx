@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useIdealSchedule } from '../hooks';
 import { IdealScheduleData } from '../types/schedule';
 import { InstructorDisplay } from './InstructorDisplay';
+import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 
 interface ScheduleTableProps {
   className?: string;
@@ -45,7 +46,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   // 日付が変更されたときにAPIからデータを取得
   useEffect(() => {
-    const dateString = currentDate.toISOString().split('T')[0];
+    const dateString = formatDateToYYYYMMDD(currentDate);
     console.log('ScheduleTable - 日付変更:', dateString);
     fetchIdealScheduleByDate(dateString);
   }, [currentDate, fetchIdealScheduleByDate]);
