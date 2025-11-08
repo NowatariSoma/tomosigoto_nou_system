@@ -17,6 +17,7 @@ import EventStyled from "../event-component/event-styled";
 import { Event, CustomEventModal } from "@/features/schedule/types";
 import CustomModal from "@/features/schedule/components/custom-modal";
 import { usePracticeScheduleEvents } from "@/features/schedule/hooks/use-practice-schedule-calendar";
+import { formatDateToYYYYMMDD } from "@/shared/utils/format";
 
 const pageTransitionVariants = {
   enter: (direction: number) => ({
@@ -118,16 +119,27 @@ export default function MonthView({
     const clickedDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      selectedDay
+      selectedDay,
+      12, // 正午に設定してタイムゾーンの影響を避ける
+      0,
+      0
     );
-    const dateStr = clickedDate.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    const dateStr = formatDateToYYYYMMDD(clickedDate); // YYYY-MM-DD形式
+    console.log('handleDateClick:', {
+      selectedDay,
+      clickedDate,
+      dateStr,
+      currentDateYear: currentDate.getFullYear(),
+      currentDateMonth: currentDate.getMonth()
+    });
     router.push(`/schedule?date=${dateStr}`);
   }
 
   // イベントクリック時に詳細表示に遷移
   function handleEventClick(event: Event) {
     const eventDate = new Date(event.startDate);
-    const dateStr = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    eventDate.setHours(12, 0, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
+    const dateStr = formatDateToYYYYMMDD(eventDate); // YYYY-MM-DD形式
     router.push(`/schedule?date=${dateStr}`);
   }
 
@@ -398,6 +410,7 @@ export default function MonthView({
                 <Card
                   className="cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none"
                   onClick={() => handleDateClick(dayObj.day)}
+                  data-day={String(dayObj.day)}
                 >
                   <div
                     className={clsx(

@@ -223,13 +223,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
-                icon={<BookOpen className="w-4 h-4" />}
-                label="練習表"
-                active={pathname === '/practice-slots'}
-                onClick={() => handleNavigateAndClose('/practice-slots')}
-              />
-
-              <NavItem
                 icon={<Edit3 className="w-4 h-4" />}
                 label="練習表編集"
                 active={pathname.startsWith('/practice-schedule-editor')}
@@ -358,14 +351,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "スケジュール"}
             active={pathname === '/schedule'}
             href="/schedule"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<BookOpen className="w-4 h-4" />}
-            label={isCollapsed ? "" : "練習表"}
-            active={pathname === '/practice-slots'}
-            href="/practice-slots"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

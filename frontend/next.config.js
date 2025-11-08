@@ -3,10 +3,10 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const nextConfig = {
-  // Dockerでのスタンドアロンビルドを有効化
-  output: 'standalone',
+  // Dockerでのスタンドアロンビルドを有効化（一時的に無効化）
+  // output: 'standalone',
   // ワークスペースルートを明示的に指定してlockfile警告を解決
-  outputFileTracingRoot: require('path').join(__dirname, '../'),
+  // outputFileTracingRoot: require('path').join(__dirname, '../'),
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
