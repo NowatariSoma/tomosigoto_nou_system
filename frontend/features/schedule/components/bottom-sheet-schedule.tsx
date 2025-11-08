@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-reac
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
 import { Information } from './Information';
+import { AttendanceSummary } from './attendance-summary';
 import { Button } from '@/components/ui/forms/button';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 import { SimpleAttendanceForm } from './attendance/SimpleAttendanceForm';
@@ -299,6 +300,9 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           <div className="w-full max-w-7xl mx-auto">
             <Information currentDate={currentDate} />
           </div>
+
+          {/* 出席情報サマリーと出欠情報詳細 */}
+          <AttendanceSummary currentDate={currentDate} />
         </motion.div>
       </motion.div>
     </>

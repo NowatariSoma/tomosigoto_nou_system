@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+import asyncio
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -8,6 +9,9 @@ from app.repositories.session_repository import SessionRepository
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
 from app.repositories.venue_repository import VenueRepository
 from app.repositories.session_instructor_repository import SessionInstructorRepository
+from app.repositories.member_assignment_repository import MemberAssignmentRepository
+from app.repositories.attendance_repository import AttendanceRepository
+from app.repositories.user_profile_repository import UserProfileRepository
 from app.core.config import settings
 
 
@@ -21,6 +25,9 @@ class PracticeScheduleService:
         session_repository: SessionRepository,
         session_instructor_repository: SessionInstructorRepository,
         venue_repository: VenueRepository,
+        member_assignment_repository: MemberAssignmentRepository,
+        attendance_repository: AttendanceRepository,
+        user_profile_repository: UserProfileRepository,
         auth_client,
     ):
         self.practice_schedule_repository = practice_schedule_repository
@@ -28,6 +35,9 @@ class PracticeScheduleService:
         self.session_repository = session_repository
         self.session_instructor_repository = session_instructor_repository
         self.venue_repository = venue_repository
+        self.member_assignment_repository = member_assignment_repository
+        self.attendance_repository = attendance_repository
+        self.user_profile_repository = user_profile_repository
         self.auth_client = auth_client
 
     # ===== 練習スケジュール CRUD =====
@@ -872,6 +882,66 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
+    async def _get_absent_members_for_session(self, schedule_id: UUID, part_id: UUID) -> List[Dict[str, Any]]:
+        """セッションの欠席メンバーを取得"""
+        try:
+            # パート所属メンバーを取得
+            part_members = await self.member_assignment_repository.find_by_part_id(part_id)
+            if not part_members:
+                return []
+            
+            # 練習スケジュールの出欠記録を取得
+            attendance_records = await self.attendance_repository.find_by_practice_schedule(schedule_id)
+            if not attendance_records:
+                return []
+            
+            # 欠席メンバーを特定（statusが'absent', 'late', 'no_show'のもの）
+            absent_members = []
+            for member in part_members:
+                user_id = member.get("user_id")
+                if not user_id:
+                    continue
+                
+                # 出欠記録を検索
+                attendance = next(
+                    (a for a in attendance_records if str(a.get("user_id")) == str(user_id)),
+                    None
+                )
+                
+                if attendance and attendance.get("status") in ["absent", "late", "no_show"]:
+                    # ユーザープロフィールから名前を取得
+                    user_name = None
+                    try:
+                        profile = await self.user_profile_repository.get_profile_by_user_id(str(user_id))
+                        if profile:
+                            first_name = profile.get("first_name_kanji", "")
+                            last_name = profile.get("last_name_kanji", "")
+                            if first_name and last_name:
+                                user_name = f"{last_name} {first_name}"
+                            elif first_name:
+                                user_name = first_name
+                            elif last_name:
+                                user_name = last_name
+                            else:
+                                # 漢字名がない場合はemailから取得を試みる
+                                user_name = profile.get("email", f"User {user_id[:8]}")
+                    except Exception as e:
+                        print(f"Error fetching user profile for {user_id}: {e}")
+                        user_name = f"User {str(user_id)[:8]}"
+                    
+                    absent_members.append({
+                        "user_id": str(user_id),
+                        "name": user_name or f"User {str(user_id)[:8]}",
+                        "status": attendance.get("status"),
+                        "notes": attendance.get("notes"),
+                        "attendance_id": str(attendance.get("id"))
+                    })
+            
+            return absent_members
+        except Exception as e:
+            print(f"Error getting absent members for session: {e}")
+            return []
+
     async def _convert_basic_to_ideal_format_with_sessions(self, schedule: Dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> Dict[str, Any]:
         """基本スケジュールデータとセッション情報から理想的な形式に変換"""
         # 基本情報
@@ -889,6 +959,73 @@ class PracticeScheduleService:
 
         # 時間スケジュールを生成
         time_schedule = self._generate_time_schedule(venues, schedule, division_count)
+
+        # パフォーマンス最適化: 一度に全てのデータを取得
+        # セッションのpart_idリストを取得（UUIDを文字列に変換）
+        part_ids = []
+        for s in sessions:
+            part_id = s.get("part_id")
+            if part_id:
+                # UUIDオブジェクトの場合は文字列に変換
+                part_ids.append(str(part_id) if isinstance(part_id, UUID) else part_id)
+        unique_part_ids = list(set(part_ids)) if part_ids else []
+        
+        # 全てのパートのメンバーを一度に取得
+        part_members_map = {}
+        if unique_part_ids:
+            for part_id_str in unique_part_ids:
+                try:
+                    # UUIDに変換してからリポジトリに渡す
+                    part_id_uuid = UUID(part_id_str) if isinstance(part_id_str, str) else part_id_str
+                    part_members = await self.member_assignment_repository.find_by_part_id(part_id_uuid)
+                    part_members_map[part_id_str] = part_members
+                except Exception as e:
+                    print(f"Error fetching members for part {part_id_str}: {e}")
+                    part_members_map[part_id_str] = []
+        
+        # 練習スケジュールの出欠記録を一度に取得
+        attendance_records = []
+        try:
+            attendance_records = await self.attendance_repository.find_by_practice_schedule(schedule["id"])
+        except Exception as e:
+            print(f"Error fetching attendance records: {e}")
+        
+        # 出欠記録をuser_idでマップ化（高速検索用）
+        attendance_by_user_id = {}
+        for record in attendance_records:
+            user_id = str(record.get("user_id"))
+            if user_id:
+                attendance_by_user_id[user_id] = record
+        
+        # ユーザープロフィールを一度に取得（必要なuser_idのみ）
+        user_ids_needed = set()
+        for part_id in unique_part_ids:
+            for member in part_members_map.get(part_id, []):
+                user_id = member.get("user_id")
+                if user_id:
+                    attendance = attendance_by_user_id.get(str(user_id))
+                    if attendance and attendance.get("status") in ["absent", "late", "no_show"]:
+                        user_ids_needed.add(str(user_id))
+        
+        # ユーザープロフィールを並列取得（パフォーマンス改善）
+        user_profiles_map = {}
+        if user_ids_needed:
+            try:
+                # 並列でプロフィールを取得
+                profile_tasks = [
+                    self.user_profile_repository.get_profile_by_user_id(user_id)
+                    for user_id in user_ids_needed
+                ]
+                profiles = await asyncio.gather(*profile_tasks, return_exceptions=True)
+                
+                # 結果をマップに格納
+                for user_id, profile in zip(user_ids_needed, profiles):
+                    if isinstance(profile, Exception):
+                        print(f"Error fetching profile for user {user_id}: {profile}")
+                    elif profile:
+                        user_profiles_map[user_id] = profile
+            except Exception as e:
+                print(f"Error in parallel profile fetch: {e}")
 
         # 実際のセッションデータを配置（slot_order順）
         part_colors = settings.DEFAULT_PART_COLORS
@@ -936,6 +1073,51 @@ class PracticeScheduleService:
                     processing_detail["final_venue_id"] = venue_id
 
                     if venue_id:
+                        # セッションのpart_idを取得（文字列に変換）
+                        part_id = session.get("part_id")
+                        part_id_str = str(part_id) if part_id and isinstance(part_id, UUID) else part_id
+                        
+                        # 欠席メンバーを取得（最適化版: 既に取得したデータを使用）
+                        absent_members = []
+                        if part_id_str:
+                            part_members = part_members_map.get(part_id_str, [])
+                            print(f"DEBUG: Processing part {part_id_str}, members: {len(part_members)}")
+                            for member in part_members:
+                                user_id = member.get("user_id")
+                                if not user_id:
+                                    continue
+                                
+                                user_id_str = str(user_id)
+                                attendance = attendance_by_user_id.get(user_id_str)
+                                
+                                if attendance and attendance.get("status") in ["absent", "late", "no_show"]:
+                                    print(f"DEBUG: Found absent member: user_id={user_id_str}, status={attendance.get('status')}, notes={attendance.get('notes')}")
+                                    # ユーザー名を取得
+                                    user_name = None
+                                    profile = user_profiles_map.get(user_id_str)
+                                    if profile:
+                                        first_name = profile.get("first_name_kanji", "")
+                                        last_name = profile.get("last_name_kanji", "")
+                                        if first_name and last_name:
+                                            user_name = f"{last_name} {first_name}"
+                                        elif first_name:
+                                            user_name = first_name
+                                        elif last_name:
+                                            user_name = last_name
+                                        else:
+                                            user_name = profile.get("email", f"User {user_id_str[:8]}")
+                                    else:
+                                        user_name = f"User {user_id_str[:8]}"
+                                    
+                                    absent_members.append({
+                                        "user_id": user_id_str,
+                                        "name": user_name,
+                                        "status": attendance.get("status"),
+                                        "notes": attendance.get("notes"),
+                                        "attendance_id": str(attendance.get("id"))
+                                    })
+                            print(f"DEBUG: Total absent members for part {part_id_str}: {len(absent_members)}")
+                        
                         session_info = {
                             "part_id": str(session.get("id", f"part-{slot_order}")),
                             "part_name": session.get("part_name", session_title),  # パート名を優先、なければセッションタイトル
@@ -945,7 +1127,8 @@ class PracticeScheduleService:
                             "participants": await self._get_session_participants_count(schedule["id"]),
                             "status": "confirmed",
                             "slot_order": slot_order,
-                            "schedule_available_venue_id": schedule_available_venue_id
+                            "schedule_available_venue_id": schedule_available_venue_id,
+                            "absent_members": absent_members
                         }
 
                         time_schedule[time_str][venue_id].append(session_info)

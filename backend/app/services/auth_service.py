@@ -53,7 +53,7 @@ class AuthService:
                 raise APIException(ErrorMessage.INVALID_CREDENTIALS)
             
             # DBからユーザー情報を取得（追加情報がある場合）
-            db_user = await self.repository.find_by_email(email)
+            db_user = await self.repository.get_user_by_email(email)
             
             # レスポンス用のユーザー情報を構築
             user_info = {
@@ -211,7 +211,7 @@ class AuthService:
             
             if hasattr(response, "user") and response.user:
                 # DBからユーザー情報を取得
-                db_user = await self.repository.find_by_email(response.user.email)
+                db_user = await self.repository.get_user_by_email(response.user.email)
                 
                 user_info = {
                     "id": response.user.id,
