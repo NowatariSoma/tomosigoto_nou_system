@@ -1,0 +1,71 @@
+'use client';
+
+import React from 'react';
+import { Search, Calendar } from 'lucide-react';
+
+interface ScheduleSearchFilterProps {
+  searchTerm: string;
+  selectedDate: string;
+  availableDates: string[];
+  onSearchChange: (value: string) => void;
+  onDateChange: (value: string) => void;
+}
+
+export const ScheduleSearchFilter: React.FC<ScheduleSearchFilterProps> = ({
+  searchTerm,
+  selectedDate,
+  availableDates,
+  onSearchChange,
+  onDateChange,
+}) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 検索 */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <Search className="h-4 w-4" />
+            <span>検索</span>
+          </label>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="タイトル、説明、会場名で検索..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* 日付フィルター */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <Calendar className="h-4 w-4" />
+            <span>日付で絞り込み</span>
+          </label>
+          <select
+            value={selectedDate}
+            onChange={(e) => onDateChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">すべての日付</option>
+            {availableDates.map(date => (
+              <option key={date} value={date}>
+                {formatDate(date)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};

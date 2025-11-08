@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { PracticeScheduleList } from './PracticeScheduleList';
 import { PracticeScheduleForm } from './PracticeScheduleForm';
+import { ScheduleSearchFilter } from './ScheduleSearchFilter';
 import { usePracticeSchedules, useVenues } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar } from 'lucide-react';
@@ -16,6 +17,8 @@ export const PracticeSchedulePage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<PracticeSchedule | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   const handleCreateClick = () => {
     setEditingSchedule(null);
@@ -59,6 +62,19 @@ export const PracticeSchedulePage: React.FC = () => {
     setEditingSchedule(null);
   };
 
+  // フィルタリングされたスケジュール
+  const filteredSchedules = schedules.filter(schedule => {
+    const matchesSearch = schedule.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesDate = !selectedDate || schedule.date === selectedDate;
+
+    return matchesSearch && matchesDate;
+  });
+
+  // 日付の一覧を取得（重複を除く）
+  const availableDates = Array.from(new Set(schedules.map(s => s.date))).sort();
 
   if (loading || venuesLoading) {
     return (
@@ -116,11 +132,20 @@ export const PracticeSchedulePage: React.FC = () => {
         />
       )}
 
+      {/* 検索・フィルター */}
+      <ScheduleSearchFilter
+        searchTerm={searchTerm}
+        selectedDate={selectedDate}
+        availableDates={availableDates}
+        onSearchChange={setSearchTerm}
+        onDateChange={setSelectedDate}
+      />
+
       {/* 練習予定一覧 */}
       <div>
         {(() => {
           // 重複を除去した実際の件数を計算
-          const uniqueSchedules = schedules.filter((schedule, index, self) => 
+          const uniqueSchedules = filteredSchedules.filter((schedule, index, self) =>
             index === self.findIndex(s => s.id === schedule.id)
           );
           return (
@@ -130,7 +155,7 @@ export const PracticeSchedulePage: React.FC = () => {
           );
         })()}
         <PracticeScheduleList
-          schedules={schedules}
+          schedules={filteredSchedules}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
         />
