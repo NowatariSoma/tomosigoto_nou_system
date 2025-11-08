@@ -3,8 +3,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { SessionInstructorWithDetails } from '../types/schedule';
-import { sessionInstructorService } from '../services';
+import { SessionInstructorWithDetails } from '../types/practice-schedule-types';
+import { sessionInstructorService } from '../services/session-instructor-service';
 
 interface UseSessionInstructorsState {
   instructors: SessionInstructorWithDetails[];

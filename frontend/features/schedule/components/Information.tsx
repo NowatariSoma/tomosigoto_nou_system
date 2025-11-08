@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { InformationProps } from '@/features/practice-slots/types/schedule';
+import { InformationProps } from '../types/practice-schedule-types';
 import { useEffect } from 'react';
-import { usePracticeSchedule } from '../hooks';
+import { usePracticeSchedule } from '../hooks/use-practice-schedule-data';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 
 const Information: React.FC<InformationProps> = ({ 
