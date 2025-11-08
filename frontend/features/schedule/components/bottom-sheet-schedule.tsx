@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
 import { Information } from '@/features/practice-slots/components/Information';
+import { AttendanceSummary } from './attendance-summary';
 import { Button } from '@/components/ui/forms/button';
 
 interface BottomSheetScheduleProps {
@@ -162,6 +163,9 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
 
           {/* 追加情報 */}
           <Information currentDate={currentDate} />
+
+          {/* 出席情報サマリーと出欠情報詳細 */}
+          <AttendanceSummary currentDate={currentDate} />
         </motion.div>
       </motion.div>
     </>
