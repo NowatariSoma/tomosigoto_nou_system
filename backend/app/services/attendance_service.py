@@ -141,9 +141,10 @@ class AttendanceService:
                 # マッチするユーザーがいない場合は空の結果を返す
                 return []
         
-        # ステップ2: 出席記録を取得（practice_schedule_idが指定されている場合）
+        # ステップ2: 出席記録を取得
         attendance_dict = {}
         if practice_schedule_id:
+            # 特定の練習スケジュールの出席記録を取得
             attendances = await self.repository.find_by_practice_schedule(practice_schedule_id)
             attendance_dict = {str(a["user_id"]): a for a in attendances}
             
@@ -159,6 +160,24 @@ class AttendanceService:
                 else:
                     # 両方のフィルタを適用
                     filtered_user_ids = [uid for uid in filtered_user_ids if uid in attendance_dict]
+        elif status and status != "unregistered":
+            # practice_schedule_idが指定されていないが、ステータスフィルタがある場合
+            # そのステータスの出席記録をデータベースレベルで検索
+            response = (
+                self.repository.client.table(self.repository.table_name)
+                .select("*")
+                .eq("status", status)
+                .execute()
+            )
+            filtered_attendances = response.data or []
+            attendance_dict = {str(a["user_id"]): a for a in filtered_attendances}
+            
+            # ステータスでフィルタリングされたuser_idリストを取得
+            if filtered_user_ids is None:
+                filtered_user_ids = list(attendance_dict.keys())
+            else:
+                # 両方のフィルタを適用
+                filtered_user_ids = [uid for uid in filtered_user_ids if uid in attendance_dict]
         
         # ステップ3: ユーザーを取得（フィルタリングされたuser_idがある場合のみ）
         if filtered_user_ids:
@@ -171,7 +190,7 @@ class AttendanceService:
                 chunk = filtered_user_ids[i:i + chunk_size]
                 response = (
                     self.user_repository.client.table("users")
-                    .select("id, email, name")
+                    .select("id, email")
                     .in_("id", chunk)
                     .execute()
                 )

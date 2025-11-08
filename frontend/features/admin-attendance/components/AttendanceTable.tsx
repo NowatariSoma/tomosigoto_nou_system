@@ -39,10 +39,12 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // フィルタ変更時にAPIを呼び出す（練習IDが選択されている場合のみ）
+  // フィルタ変更時にAPIを呼び出す
   useEffect(() => {
-    if (!filterPracticeId) {
-      // 練習IDが選択されていない場合は空の配列を設定
+    // 練習ID、ステータス、ユーザー名のいずれかが設定されている場合のみAPIを呼び出す
+    const hasAnyFilter = filterPracticeId || filterStatus !== 'all' || filterUserName;
+    if (!hasAnyFilter) {
+      // フィルタが何も設定されていない場合は空の配列を設定
       return;
     }
 
@@ -57,7 +59,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       limit: 100,
     };
 
-    params.practice_schedule_id = filterPracticeId;
+    if (filterPracticeId) {
+      params.practice_schedule_id = filterPracticeId;
+    }
     
     if (filterStatus !== 'all') {
       params.status = filterStatus;
