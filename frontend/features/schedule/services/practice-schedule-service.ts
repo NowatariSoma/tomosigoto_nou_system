@@ -3,10 +3,10 @@
  * room-settingsパターンに合わせて統一的なAPIアプローチを採用
  */
 
-import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '@/features/schedule/types/schedule';
-import { ApiResponse } from '@/features/schedule/types/api';
-import { API_ENDPOINTS } from '@/features/schedule/constants';
-import { fetchApi } from '@/lib/api';
+import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/practice-schedule-types';
+import { ApiResponse } from '../types/api-types';
+import { API_ENDPOINTS } from '../constants/practice-schedule-constants';
+import { fetchApi } from '../../../lib/api';
 
 // practice-slots.tsから移行された型定義
 export interface ScheduleItem {

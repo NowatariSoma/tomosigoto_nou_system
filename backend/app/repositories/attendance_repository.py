@@ -23,8 +23,8 @@ class AttendanceRepository:
             elif isinstance(value, Enum):
                 serialized_data[key] = value.value
             elif isinstance(value, time):
-                # time型を文字列に変換（HH:MM:SS形式）
-                serialized_data[key] = value.strftime("%H:%M:%S")
+                # time型をHH:MM:SS形式の文字列に変換
+                serialized_data[key] = value.isoformat()
             elif value == "":
                 # 空文字列はNoneに変換（available_from, available_toなど）
                 serialized_data[key] = None

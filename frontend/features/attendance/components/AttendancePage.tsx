@@ -19,14 +19,15 @@ interface User {
 
 export const AttendancePage: React.FC = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const { attendances, loading: attendanceLoading, upsertAttendance, deleteAttendance } = useAttendance();
+  const { attendances, loading: attendanceLoading, error: attendanceError, upsertAttendance, deleteAttendance } = useAttendance();
   const { practiceSchedules, loading: practiceLoading, error: practiceError } = usePracticeSchedule();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   const handleCreateClick = () => {
     setEditingAttendance(null);
@@ -77,7 +78,7 @@ export const AttendancePage: React.FC = () => {
       await upsertAttendance({
         practice_schedule_id: data.practiceScheduleId,
         user_id: data.userId,
-        status: data.status as "present" | "absent" | "late" | "no_show",
+        status: data.status as "present" | "absent" | "late" | "no_show" | "undecided",
         notes: data.notes,
         available_from: data.availableFrom,
         available_to: data.availableTo,
@@ -93,18 +94,20 @@ export const AttendancePage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      
+      setUsersError(null);
+
       // デバッグ: 認証状態とlocalStorageのauthTokenを確認
       console.log('Auth user:', user);
       console.log('Auth loading:', authLoading);
       const authToken = localStorage.getItem('authToken');
       console.log('Auth token from localStorage:', authToken ? 'exists' : 'not found');
-      
+
       const response = await fetchApi('/users/');
       const usersData = await response.json();
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsersError(error instanceof Error ? error.message : 'ユーザー一覧の取得に失敗しました');
     } finally {
       setUsersLoading(false);
     }
@@ -127,13 +130,25 @@ export const AttendancePage: React.FC = () => {
     );
   }
 
-  if (practiceError) {
+  // エラーがある場合は表示（ただし、一部のデータが取得できていれば続行）
+  const hasError = practiceError || attendanceError || usersError;
+  const hasCriticalError = practiceError; // 練習スケジュールは必須
+
+  if (hasCriticalError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
             <h2 className="text-lg font-semibold text-red-800 mb-2">エラーが発生しました</h2>
             <p className="text-red-600 mb-4">{practiceError}</p>
+            <div className="text-sm text-gray-600 mb-4">
+              <p>考えられる原因：</p>
+              <ul className="list-disc list-inside text-left mt-2">
+                <li>APIサーバーに接続できません</li>
+                <li>認証トークンが無効です</li>
+                <li>ネットワーク接続を確認してください</li>
+              </ul>
+            </div>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -162,6 +177,18 @@ export const AttendancePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 非クリティカルなエラーの警告 */}
+      {(attendanceError || usersError) && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-yellow-800 mb-2">⚠️ 一部のデータ取得に失敗しました</h3>
+          <ul className="text-sm text-yellow-700 list-disc list-inside">
+            {attendanceError && <li>出席履歴: {attendanceError}</li>}
+            {usersError && <li>ユーザー一覧: {usersError}</li>}
+          </ul>
+          <p className="text-xs text-yellow-600 mt-2">ページを再読み込みするか、しばらく待ってから再度お試しください。</p>
+        </div>
+      )}
+
       {/* シンプルな出席登録フォーム */}
       <SimpleAttendanceForm
         practiceSchedules={practiceSchedules}
