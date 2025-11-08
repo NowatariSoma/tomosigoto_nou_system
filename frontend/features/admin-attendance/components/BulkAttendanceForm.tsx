@@ -206,7 +206,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
     return (
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
         <div className="flex flex-col items-center space-y-6">
-          <div className="bg-green-50 p-4 rounded-full">
+          <div className="bg-white p-4 rounded-full">
             <CheckCircle className="h-16 w-16 text-green-600" />
           </div>
           <div className="space-y-2">
@@ -273,7 +273,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
         {/* 選択された練習の詳細 */}
         {selectedPractice && (
-          <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+          <div className="bg-white border border-slate-200 p-4 rounded-lg">
             <h3 className="text-sm font-semibold text-slate-900 mb-2">練習情報</h3>
             <div className="text-sm text-slate-600 space-y-1">
               <p>日付: {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP')}</p>
@@ -300,7 +300,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
         {/* ユーザー一覧 */}
         {selectedPracticeId && users.length > 0 && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+            <div className="bg-white px-4 py-3 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-900">
                 ユーザー一覧 ({users.length}名)
               </h3>
