@@ -96,14 +96,24 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       const item = tableData.find(d => d.user.id === userId);
       const currentAttendance = item?.attendance;
       
-      await onAttendanceUpdate({
+      // 遅刻の場合は参加可能時間を保持、それ以外の場合はnullに設定
+      const updateData: AttendanceCreate = {
         practice_schedule_id: displayPracticeId,
         user_id: userId,
         status,
         notes: currentAttendance?.notes || undefined,
-        available_from: status === ATTENDANCE_STATUS.LATE ? currentAttendance?.available_from || undefined : undefined,
-        available_to: status === ATTENDANCE_STATUS.LATE ? currentAttendance?.available_to || undefined : undefined,
-      });
+      };
+      
+      if (status === ATTENDANCE_STATUS.LATE) {
+        updateData.available_from = currentAttendance?.available_from || undefined;
+        updateData.available_to = currentAttendance?.available_to || undefined;
+      } else {
+        // 遅刻以外の場合は参加可能時間をnullに設定（既存の記録をクリアするため）
+        updateData.available_from = null;
+        updateData.available_to = null;
+      }
+      
+      await onAttendanceUpdate(updateData);
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -150,15 +160,33 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     try {
       const item = tableData.find(d => d.user.id === editingUserId);
       const currentAttendance = item?.attendance;
+      const currentStatus = currentAttendance?.status || ATTENDANCE_STATUS.PRESENT;
       
-      await onAttendanceUpdate({
+      // 遅刻の場合は参加可能時間を送信、それ以外の場合はnullに設定
+      const updateData: AttendanceCreate = {
         practice_schedule_id: displayPracticeId,
         user_id: editingUserId,
-        status: currentAttendance?.status || ATTENDANCE_STATUS.PRESENT,
-        notes: editingData.notes || undefined,
-        available_from: editingData.availableFrom || undefined,
-        available_to: editingData.availableTo || undefined,
-      });
+        status: currentStatus,
+        notes: editingData.notes?.trim() || undefined,
+      };
+      
+      if (currentStatus === ATTENDANCE_STATUS.LATE) {
+        // 遅刻の場合のみ参加可能時間を送信（値がある場合のみ、空文字列の場合はundefined）
+        const availableFrom = editingData.availableFrom?.trim();
+        const availableTo = editingData.availableTo?.trim();
+        if (availableFrom) {
+          updateData.available_from = availableFrom;
+        }
+        if (availableTo) {
+          updateData.available_to = availableTo;
+        }
+      } else {
+        // 遅刻以外の場合は参加可能時間をnullに設定（既存の記録をクリアするため）
+        updateData.available_from = null;
+        updateData.available_to = null;
+      }
+      
+      await onAttendanceUpdate(updateData);
       setEditingUserId(null);
       setEditingData(null);
     } catch (error) {
@@ -215,7 +243,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             
             <div className="p-6 space-y-6">
               {/* 参加可能時間 */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-3">
                   <Clock className="h-4 w-4 text-yellow-600" />
                   <span>参加可能時間</span>

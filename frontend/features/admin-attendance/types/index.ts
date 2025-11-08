@@ -17,8 +17,8 @@ export interface AttendanceCreate {
   user_id: string;
   status: 'present' | 'absent' | 'late' | 'no_show';
   notes?: string;
-  available_from?: string;
-  available_to?: string;
+  available_from?: string | null;
+  available_to?: string | null;
 }
 
 export interface PracticeSchedule {
