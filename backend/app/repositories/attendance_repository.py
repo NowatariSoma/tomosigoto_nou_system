@@ -46,14 +46,54 @@ class AttendanceRepository:
 
     @handle_supabase_errors("find_by_practice_schedule")
     async def find_by_practice_schedule(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定した練習スケジュールの出欠記録を取得"""
+        """指定した練習スケジュールの出欠記録を取得（ユーザー情報とプロフィール情報を含む）"""
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select("""
+                *,
+                users!inner(
+                    id,
+                    email,
+                    raw_user_meta_data
+                ),
+                user_profiles!left(
+                    first_name_kanji,
+                    last_name_kanji,
+                    first_name_katakana,
+                    last_name_katakana,
+                    student_id
+                )
+            """)
             .eq("practice_schedule_id", practice_schedule_id)
             .execute()
         )
-        return response.data
+        
+        formatted_data = []
+        for item in response.data:
+            formatted_item = item.copy()
+            user_data = item.get("users", {})
+            profile_data = item.get("user_profiles", {})
+            
+            user_name = None
+            if profile_data:
+                first_name = profile_data.get("first_name_kanji", "")
+                last_name = profile_data.get("last_name_kanji", "")
+                if first_name and last_name:
+                    user_name = f"{last_name} {first_name}"
+                elif first_name:
+                    user_name = first_name
+                elif last_name:
+                    user_name = last_name
+            
+            if not user_name and user_data:
+                meta_data = user_data.get("raw_user_meta_data", {})
+                user_name = meta_data.get("name") or user_data.get("email", "").split("@")[0]
+            
+            formatted_item["user_name"] = user_name or f"User {str(user_data.get('id', ''))[:8]}"
+            formatted_item["user_email"] = user_data.get("email", "")
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_by_user")
     async def find_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:

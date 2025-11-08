@@ -22,22 +22,22 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
   try {
     // サーバーサイドかクライアントサイドかを判定
     const isServer = typeof window === 'undefined';
-    
+
     // サーバーサイド（Docker内）では backend:8000 を使用
     // クライアントサイド（ブラウザ）では localhost:8000 を使用
-    const baseUrl = isServer 
+    const baseUrl = isServer
       ? 'http://backend:8000/api/v1'  // Docker内のサービス名を使用
       : API_BASE_URL;  // ブラウザからは localhost を使用
-    
+
     // トークンの取得（サーバーサイドでは localStorage が使えないため）
     let token = null;
     if (!isServer && typeof localStorage !== 'undefined') {
       token = localStorage.getItem('authToken');
     }
-    
+
     // URLが相対パスの場合、baseUrlを前に付ける
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-    
+
     // デバッグ用ログ
     console.log('fetchApi called with:', {
       url,
@@ -50,110 +50,136 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
         headers: options.headers
       }
     });
-    
-    const response = await fetch(fullUrl, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
 
-    console.log('fetchApi response:', {
-      url: fullUrl,
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
+    // タイムアウト処理を追加（30秒）
+    const timeoutMs = 30000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      // レスポンスボディからエラー詳細を取得
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      let errorData = null;
-      let responseText = '';
-      
-      try {
-        responseText = await response.text();
-        console.log('Error response body (raw):', responseText);
-        console.log('Error response body length:', responseText.length);
-        
-        if (responseText && responseText.trim() !== '') {
-          try {
-            errorData = JSON.parse(responseText);
-            console.log('Error response body (parsed):', errorData);
-            
-            // detailがオブジェクトの場合（例: {"detail":{"error_code":"...","error_msg":"..."}}）
-            if (errorData.detail) {
-              if (typeof errorData.detail === 'object' && errorData.detail !== null) {
-                // detailがオブジェクトの場合、error_msgまたはerror_codeを取得
-                errorMessage = errorData.detail.error_msg || 
-                              errorData.detail.error_code || 
-                              errorData.detail.message ||
-                              JSON.stringify(errorData.detail);
-              } else if (typeof errorData.detail === 'string') {
-                // detailが文字列の場合
-                errorMessage = errorData.detail;
-              }
-            } else if (errorData.message) {
-              errorMessage = errorData.message;
-            } else if (errorData.error) {
-              errorMessage = typeof errorData.error === 'string' 
-                ? errorData.error 
-                : errorData.error.message || JSON.stringify(errorData.error);
-            } else if (errorData.error_msg) {
-              errorMessage = errorData.error_msg;
-            } else if (errorData.error_code) {
-              errorMessage = errorData.error_code;
-            }
-          } catch (jsonError) {
-            console.warn('JSON parse error:', jsonError);
-            // JSONパースに失敗した場合は生のテキストをエラーメッセージにする
-            errorMessage = responseText || errorMessage;
-          }
-        } else {
-          console.warn('Error response body is empty');
-        }
-      } catch (textError) {
-        // レスポンステキストの取得に失敗した場合
-        console.warn('Error response text retrieval failed:', textError);
-      }
-      
-      const errorDetails = {
-        url: fullUrl,
-        status: response.status,
-        statusText: response.statusText,
-        errorMessage,
-        errorData,
-        responseText,
-        responseHeaders: Object.fromEntries(response.headers.entries())
-      };
-      
-      // より詳細なエラーログ
-      console.error('API Error:', {
-        url: fullUrl,
-        status: response.status,
-        statusText: response.statusText,
-        errorMessage: errorMessage,
-        errorData: errorData ? JSON.stringify(errorData, null, 2) : 'null',
-        responseText: responseText || '(empty)',
-        responseHeaders: Object.fromEntries(response.headers.entries())
+    try {
+      const response = await fetch(fullUrl, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...options.headers,
+        },
       });
-      
-      // エラーメッセージが空の場合は詳細な情報を表示
-      const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
-      
-      throw new ApiError(response.status, finalErrorMessage);
+
+      clearTimeout(timeoutId);
+
+      console.log('fetchApi response:', {
+        url: fullUrl,
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.ok) {
+        // レスポンスボディからエラー詳細を取得
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorData = null;
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          console.log('Error response body (raw):', responseText);
+          console.log('Error response body length:', responseText.length);
+          
+          if (responseText && responseText.trim() !== '') {
+            try {
+              errorData = JSON.parse(responseText);
+              console.log('Error response body (parsed):', errorData);
+              
+              // detailがオブジェクトの場合（例: {"detail":{"error_code":"...","error_msg":"..."}}）
+              if (errorData.detail) {
+                if (typeof errorData.detail === 'object' && errorData.detail !== null) {
+                  // detailがオブジェクトの場合、error_msgまたはerror_codeを取得
+                  errorMessage = errorData.detail.error_msg || 
+                                errorData.detail.error_code || 
+                                errorData.detail.message ||
+                                JSON.stringify(errorData.detail);
+                } else if (typeof errorData.detail === 'string') {
+                  // detailが文字列の場合
+                  errorMessage = errorData.detail;
+                }
+              } else if (errorData.message) {
+                errorMessage = errorData.message;
+              } else if (errorData.error) {
+                errorMessage = typeof errorData.error === 'string' 
+                  ? errorData.error 
+                  : errorData.error.message || JSON.stringify(errorData.error);
+              } else if (errorData.error_msg) {
+                errorMessage = errorData.error_msg;
+              } else if (errorData.error_code) {
+                errorMessage = errorData.error_code;
+              }
+            } catch (jsonError) {
+              console.warn('JSON parse error:', jsonError);
+              // JSONパースに失敗した場合は生のテキストをエラーメッセージにする
+              errorMessage = responseText || errorMessage;
+            }
+          } else {
+            console.warn('Error response body is empty');
+          }
+        } catch (textError) {
+          // レスポンステキストの取得に失敗した場合
+          console.warn('Error response text retrieval failed:', textError);
+        }
+        
+        const errorDetails = {
+          url: fullUrl,
+          status: response.status,
+          statusText: response.statusText,
+          errorMessage,
+          errorData,
+          responseText,
+          responseHeaders: Object.fromEntries(response.headers.entries())
+        };
+        
+        // より詳細なエラーログ
+        console.error('API Error:', {
+          url: fullUrl,
+          status: response.status,
+          statusText: response.statusText,
+          errorMessage: errorMessage,
+          errorData: errorData ? JSON.stringify(errorData, null, 2) : 'null',
+          responseText: responseText || '(empty)',
+          responseHeaders: Object.fromEntries(response.headers.entries())
+        });
+        
+        // エラーメッセージが空の場合は詳細な情報を表示
+        const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
+        
+        throw new ApiError(response.status, finalErrorMessage);
+      }
+
+      return response;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+
+      // タイムアウトエラーの場合
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('Request timeout:', { url: fullUrl, timeoutMs });
+        throw new ApiError(408, `リクエストがタイムアウトしました（${timeoutMs / 1000}秒）`);
+      }
+
+      // ApiErrorの場合はそのまま再スロー
+      if (fetchError instanceof ApiError) {
+        throw fetchError;
+      }
+
+      // その他のfetchエラー
+      throw fetchError;
+    }
+  } catch (error) {
+    // ApiErrorはそのまま再スロー
+    if (error instanceof ApiError) {
+      throw error;
     }
 
-    return response;
-  } catch (error) {
-    // ネットワークエラーやその他の例外をキャッチ
-    if (error instanceof ApiError) {
-      throw error; // ApiErrorはそのまま再スロー
-    }
-    
     // その他のエラー（ネットワークエラーなど）
     console.error('fetchApi error:', {
       url,
