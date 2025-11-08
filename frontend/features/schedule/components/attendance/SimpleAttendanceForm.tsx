@@ -132,22 +132,30 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
       ? ATTENDANCE_STATUS_LABELS[existingAttendance.status as keyof typeof ATTENDANCE_STATUS_LABELS]
       : '出席';
 
+    const isLate = existingAttendance?.status === ATTENDANCE_STATUS.LATE;
+    const hasTimeRange = existingAttendance?.available_from || existingAttendance?.available_to;
+
     return (
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="bg-[#D1FAE5] px-6 py-10 text-center border-b border-green-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-              <Check className="h-10 w-10 text-[#16A34A]" strokeWidth={2} />
+      <div className="w-full max-w-7xl mx-auto flex justify-end">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-xs">
+          <div className="bg-slate-100 px-4 py-3 flex items-center gap-2 border-b border-slate-200">
+            <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full shadow-sm flex-shrink-0">
+              <Check className="h-3 w-3 text-slate-600" strokeWidth={2.5} />
             </div>
-            <h3 className="text-xl font-semibold text-[#1E293B] mb-2">出席登録済み</h3>
-            <p className="text-slate-600 text-sm font-medium">{statusLabel}として登録されています</p>
+            <div className="text-left flex-1">
+              <div className="flex items-baseline gap-1.5">
+                <h3 className="text-sm font-semibold text-[#1E293B]">登録済み</h3>
+                <span className="text-xs text-slate-600 font-medium">({statusLabel})</span>
+              </div>
+              {isLate && hasTimeRange && (
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {existingAttendance.available_from && `${existingAttendance.available_from}`}
+                  {existingAttendance.available_from && existingAttendance.available_to && ' 〜 '}
+                  {existingAttendance.available_to && `${existingAttendance.available_to}`}
+                </p>
+              )}
+            </div>
           </div>
-          {existingAttendance?.notes && (
-            <div className="px-6 py-5 bg-white border-t border-[#E5E7EB]">
-              <p className="text-xs font-medium text-slate-600 mb-2">備考</p>
-              <p className="text-sm text-[#1E293B] leading-relaxed">{existingAttendance.notes}</p>
-            </div>
-          )}
         </div>
       </div>
     );
