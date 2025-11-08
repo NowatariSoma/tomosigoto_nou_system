@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useAdminAttendance } from '../hooks/use-admin-attendance';
-import { BulkAttendanceForm } from './BulkAttendanceForm';
 import { AttendanceTable } from './AttendanceTable';
 import { AttendanceCreate } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,12 +16,10 @@ export const AdminAttendancePage: React.FC = () => {
     loading,
     error,
     fetchAttendancesByPractice,
-    bulkUpdateAttendances,
     upsertAttendance,
   } = useAdminAttendance();
 
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'bulk' | 'table'>('bulk');
 
   // 権限チェック
   if (authLoading) {
@@ -48,13 +45,6 @@ export const AdminAttendancePage: React.FC = () => {
     );
   }
 
-  const handleBulkSubmit = async (practiceScheduleId: string, attendances: AttendanceCreate[]) => {
-    await bulkUpdateAttendances(practiceScheduleId, attendances);
-    // 更新後に出席記録を再取得
-    await fetchAttendancesByPractice(practiceScheduleId);
-    setSelectedPracticeId(practiceScheduleId);
-    setActiveTab('table');
-  };
 
   const handlePracticeChange = async (practiceId: string) => {
     setSelectedPracticeId(practiceId);
@@ -92,51 +82,16 @@ export const AdminAttendancePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* タブ切り替え */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('bulk')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'bulk'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            一括登録
-          </button>
-          <button
-            onClick={() => setActiveTab('table')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'table'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            出席一覧
-          </button>
-        </nav>
-      </div>
-
-      {/* コンテンツ */}
-      {activeTab === 'bulk' ? (
-        <BulkAttendanceForm
-          practiceSchedules={practiceSchedules}
-          users={users}
-          onSubmit={handleBulkSubmit}
-          loading={loading}
-        />
-      ) : (
-        <AttendanceTable
-          users={users}
-          attendances={attendances}
-          practiceSchedules={practiceSchedules}
-          selectedPracticeId={selectedPracticeId}
-          onPracticeChange={handlePracticeChange}
-          onAttendanceUpdate={handleAttendanceUpdate}
-          isEditable={true}
-        />
-      )}
+      <AttendanceTable
+        users={users}
+        attendances={attendances}
+        practiceSchedules={practiceSchedules}
+        selectedPracticeId={selectedPracticeId}
+        onPracticeChange={handlePracticeChange}
+        onAttendanceUpdate={handleAttendanceUpdate}
+        isEditable={true}
+        loading={loading}
+      />
     </div>
   );
 };

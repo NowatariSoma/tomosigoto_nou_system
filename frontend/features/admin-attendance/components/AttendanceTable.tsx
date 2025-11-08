@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, Attendance, PracticeSchedule, AttendanceCreate } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS, UI_TEXT } from '../constants';
-import { Calendar, Filter, Edit2, Save, X, Clock, FileText } from 'lucide-react';
+import { Calendar, Filter } from 'lucide-react';
 
 interface AttendanceTableProps {
   users: User[];
@@ -13,6 +13,7 @@ interface AttendanceTableProps {
   onPracticeChange?: (practiceId: string) => void;
   onAttendanceUpdate?: (attendance: AttendanceCreate) => Promise<void>;
   isEditable?: boolean;
+  loading?: boolean;
 }
 
 export const AttendanceTable: React.FC<AttendanceTableProps> = ({
@@ -23,19 +24,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   onPracticeChange,
   onAttendanceUpdate,
   isEditable = true,
+  loading = false,
 }) => {
   const [filterPracticeId, setFilterPracticeId] = useState<string>(selectedPracticeId || '');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterStartDate, setFilterStartDate] = useState<string>('');
   const [filterEndDate, setFilterEndDate] = useState<string>('');
-  const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [editingData, setEditingData] = useState<{
-    status: string;
-    notes: string;
-    availableFrom: string;
-    availableTo: string;
-  } | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
   // フィルタリングされた練習スケジュール
   const filteredPracticeSchedules = useMemo(() => {
@@ -72,56 +67,36 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
     // 出席状況でフィルタ
     if (filterStatus !== 'all') {
-      data = data.filter(item => {
-        if (!item.attendance) return false;
-        return item.attendance.status === filterStatus;
-      });
+      if (filterStatus === 'unregistered') {
+        data = data.filter(item => !item.attendance);
+      } else {
+        data = data.filter(item => {
+          if (!item.attendance) return false;
+          return item.attendance.status === filterStatus;
+        });
+      }
     }
 
     return data;
   }, [users, attendances, displayPracticeId, filterStatus]);
 
-  const handleEdit = (userId: string) => {
-    const item = tableData.find(d => d.user.id === userId);
-    if (item) {
-      setEditingUserId(userId);
-      setEditingData({
-        status: item.attendance?.status || '',
-        notes: item.attendance?.notes || '',
-        availableFrom: item.attendance?.available_from || '',
-        availableTo: item.attendance?.available_to || '',
-      });
-    }
-  };
+  const handleStatusChange = async (userId: string, status: 'present' | 'absent' | 'late' | 'no_show') => {
+    if (!displayPracticeId || !onAttendanceUpdate) return;
 
-  const handleCancelEdit = () => {
-    setEditingUserId(null);
-    setEditingData(null);
-  };
-
-  const handleSave = async (userId: string) => {
-    if (!editingData || !displayPracticeId || !onAttendanceUpdate) return;
-
-    setSaving(true);
+    setSavingUserId(userId);
     try {
       await onAttendanceUpdate({
         practice_schedule_id: displayPracticeId,
         user_id: userId,
-        status: editingData.status as 'present' | 'absent' | 'late' | 'no_show',
-        notes: editingData.notes || undefined,
-        available_from: editingData.status === ATTENDANCE_STATUS.LATE && editingData.availableFrom
-          ? editingData.availableFrom
-          : undefined,
-        available_to: editingData.status === ATTENDANCE_STATUS.LATE && editingData.availableTo
-          ? editingData.availableTo
-          : undefined,
+        status,
+        notes: undefined,
+        available_from: undefined,
+        available_to: undefined,
       });
-      setEditingUserId(null);
-      setEditingData(null);
     } catch (error) {
       console.error('Failed to update attendance:', error);
     } finally {
-      setSaving(false);
+      setSavingUserId(null);
     }
   };
 
@@ -137,15 +112,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <Calendar className="h-6 w-6 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            {UI_TEXT.ATTENDANCE_TABLE}
-          </h2>
+      <div className="flex items-center space-x-3 mb-6">
+        <div className="bg-blue-100 p-2 rounded-lg">
+          <Calendar className="h-6 w-6 text-blue-600" />
         </div>
+        <h2 className="text-2xl font-semibold text-gray-900">
+          {UI_TEXT.ATTENDANCE_TABLE}
+        </h2>
       </div>
 
       {/* フィルタリング */}
@@ -191,6 +164,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="all">{UI_TEXT.ALL_STATUS}</option>
+              <option value="unregistered">未登録</option>
               {Object.entries(ATTENDANCE_STATUS_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
@@ -278,7 +252,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 </tr>
               ) : (
                 tableData.map(({ user, attendance }) => {
-                  const isEditing = editingUserId === user.id;
+                  const isSaving = savingUserId === user.id;
+                  const currentStatus = attendance?.status || null;
 
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
@@ -289,100 +264,74 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {isEditing ? (
-                          <select
-                            value={editingData?.status || ''}
-                            onChange={(e) => setEditingData(prev => prev ? { ...prev, status: e.target.value } : null)}
-                            className="text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">選択</option>
-                            {Object.entries(ATTENDANCE_STATUS_LABELS).map(([key, label]) => (
-                              <option key={key} value={key}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(attendance?.status || '')}`}>
-                            {attendance ? getStatusLabel(attendance.status) : '未登録'}
-                          </span>
-                        )}
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(attendance?.status || '')}`}>
+                          {attendance ? getStatusLabel(attendance.status) : '未登録'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {isEditing ? (
-                          editingData?.status === ATTENDANCE_STATUS.LATE ? (
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="time"
-                                value={editingData.availableFrom}
-                                onChange={(e) => setEditingData(prev => prev ? { ...prev, availableFrom: e.target.value } : null)}
-                                className="text-sm px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                              <span className="text-gray-500">-</span>
-                              <input
-                                type="time"
-                                value={editingData.availableTo}
-                                onChange={(e) => setEditingData(prev => prev ? { ...prev, availableTo: e.target.value } : null)}
-                                className="text-sm px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">-</span>
-                          )
+                        {attendance?.status === ATTENDANCE_STATUS.LATE ? (
+                          <div className="text-sm text-gray-900">
+                            {attendance.available_from && attendance.available_to
+                              ? `${attendance.available_from} - ${attendance.available_to}`
+                              : '-'}
+                          </div>
                         ) : (
-                          attendance?.status === ATTENDANCE_STATUS.LATE ? (
-                            <div className="text-sm text-gray-900">
-                              {attendance.available_from && attendance.available_to
-                                ? `${attendance.available_from} - ${attendance.available_to}`
-                                : '-'}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">-</span>
-                          )
+                          <span className="text-sm text-gray-400">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        {isEditing ? (
-                          <textarea
-                            value={editingData?.notes || ''}
-                            onChange={(e) => setEditingData(prev => prev ? { ...prev, notes: e.target.value } : null)}
-                            rows={2}
-                            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                            placeholder="備考"
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-900 max-w-xs truncate" title={attendance?.notes}>
-                            {attendance?.notes || '-'}
-                          </div>
-                        )}
+                        <div className="text-sm text-gray-900 max-w-xs truncate" title={attendance?.notes}>
+                          {attendance?.notes || '-'}
+                        </div>
                       </td>
                       {isEditable && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {isEditing ? (
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleSave(user.id)}
-                                disabled={saving}
-                                className="text-green-600 hover:text-green-900 disabled:text-gray-400"
-                              >
-                                <Save className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={handleCancelEdit}
-                                disabled={saving}
-                                className="text-red-600 hover:text-red-900 disabled:text-gray-400"
-                              >
-                                <X className="h-5 w-5" />
-                              </button>
-                            </div>
-                          ) : (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-wrap gap-2">
                             <button
-                              onClick={() => handleEdit(user.id)}
-                              className="text-blue-600 hover:text-blue-900"
+                              onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
+                              disabled={isSaving || loading}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.PRESENT
+                                  ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                                  : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
-                              <Edit2 className="h-5 w-5" />
+                              出席
                             </button>
-                          )}
+                            <button
+                              onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
+                              disabled={isSaving || loading}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.ABSENT
+                                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                                  : 'bg-white text-red-700 border-red-300 hover:bg-red-50'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              欠席
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
+                              disabled={isSaving || loading}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.LATE
+                                  ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
+                                  : 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              遅刻
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
+                              disabled={isSaving || loading}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.NO_SHOW
+                                  ? 'bg-red-700 text-white border-red-700 shadow-sm'
+                                  : 'bg-white text-red-800 border-red-400 hover:bg-red-50'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              無断欠席
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
