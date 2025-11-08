@@ -301,8 +301,10 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
             <Information currentDate={currentDate} />
           </div>
 
-          {/* 出席情報サマリーと出欠情報詳細 */}
-          <AttendanceSummary currentDate={currentDate} />
+          <div className="w-full max-w-7xl mx-auto">
+            {/* 出席情報サマリーと出欠情報詳細 */}
+            <AttendanceSummary currentDate={currentDate} />
+          </div>
         </motion.div>
       </motion.div>
     </>
