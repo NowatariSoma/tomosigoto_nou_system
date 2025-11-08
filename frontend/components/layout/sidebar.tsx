@@ -141,7 +141,7 @@ function NavTitle({ label }: { label: string }) {
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const router = useRouter();
 
   const toggleSidebar = () => {
