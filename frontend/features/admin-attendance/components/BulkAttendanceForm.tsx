@@ -10,6 +10,8 @@ interface BulkAttendanceFormProps {
   users: User[];
   onSubmit: (practiceScheduleId: string, attendances: AttendanceCreate[]) => Promise<void>;
   loading?: boolean;
+  onComplete?: () => void;
+  showCompletionMessage?: boolean;
 }
 
 export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
@@ -17,6 +19,8 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
   users,
   onSubmit,
   loading = false,
+  onComplete,
+  showCompletionMessage = true,
 }) => {
   const [selectedPracticeId, setSelectedPracticeId] = useState<string>('');
   const [setUnenteredToPresent, setSetUnenteredToPresent] = useState<boolean>(true);
@@ -28,6 +32,25 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
   }>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // フォームをリセットする関数
+  const resetForm = () => {
+    setSelectedPracticeId('');
+    setAttendanceData({});
+    setErrors({});
+    setIsSubmitted(false);
+  };
+
+  // 親コンポーネントからフォームが閉じられた時にリセット
+  useEffect(() => {
+    if (!showCompletionMessage && isSubmitted) {
+      // showCompletionMessageがfalseの場合、完了後に自動的にリセット
+      const timer = setTimeout(() => {
+        resetForm();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isSubmitted, showCompletionMessage]);
 
   // 選択された練習が変更されたら、未入力のユーザーを出席に設定
   useEffect(() => {
@@ -167,12 +190,19 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
       await onSubmit(selectedPracticeId, attendances);
       setIsSubmitted(true);
+      // 完了コールバックを呼び出す
+      if (onComplete) {
+        // 少し遅延を入れてからコールバックを呼び出す（完了メッセージを表示する時間を確保）
+        setTimeout(() => {
+          onComplete();
+        }, showCompletionMessage ? 1500 : 0);
+      }
     } catch (error) {
       console.error('Failed to submit bulk attendance:', error);
     }
   };
 
-  if (isSubmitted) {
+  if (isSubmitted && showCompletionMessage) {
     return (
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
         <div className="flex flex-col items-center space-y-6">
