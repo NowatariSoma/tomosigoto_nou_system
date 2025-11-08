@@ -2,12 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
 import { Information } from '@/features/practice-slots/components/Information';
 import { Button } from '@/components/ui/forms/button';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
+import { SimpleAttendanceForm } from './attendance/SimpleAttendanceForm';
+import { useAttendance } from '../hooks/use-attendance';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchApi } from '@/lib/api';
+import { User, PracticeSchedule as AttendancePracticeSchedule } from '../types/attendance';
+import { toast } from 'sonner';
 
 interface BottomSheetScheduleProps {
   date: string; // YYYY-MM-DD形式
@@ -16,6 +22,12 @@ interface BottomSheetScheduleProps {
 
 export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps) {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [practiceSchedules, setPracticeSchedules] = useState<AttendancePracticeSchedule[]>([]);
+  const [formLoading, setFormLoading] = useState(false);
+
   // dateプロップが変わった時に再計算されるように useMemo を使用
   // YYYY-MM-DD形式をローカルタイムゾーンとして正しく解釈
   const currentDate = useMemo(() => {
@@ -39,10 +51,72 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const [isDragging, setIsDragging] = useState(false);
   const [screenHeight, setScreenHeight] = useState(1000); // デフォルト値
 
+  // 出席情報を取得
+  const { attendances, loading: attendanceLoading, error: attendanceError, upsertAttendance, deleteAttendance, refetch } = useAttendance();
+
   // 画面の高さを取得
   useEffect(() => {
     setScreenHeight(window.innerHeight);
   }, []);
+
+  // ユーザー一覧を取得
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const response = await fetchApi('/users/');
+      const usersData = await response.json();
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // 練習スケジュール一覧を取得
+  const fetchPracticeSchedules = async () => {
+    try {
+      const response = await fetchApi('/practice_schedules/');
+      const data = await response.json();
+      setPracticeSchedules(data || []);
+    } catch (error) {
+      console.error('Error fetching practice schedules:', error);
+    }
+  };
+
+  // ユーザー一覧と練習スケジュールを取得
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchUsers();
+      fetchPracticeSchedules();
+    }
+  }, [authLoading, user]);
+
+  // その日の練習スケジュールを取得
+  const todayPracticeSchedule = useMemo(() => {
+    if (!practiceSchedules.length) return null;
+
+    // dateをYYYY-MM-DD形式で比較
+    const targetDate = date; // date は既に YYYY-MM-DD 形式
+
+    const schedule = practiceSchedules.find(schedule => {
+      // schedule_dateもYYYY-MM-DD形式なので直接比較
+      return schedule.schedule_date === targetDate;
+    });
+
+    return schedule || null;
+  }, [practiceSchedules, date]);
+
+  // その日の練習の自分の出席状況を取得
+  const myAttendance = useMemo(() => {
+    if (!todayPracticeSchedule || !user) return null;
+
+    return attendances.find(
+      attendance =>
+        attendance.practice_schedule_id === todayPracticeSchedule.id &&
+        attendance.user_id === user.id
+    );
+  }, [attendances, todayPracticeSchedule, user]);
 
   // 日付のフォーマット
   const formatDate = (date: Date) => {
@@ -98,6 +172,33 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
         // 左にスワイプ → 翌日
         goToNextDay();
       }
+    }
+  };
+
+  // 出席登録フォーム送信処理
+  const handleAttendanceSubmit = async (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => {
+    try {
+      setFormLoading(true);
+      await upsertAttendance({
+        practice_schedule_id: data.practiceScheduleId,
+        user_id: data.userId,
+        status: data.status as "present" | "absent" | "late" | "no_show" | "undecided",
+        notes: data.notes,
+        available_from: data.availableFrom,
+        available_to: data.availableTo,
+      });
+
+      // 出席情報を再取得
+      refetch();
+
+      // トーストで成功メッセージを表示
+      toast.success('出席を記録しました');
+    } catch (error) {
+      console.error('Failed to save attendance:', error);
+      toast.error('出席登録に失敗しました');
+      throw error;
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -171,11 +272,33 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           style={{ x }}
           className="flex-1 overflow-y-auto px-4 py-6 space-y-6"
         >
+          {/* 出席登録フォーム */}
+          {authLoading || usersLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <span className="ml-2">読み込み中...</span>
+            </div>
+          ) : todayPracticeSchedule ? (
+            <SimpleAttendanceForm
+              practiceScheduleId={todayPracticeSchedule.id}
+              practiceSchedule={todayPracticeSchedule}
+              users={users}
+              currentUserId={user?.id}
+              onSubmit={handleAttendanceSubmit}
+              loading={formLoading}
+              existingAttendance={myAttendance}
+            />
+          ) : null}
+
           {/* 練習表テーブル */}
-          <ScheduleTable currentDate={currentDate} />
+          <div className="w-full max-w-7xl mx-auto">
+            <ScheduleTable currentDate={currentDate} />
+          </div>
 
           {/* 追加情報 */}
-          <Information currentDate={currentDate} />
+          <div className="w-full max-w-7xl mx-auto">
+            <Information currentDate={currentDate} />
+          </div>
         </motion.div>
       </motion.div>
     </>

@@ -1,0 +1,382 @@
+'use client';
+
+import React, { useState } from 'react';
+import { PracticeSchedule, User } from '../../types/attendance';
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../../constants/attendance';
+import { Check, Clock, X, Save } from 'lucide-react';
+
+interface SimpleAttendanceFormProps {
+  practiceScheduleId: string;
+  practiceSchedule?: PracticeSchedule;
+  users: User[];
+  currentUserId?: string;
+  onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => Promise<void>;
+  loading?: boolean;
+  existingAttendance?: any;
+}
+
+export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
+  practiceScheduleId,
+  practiceSchedule,
+  users,
+  currentUserId,
+  onSubmit,
+  loading = false,
+  existingAttendance,
+}) => {
+  const [selectedUserId, setSelectedUserId] = useState<string>(currentUserId || '');
+  const [status, setStatus] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
+  const [availableFrom, setAvailableFrom] = useState<string>('');
+  const [availableTo, setAvailableTo] = useState<string>('');
+  const [errors, setErrors] = useState<{ selectedUserId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string }>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const validateForm = (): boolean => {
+    const newErrors: { selectedUserId?: string; status?: string; notes?: string; availableFrom?: string; availableTo?: string } = {};
+
+    if (!selectedUserId) {
+      newErrors.selectedUserId = 'ユーザーを選択してください';
+    }
+
+    if (!status) {
+      newErrors.status = '出席状況を選択してください';
+    }
+
+    if (status === ATTENDANCE_STATUS.LATE) {
+      if (!availableFrom && !availableTo) {
+        newErrors.availableFrom = '参加可能時間を入力してください';
+      } else if (availableFrom && availableTo && availableFrom >= availableTo) {
+        newErrors.availableFrom = '開始時刻は終了時刻より前にしてください';
+      }
+    }
+
+    if (status === ATTENDANCE_STATUS.ABSENT) {
+      if (!notes || notes.trim().length === 0) {
+        newErrors.notes = '欠席の場合は謝罪文を入力してください';
+      } else if (notes.trim().length < 30) {
+        newErrors.notes = '謝罪文は30文字以上入力してください';
+      } else if (notes.length > VALIDATION.MAX_NOTES_LENGTH) {
+        newErrors.notes = `謝罪文は${VALIDATION.MAX_NOTES_LENGTH}文字以内で入力してください`;
+      }
+    } else if (notes && notes.length > VALIDATION.MAX_NOTES_LENGTH) {
+      newErrors.notes = `備考は${VALIDATION.MAX_NOTES_LENGTH}文字以内で入力してください`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      try {
+        await onSubmit({
+          userId: selectedUserId,
+          practiceScheduleId: practiceScheduleId,
+          status,
+          notes,
+          availableFrom: status === ATTENDANCE_STATUS.LATE && availableFrom ? availableFrom : undefined,
+          availableTo: status === ATTENDANCE_STATUS.LATE && availableTo ? availableTo : undefined
+        });
+        setIsSubmitted(true);
+      } catch (error) {
+        console.error('Failed to submit attendance:', error);
+      }
+    }
+  };
+
+  const handleUserChange = (value: string) => {
+    setSelectedUserId(value);
+    if (errors.selectedUserId) {
+      setErrors(prev => ({ ...prev, selectedUserId: undefined }));
+    }
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus);
+    if (errors.status) {
+      setErrors(prev => ({ ...prev, status: undefined }));
+    }
+    if (newStatus !== ATTENDANCE_STATUS.LATE) {
+      setAvailableFrom('');
+      setAvailableTo('');
+      setErrors(prev => ({ ...prev, availableFrom: undefined, availableTo: undefined }));
+    }
+  };
+
+  const handleAvailableFromChange = (value: string) => {
+    setAvailableFrom(value);
+    if (errors.availableFrom) {
+      setErrors(prev => ({ ...prev, availableFrom: undefined }));
+    }
+  };
+
+  const handleAvailableToChange = (value: string) => {
+    setAvailableTo(value);
+    if (errors.availableTo) {
+      setErrors(prev => ({ ...prev, availableTo: undefined }));
+    }
+  };
+
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    if (errors.notes) {
+      setErrors(prev => ({ ...prev, notes: undefined }));
+    }
+  };
+
+  // 出席済みまたは登録完了時の表示
+  if (existingAttendance || isSubmitted) {
+    const statusLabel = existingAttendance
+      ? ATTENDANCE_STATUS_LABELS[existingAttendance.status as keyof typeof ATTENDANCE_STATUS_LABELS]
+      : '出席';
+
+    return (
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-[#D1FAE5] px-6 py-10 text-center border-b border-green-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+              <Check className="h-10 w-10 text-[#16A34A]" strokeWidth={2} />
+            </div>
+            <h3 className="text-xl font-semibold text-[#1E293B] mb-2">出席登録済み</h3>
+            <p className="text-slate-600 text-sm font-medium">{statusLabel}として登録されています</p>
+          </div>
+          {existingAttendance?.notes && (
+            <div className="px-6 py-5 bg-white border-t border-[#E5E7EB]">
+              <p className="text-xs font-medium text-slate-600 mb-2">備考</p>
+              <p className="text-sm text-[#1E293B] leading-relaxed">{existingAttendance.notes}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-7xl mx-auto">
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* ヘッダー */}
+          <div className="px-6 py-6 bg-[#2D3748]">
+            <h2 className="text-lg font-semibold text-white">出席登録</h2>
+            <p className="text-sm text-gray-300 mt-1.5">出欠状況を選択してください</p>
+          </div>
+
+          <div className="px-6 py-8 space-y-7 bg-[#F9FAFB]">
+            {/* ユーザー選択 */}
+            {!currentUserId && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-3">
+                  ユーザー選択
+                </label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => handleUserChange(e.target.value)}
+                  className={`w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                    errors.selectedUserId ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                  }`}
+                >
+                  <option value="">選択してください</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.selectedUserId && (
+                  <p className="mt-2 text-xs text-red-600">{errors.selectedUserId}</p>
+                )}
+              </div>
+            )}
+
+            {/* 出欠選択 */}
+            <div>
+              <div className="grid grid-cols-3 gap-3">
+                {/* 出席 */}
+                <label
+                  className={`relative flex flex-col items-center justify-center gap-4 py-7 rounded-xl cursor-pointer transition-all duration-200 ${
+                    status === ATTENDANCE_STATUS.PRESENT
+                      ? 'bg-[#D1FAE5] shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)] border border-green-300/60'
+                      : 'bg-white border border-[#E5E7EB] hover:border-slate-300 hover:shadow-[0_2px_4px_rgba(0,0,0,0.04)] active:scale-[0.98]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value={ATTENDANCE_STATUS.PRESENT}
+                    checked={status === ATTENDANCE_STATUS.PRESENT}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="sr-only"
+                  />
+                  <Check
+                    className={`transition-colors ${
+                      status === ATTENDANCE_STATUS.PRESENT ? 'text-[#16A34A]' : 'text-[#94A3B8]'
+                    }`}
+                    size={24}
+                    strokeWidth={1.5}
+                  />
+                  <span
+                    className={`text-sm font-medium transition-colors ${
+                      status === ATTENDANCE_STATUS.PRESENT ? 'text-[#1E293B]' : 'text-slate-500'
+                    }`}
+                  >
+                    {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.PRESENT]}
+                  </span>
+                </label>
+
+                {/* 遅刻 */}
+                <label
+                  className={`relative flex flex-col items-center justify-center gap-4 py-7 rounded-xl cursor-pointer transition-all duration-200 ${
+                    status === ATTENDANCE_STATUS.LATE
+                      ? 'bg-[#FEF3C7] shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)] border border-yellow-300/60'
+                      : 'bg-white border border-[#E5E7EB] hover:border-slate-300 hover:shadow-[0_2px_4px_rgba(0,0,0,0.04)] active:scale-[0.98]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value={ATTENDANCE_STATUS.LATE}
+                    checked={status === ATTENDANCE_STATUS.LATE}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="sr-only"
+                  />
+                  <Clock
+                    className={`transition-colors ${
+                      status === ATTENDANCE_STATUS.LATE ? 'text-[#CA8A04]' : 'text-[#94A3B8]'
+                    }`}
+                    size={24}
+                    strokeWidth={1.5}
+                  />
+                  <span
+                    className={`text-sm font-medium transition-colors ${
+                      status === ATTENDANCE_STATUS.LATE ? 'text-[#1E293B]' : 'text-slate-500'
+                    }`}
+                  >
+                    {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.LATE]}
+                  </span>
+                </label>
+
+                {/* 欠席 */}
+                <label
+                  className={`relative flex flex-col items-center justify-center gap-4 py-7 rounded-xl cursor-pointer transition-all duration-200 ${
+                    status === ATTENDANCE_STATUS.ABSENT
+                      ? 'bg-[#FECACA] shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)] border border-red-300/60'
+                      : 'bg-white border border-[#E5E7EB] hover:border-slate-300 hover:shadow-[0_2px_4px_rgba(0,0,0,0.04)] active:scale-[0.98]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value={ATTENDANCE_STATUS.ABSENT}
+                    checked={status === ATTENDANCE_STATUS.ABSENT}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="sr-only"
+                  />
+                  <X
+                    className={`transition-colors ${
+                      status === ATTENDANCE_STATUS.ABSENT ? 'text-[#DC2626]' : 'text-[#94A3B8]'
+                    }`}
+                    size={24}
+                    strokeWidth={1.5}
+                  />
+                  <span
+                    className={`text-sm font-medium transition-colors ${
+                      status === ATTENDANCE_STATUS.ABSENT ? 'text-[#1E293B]' : 'text-slate-500'
+                    }`}
+                  >
+                    {ATTENDANCE_STATUS_LABELS[ATTENDANCE_STATUS.ABSENT]}
+                  </span>
+                </label>
+              </div>
+              {errors.status && <p className="mt-3 text-xs text-red-600">{errors.status}</p>}
+            </div>
+
+            {/* 参加可能時間（遅刻の場合のみ表示） */}
+            {status === ATTENDANCE_STATUS.LATE && (
+              <div>
+                <label className="block text-sm font-medium text-[#1E293B] mb-3">
+                  参加可能時間
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="time"
+                    value={availableFrom}
+                    onChange={(e) => handleAvailableFromChange(e.target.value)}
+                    placeholder="何時から"
+                    className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                      errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                    }`}
+                  />
+                  <input
+                    type="time"
+                    value={availableTo}
+                    onChange={(e) => handleAvailableToChange(e.target.value)}
+                    placeholder="何時まで"
+                    className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                      errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                    }`}
+                  />
+                </div>
+                {errors.availableFrom && (
+                  <p className="mt-2 text-xs text-red-600">{errors.availableFrom}</p>
+                )}
+              </div>
+            )}
+
+            {/* 備考 */}
+            <div>
+              {status === ATTENDANCE_STATUS.ABSENT && (
+                <label className="block text-sm font-medium text-[#1E293B] mb-3">
+                  謝罪文
+                  <span className="ml-2 text-xs text-red-600 font-normal">
+                    （30文字以上 / 現在: {notes.trim().length}文字）
+                  </span>
+                </label>
+              )}
+              <textarea
+                value={notes}
+                onChange={(e) => handleNotesChange(e.target.value)}
+                rows={status === ATTENDANCE_STATUS.ABSENT ? 5 : 3}
+                placeholder={
+                  status === ATTENDANCE_STATUS.ABSENT
+                    ? '謝罪文を入力してください（30文字以上）'
+                    : '備考（任意）'
+                }
+                className={`w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm text-[#1E293B] placeholder:text-slate-400 resize-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                  errors.notes
+                    ? 'ring-2 ring-red-500/30 border-red-300'
+                    : status === ATTENDANCE_STATUS.ABSENT
+                    ? 'ring-2 ring-red-500/20 border-red-200'
+                    : ''
+                }`}
+              />
+              {errors.notes && <p className="mt-2 text-xs text-red-600">{errors.notes}</p>}
+            </div>
+          </div>
+
+          {/* 送信ボタン */}
+          <div className="px-6 py-6 bg-[#F9FAFB] border-t border-[#E5E7EB] shadow-[0_-1px_3px_rgba(0,0,0,0.03)]">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full max-w-sm mx-auto flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-b from-[#60A5FA] to-[#3B82F6] text-white hover:from-[#3B82F6] hover:to-[#2563EB] disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 rounded-xl transition-all duration-200 font-semibold text-base shadow-[0_2px_8px_rgba(96,165,250,0.25)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>送信中...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  <span>出席を登録する</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};

@@ -44,29 +44,6 @@ export interface AttendanceResponse {
   updated_by: string;
 }
 
-export interface AttendanceSummary {
-  practice_schedule_id: string;
-  practice_date: string;
-  practice_time: string;
-  venue_name: string;
-  total_users: number;
-  present_count: number;
-  absent_count: number;
-  late_count: number;
-  no_show_count: number;
-}
-
-export interface UserAttendanceHistory {
-  user_id: string;
-  user_name: string;
-  total_practices: number;
-  present_count: number;
-  absent_count: number;
-  late_count: number;
-  no_show_count: number;
-  attendance_rate: number;
-}
-
 export interface PracticeSchedule {
   id: string;
   schedule_date: string;
@@ -96,10 +73,8 @@ export interface AttendanceFormData {
   available_to?: string; // 参加終了時刻（HH:MM形式）
 }
 
-export interface AttendanceFormErrors {
-  practice_schedule_id?: string;
-  status?: string;
-  notes?: string;
-  available_from?: string;
-  available_to?: string;
+export interface User {
+  id: string;
+  name: string;
+  email: string;
 }

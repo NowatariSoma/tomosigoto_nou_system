@@ -7,6 +7,7 @@ import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { usePracticeSchedules, useVenues } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
 
 export const PracticeSchedulePage: React.FC = () => {
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
@@ -92,21 +93,16 @@ export const PracticeSchedulePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">練習予定管理</h1>
-          <p className="text-gray-600 mt-1">
-            練習スケジュールの作成・編集・削除を行います
-          </p>
-        </div>
-        <button
+      {/* 新規登録ボタン */}
+      <div className="text-center">
+        <Button
           onClick={handleCreateClick}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          size="lg"
         >
-          <Plus className="h-4 w-4" />
-          <span>新しい練習予定</span>
-        </button>
+          <Plus className="h-5 w-5 mr-2" />
+          新規登録
+        </Button>
       </div>
 
       {/* フォーム */}
