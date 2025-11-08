@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 from enum import Enum
+from datetime import time
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -14,13 +15,16 @@ class AttendanceRepository:
         self.table_name = "practice_user_attendance"
     
     def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """UUID型とEnum型を文字列に変換、空文字列をNoneに変換"""
+        """UUID型、Enum型、time型を文字列に変換、空文字列をNoneに変換"""
         serialized_data = {}
         for key, value in data.items():
             if isinstance(value, UUID):
                 serialized_data[key] = str(value)
             elif isinstance(value, Enum):
                 serialized_data[key] = value.value
+            elif isinstance(value, time):
+                # time型をHH:MM:SS形式の文字列に変換
+                serialized_data[key] = value.isoformat()
             elif value == "":
                 # 空文字列はNoneに変換（available_from, available_toなど）
                 serialized_data[key] = None
