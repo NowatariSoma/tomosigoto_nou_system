@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Attendance, User, UserWithAttendance, PracticeSchedule, AttendanceCreate } from '../types';
+import { Attendance, User, UserWithAttendance, PracticeSchedule, AttendanceCreate, UserWithAttendanceResponse } from '../types';
 import { adminAttendanceService } from '../services/attendance-service';
 import { adminUserService } from '../services/user-service';
 import { API_ENDPOINTS } from '../constants';
@@ -9,6 +9,7 @@ export const useAdminAttendance = () => {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [practiceSchedules, setPracticeSchedules] = useState<PracticeSchedule[]>([]);
+  const [usersWithAttendance, setUsersWithAttendance] = useState<UserWithAttendanceResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +84,31 @@ export const useAdminAttendance = () => {
     }
   }, [fetchAttendancesByPractice]);
 
-  // 個別更新
+  // ユーザーと出席記録を結合して取得（新しいAPI）
+  const fetchUsersWithAttendance = useCallback(async (params?: {
+    practice_schedule_id?: string;
+    status?: string;
+    user_name?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminAttendanceService.getUsersWithAttendance(params);
+      setUsersWithAttendance(data);
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'ユーザー一覧の取得に失敗しました';
+      setError(errorMessage);
+      console.error('Failed to fetch users with attendance:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 個別更新（楽観的更新）
   const upsertAttendance = useCallback(async (
     attendance: AttendanceCreate
   ): Promise<Attendance> => {
@@ -91,10 +116,18 @@ export const useAdminAttendance = () => {
       setLoading(true);
       setError(null);
       const data = await adminAttendanceService.upsertAttendance(attendance);
-      // 更新後に再取得
-      if (attendance.practice_schedule_id) {
-        await fetchAttendancesByPractice(attendance.practice_schedule_id);
-      }
+      
+      // 楽観的更新：該当ユーザーの出席記録のみ更新
+      setUsersWithAttendance(prev => prev.map(item => {
+        if (item.user.id === attendance.user_id) {
+          return {
+            ...item,
+            attendance: data,
+          };
+        }
+        return item;
+      }));
+      
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '出席登録に失敗しました';
@@ -104,7 +137,7 @@ export const useAdminAttendance = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchAttendancesByPractice]);
+  }, []);
 
   // ユーザーと出席記録をマージ
   const getUsersWithAttendance = useCallback((
@@ -132,9 +165,11 @@ export const useAdminAttendance = () => {
     attendances,
     users,
     practiceSchedules,
+    usersWithAttendance,
     loading,
     error,
     fetchAttendancesByPractice,
+    fetchUsersWithAttendance,
     bulkUpdateAttendances,
     upsertAttendance,
     getUsersWithAttendance,

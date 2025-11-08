@@ -170,19 +170,25 @@ def get_attendance_repository(
     return AttendanceRepository(supabase_client)
 
 
-def get_attendance_service(
-    supabase_client: Client = Depends(get_supabase),
-    attendance_repository: "AttendanceRepository" = Depends(get_attendance_repository),
-) -> "AttendanceService":
-    """AttendanceServiceのインスタンスを依存性注入で取得"""
-    return AttendanceService(attendance_repository)
-
-
 def get_user_profile_repository(
     supabase_client: Client = Depends(get_supabase),
 ) -> UserProfileRepository:
     """UserProfileRepositoryのインスタンスを取得"""
     return UserProfileRepository(supabase_client)
+
+
+def get_attendance_service(
+    supabase_client: Client = Depends(get_supabase),
+    attendance_repository: "AttendanceRepository" = Depends(get_attendance_repository),
+    user_repository: UserRepository = Depends(get_user_repository),
+    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+) -> "AttendanceService":
+    """AttendanceServiceのインスタンスを依存性注入で取得"""
+    return AttendanceService(
+        attendance_repository,
+        user_repository=user_repository,
+        user_profile_repository=user_profile_repository
+    )
 
 
 def get_department_repository(

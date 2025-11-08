@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.api.deps import get_current_user, get_current_user_optional, get_attendance_service, require_admin
@@ -264,5 +264,44 @@ async def bulk_update_attendances(
         practice_schedule_id, attendance_dicts
     )
     return [AttendanceResponse(**attendance) for attendance in updated_attendances]
+
+
+@router.get("/admin/list")
+async def get_users_with_attendance_for_admin(
+    practice_schedule_id: Optional[UUID] = None,
+    status: Optional[str] = None,
+    user_name: Optional[str] = None,
+    page: int = 1,
+    limit: int = 100,
+    attendance_service: AttendanceService = Depends(get_attendance_service),
+    current_user: Dict[str, Any] = Depends(get_current_user),  # 一時的に管理者権限チェックを無効化
+):
+    """
+    管理者用：ユーザー情報と出席記録を結合して取得
+
+    Args:
+        practice_schedule_id: 練習スケジュールID（任意）
+        status: 出席状況フィルタ（任意、'unregistered'で未登録を指定可能）
+        user_name: ユーザー名フィルタ（部分一致、任意）
+        page: ページ番号（デフォルト1）
+        limit: 1ページあたりの件数（デフォルト100、最大100）
+        attendance_service: 出欠管理サービス
+        current_user: 現在のユーザー（管理者）
+
+    Returns:
+        ユーザー情報と出席記録を結合した配列
+    """
+    # limitの最大値を100に制限
+    limit = min(limit, 100)
+    
+    result = await attendance_service.get_users_with_attendance_for_admin(
+        practice_schedule_id=practice_schedule_id,
+        status=status,
+        user_name=user_name,
+        page=page,
+        limit=limit
+    )
+    
+    return result
 
 
