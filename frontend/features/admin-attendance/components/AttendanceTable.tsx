@@ -1,36 +1,35 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { User, Attendance, PracticeSchedule, AttendanceCreate } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { User, Attendance, PracticeSchedule, AttendanceCreate, UserWithAttendanceResponse } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS, UI_TEXT } from '../constants';
-import { Calendar, Filter, Edit2, Clock, FileText, Save, X } from 'lucide-react';
+import { Calendar, Filter, Edit2, Clock, FileText, Save, X, Search } from 'lucide-react';
 import { ApiError } from '../../../lib/api';
+import { useAdminAttendance } from '../hooks/use-admin-attendance';
 
 interface AttendanceTableProps {
-  users: User[];
-  attendances: Attendance[];
   practiceSchedules: PracticeSchedule[];
-  selectedPracticeId?: string;
-  onPracticeChange?: (practiceId: string) => void;
-  onAttendanceUpdate?: (attendance: AttendanceCreate) => Promise<void>;
   isEditable?: boolean;
-  loading?: boolean;
 }
 
 export const AttendanceTable: React.FC<AttendanceTableProps> = ({
-  users,
-  attendances,
   practiceSchedules,
-  selectedPracticeId,
-  onPracticeChange,
-  onAttendanceUpdate,
   isEditable = true,
-  loading = false,
 }) => {
-  const [filterPracticeId, setFilterPracticeId] = useState<string>(selectedPracticeId || '');
+  const {
+    practiceSchedules: schedulesFromHook,
+    usersWithAttendance,
+    loading,
+    fetchUsersWithAttendance,
+    upsertAttendance,
+  } = useAdminAttendance();
+  
+  // practiceSchedulesはpropsから取得、なければhookから取得
+  const displayPracticeSchedules = practiceSchedules.length > 0 ? practiceSchedules : schedulesFromHook;
+
+  const [filterPracticeId, setFilterPracticeId] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterStartDate, setFilterStartDate] = useState<string>('');
-  const [filterEndDate, setFilterEndDate] = useState<string>('');
+  const [filterUserName, setFilterUserName] = useState<string>('');
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<{
@@ -40,56 +39,41 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // フィルタリングされた練習スケジュール
-  const filteredPracticeSchedules = useMemo(() => {
-    let filtered = practiceSchedules;
-
-    if (filterStartDate) {
-      filtered = filtered.filter(p => new Date(p.schedule_date) >= new Date(filterStartDate));
-    }
-    if (filterEndDate) {
-      filtered = filtered.filter(p => new Date(p.schedule_date) <= new Date(filterEndDate));
+  // フィルタ変更時にAPIを呼び出す（練習IDが選択されている場合のみ）
+  useEffect(() => {
+    if (!filterPracticeId) {
+      // 練習IDが選択されていない場合は空の配列を設定
+      return;
     }
 
-    return filtered;
-  }, [practiceSchedules, filterStartDate, filterEndDate]);
+    const params: {
+      practice_schedule_id?: string;
+      status?: string;
+      user_name?: string;
+      page?: number;
+      limit?: number;
+    } = {
+      page: 1,
+      limit: 100,
+    };
 
-  // 表示する練習を決定
-  const displayPracticeId = filterPracticeId || selectedPracticeId || '';
-
-  // ユーザーと出席記録をマージ
-  const tableData = useMemo(() => {
-    if (!displayPracticeId) return [];
-
-    const practiceAttendances = attendances.filter(
-      a => a.practice_schedule_id === displayPracticeId
-    );
-
-    let data = users.map(user => {
-      const attendance = practiceAttendances.find(a => a.user_id === user.id);
-      return {
-        user,
-        attendance,
-      };
-    });
-
-    // 出席状況でフィルタ
+    params.practice_schedule_id = filterPracticeId;
+    
     if (filterStatus !== 'all') {
-      if (filterStatus === 'unregistered') {
-        data = data.filter(item => !item.attendance);
-      } else {
-        data = data.filter(item => {
-          if (!item.attendance) return false;
-          return item.attendance.status === filterStatus;
-        });
-      }
+      params.status = filterStatus;
+    }
+    if (filterUserName) {
+      params.user_name = filterUserName;
     }
 
-    return data;
-  }, [users, attendances, displayPracticeId, filterStatus]);
+    fetchUsersWithAttendance(params);
+  }, [filterPracticeId, filterStatus, filterUserName, fetchUsersWithAttendance]);
+
+  // テーブルデータ（バックエンドから取得したデータをそのまま使用）
+  const tableData = usersWithAttendance;
 
   const handleStatusChange = async (userId: string, status: 'present' | 'absent' | 'late' | 'no_show') => {
-    if (!displayPracticeId || !onAttendanceUpdate) return;
+    if (!filterPracticeId) return;
 
     setSavingUserId(userId);
     try {
@@ -98,7 +82,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       
       // 遅刻の場合は参加可能時間を保持、それ以外の場合はnullに設定
       const updateData: AttendanceCreate = {
-        practice_schedule_id: displayPracticeId,
+        practice_schedule_id: filterPracticeId,
         user_id: userId,
         status,
         notes: currentAttendance?.notes || undefined,
@@ -113,7 +97,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         updateData.available_to = null;
       }
       
-      await onAttendanceUpdate(updateData);
+      await upsertAttendance(updateData);
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -127,7 +111,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         errorStack: error instanceof Error ? error.stack : undefined,
         userId,
         status,
-        practiceScheduleId: displayPracticeId
+        practiceScheduleId: filterPracticeId
       });
       // エラーをユーザーに通知（必要に応じてトースト通知などを追加可能）
       alert(`出席状況の更新に失敗しました: ${errorMessage}`);
@@ -154,7 +138,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   };
 
   const handleEditSave = async () => {
-    if (!editingData || !editingUserId || !displayPracticeId || !onAttendanceUpdate) return;
+    if (!editingData || !editingUserId || !filterPracticeId) return;
 
     setSaving(true);
     try {
@@ -164,7 +148,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       
       // 遅刻の場合は参加可能時間を送信、それ以外の場合はnullに設定
       const updateData: AttendanceCreate = {
-        practice_schedule_id: displayPracticeId,
+        practice_schedule_id: filterPracticeId,
         user_id: editingUserId,
         status: currentStatus,
         notes: editingData.notes?.trim() || undefined,
@@ -186,7 +170,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         updateData.available_to = null;
       }
       
-      await onAttendanceUpdate(updateData);
+      await upsertAttendance(updateData);
       setEditingUserId(null);
       setEditingData(null);
     } catch (error) {
@@ -201,7 +185,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         errorMessage,
         errorStack: error instanceof Error ? error.stack : undefined,
         userId: editingUserId,
-        practiceScheduleId: displayPracticeId
+        practiceScheduleId: filterPracticeId
       });
       // エラーをユーザーに通知（必要に応じてトースト通知などを追加可能）
       alert(`出席詳細の更新に失敗しました: ${errorMessage}`);
@@ -210,7 +194,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     }
   };
 
-  const selectedPractice = practiceSchedules.find(p => p.id === displayPracticeId);
+  const selectedPractice = displayPracticeSchedules.find(p => p.id === filterPracticeId);
 
   const getStatusLabel = (status: string) => {
     return ATTENDANCE_STATUS_LABELS[status as keyof typeof ATTENDANCE_STATUS_LABELS] || status;
@@ -220,8 +204,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     return ATTENDANCE_STATUS_COLORS[status as keyof typeof ATTENDANCE_STATUS_COLORS] || 'text-gray-600 bg-gray-50';
   };
 
-  const editingUser = editingUserId ? users.find(u => u.id === editingUserId) : null;
-  const editingAttendance = editingUserId ? attendances.find(a => a.user_id === editingUserId && a.practice_schedule_id === displayPracticeId) : null;
+  const editingUser = editingUserId ? tableData.find(item => item.user.id === editingUserId)?.user : null;
+  const editingAttendance = editingUserId ? tableData.find(item => item.user.id === editingUserId)?.attendance : null;
 
   return (
     <>
@@ -339,7 +323,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <h3 className="text-sm font-semibold text-gray-900">フィルタ</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* 練習選択 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -347,16 +331,11 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             </label>
             <select
               value={filterPracticeId}
-              onChange={(e) => {
-                setFilterPracticeId(e.target.value);
-                if (onPracticeChange) {
-                  onPracticeChange(e.target.value);
-                }
-              }}
+              onChange={(e) => setFilterPracticeId(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">すべての練習</option>
-              {filteredPracticeSchedules.map((schedule) => (
+              {displayPracticeSchedules.map((schedule) => (
                 <option key={schedule.id} value={schedule.id}>
                   {schedule.title || '練習'} - {new Date(schedule.schedule_date).toLocaleDateString('ja-JP')}
                 </option>
@@ -384,30 +363,21 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             </select>
           </div>
 
-          {/* 開始日 */}
+          {/* ユーザー名フィルタ */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {UI_TEXT.START_DATE}
+              ユーザー名
             </label>
-            <input
-              type="date"
-              value={filterStartDate}
-              onChange={(e) => setFilterStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
-          </div>
-
-          {/* 終了日 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {UI_TEXT.END_DATE}
-            </label>
-            <input
-              type="date"
-              value={filterEndDate}
-              onChange={(e) => setFilterEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={filterUserName}
+                onChange={(e) => setFilterUserName(e.target.value)}
+                placeholder="ユーザー名で検索"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -430,7 +400,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       )}
 
       {/* テーブル */}
-      {displayPracticeId ? (
+      {filterPracticeId ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-white">
@@ -462,7 +432,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                tableData.map(({ user, attendance }) => {
+                tableData.map((item) => {
+                  const user = item.user;
+                  const attendance = item.attendance;
                   const isSaving = savingUserId === user.id;
                   const currentStatus = attendance?.status || null;
 

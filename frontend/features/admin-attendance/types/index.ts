@@ -61,3 +61,8 @@ export interface AttendanceTableRow {
   attendance?: Attendance;
 }
 
+export interface UserWithAttendanceResponse {
+  user: User;
+  attendance: Attendance | null;
+}
+
