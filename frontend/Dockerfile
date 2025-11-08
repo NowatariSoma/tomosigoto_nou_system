@@ -40,8 +40,13 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
 
-# Next.jsをビルド
-RUN npm run build
+# Next.jsをビルド（本番環境のみ）
+RUN if [ "$NODE_ENV" = "production" ]; then \
+      npm run build; \
+    else \
+      echo "Skipping build in development mode"; \
+      mkdir -p .next && echo '{"version": 3}' > .next/build-manifest.json; \
+    fi
 
 # ================================
 # 開発ステージ

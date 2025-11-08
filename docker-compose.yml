@@ -31,6 +31,9 @@ services:
       target: development
       args:
         - NODE_ENV=${NODE_ENV:-development}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     ports:
       - "3000:3000"
     env_file:
@@ -39,6 +42,8 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
       - NEXT_PUBLIC_ORTOOLS_ENGINE_URL=http://localhost:8001
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     volumes:
       # フロントエンドのソースコードをマウント
       - ./frontend:/app
