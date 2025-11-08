@@ -8,8 +8,8 @@ import { useSearchParams } from 'next/navigation';
 
 function PracticeScheduleEditorContent() {
   const searchParams = useSearchParams();
-  const scheduleId = searchParams.get('scheduleId') || undefined;
-  const scheduleDate = searchParams.get('date') || undefined;
+  const scheduleId = searchParams?.get('scheduleId') || undefined;
+  const scheduleDate = searchParams?.get('date') || undefined;
 
   return (
     <PracticeScheduleEditorPage 

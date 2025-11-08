@@ -3,8 +3,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/schedule';
-import { practiceScheduleService } from '../services';
+import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/practice-schedule-types';
+import { practiceScheduleService } from '../services/practice-schedule-service';
 
 /**
  * 練習スケジュール管理フック

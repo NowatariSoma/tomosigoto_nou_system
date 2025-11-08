@@ -8,7 +8,7 @@ import { BottomSheetSchedule } from "@/features/schedule/components/bottom-sheet
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedDate = searchParams.get('date'); // YYYY-MM-DD形式
+  const selectedDate = searchParams?.get('date') || null; // YYYY-MM-DD形式
 
   // ボトムシートを閉じる
   const handleCloseBottomSheet = () => {

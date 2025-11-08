@@ -141,7 +141,7 @@ function NavTitle({ label }: { label: string }) {
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const router = useRouter();
 
   const toggleSidebar = () => {
@@ -220,13 +220,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 label="スケジュール"
                 active={pathname === '/schedule'}
                 onClick={() => handleNavigateAndClose('/schedule')}
-              />
-
-              <NavItem
-                icon={<BookOpen className="w-4 h-4" />}
-                label="練習表"
-                active={pathname === '/practice-slots'}
-                onClick={() => handleNavigateAndClose('/practice-slots')}
               />
 
               <NavItem
@@ -365,14 +358,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "スケジュール"}
             active={pathname === '/schedule'}
             href="/schedule"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<BookOpen className="w-4 h-4" />}
-            label={isCollapsed ? "" : "練習表"}
-            active={pathname === '/practice-slots'}
-            href="/practice-slots"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

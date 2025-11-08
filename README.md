@@ -45,3 +45,8 @@ docker compose -f docker-compose.prod.yml logs -f
 ```bash
 docker compose -f docker-compose.prod.yml logs -f backend
 docker compose -f docker-compose.prod.yml logs -f frontend
+
+
+#### 6. 開発環境での停止
+```bash
+docker compose -f docker-compose.yml down

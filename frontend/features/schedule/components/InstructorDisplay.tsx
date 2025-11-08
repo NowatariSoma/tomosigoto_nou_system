@@ -6,8 +6,8 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { SessionInstructorWithDetails } from '../types/schedule';
-import { useSessionInstructors } from '../hooks';
+import { SessionInstructorWithDetails } from '../types/practice-schedule-types';
+import { useSessionInstructors } from '../hooks/use-session-instructors';
 
 interface InstructorDisplayProps {
   scheduleId?: string;
