@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
-import { IdealScheduleData } from '@/features/practice-slots/types/schedule';
+import { ScheduleTable } from '@/features/schedule/components/ScheduleTable';
+import { IdealScheduleData } from '@/features/schedule/types/practice-schedule-types';
 
 /**
  * ScheduleTableコンポーネントのテストページ

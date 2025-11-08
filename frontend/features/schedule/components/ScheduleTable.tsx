@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useIdealSchedule } from '../hooks';
-import { IdealScheduleData } from '../types/schedule';
+import { useIdealSchedule } from '../hooks/use-practice-schedule-data';
+import { IdealScheduleData } from '../types/practice-schedule-types';
 import { InstructorDisplay } from './InstructorDisplay';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 

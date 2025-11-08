@@ -3,15 +3,15 @@
  * session_instructors APIエンドポイントとの通信を担当
  */
 
-import { 
-  SessionInstructor, 
+import {
+  SessionInstructor,
   SessionInstructorWithDetails,
   SessionInstructorCreate,
   SessionInstructorBulkCreate,
   SessionInstructorBulkResponse
-} from '../types/schedule';
+} from '../types/practice-schedule-types';
 import { fetchApi } from '../../../lib/api';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../constants/practice-schedule-constants';
 
 /**
  * セッション指導者APIサービス
