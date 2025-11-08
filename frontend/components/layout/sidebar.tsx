@@ -271,6 +271,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleNavigateAndClose('/attendance')}
               />
 
+              <NavItem
+                icon={<Users className="w-4 h-4" />}
+                label="管理者用出席管理"
+                active={pathname === '/admin/attendance'}
+                onClick={() => handleNavigateAndClose('/admin/attendance')}
+              />
+
               <NavTitle label="その他" />
 
               <NavItem
@@ -413,6 +420,14 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "出席管理"}
             active={pathname === '/attendance'}
             href="/attendance"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Users className="w-4 h-4" />}
+            label={isCollapsed ? "" : "管理者用出席管理"}
+            active={pathname === '/admin/attendance'}
+            href="/admin/attendance"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
