@@ -3,7 +3,7 @@
  * バックエンドから適切にデータが取得できているか確認する
  */
 
-import { IdealScheduleData } from './features/practice-slots/types/schedule';
+import { IdealScheduleData } from './features/schedule/types/practice-schedule-types';
 
 // テスト用の日付（実際に存在するスケジュールの日付に変更してください）
 const TEST_DATE = '2025-01-15';

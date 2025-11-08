@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ScheduleTable } from '@/features/practice-slots/components/ScheduleTable';
-import { Information } from '@/features/practice-slots/components/Information';
+import { ScheduleTable } from './ScheduleTable';
+import { Information } from './Information';
 
 interface DayScheduleDetailProps {
   date: string; // YYYY-MM-DD形式
