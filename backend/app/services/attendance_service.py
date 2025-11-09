@@ -221,16 +221,16 @@ class AttendanceService:
             user_data = {
                 "user": {
                     "id": user["id"],
-                    "name": user.get("name") or user.get("email", ""),
+                    "name": user.get("name") or "--",
                     "email": user.get("email", ""),
                 }
             }
-            
+
             # プロフィール情報を追加
             if profile:
                 user_data["user"]["first_name_kanji"] = profile.get("first_name_kanji")
                 user_data["user"]["last_name_kanji"] = profile.get("last_name_kanji")
-                user_data["user"]["name"] = f"{profile.get('last_name_kanji', '')} {profile.get('first_name_kanji', '')}".strip() or user.get("email", "")
+                user_data["user"]["name"] = f"{profile.get('last_name_kanji', '')} {profile.get('first_name_kanji', '')}".strip() or "--"
             
             # 出席記録を追加
             if attendance:

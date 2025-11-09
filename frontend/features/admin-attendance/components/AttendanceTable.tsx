@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance, PracticeSchedule, AttendanceCreate, UserWithAttendanceResponse } from '../types';
-import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS, UI_TEXT } from '../constants';
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT } from '../constants';
 import { Calendar, Filter, Save, X, Search, Edit } from 'lucide-react';
 import { ApiError } from '../../../lib/api';
 import { useAdminAttendance } from '../hooks/use-admin-attendance';
+import { toast } from 'sonner';
 
 interface AttendanceTableProps {
   practiceSchedules: PracticeSchedule[];
@@ -74,14 +75,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   const tableData = usersWithAttendance;
 
   const selectedPractice = displayPracticeSchedules.find(p => p.id === filterPracticeId);
-
-  const getStatusLabel = (status: string) => {
-    return ATTENDANCE_STATUS_LABELS[status as keyof typeof ATTENDANCE_STATUS_LABELS] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    return ATTENDANCE_STATUS_COLORS[status as keyof typeof ATTENDANCE_STATUS_COLORS] || 'text-gray-600 bg-gray-50';
-  };
 
   // 編集モード切り替え
   const handleEditModeToggle = () => {
@@ -162,7 +155,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       await Promise.all(promises);
       setEditedChanges({});
       setIsEditMode(false);
-      alert('変更を保存しました');
+
+      // トースト通知を表示
+      toast.success('出席を記録しました');
     } catch (error) {
       const errorMessage = error instanceof ApiError
         ? error.message
@@ -171,7 +166,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         : String(error);
 
       console.error('Failed to save changes:', error);
-      alert(`変更の保存に失敗しました: ${errorMessage}`);
+      toast.error(`変更の保存に失敗しました: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -257,17 +252,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           )}
         </div>
       </div>
-
-      {/* 編集モード表示 */}
-      {isEditMode && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-yellow-800">
-            <Edit className="h-4 w-4" />
-            <span className="font-medium">編集モード：</span>
-            <span>変更を加えた後、「変更を保存」ボタンをクリックしてください。</span>
-          </div>
-        </div>
-      )}
 
       {/* フィルタリング */}
       <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-white rounded-lg border border-gray-200">
@@ -365,13 +349,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 <th style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.USER_NAME}
                 </th>
-                <th style={isEditMode ? { minWidth: '312px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={isEditMode ? { width: '280px', minWidth: '280px', maxWidth: '280px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.STATUS}
                 </th>
-                <th style={{ width: '130px', minWidth: '130px', maxWidth: '130px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   参加可能時間
                 </th>
-                <th style={isEditMode ? { width: '240px', minWidth: '240px', maxWidth: '240px' } : { minWidth: '240px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ minWidth: '240px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.NOTES}
                 </th>
               </tr>
@@ -402,12 +386,12 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                       </td>
 
                       {/* 出席状況 */}
-                      <td className="px-6 py-4 whitespace-nowrap" style={isEditMode ? { minWidth: '312px' } : { width: '150px', maxWidth: '150px' }}>
+                      <td className="px-6 py-4 whitespace-nowrap" style={isEditMode ? { width: '280px', maxWidth: '280px' } : { width: '150px', maxWidth: '150px' }}>
                         {isEditMode ? (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5">
                             <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                              className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                                 currentStatus === ATTENDANCE_STATUS.PRESENT
                                   ? 'bg-green-600 text-white border-green-600 shadow-sm'
                                   : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
@@ -417,7 +401,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                             </button>
                             <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                              className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                                 currentStatus === ATTENDANCE_STATUS.ABSENT
                                   ? 'bg-red-600 text-white border-red-600 shadow-sm'
                                   : 'bg-white text-red-700 border-red-300 hover:bg-red-50'
@@ -427,7 +411,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                             </button>
                             <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                              className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                                 currentStatus === ATTENDANCE_STATUS.LATE
                                   ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
                                   : 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50'
@@ -437,7 +421,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                             </button>
                             <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                              className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                                 currentStatus === ATTENDANCE_STATUS.NO_SHOW
                                   ? 'bg-red-700 text-white border-red-700 shadow-sm'
                                   : 'bg-white text-red-800 border-red-400 hover:bg-red-50'
@@ -449,22 +433,22 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         ) : (
                           <div>
                             {currentStatus === ATTENDANCE_STATUS.PRESENT && (
-                              <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
+                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
                                 出席
                               </span>
                             )}
                             {currentStatus === ATTENDANCE_STATUS.ABSENT && (
-                              <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
+                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
                                 欠席
                               </span>
                             )}
                             {currentStatus === ATTENDANCE_STATUS.LATE && (
-                              <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
+                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
                                 遅刻
                               </span>
                             )}
                             {currentStatus === ATTENDANCE_STATUS.NO_SHOW && (
-                              <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
+                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
                                 無断欠席
                               </span>
                             )}
@@ -476,7 +460,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                       </td>
 
                       {/* 参加可能時間 */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ width: '180px', maxWidth: '180px' }}>
                         {isEditMode && currentStatus === ATTENDANCE_STATUS.LATE ? (
                           // 編集モード & 遅刻の場合：時間入力フィールド
                           <div className="flex gap-1 items-center text-xs">
@@ -604,22 +588,22 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                       ) : (
                         <div>
                           {currentStatus === ATTENDANCE_STATUS.PRESENT && (
-                            <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
                               出席
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.ABSENT && (
-                            <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
                               欠席
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.LATE && (
-                            <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
                               遅刻
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.NO_SHOW && (
-                            <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
                               無断欠席
                             </span>
                           )}
