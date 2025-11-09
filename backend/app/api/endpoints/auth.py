@@ -184,7 +184,7 @@ async def update_password(
 
 @router.get("/me", response_model=Dict[str, Any])
 async def get_current_user_info(
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     現在のユーザー情報を取得

@@ -53,47 +53,46 @@ class AttendanceRepository:
                 *,
                 users!inner(
                     id,
-                    email,
-                    raw_user_meta_data
-                ),
-                user_profiles!left(
-                    first_name_kanji,
-                    last_name_kanji,
-                    first_name_katakana,
-                    last_name_katakana,
-                    student_id
+                    email
                 )
             """)
             .eq("practice_schedule_id", practice_schedule_id)
             .execute()
         )
         
-        formatted_data = []
-        for item in response.data:
-            formatted_item = item.copy()
-            user_data = item.get("users", {})
-            profile_data = item.get("user_profiles", {})
-            
-            user_name = None
-            if profile_data:
-                first_name = profile_data.get("first_name_kanji", "")
-                last_name = profile_data.get("last_name_kanji", "")
-                if first_name and last_name:
-                    user_name = f"{last_name} {first_name}"
-                elif first_name:
-                    user_name = first_name
-                elif last_name:
-                    user_name = last_name
-            
-            if not user_name and user_data:
-                meta_data = user_data.get("raw_user_meta_data", {})
-                user_name = meta_data.get("name") or user_data.get("email", "").split("@")[0]
-            
-            formatted_item["user_name"] = user_name or f"User {str(user_data.get('id', ''))[:8]}"
-            formatted_item["user_email"] = user_data.get("email", "")
-            formatted_data.append(formatted_item)
+        if not response.data:
+            return []
         
-        return formatted_data
+        # user_idを収集
+        user_ids = [item["users"]["id"] for item in response.data if item.get("users", {}).get("id")]
+        
+        # user_profilesをバッチ取得
+        profiles_map = {}
+        if user_ids:
+            profile_response = (
+                self.client.table("user_profiles")
+                .select("user_id, last_name_kanji, first_name_kanji")
+                .in_("user_id", user_ids)
+                .execute()
+            )
+            for profile in profile_response.data or []:
+                profiles_map[profile["user_id"]] = profile
+        
+        # 各出欠記録にuser_nameを設定
+        for item in response.data:
+            user_data = item.get("users", {})
+            user_id = user_data.get("id")
+            
+            # フルネームを構築（本番環境では必ず存在する）
+            if user_id and user_id in profiles_map:
+                profile = profiles_map[user_id]
+                item["user_name"] = f"{profile.get('last_name_kanji', '')} {profile.get('first_name_kanji', '')}".strip()
+            else:
+                item["user_name"] = user_data.get("email", "").split("@")[0] if user_data.get("email") else "不明"
+            
+            item["user_email"] = user_data.get("email", "") if user_data else ""
+        
+        return response.data
 
     @handle_supabase_errors("find_by_user")
     async def find_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:

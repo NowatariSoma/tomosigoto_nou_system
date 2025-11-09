@@ -3,10 +3,15 @@
 # load_dotenv()
 
 # Supabase連携を有効にする
+import logging
 from app.api.api import api_router
 from app.core.config import settings
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -14,6 +19,19 @@ app = FastAPI(
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
+
+# バリデーションエラーの詳細をログに出力
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """バリデーションエラーの詳細をログに出力"""
+    body = await request.body()
+    logger.error(f"Validation error for {request.method} {request.url}")
+    logger.error(f"Validation errors: {exc.errors()}")
+    logger.error(f"Request body: {body.decode('utf-8') if body else 'Empty'}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
 
 # CORS設定
 # 開発環境ではすべてのオリジンを許可（本番環境では適切に制限すること）

@@ -5,7 +5,6 @@ from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.department_repository import DepartmentRepository
-from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
 from app.schemas.account_setting import (
     AccountSettingProfileCreate,
     AccountSettingProfileUpdate,
@@ -13,7 +12,6 @@ from app.schemas.account_setting import (
     AccountSettingValidationResponse,
     AccountSettingValidationError,
     DepartmentResponse,
-    AccountSettingHistoryResponse,
     AccountSettingProfileResponse,
 )
 
@@ -29,18 +27,15 @@ class AccountSettingService:
     def __init__(
         self, 
         user_profile_repository: UserProfileRepository,
-        department_repository: DepartmentRepository,
-        history_repository: AccountSettingHistoryRepository
+        department_repository: DepartmentRepository
     ):
         """
         Args:
             user_profile_repository: UserProfileRepositoryインスタンス
             department_repository: DepartmentRepositoryインスタンス
-            history_repository: AccountSettingHistoryRepositoryインスタンス
         """
         self.user_profile_repo = user_profile_repository
         self.department_repo = department_repository
-        self.history_repo = history_repository
 
     async def _ensure_test_user_exists(self, user_id: str) -> None:
         """テスト用のユーザーがusersテーブルに存在することを確認し、存在しない場合は作成"""
@@ -231,8 +226,8 @@ class AccountSettingService:
             logger.warning(f"Account setting profile not found for user: {user_id}")
             raise APIException(ErrorMessage.USER_NOT_FOUND)
 
-        # 更新データの準備
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        # 更新データの準備（Pydantic v2対応: model_dump()を使用）
+        update_dict = {k: v for k, v in update_data.model_dump(exclude_unset=True).items() if v is not None}
         
         if not update_dict:
             return existing_profile
@@ -328,16 +323,6 @@ class AccountSettingService:
         """学部コードで学部を取得"""
         department = await self.department_repo.get_department_by_code(department_code)
         return DepartmentResponse(**department) if department else None
-
-    async def get_profile_history(self, user_id: str, limit: int = 50) -> List[AccountSettingHistoryResponse]:
-        """ユーザーのアカウント設定変更履歴を取得"""
-        history = await self.history_repo.get_history_by_user_id(user_id, limit)
-        return [AccountSettingHistoryResponse(**record) for record in history]
-
-    async def get_field_history(self, user_id: str, field_name: str, limit: int = 20) -> List[AccountSettingHistoryResponse]:
-        """特定フィールドの変更履歴を取得"""
-        history = await self.history_repo.get_history_by_field(user_id, field_name, limit)
-        return [AccountSettingHistoryResponse(**record) for record in history]
 
     async def validate_profile_data(self, profile_data: Dict[str, Any], user_id: Optional[str] = None) -> AccountSettingValidationResponse:
         """プロフィールデータのバリデーション"""
@@ -446,23 +431,3 @@ class AccountSettingService:
             "total_profiles": total_count,
             "faculty_distribution": faculty_distribution
         }
-
-    async def _record_profile_changes(self, user_id: str, old_profile: Dict[str, Any], 
-                                    new_data: Dict[str, Any], change_reason: Optional[str] = None) -> None:
-        """プロフィール変更履歴を記録"""
-        history_records = []
-        
-        for field, new_value in new_data.items():
-            old_value = old_profile.get(field)
-            if old_value != new_value:
-                history_records.append({
-                    "user_id": user_id,
-                    "field_name": field,
-                    "old_value": str(old_value) if old_value is not None else None,
-                    "new_value": str(new_value) if new_value is not None else None,
-                    "change_reason": change_reason
-                })
-
-        # 履歴レコードを一括作成
-        for record in history_records:
-            await self.history_repo.create_history_record(record)

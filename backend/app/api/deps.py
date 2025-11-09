@@ -17,7 +17,6 @@ from app.repositories.attendance_repository import AttendanceRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_role_repository import UserRoleRepository
-from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
 
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
@@ -199,20 +198,12 @@ def get_user_role_repository(
     return UserRoleRepository(supabase_client)
 
 
-def get_account_setting_history_repository(
-    supabase_client: Client = Depends(get_supabase),
-) -> AccountSettingHistoryRepository:
-    """AccountSettingHistoryRepositoryのインスタンスを取得"""
-    return AccountSettingHistoryRepository(supabase_client)
-
-
 def get_account_setting_service(
     user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
     department_repository: DepartmentRepository = Depends(get_department_repository),
-    history_repository: AccountSettingHistoryRepository = Depends(get_account_setting_history_repository),
 ) -> AccountSettingService:
     """AccountSettingServiceのインスタンスを依存性注入で取得"""
-    return AccountSettingService(user_profile_repository, department_repository, history_repository)
+    return AccountSettingService(user_profile_repository, department_repository)
 
 def get_practice_schedule_repository(
     supabase_client: Client = Depends(get_supabase),

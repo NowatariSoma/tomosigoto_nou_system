@@ -13,7 +13,6 @@ from app.schemas.account_setting import (
     AccountSettingUpdateRequest,
     AccountSettingValidationResponse,
     DepartmentResponse,
-    AccountSettingHistoryResponse,
 )
 from app.services.account_setting_service import AccountSettingService
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -81,8 +80,8 @@ async def create_user_profile(
     if existing_profile:
         raise APIException(ErrorMessage.BAD_REQUEST)
     
-    # バリデーション
-    validation_result = await account_setting_service.validate_profile_data(profile_data.dict(), user_id)
+    # バリデーション（Pydantic v2対応: model_dump()を使用）
+    validation_result = await account_setting_service.validate_profile_data(profile_data.model_dump(exclude_unset=True), user_id)
     if not validation_result.is_valid:
         raise APIException(ErrorMessage.BAD_REQUEST)
     
@@ -125,8 +124,8 @@ async def update_user_profile(
     """現在認証されているユーザーのアカウント設定プロフィールを更新"""
     user_id = current_user["id"]
     
-    # 更新データから None 値を除外
-    update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+    # 更新データから None 値を除外（Pydantic v2対応: model_dump()を使用）
+    update_dict = {k: v for k, v in update_data.model_dump(exclude_unset=True).items() if v is not None}
     
     if not update_dict:
         raise APIException(ErrorMessage.BAD_REQUEST)
@@ -149,8 +148,8 @@ async def update_public_profile(
 ):
     """認証不要でプロフィールを更新（テスト用）"""
     try:
-        # 更新データから None 値を除外
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        # 更新データから None 値を除外（Pydantic v2対応: model_dump()を使用）
+        update_dict = {k: v for k, v in update_data.model_dump(exclude_unset=True).items() if v is not None}
         
         if not update_dict:
             raise APIException(ErrorMessage.BAD_REQUEST)
@@ -210,31 +209,6 @@ async def get_department_by_code(
         raise APIException(ErrorMessage.USER_NOT_FOUND)
     
     return department
-
-
-@router.get("/profile/history", response_model=List[AccountSettingHistoryResponse])
-async def get_profile_history(
-    limit: int = Query(50, ge=1, le=100),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    account_setting_service: AccountSettingService = Depends(get_account_setting_service),
-):
-    """現在認証されているユーザーのアカウント設定変更履歴を取得"""
-    user_id = current_user["id"]
-    history = await account_setting_service.get_profile_history(user_id, limit)
-    return history
-
-
-@router.get("/profile/history/{field_name}", response_model=List[AccountSettingHistoryResponse])
-async def get_field_history(
-    field_name: str,
-    limit: int = Query(20, ge=1, le=50),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    account_setting_service: AccountSettingService = Depends(get_account_setting_service),
-):
-    """現在認証されているユーザーの特定フィールドの変更履歴を取得"""
-    user_id = current_user["id"]
-    history = await account_setting_service.get_field_history(user_id, field_name, limit)
-    return history
 
 
 @router.post("/validate", response_model=AccountSettingValidationResponse)

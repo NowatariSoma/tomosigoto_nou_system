@@ -87,32 +87,6 @@ class AccountSettingProfileUpdate(BaseModel):
 
 
 
-class AccountSettingHistoryBase(BaseModel):
-    """アカウント設定変更履歴の基本情報"""
-
-    field_name: str = Field(..., description="変更されたフィールド名")
-    old_value: Optional[str] = Field(None, description="変更前の値")
-    new_value: Optional[str] = Field(None, description="変更後の値")
-    change_reason: Optional[str] = Field(None, description="変更理由")
-
-
-class AccountSettingHistoryCreate(AccountSettingHistoryBase):
-    """アカウント設定変更履歴作成用スキーマ"""
-
-    pass
-
-
-class AccountSettingHistoryResponse(AccountSettingHistoryBase):
-    """アカウント設定変更履歴レスポンス用スキーマ"""
-
-    id: str
-    user_id: str
-    changed_by: Optional[str] = Field(None, description="変更者ユーザーID")
-    changed_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class AccountSettingUpdateRequest(BaseModel):
     """アカウント設定更新リクエスト用スキーマ"""
 

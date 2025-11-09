@@ -140,8 +140,9 @@ class UserService:
         update_data = {}
         if "email" in user_data:
             update_data["email"] = user_data["email"]
-        if "name" in user_data:
-            update_data["name"] = user_data["name"]
+        # nameカラムはusersテーブルに存在しないため、更新をスキップ
+        # if "name" in user_data:
+        #     update_data["name"] = user_data["name"]
 
         if not update_data:
             return existing_user
