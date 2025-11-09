@@ -41,7 +41,6 @@ export const AdminAttendancePage: React.FC = () => {
     <div className="space-y-6">
       <AttendanceTable
         practiceSchedules={practiceSchedules}
-        isEditable={true}
       />
     </div>
   );
