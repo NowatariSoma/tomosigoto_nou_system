@@ -406,23 +406,23 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         <>
           {/* デスクトップ用テーブル */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-white">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.USER_NAME}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ minWidth: '312px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.STATUS}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ width: '130px', minWidth: '130px', maxWidth: '130px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   参加可能時間
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th style={{ width: '240px', minWidth: '240px', maxWidth: '240px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {UI_TEXT.NOTES}
                 </th>
                 {isEditable && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     操作
                   </th>
                 )}
@@ -444,18 +444,18 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
                   return (
                     <tr key={user.id} className="hover:bg-white">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                      <td style={{ width: '180px', maxWidth: '180px' }} className="px-6 py-4 overflow-hidden">
+                        <div className="w-full min-w-0 overflow-hidden">
+                          <div className="text-sm font-medium text-gray-900 truncate" title={user.name}>{user.name}</div>
+                          <div className="text-sm text-gray-500 truncate" title={user.email}>{user.email}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap gap-2">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '312px' }}>
+                        <div className="flex gap-2">
                           <button
                             onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
                             disabled={isSaving || loading}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                            className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                               currentStatus === ATTENDANCE_STATUS.PRESENT
                                 ? 'bg-green-600 text-white border-green-600 shadow-sm'
                                 : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
@@ -466,7 +466,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           <button
                             onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
                             disabled={isSaving || loading}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                            className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                               currentStatus === ATTENDANCE_STATUS.ABSENT
                                 ? 'bg-red-600 text-white border-red-600 shadow-sm'
                                 : 'bg-white text-red-700 border-red-300 hover:bg-red-50'
@@ -477,7 +477,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           <button
                             onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
                             disabled={isSaving || loading}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                            className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                               currentStatus === ATTENDANCE_STATUS.LATE
                                 ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
                                 : 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50'
@@ -488,7 +488,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           <button
                             onClick={() => handleStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
                             disabled={isSaving || loading}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                            className={`flex-1 min-w-[60px] px-2 py-1.5 text-xs font-medium rounded-md border transition-all whitespace-nowrap text-center ${
                               currentStatus === ATTENDANCE_STATUS.NO_SHOW
                                 ? 'bg-red-700 text-white border-red-700 shadow-sm'
                                 : 'bg-white text-red-800 border-red-400 hover:bg-red-50'
@@ -502,7 +502,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         {attendance?.status === ATTENDANCE_STATUS.LATE ? (
                           <div className="text-sm text-gray-900">
                             {attendance.available_from && attendance.available_to
-                              ? `${attendance.available_from} - ${attendance.available_to}`
+                              ? `${attendance.available_from.substring(0, 5)} - ${attendance.available_to.substring(0, 5)}`
                               : '-'}
                           </div>
                         ) : (
@@ -515,14 +515,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </div>
                       </td>
                       {isEditable && (
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           <button
                             onClick={() => handleEditClick(user.id)}
                             disabled={loading}
-                            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 hover:bg-blue-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center justify-center p-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 hover:bg-blue-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Edit2 className="h-4 w-4" />
-                            <span>操作</span>
                           </button>
                         </td>
                       )}
@@ -631,10 +630,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         <button
                           onClick={() => handleEditClick(user.id)}
                           disabled={loading}
-                          className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
-                          <span>操作</span>
                         </button>
                       </div>
                     )}
