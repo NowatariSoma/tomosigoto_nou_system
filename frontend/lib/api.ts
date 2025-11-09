@@ -82,23 +82,39 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         let errorData = null;
         let responseText = '';
-
+        
         try {
           responseText = await response.text();
           console.log('Error response body (raw):', responseText);
           console.log('Error response body length:', responseText.length);
-
+          
           if (responseText && responseText.trim() !== '') {
             try {
               errorData = JSON.parse(responseText);
               console.log('Error response body (parsed):', errorData);
-
+              
+              // detailがオブジェクトの場合（例: {"detail":{"error_code":"...","error_msg":"..."}}）
               if (errorData.detail) {
-                errorMessage = errorData.detail;
+                if (typeof errorData.detail === 'object' && errorData.detail !== null) {
+                  // detailがオブジェクトの場合、error_msgまたはerror_codeを取得
+                  errorMessage = errorData.detail.error_msg || 
+                                errorData.detail.error_code || 
+                                errorData.detail.message ||
+                                JSON.stringify(errorData.detail);
+                } else if (typeof errorData.detail === 'string') {
+                  // detailが文字列の場合
+                  errorMessage = errorData.detail;
+                }
               } else if (errorData.message) {
                 errorMessage = errorData.message;
               } else if (errorData.error) {
-                errorMessage = errorData.error;
+                errorMessage = typeof errorData.error === 'string' 
+                  ? errorData.error 
+                  : errorData.error.message || JSON.stringify(errorData.error);
+              } else if (errorData.error_msg) {
+                errorMessage = errorData.error_msg;
+              } else if (errorData.error_code) {
+                errorMessage = errorData.error_code;
               }
             } catch (jsonError) {
               console.warn('JSON parse error:', jsonError);
@@ -112,21 +128,31 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
           // レスポンステキストの取得に失敗した場合
           console.warn('Error response text retrieval failed:', textError);
         }
-
+        
         const errorDetails = {
           url: fullUrl,
           status: response.status,
           statusText: response.statusText,
           errorMessage,
           errorData,
+          responseText,
           responseHeaders: Object.fromEntries(response.headers.entries())
         };
-
-        console.error('API Error:', errorDetails);
-
+        
+        // より詳細なエラーログ
+        console.error('API Error:', {
+          url: fullUrl,
+          status: response.status,
+          statusText: response.statusText,
+          errorMessage: errorMessage,
+          errorData: errorData ? JSON.stringify(errorData, null, 2) : 'null',
+          responseText: responseText || '(empty)',
+          responseHeaders: Object.fromEntries(response.headers.entries())
+        });
+        
         // エラーメッセージが空の場合は詳細な情報を表示
         const finalErrorMessage = errorMessage || `${response.status} ${response.statusText}`;
-
+        
         throw new ApiError(response.status, finalErrorMessage);
       }
 

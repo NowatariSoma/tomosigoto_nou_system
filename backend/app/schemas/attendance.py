@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict
 
 
 class AttendanceStatus(str, Enum):
@@ -12,7 +12,7 @@ class AttendanceStatus(str, Enum):
     ABSENT = "absent"        # 欠席
     LATE = "late"           # 遅刻
     NO_SHOW = "no_show"     # 無断欠席
-    UNDECIDED = "undecided"  # 未定
+    UNDECIDED = "undecided"  # 未決定（後方互換性のため）
 
 
 class AttendanceBase(BaseModel):
@@ -35,17 +35,9 @@ class AttendanceUpdate(BaseModel):
     """出欠記録更新用スキーマ"""
 
     status: Optional[AttendanceStatus] = None
-    notes: Optional[str] = Field(None, max_length=500, description="備考（最大500文字）")
+    notes: Optional[str] = None
     available_from: Optional[time] = None
     available_to: Optional[time] = None
-
-    @field_validator('notes')
-    @classmethod
-    def validate_notes(cls, v: Optional[str]) -> Optional[str]:
-        """備考のバリデーション"""
-        if v is not None and len(v) > 500:
-            raise ValueError("備考は500文字以内で入力してください")
-        return v
 
 
 class AttendanceResponse(AttendanceBase):
@@ -56,8 +48,6 @@ class AttendanceResponse(AttendanceBase):
     updated_at: Optional[datetime] = None
     created_by: Optional[UUID] = None
     updated_by: Optional[UUID] = None
-    user_name: Optional[str] = None  # ユーザー名
-    user_email: Optional[str] = None  # ユーザーメールアドレス
 
     model_config = ConfigDict(from_attributes=True)
 
