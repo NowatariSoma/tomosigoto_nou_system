@@ -16,7 +16,7 @@ function AdminAttendanceContent() {
         text: '管理者向け機能'
       }}
       permissionBadge={{
-        level: 'admin',
+        level: 'basic',
         text: '管理者のみ'
       }}
       maxWidth="7xl"
