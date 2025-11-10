@@ -15,7 +15,9 @@ class PracticeScheduleRepository:
     @handle_supabase_errors("find_all")
     async def find_all(self) -> List[Dict[str, Any]]:
         """すべての練習スケジュールを取得"""
-        response = self.client.table(self.table_name).select("*").execute()
+        # Supabaseのデフォルトページネーション制限（1000件）を回避するため、
+        # 明示的に大きなlimitを設定して全件取得する
+        response = self.client.table(self.table_name).select("*").limit(10000).execute()
         return response.data
 
     @handle_supabase_errors("find_by_id")

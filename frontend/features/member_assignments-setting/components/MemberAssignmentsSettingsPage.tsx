@@ -2,10 +2,8 @@
 
 import React, { useState } from 'react';
 import { useStageAssignments } from '../hooks/useStageAssignments';
-import { memberAssignmentService } from '../services/member-assignment-service';
 import { MemberAssignmentsList } from './MemberAssignmentsList';
 import { MemberRegistrationModal } from './MemberRegistrationModal';
-import { CreateMemberAssignmentRequest } from '../types';
 import { UI_TEXT } from '../constants';
 
 export const MemberAssignmentsSettingsPage: React.FC = () => {
