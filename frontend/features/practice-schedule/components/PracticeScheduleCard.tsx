@@ -8,12 +8,14 @@ interface PracticeScheduleCardProps {
   schedule: PracticeSchedule;
   onEdit?: (schedule: PracticeSchedule) => void;
   onDelete?: (schedule: PracticeSchedule) => void;
+  onClick?: (schedule: PracticeSchedule) => void;
 }
 
 export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   schedule,
   onEdit,
   onDelete,
+  onClick,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -53,7 +55,10 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => onClick && onClick(schedule)}
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           {schedule.title && (
@@ -70,7 +75,10 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
         </div>
         <div className="flex space-x-2">
           <button
-            onClick={copyAttendanceLink}
+            onClick={(e) => {
+              e.stopPropagation();
+              copyAttendanceLink();
+            }}
             className={`p-2 rounded-md transition-colors ${
               copied
                 ? 'text-green-600 bg-green-50'
@@ -82,7 +90,10 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
           </button>
           {onEdit && (
             <button
-              onClick={() => onEdit(schedule)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(schedule);
+              }}
               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
               title="編集"
             >
@@ -91,7 +102,10 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
           )}
           {onDelete && (
             <button
-              onClick={() => onDelete(schedule)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(schedule);
+              }}
               className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
               title="削除"
             >

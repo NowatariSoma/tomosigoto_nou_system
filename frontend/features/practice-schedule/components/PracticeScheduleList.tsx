@@ -9,12 +9,14 @@ interface PracticeScheduleListProps {
   schedules: PracticeSchedule[];
   onEdit?: (schedule: PracticeSchedule) => void;
   onDelete?: (schedule: PracticeSchedule) => void;
+  onClick?: (schedule: PracticeSchedule) => void;
 }
 
 export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
   schedules,
   onEdit,
   onDelete,
+  onClick,
 }) => {
   if (schedules.length === 0) {
     return (
@@ -48,6 +50,7 @@ export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
             schedule={schedule}
             onEdit={onEdit}
             onDelete={onDelete}
+            onClick={onClick}
           />
       ))}
     </div>
