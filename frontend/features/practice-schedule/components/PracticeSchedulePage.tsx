@@ -7,7 +7,7 @@ import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { ScheduleSearchFilter } from './ScheduleSearchFilter';
 import { usePracticeSchedules, useVenues } from '../hooks';
 import { UI_TEXT } from '../constants';
-import { Plus, Calendar, ArrowLeft, Sparkles, Link, Check, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { SessionEditorTableSimpleDnd } from '../../practice-schedule-editor/components/SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from '../../practice-schedule-editor/components/SessionEditorModal';
@@ -16,13 +16,6 @@ import { ScheduleTimeEditor } from '../../practice-schedule-editor/components/Sc
 import { OptimizationModal } from '../../practice-schedule-editor/components/OptimizationModal';
 import { useSessionEditor } from '../../practice-schedule-editor/hooks';
 import { sessionInstructorService } from '../../practice-schedule-editor/services';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/overlays/dropdown-menu';
 
 export const PracticeSchedulePage: React.FC = () => {
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
@@ -40,7 +33,6 @@ export const PracticeSchedulePage: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
-  const [copied, setCopied] = useState(false);
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
   const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
   
@@ -129,35 +121,6 @@ export const PracticeSchedulePage: React.FC = () => {
     setIsEditMode(false);
     setEditingScheduleId('');
     setEditingScheduleDate('');
-  };
-
-  const handleEditScheduleInfo = (schedule: PracticeSchedule) => {
-    setEditingSchedule(schedule);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteScheduleFromEditor = async () => {
-    if (!editingScheduleId) return;
-    if (window.confirm('この練習予定を削除しますか？')) {
-      try {
-        await deleteSchedule(editingScheduleId);
-        handleBackToList();
-      } catch (error) {
-        console.error('Failed to delete schedule:', error);
-      }
-    }
-  };
-
-  const copyAttendanceLink = async () => {
-    if (!editingScheduleId) return;
-    const attendanceUrl = `${window.location.origin}/attendance?practice=${editingScheduleId}`;
-    try {
-      await navigator.clipboard.writeText(attendanceUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy link:', error);
-    }
   };
 
   const handleCreateSession = () => {
@@ -380,79 +343,48 @@ export const PracticeSchedulePage: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* ヘッダー */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex items-center space-x-4">
             <button
               onClick={handleBackToList}
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>一覧に戻る</span>
+              <span className="hidden sm:inline">一覧に戻る</span>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">練習表編集</h1>
-              <p className="text-gray-600 mt-1">
-                {editingScheduleDate} の練習スケジュールを編集します
-              </p>
-              <div className="mt-2">
-                <ScheduleTimeEditor
-                  startTime={scheduleStartTime}
-                  endTime={scheduleEndTime}
-                  onUpdate={handleScheduleTimeUpdate}
-                />
-              </div>
+              <ScheduleTimeEditor
+                startTime={scheduleStartTime}
+                endTime={scheduleEndTime}
+                onUpdate={handleScheduleTimeUpdate}
+              />
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleAutoOptimize}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors text-sm sm:text-base"
             >
               <Sparkles className="h-4 w-4" />
-              <span>自動最適化</span>
+              <span className="hidden sm:inline">自動最適化</span>
+              <span className="sm:hidden">最適化</span>
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-md transition-colors">
-                  <MoreVertical className="h-4 w-4" />
-                  <span>その他</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={copyAttendanceLink}>
-                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Link className="mr-2 h-4 w-4" />}
-                  <span>{copied ? 'リンクコピー済み' : '出席登録リンクをコピー'}</span>
-                </DropdownMenuItem>
-                {(() => {
-                  const currentSchedule = schedules.find(s => s.id === editingScheduleId);
-                  if (currentSchedule) {
-                    return (
-                      <DropdownMenuItem onClick={() => handleEditScheduleInfo(currentSchedule)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>練習予定を編集</span>
-                      </DropdownMenuItem>
-                    );
-                  }
-                  return null;
-                })()}
-                <DropdownMenuItem onClick={handleCreateSession}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>セッションを追加</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCreateInstructor}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>インストラクターを追加</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleDeleteScheduleFromEditor}
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>練習予定を削除</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              onClick={handleCreateSession}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors text-sm sm:text-base"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">パート追加</span>
+              <span className="sm:hidden">パート</span>
+            </button>
+            <button
+              onClick={handleCreateInstructor}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors text-sm sm:text-base"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">インストラクターを追加</span>
+              <span className="sm:hidden">インスト</span>
+            </button>
           </div>
         </div>
 
