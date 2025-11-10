@@ -61,6 +61,34 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
     const late = attendances.filter(a => a.status === 'late');
     const noShow = attendances.filter(a => a.status === 'no_show');
 
+    // 学年ごとにグループ化する関数
+    const groupByYear = (items: Attendance[]) => {
+      const groups: Record<string, Attendance[]> = {};
+
+      items.forEach(item => {
+        const yearKey = item.user_year !== undefined && item.user_year !== null
+          ? `${item.user_year}回生`
+          : '学年未登録';
+
+        if (!groups[yearKey]) {
+          groups[yearKey] = [];
+        }
+        groups[yearKey].push(item);
+      });
+
+      // ソート: 4回生 -> 3回生 -> 2回生 -> 1回生 -> 学年未登録
+      const sortedGroups: Record<string, Attendance[]> = {};
+      const yearOrder = ['4回生', '3回生', '2回生', '1回生', '学年未登録'];
+
+      yearOrder.forEach(year => {
+        if (groups[year]) {
+          sortedGroups[year] = groups[year];
+        }
+      });
+
+      return sortedGroups;
+    };
+
     return {
       stats: {
         total: attendances.length,
@@ -71,8 +99,8 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
       },
       groupedAttendances: {
         present,
-        absent,
-        late,
+        absent: groupByYear(absent),
+        late: groupByYear(late),
         noShow,
       },
     };
@@ -103,58 +131,6 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <div className="flex items-center mb-4">
-          <div className="bg-white border-2 border-slate-300 p-2 rounded-lg mr-3">
-            <Calendar className="h-5 w-5 text-slate-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-slate-900">
-            出欠情報サマリー
-          </h2>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-          <div className="bg-white p-4 rounded-lg border-2 border-slate-300">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="h-4 w-4 text-slate-500" />
-              <span className="text-2xl font-bold text-slate-900">{stats.total}</span>
-            </div>
-            <p className="text-sm text-slate-600">合計</p>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border-2 border-green-400">
-            <div className="flex items-center justify-between mb-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-2xl font-bold text-slate-900">{stats.present}</span>
-            </div>
-            <p className="text-sm text-slate-600">出席</p>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border-2 border-red-400">
-            <div className="flex items-center justify-between mb-2">
-              <XCircle className="h-4 w-4 text-red-500" />
-              <span className="text-2xl font-bold text-slate-900">{stats.absent}</span>
-            </div>
-            <p className="text-sm text-slate-600">欠席</p>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border-2 border-yellow-400">
-            <div className="flex items-center justify-between mb-2">
-              <Clock className="h-4 w-4 text-yellow-500" />
-              <span className="text-2xl font-bold text-slate-900">{stats.late}</span>
-            </div>
-            <p className="text-sm text-slate-600">遅刻</p>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border-2 border-orange-400">
-            <div className="flex items-center justify-between mb-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <span className="text-2xl font-bold text-slate-900">{stats.noShow}</span>
-            </div>
-            <p className="text-sm text-slate-600">無断欠席</p>
-          </div>
-        </div>
-      </div>
 
       {practiceSchedule && attendances.length > 0 && (
         <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -162,135 +138,82 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
             出欠情報詳細
           </h3>
           
-          <div className="border border-slate-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="font-medium text-slate-900">
-                  {practiceSchedule.title || '練習'}
-                </h4>
-                <p className="text-sm text-slate-600">
-                  {new Date(practiceSchedule.schedule_date).toLocaleDateString('ja-JP', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'short'
-                  })} {practiceSchedule.start_time} - {practiceSchedule.end_time}
-                </p>
-              </div>
-            </div>
             
             <div className="space-y-4">
-              {groupedAttendances.absent.length > 0 && (
-                <div className="bg-white border-2 border-red-400 rounded-lg p-4">
+              {Object.keys(groupedAttendances.absent).length > 0 && (
+                <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-white border-2 border-red-400 p-1.5 rounded">
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    </div>
+                    <XCircle className="h-4 w-4 text-red-500" />
                     <h5 className="font-semibold text-slate-900">
-                      欠席 ({groupedAttendances.absent.length}名)
+                      欠席 ({Object.values(groupedAttendances.absent).flat().length}名)
                     </h5>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {groupedAttendances.absent.map((attendance) => (
-                      <div
-                        key={attendance.id}
-                        className="bg-white px-3 py-1.5 rounded border-2 border-red-400 text-sm"
-                      >
-                        <span className="text-slate-900">
-                          {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {groupedAttendances.late.length > 0 && (
-                <div className="bg-white border-2 border-yellow-400 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-white border-2 border-yellow-400 p-1.5 rounded">
-                      <Clock className="h-4 w-4 text-yellow-500" />
-                    </div>
-                    <h5 className="font-semibold text-slate-900">
-                      遅刻 ({groupedAttendances.late.length}名)
-                    </h5>
-                  </div>
-                  <div className="space-y-2">
-                    {groupedAttendances.late.map((attendance) => (
-                      <div
-                        key={attendance.id}
-                        className="bg-white px-3 py-2 rounded border-2 border-yellow-400 text-sm"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-900 font-medium">
-                            {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
-                          </span>
-                          {(attendance.available_from || attendance.available_to) && (
-                            <span className="text-xs text-slate-500 ml-2">
-                              {attendance.available_from || '開始'} - {attendance.available_to || '終了'}
-                            </span>
-                          )}
+                  <div className="space-y-3">
+                    {Object.entries(groupedAttendances.absent).map(([year, attendances]) => (
+                      <div key={year} className="flex flex-wrap gap-2 items-start">
+                        <div className="font-bold text-slate-700 text-sm min-w-[80px] pt-1.5">
+                          【{year}】
                         </div>
-                        {attendance.notes && (
-                          <p className="text-xs text-slate-600 mt-1">{attendance.notes}</p>
-                        )}
+                        <div className="flex flex-wrap gap-2 flex-1">
+                          {attendances.map((attendance) => (
+                            <div
+                              key={attendance.id}
+                              className="bg-white px-3 py-1.5 rounded border-2 border-red-400 text-sm"
+                            >
+                              <span className="text-slate-900">
+                                {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {groupedAttendances.present.length > 0 && (
-                <div className="bg-white border-2 border-green-400 rounded-lg p-4">
+              {Object.keys(groupedAttendances.late).length > 0 && (
+                <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-white border-2 border-green-400 p-1.5 rounded">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    </div>
+                    <Clock className="h-4 w-4 text-yellow-500" />
                     <h5 className="font-semibold text-slate-900">
-                      出席 ({groupedAttendances.present.length}名)
+                      遅刻 ({Object.values(groupedAttendances.late).flat().length}名)
                     </h5>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {groupedAttendances.present.map((attendance) => (
-                      <div
-                        key={attendance.id}
-                        className="bg-white px-3 py-1.5 rounded border-2 border-green-400 text-sm"
-                      >
-                        <span className="text-slate-900">
-                          {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {groupedAttendances.noShow.length > 0 && (
-                <div className="bg-white border-2 border-orange-400 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-white border-2 border-orange-400 p-1.5 rounded">
-                      <AlertCircle className="h-4 w-4 text-orange-500" />
-                    </div>
-                    <h5 className="font-semibold text-slate-900">
-                      無断欠席 ({groupedAttendances.noShow.length}名)
-                    </h5>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {groupedAttendances.noShow.map((attendance) => (
-                      <div
-                        key={attendance.id}
-                        className="bg-white px-3 py-1.5 rounded border-2 border-orange-400 text-sm"
-                      >
-                        <span className="text-slate-900">
-                          {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
-                        </span>
+                  <div className="space-y-3">
+                    {Object.entries(groupedAttendances.late).map(([year, attendances]) => (
+                      <div key={year} className="flex flex-wrap gap-2 items-start">
+                        <div className="font-bold text-slate-700 text-sm min-w-[80px] pt-2">
+                          【{year}】
+                        </div>
+                        <div className="flex flex-wrap gap-2 flex-1">
+                          {attendances.map((attendance) => (
+                            <div
+                              key={attendance.id}
+                              className="bg-white px-3 py-2 rounded border-2 border-yellow-400 text-sm w-fit"
+                            >
+                              <div className="flex items-center flex-nowrap gap-2">
+                                <span className="text-slate-900 font-medium whitespace-nowrap">
+                                  {attendance.user_name}
+                                </span>
+                                {(attendance.available_from && attendance.available_to) && (
+                                  <span className="text-xs text-slate-500 whitespace-nowrap">
+                                    {attendance.available_from.slice(0, 5)} - {attendance.available_to.slice(0, 5)}
+                                  </span>
+                                )}
+                              </div>
+                              {attendance.notes && (
+                                <p className="text-xs text-slate-600 mt-1">{attendance.notes}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </div>
         </div>
       )}
 
@@ -305,4 +228,3 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
     </div>
   );
 };
-

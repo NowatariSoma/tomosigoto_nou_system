@@ -14,6 +14,7 @@ export interface Attendance {
   updated_by: string;
   user_name?: string; // ユーザー名
   user_email?: string; // ユーザーメールアドレス
+  user_year?: number; // ユーザーの学年
 }
 
 export interface AttendanceCreate {
