@@ -411,54 +411,48 @@ export const PracticeSchedulePage: React.FC = () => {
               <Sparkles className="h-4 w-4" />
               <span>自動最適化</span>
             </button>
-            <button
-              onClick={copyAttendanceLink}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                copied
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-gray-600 text-white hover:bg-gray-700'
-              }`}
-              title={copied ? 'コピーしました！' : '出席登録リンクをコピー'}
-            >
-              {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
-              <span>{copied ? 'コピー済み' : 'リンクコピー'}</span>
-            </button>
-            <button
-              onClick={handleDeleteScheduleFromEditor}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>削除</span>
-            </button>
-            {(() => {
-              const currentSchedule = schedules.find(s => s.id === editingScheduleId);
-              if (currentSchedule) {
-                return (
-                  <button
-                    onClick={() => handleEditScheduleInfo(currentSchedule)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-md transition-colors"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>編集</span>
-                  </button>
-                );
-              }
-              return null;
-            })()}
-            <button
-              onClick={handleCreateSession}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{UI_TEXT.ADD_SESSION}</span>
-            </button>
-            <button
-              onClick={handleCreateInstructor}
-              className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>インストラクターを追加</span>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-md transition-colors">
+                  <MoreVertical className="h-4 w-4" />
+                  <span>その他</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={copyAttendanceLink}>
+                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Link className="mr-2 h-4 w-4" />}
+                  <span>{copied ? 'リンクコピー済み' : '出席登録リンクをコピー'}</span>
+                </DropdownMenuItem>
+                {(() => {
+                  const currentSchedule = schedules.find(s => s.id === editingScheduleId);
+                  if (currentSchedule) {
+                    return (
+                      <DropdownMenuItem onClick={() => handleEditScheduleInfo(currentSchedule)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>練習予定を編集</span>
+                      </DropdownMenuItem>
+                    );
+                  }
+                  return null;
+                })()}
+                <DropdownMenuItem onClick={handleCreateSession}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  <span>セッションを追加</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCreateInstructor}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  <span>インストラクターを追加</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleDeleteScheduleFromEditor}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>練習予定を削除</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -553,18 +547,6 @@ export const PracticeSchedulePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* 新規登録ボタン */}
-      <div className="text-center">
-        <Button
-          onClick={handleCreateClick}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          新規登録
-        </Button>
-      </div>
-
       {/* フォーム */}
       {isFormOpen && (
         <PracticeScheduleForm
@@ -593,9 +575,18 @@ export const PracticeSchedulePage: React.FC = () => {
             index === self.findIndex(s => s.id === schedule.id)
           );
           return (
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              練習予定一覧 ({uniqueSchedules.length}件)
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                練習予定一覧 ({uniqueSchedules.length}件)
+              </h2>
+              <Button
+                onClick={handleCreateClick}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                新規登録
+              </Button>
+            </div>
           );
         })()}
         <PracticeScheduleList
