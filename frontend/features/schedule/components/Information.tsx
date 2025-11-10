@@ -4,12 +4,14 @@ import { InformationProps } from '../types/practice-schedule-types';
 import { useEffect } from 'react';
 import { usePracticeSchedule } from '../hooks/use-practice-schedule-data';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
+import { AttendanceSummary } from './attendance-summary';
+import { PracticeDescription } from './practice-description';
 
-const Information: React.FC<InformationProps> = ({ 
+const Information: React.FC<InformationProps> = ({
   className,
   currentDate = new Date()
 }) => {
-  
+
   // 練習スケジュール管理フック
   const { scheduleData, loading, error, fetchPracticeScheduleByDate } = usePracticeSchedule();
 
@@ -58,19 +60,14 @@ const Information: React.FC<InformationProps> = ({
         正規練習 {formatDate(currentDate)}（{getWeekday(currentDate)}）
       </h2>
       
-      <div className="space-y-3 text-sm text-gray-600 max-w-4xl mx-auto">        
-        <div className="mt-4">
-          <h3 className="font-medium text-gray-800 mb-2">練習内容:</h3>
-          {scheduleData ? (
-            <ul className="space-y-1 text-xs">
-              {scheduleData.title && <li>・タイトル: {scheduleData.title}</li>}
-              <li>・{scheduleData.description || '練習内容が登録されていません'}</li>
-              <li>・練習タイプ: {scheduleData.schedule_type || '未設定'}</li>
-              <li>・ステータス: {scheduleData.status || '未設定'}</li>
-            </ul>
-          ) : (
-            <p className="text-gray-500">スケジュールデータがありません</p>
-          )}
+      <div className="space-y-3 text-sm text-gray-600 max-w-5xl mx-auto">
+        <div className="mb-6">
+          <PracticeDescription description={scheduleData?.description} />
+        </div>
+
+        {/* 出欠情報詳細 */}
+        <div className="mt-6">
+          <AttendanceSummary currentDate={currentDate} />
         </div>
       </div>
     </div>
