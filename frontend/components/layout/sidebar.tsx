@@ -210,7 +210,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
               <NavItem
                 icon={<Calendar className="w-4 h-4" />}
-                label="登録"
+                label="練習予定管理"
                 active={pathname === '/practice-schedule'}
                 onClick={() => handleNavigateAndClose('/practice-schedule')}
               />
@@ -220,13 +220,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 label="スケジュール"
                 active={pathname === '/schedule'}
                 onClick={() => handleNavigateAndClose('/schedule')}
-              />
-
-              <NavItem
-                icon={<Edit3 className="w-4 h-4" />}
-                label="練習表編集"
-                active={pathname.startsWith('/practice-schedule-editor')}
-                onClick={() => handleNavigateAndClose('/practice-schedule-editor')}
               />
 
               <NavItem
@@ -347,7 +340,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
           <NavItem
             icon={<Calendar className="w-4 h-4" />}
-            label={isCollapsed ? "" : "登録"}
+            label={isCollapsed ? "" : "練習予定管理"}
             active={pathname === '/practice-schedule'}
             href="/practice-schedule"
             className={isCollapsed ? "justify-center px-2" : ""}
@@ -358,14 +351,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "スケジュール"}
             active={pathname === '/schedule'}
             href="/schedule"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<Edit3 className="w-4 h-4" />}
-            label={isCollapsed ? "" : "練習表編集"}
-            active={pathname.startsWith('/practice-schedule-editor')}
-            href="/practice-schedule-editor"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 

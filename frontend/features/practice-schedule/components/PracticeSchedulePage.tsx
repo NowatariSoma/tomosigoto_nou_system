@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { PracticeScheduleList } from './PracticeScheduleList';
 import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { ScheduleSearchFilter } from './ScheduleSearchFilter';
 import { usePracticeSchedules, useVenues } from '../hooks';
 import { UI_TEXT } from '../constants';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
+import { SessionEditorTableSimpleDnd } from '../../practice-schedule-editor/components/SessionEditorTableSimpleDnd';
+import { SessionEditorModal } from '../../practice-schedule-editor/components/SessionEditorModal';
+import { InstructorEditorModal } from '../../practice-schedule-editor/components/InstructorEditorModal';
+import { ScheduleTimeEditor } from '../../practice-schedule-editor/components/ScheduleTimeEditor';
+import { OptimizationModal } from '../../practice-schedule-editor/components/OptimizationModal';
+import { useSessionEditor } from '../../practice-schedule-editor/hooks';
+import { sessionInstructorService } from '../../practice-schedule-editor/services';
 
 export const PracticeSchedulePage: React.FC = () => {
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
@@ -19,6 +26,40 @@ export const PracticeSchedulePage: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  
+  // 編集モードのstate
+  const [editingScheduleId, setEditingScheduleId] = useState<string>('');
+  const [editingScheduleDate, setEditingScheduleDate] = useState<string>('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
+  const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
+  const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
+  const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
+  
+  // 編集用のフック
+  const {
+    sessions,
+    instructors,
+    venues: editorVenues,
+    time_slots,
+    parts,
+    selected_session,
+    is_modal_open,
+    edit_mode,
+    loading: editorLoading,
+    error: editorError,
+    fetchScheduleDetails,
+    createSession,
+    updateSession,
+    deleteSession,
+    moveSession,
+    moveInstructor,
+    selectSession,
+    openModal,
+    closeModal,
+    toggleEditMode,
+    updateTimeSlot,
+  } = useSessionEditor(editingScheduleId);
 
   const handleCreateClick = () => {
     setEditingSchedule(null);
@@ -62,6 +103,210 @@ export const PracticeSchedulePage: React.FC = () => {
     setEditingSchedule(null);
   };
 
+  // 編集モード関連のハンドラー
+  const handleScheduleClick = (schedule: PracticeSchedule) => {
+    setEditingScheduleId(schedule.id);
+    setEditingScheduleDate(schedule.date);
+    setIsEditMode(true);
+    // スケジュールの開始・終了時間を設定
+    if (schedule.startTime) {
+      setScheduleStartTime(schedule.startTime.substring(0, 5));
+    }
+    if (schedule.endTime) {
+      setScheduleEndTime(schedule.endTime.substring(0, 5));
+    }
+  };
+
+  const handleBackToList = () => {
+    setIsEditMode(false);
+    setEditingScheduleId('');
+    setEditingScheduleDate('');
+  };
+
+  const handleCreateSession = () => {
+    selectSession(null);
+    openModal();
+  };
+
+  const handleEditSession = (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      selectSession(session);
+      openModal();
+    } else {
+      console.error('Session not found:', sessionId);
+      alert('セッション情報が見つかりません');
+    }
+  };
+
+  const handleDeleteSessionClick = async (sessionId: string) => {
+    await deleteSession(sessionId);
+  };
+
+  const handleSessionSubmit = async (formData: any) => {
+    if (selected_session) {
+      await updateSession(selected_session.id, formData);
+    } else {
+      await createSession(formData);
+    }
+  };
+
+  const handleSessionMove = async (
+    sessionId: string,
+    venueId: string,
+    timeSlot: string,
+    slotOrder: number
+  ) => {
+    await moveSession(sessionId, venueId, timeSlot, slotOrder);
+  };
+
+  const handleInstructorMove = async (
+    instructorId: string,
+    venueId: string,
+    slotOrder: number
+  ) => {
+    await moveInstructor(instructorId, venueId, slotOrder);
+  };
+
+  const handleDeleteInstructor = async (instructorId: string) => {
+    if (!confirm('監督者を削除しますか？')) {
+      return;
+    }
+    
+    try {
+      await sessionInstructorService.deleteSessionInstructor(instructorId);
+      fetchScheduleDetails();
+    } catch (error) {
+      console.error('監督者削除エラー:', error);
+      alert('監督者の削除に失敗しました');
+    }
+  };
+
+  const handleCreateInstructor = () => {
+    setIsCreatingInstructor(true);
+  };
+
+  const handleCloseInstructorModal = () => {
+    setIsCreatingInstructor(false);
+  };
+
+  const handleInstructorSubmit = async (data: any) => {
+    try {
+      const slotIndex = time_slots.findIndex(slot => slot.time === data.time_slot);
+      const slotOrder = slotIndex + 1;
+
+      const instructorData = {
+        attendance_id: data.attendance_id,
+        schedule_id: editingScheduleId,
+        schedule_available_venue_id: data.venue_id,
+        slot_order: slotOrder,
+      };
+
+      await sessionInstructorService.createSessionInstructor(instructorData);
+      fetchScheduleDetails();
+      setIsCreatingInstructor(false);
+    } catch (error) {
+      console.error('監督者追加エラー:', error);
+      alert('監督者の追加に失敗しました');
+    }
+  };
+
+  const handleScheduleTimeUpdate = async (startTime: string, endTime: string) => {
+    try {
+      const { practiceScheduleEditorService } = await import('../../practice-schedule-editor/services');
+      await practiceScheduleEditorService.updateScheduleTime(
+        editingScheduleId,
+        `${startTime}:00`,
+        `${endTime}:00`
+      );
+      setScheduleStartTime(startTime);
+      setScheduleEndTime(endTime);
+    } catch (error) {
+      console.error('スケジュール時間の更新に失敗しました:', error);
+      alert('スケジュール時間の更新に失敗しました');
+    }
+  };
+
+  const handleAddTimeSlot = async () => {
+    try {
+      const { practiceScheduleEditorService } = await import('../../practice-schedule-editor/services');
+      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(editingScheduleId);
+      const currentDivisionCount = basicSchedule?.division_count || time_slots.length || 6;
+      const newDivisionCount = currentDivisionCount + 1;
+      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
+      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
+      
+      if (newDivisionCount > 24) {
+        alert('時間スロットは最大24個までです');
+        return;
+      }
+      
+      await practiceScheduleEditorService.updateScheduleTime(
+        editingScheduleId,
+        actualStartTime,
+        actualEndTime,
+        newDivisionCount
+      );
+      await fetchScheduleDetails();
+    } catch (error) {
+      console.error('時間スロットの追加に失敗しました:', error);
+      alert('時間スロットの追加に失敗しました');
+    }
+  };
+
+  const handleRemoveTimeSlot = async () => {
+    try {
+      const { practiceScheduleEditorService } = await import('../../practice-schedule-editor/services');
+      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(editingScheduleId);
+      const currentDivisionCount = basicSchedule?.division_count || time_slots.length || 6;
+      const newDivisionCount = currentDivisionCount - 1;
+      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
+      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
+      
+      if (newDivisionCount < 1) {
+        alert('時間スロットは最低1個必要です');
+        return;
+      }
+      
+      await practiceScheduleEditorService.updateScheduleTime(
+        editingScheduleId,
+        actualStartTime,
+        actualEndTime,
+        newDivisionCount
+      );
+      await fetchScheduleDetails();
+    } catch (error) {
+      console.error('時間スロットの削除に失敗しました:', error);
+      alert('時間スロットの削除に失敗しました');
+    }
+  };
+
+  const handleAutoOptimize = () => {
+    setIsOptimizationModalOpen(true);
+  };
+
+  const handleOptimizationComplete = async () => {
+    setIsOptimizationModalOpen(false);
+    await fetchScheduleDetails();
+  };
+
+  // 編集モードに入った時にスケジュール詳細を取得
+  useEffect(() => {
+    if (isEditMode && editingScheduleId) {
+      fetchScheduleDetails();
+      // スケジュールの開始・終了時間を取得
+      const currentSchedule = schedules.find(s => s.id === editingScheduleId);
+      if (currentSchedule) {
+        if (currentSchedule.startTime) {
+          setScheduleStartTime(currentSchedule.startTime.substring(0, 5));
+        }
+        if (currentSchedule.endTime) {
+          setScheduleEndTime(currentSchedule.endTime.substring(0, 5));
+        }
+      }
+    }
+  }, [isEditMode, editingScheduleId, schedules, fetchScheduleDetails]);
+
   // フィルタリングされたスケジュール
   const filteredSchedules = schedules.filter(schedule => {
     const matchesSearch = schedule.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,6 +320,131 @@ export const PracticeSchedulePage: React.FC = () => {
 
   // 日付の一覧を取得（重複を除く）
   const availableDates = Array.from(new Set(schedules.map(s => s.date))).sort();
+
+  // 編集モード時の表示
+  if (isEditMode) {
+    if (editorLoading && sessions.length === 0 && !is_modal_open) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
+        </div>
+      );
+    }
+
+    if (editorError && sessions.length === 0 && !is_modal_open) {
+      return (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          エラー: {editorError}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* ヘッダー */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleBackToList}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">一覧に戻る</span>
+            </button>
+            <div>
+              <ScheduleTimeEditor
+                startTime={scheduleStartTime}
+                endTime={scheduleEndTime}
+                onUpdate={handleScheduleTimeUpdate}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleAutoOptimize}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors text-sm sm:text-base"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">自動最適化</span>
+              <span className="sm:hidden">最適化</span>
+            </button>
+            <button
+              onClick={handleCreateSession}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors text-sm sm:text-base"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">パート追加</span>
+              <span className="sm:hidden">パート</span>
+            </button>
+            <button
+              onClick={handleCreateInstructor}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors text-sm sm:text-base"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">監督者を追加</span>
+              <span className="sm:hidden">監督者</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 編集テーブル */}
+        <SessionEditorTableSimpleDnd
+          sessions={sessions}
+          instructors={instructors}
+          venues={editorVenues}
+          time_slots={time_slots}
+          edit_mode={edit_mode}
+          scheduleId={editingScheduleId}
+          onEditSession={handleEditSession}
+          onDeleteSession={handleDeleteSessionClick}
+          onMoveSession={handleSessionMove}
+          onMoveInstructor={handleInstructorMove}
+          onDeleteInstructor={handleDeleteInstructor}
+          onAddTimeSlot={handleAddTimeSlot}
+          onRemoveTimeSlot={handleRemoveTimeSlot}
+          onUpdateTimeSlot={updateTimeSlot}
+          fallbackInstructors={[]}
+        />
+
+        {/* セッション編集モーダル */}
+        {is_modal_open && (
+          <SessionEditorModal
+            session={selected_session}
+            venues={editorVenues}
+            time_slots={time_slots}
+            parts={parts}
+            scheduleId={editingScheduleId}
+            is_creating={!selected_session}
+            onSubmit={handleSessionSubmit}
+            onCancel={closeModal}
+            loading={editorLoading}
+          />
+        )}
+
+        {/* 自動最適化モーダル */}
+        {isOptimizationModalOpen && (
+          <OptimizationModal
+            scheduleId={editingScheduleId}
+            onOptimizationComplete={handleOptimizationComplete}
+            onClose={() => setIsOptimizationModalOpen(false)}
+          />
+        )}
+
+        {/* 監督者追加モーダル */}
+        {isCreatingInstructor && (
+          <InstructorEditorModal
+            isOpen={isCreatingInstructor}
+            onClose={handleCloseInstructorModal}
+            onSubmit={handleInstructorSubmit}
+            venues={editorVenues}
+            time_slots={time_slots}
+            scheduleId={editingScheduleId}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (loading || venuesLoading) {
     return (
@@ -109,18 +479,6 @@ export const PracticeSchedulePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* 新規登録ボタン */}
-      <div className="text-center">
-        <Button
-          onClick={handleCreateClick}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          新規登録
-        </Button>
-      </div>
-
       {/* フォーム */}
       {isFormOpen && (
         <PracticeScheduleForm
@@ -149,15 +507,25 @@ export const PracticeSchedulePage: React.FC = () => {
             index === self.findIndex(s => s.id === schedule.id)
           );
           return (
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              練習予定一覧 ({uniqueSchedules.length}件)
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                練習予定一覧 ({uniqueSchedules.length}件)
+              </h2>
+              <Button
+                onClick={handleCreateClick}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                新規登録
+              </Button>
+            </div>
           );
         })()}
         <PracticeScheduleList
           schedules={filteredSchedules}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          onClick={handleScheduleClick}
         />
       </div>
 

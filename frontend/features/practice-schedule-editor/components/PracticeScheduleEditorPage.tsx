@@ -97,8 +97,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       
       setIsCreatingInstructor(false);
     } catch (error) {
-      console.error('インストラクター追加エラー:', error);
-      alert('インストラクターの追加に失敗しました');
+      console.error('監督者追加エラー:', error);
+      alert('監督者の追加に失敗しました');
     }
   };
 
@@ -147,7 +147,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   };
 
   const handleDeleteInstructor = async (instructorId: string) => {
-    if (!confirm('インストラクターを削除しますか？')) {
+    if (!confirm('監督者を削除しますか？')) {
       return;
     }
     
@@ -157,8 +157,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       // 削除後、スケジュール詳細を再取得
       fetchScheduleDetails();
     } catch (error) {
-      console.error('インストラクター削除エラー:', error);
-      alert('インストラクターの削除に失敗しました');
+      console.error('監督者削除エラー:', error);
+      alert('監督者の削除に失敗しました');
     }
   };
 
@@ -338,7 +338,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span>インストラクターを追加</span>
+            <span>監督者を追加</span>
           </button>
         </div>
       </div>
@@ -386,7 +386,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         />
       )}
 
-      {/* インストラクター追加モーダル */}
+      {/* 監督者追加モーダル */}
       {isCreatingInstructor && (
         <InstructorEditorModal
           isOpen={isCreatingInstructor}

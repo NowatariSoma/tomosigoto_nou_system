@@ -228,21 +228,22 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* テーブルヘッダー */}
-      <div className="flex">
-        <div className="w-32 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
-        <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
-          {venues.map((venue, index) => (
-            <div key={`${venue.id}-${index}`} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
-              {venue.name || `会場${venue.id.slice(-4)}`}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* テーブルボディ */}
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
+      {/* テーブル全体 */}
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <table className="w-full table-fixed min-w-[600px]">
+          <thead>
+            <tr>
+              <th className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</th>
+              {venues.map((venue, index) => (
+                <th 
+                  key={`${venue.id}-${index}`} 
+                  className="px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-r border-b border-gray-600 last:border-r-0 hover:bg-gray-800 transition-colors whitespace-nowrap"
+                >
+                  {venue.name || `会場${venue.id.slice(-4)}`}
+                </th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {time_slots.map((timeSlot) => (
               <tr key={timeSlot.time} className="border-b border-gray-100">
@@ -258,12 +259,12 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                   return (
                     <td
                       key={`${venue.id}-${timeSlot.time}`}
-                      className="border-r border-gray-200 last:border-r-0 min-h-[80px] align-top bg-white p-1"
+                      className="border-r border-gray-200 last:border-r-0 min-h-[60px] sm:min-h-[80px] align-top bg-white p-0.5 sm:p-1"
                       onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, venue.id, timeSlot.time)}
                     >
-                      <div className={`min-h-[80px] ${
+                      <div className={`min-h-[60px] sm:min-h-[80px] ${
                         isOver && venueSessions.length === 0 ? 'border-2 border-dashed border-blue-400 rounded-lg' : ''
                       }`}>
                         {(venueSessions.length > 0 || venueInstructors.length > 0) && (
@@ -280,7 +281,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 onDelete={onDeleteSession}
                               />
                             ))}
-                            {/* インストラクターカード */}
+                            {/* 監督者カード */}
                             {venueInstructors.map((instructor) => (
                               <InstructorCard
                                 key={instructor.id}
@@ -304,27 +305,29 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
             {/* 時間追加・削除ボタン行 */}
             {edit_mode === 'edit' && (onAddTimeSlot || onRemoveTimeSlot) && (
               <tr className="border-t-2 border-gray-200">
-                <td colSpan={venues.length + 1} className="px-4 py-3 bg-white">
-                  <div className="flex items-center justify-center space-x-3">
+                <td colSpan={venues.length + 1} className="px-2 sm:px-4 py-2 sm:py-3 bg-white">
+                  <div className="flex items-center justify-center flex-wrap gap-2">
                     {onRemoveTimeSlot && (
                       <button
                         onClick={onRemoveTimeSlot}
-                        className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                        className="flex items-center justify-center space-x-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                         title="時間スロットを削除"
                         disabled={time_slots.length <= 1}
                       >
                         <Minus className="h-4 w-4" />
-                        <span>時間スロットを削除</span>
+                        <span className="hidden sm:inline">時間スロットを削除</span>
+                        <span className="sm:hidden">削除</span>
                       </button>
                     )}
                     {onAddTimeSlot && (
                       <button
                         onClick={onAddTimeSlot}
-                        className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                        className="flex items-center justify-center space-x-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                         title="時間スロットを追加"
                       >
                         <Plus className="h-4 w-4" />
-                        <span>時間スロットを追加</span>
+                        <span className="hidden sm:inline">時間スロットを追加</span>
+                        <span className="sm:hidden">追加</span>
                       </button>
                     )}
                   </div>
@@ -336,9 +339,9 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
       </div>
 
       {/* 統計情報 - 目立たないデザイン */}
-      <div className="px-4 py-2 bg-white border-t border-gray-100">
-        <div className="flex justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-4">
+      <div className="px-2 sm:px-4 py-2 bg-white border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0 text-xs text-gray-500">
+          <div className="flex items-center flex-wrap gap-2 sm:gap-4">
             <span>セッション: {sessions.length}</span>
             <span>会場: {venues.length}</span>
             <span>時間スロット: {time_slots.length}</span>
@@ -351,15 +354,15 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
 
       {/* 時間割外セッション */}
       {outOfScheduleSessions.length > 0 && (
-        <div className="px-4 py-3 bg-red-50 border-t border-red-200">
-          <div className="text-sm font-semibold text-red-700 mb-2">
+        <div className="px-2 sm:px-4 py-2 sm:py-3 bg-red-50 border-t border-red-200">
+          <div className="text-xs sm:text-sm font-semibold text-red-700 mb-2">
             ⚠️ 時間割外のセッション ({outOfScheduleSessions.length}件)
           </div>
           <div className="space-y-1">
             {outOfScheduleSessions.map((session) => (
               <div
                 key={session.id}
-                className="rounded-lg p-2 bg-red-100 border border-red-300 text-sm cursor-pointer hover:bg-red-200"
+                className="rounded-lg p-2 bg-red-100 border border-red-300 text-xs sm:text-sm cursor-pointer hover:bg-red-200"
                 onClick={() => onEditSession(session.id)}
               >
                 <div className="text-xs text-red-600">
