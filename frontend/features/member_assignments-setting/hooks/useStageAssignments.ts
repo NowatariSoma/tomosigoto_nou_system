@@ -14,7 +14,7 @@ interface UseStageAssignmentsState {
 export const useStageAssignments = () => {
   const [state, setState] = useState<UseStageAssignmentsState>({
     stages: [],
-    loading: false,
+    loading: true,
     error: null,
   });
 

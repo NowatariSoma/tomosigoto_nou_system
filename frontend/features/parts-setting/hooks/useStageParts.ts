@@ -18,7 +18,7 @@ interface UseStagePartsState {
 export const useStageParts = () => {
   const [state, setState] = useState<UseStagePartsState>({
     stages: [],
-    loading: false,
+    loading: true,
     error: null,
   });
 
