@@ -63,7 +63,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
     return (
       <div className={cn("flex items-center justify-center p-4", className)}>
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        <span className="text-sm text-gray-500">インストラクター候補を読み込み中...</span>
+        <span className="text-sm text-gray-500">監督者候補を読み込み中...</span>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
       <div className={cn("p-4 text-center", className)}>
         <Users className="h-8 w-8 mx-auto text-gray-400 mb-2" />
         <div className="text-sm text-gray-500">
-          インストラクター候補が見つかりません
+          監督者候補が見つかりません
         </div>
         <div className="text-xs text-gray-400 mt-1">
           （学年4かつ出席記録があるユーザー）
