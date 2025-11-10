@@ -155,7 +155,8 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 
         {schedule.description && (
           <div className="mt-3">
-            <p className="text-sm text-slate-700 bg-slate-100 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed">
+            <div className="text-xs font-semibold text-gray-600 mb-1">練習内容</div>
+            <p className="text-sm text-slate-700 bg-slate-100 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed whitespace-pre-wrap">
               {schedule.description}
             </p>
           </div>
