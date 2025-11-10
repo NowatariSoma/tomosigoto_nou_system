@@ -32,79 +32,230 @@ class AttendanceRepository:
                 serialized_data[key] = value
         return serialized_data
 
+    def _format_attendance_with_user_info(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        """出欠記録にユーザー情報（user_name, user_email）を追加"""
+        formatted_item = item.copy()
+        user_data = item.get("users", {})
+        # account_setting_profileビューから取得
+        profile_data = item.get("account_setting_profile", {})
+        
+        user_name = None
+        if profile_data:
+            first_name = profile_data.get("first_name_kanji", "")
+            last_name = profile_data.get("last_name_kanji", "")
+            if first_name and last_name:
+                user_name = f"{last_name} {first_name}"
+            elif first_name:
+                user_name = first_name
+            elif last_name:
+                user_name = last_name
+        
+        if not user_name and user_data:
+            meta_data = user_data.get("raw_user_meta_data", {})
+            user_name = meta_data.get("name") or user_data.get("email", "").split("@")[0]
+        
+        formatted_item["user_name"] = user_name or f"User {str(user_data.get('id', ''))[:8]}"
+        formatted_item["user_email"] = user_data.get("email", "")
+        
+        return formatted_item
+
     @handle_supabase_errors("find_all")
     async def find_all(self) -> List[Dict[str, Any]]:
-        """すべての出欠記録を取得"""
+        """すべての出欠記録を取得（ユーザー情報とプロフィール情報を含む）"""
+        # まず出欠記録を取得
         response = self.client.table(self.table_name).select("*").execute()
-        return response.data
+        
+        if not response.data:
+            return []
+        
+        # ユーザーIDのリストを取得
+        user_ids = [str(item["user_id"]) for item in response.data]
+        
+        # account_setting_profileから一括取得
+        profile_response = (
+            self.client.table("account_setting_profile")
+            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+        
+        # user_idをキーとしたマップを作成
+        profile_map = {}
+        for profile in profile_response.data:
+            profile_map[str(profile["user_id"])] = profile
+        
+        # usersテーブルから一括取得
+        users_response = (
+            self.client.table("users")
+            .select("id, email, raw_user_meta_data")
+            .in_("id", user_ids)
+            .execute()
+        )
+        
+        # user_idをキーとしたマップを作成
+        users_map = {}
+        for user in users_response.data:
+            users_map[str(user["id"])] = user
+        
+        # データを結合
+        formatted_data = []
+        for item in response.data:
+            user_id_str = str(item["user_id"])
+            user_data = users_map.get(user_id_str, {})
+            profile_data = profile_map.get(user_id_str, {})
+            
+            # ユーザー情報を追加
+            item["users"] = user_data
+            item["account_setting_profile"] = profile_data
+            
+            formatted_item = self._format_attendance_with_user_info(item)
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, attendance_id: UUID) -> Dict[str, Any]:
-        """指定したIDの出欠記録を取得"""
+        """指定したIDの出欠記録を取得（ユーザー情報とプロフィール情報を含む）"""
         response = self.client.table(self.table_name).select("*").eq("id", attendance_id).execute()
-        return response.data[0]
+        
+        if not response.data:
+            raise ValueError(f"Attendance with id {attendance_id} not found")
+        
+        item = response.data[0]
+        user_id_str = str(item["user_id"])
+        
+        # account_setting_profileから取得
+        profile_response = (
+            self.client.table("account_setting_profile")
+            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .eq("user_id", user_id_str)
+            .execute()
+        )
+        
+        profile_data = profile_response.data[0] if profile_response.data else {}
+        
+        # usersテーブルから取得
+        users_response = (
+            self.client.table("users")
+            .select("id, email, raw_user_meta_data")
+            .eq("id", user_id_str)
+            .execute()
+        )
+        
+        user_data = users_response.data[0] if users_response.data else {}
+        
+        # ユーザー情報を追加
+        item["users"] = user_data
+        item["account_setting_profile"] = profile_data
+        
+        return self._format_attendance_with_user_info(item)
 
     @handle_supabase_errors("find_by_practice_schedule")
     async def find_by_practice_schedule(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
         """指定した練習スケジュールの出欠記録を取得（ユーザー情報とプロフィール情報を含む）"""
+        # まず出欠記録を取得
         response = (
             self.client.table(self.table_name)
-            .select("""
-                *,
-                users!inner(
-                    id,
-                    email,
-                    raw_user_meta_data
-                ),
-                user_profiles!left(
-                    first_name_kanji,
-                    last_name_kanji,
-                    first_name_katakana,
-                    last_name_katakana,
-                    student_id
-                )
-            """)
+            .select("*")
             .eq("practice_schedule_id", practice_schedule_id)
             .execute()
         )
         
+        if not response.data:
+            return []
+        
+        # ユーザーIDのリストを取得
+        user_ids = [str(item["user_id"]) for item in response.data]
+        
+        # account_setting_profileから一括取得
+        profile_response = (
+            self.client.table("account_setting_profile")
+            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+        
+        # user_idをキーとしたマップを作成
+        profile_map = {}
+        for profile in profile_response.data:
+            profile_map[str(profile["user_id"])] = profile
+        
+        # usersテーブルから一括取得
+        users_response = (
+            self.client.table("users")
+            .select("id, email, raw_user_meta_data")
+            .in_("id", user_ids)
+            .execute()
+        )
+        
+        # user_idをキーとしたマップを作成
+        users_map = {}
+        for user in users_response.data:
+            users_map[str(user["id"])] = user
+        
+        # データを結合
         formatted_data = []
         for item in response.data:
-            formatted_item = item.copy()
-            user_data = item.get("users", {})
-            profile_data = item.get("user_profiles", {})
+            user_id_str = str(item["user_id"])
+            user_data = users_map.get(user_id_str, {})
+            profile_data = profile_map.get(user_id_str, {})
             
-            user_name = None
-            if profile_data:
-                first_name = profile_data.get("first_name_kanji", "")
-                last_name = profile_data.get("last_name_kanji", "")
-                if first_name and last_name:
-                    user_name = f"{last_name} {first_name}"
-                elif first_name:
-                    user_name = first_name
-                elif last_name:
-                    user_name = last_name
+            # ユーザー情報を追加
+            item["users"] = user_data
+            item["account_setting_profile"] = profile_data
             
-            if not user_name and user_data:
-                meta_data = user_data.get("raw_user_meta_data", {})
-                user_name = meta_data.get("name") or user_data.get("email", "").split("@")[0]
-            
-            formatted_item["user_name"] = user_name or f"User {str(user_data.get('id', ''))[:8]}"
-            formatted_item["user_email"] = user_data.get("email", "")
+            formatted_item = self._format_attendance_with_user_info(item)
             formatted_data.append(formatted_item)
         
         return formatted_data
 
     @handle_supabase_errors("find_by_user")
     async def find_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:
-        """指定したユーザーの出欠記録を取得"""
+        """指定したユーザーの出欠記録を取得（ユーザー情報とプロフィール情報を含む）"""
+        # まず出欠記録を取得
         response = (
             self.client.table(self.table_name)
             .select("*")
             .eq("user_id", user_id)
             .execute()
         )
-        return response.data
+        
+        if not response.data:
+            return []
+        
+        user_id_str = str(user_id)
+        
+        # account_setting_profileから取得
+        profile_response = (
+            self.client.table("account_setting_profile")
+            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .eq("user_id", user_id_str)
+            .execute()
+        )
+        
+        profile_data = profile_response.data[0] if profile_response.data else {}
+        
+        # usersテーブルから取得
+        users_response = (
+            self.client.table("users")
+            .select("id, email, raw_user_meta_data")
+            .eq("id", user_id_str)
+            .execute()
+        )
+        
+        user_data = users_response.data[0] if users_response.data else {}
+        
+        # データを結合
+        formatted_data = []
+        for item in response.data:
+            # ユーザー情報を追加
+            item["users"] = user_data
+            item["account_setting_profile"] = profile_data
+            
+            formatted_item = self._format_attendance_with_user_info(item)
+            formatted_data.append(formatted_item)
+        
+        return formatted_data
 
     @handle_supabase_errors("find_by_practice_and_user")
     async def find_by_practice_and_user(
