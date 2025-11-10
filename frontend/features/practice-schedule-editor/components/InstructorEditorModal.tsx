@@ -62,7 +62,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
       console.log('InstructorEditorModal: フォーマット後の候補', formattedCandidates);
       setAvailableInstructors(formattedCandidates);
     } catch (error) {
-      console.error('インストラクター候補の取得に失敗しました:', error);
+      console.error('監督者候補の取得に失敗しました:', error);
       setAvailableInstructors([]);
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">インストラクターを追加</h2>
+          <h2 className="text-xl font-bold text-gray-900">監督者を追加</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -142,11 +142,11 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
               </select>
             </div>
 
-            {/* インストラクター選択 */}
+            {/* 監督者選択 */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
                 <Users className="h-4 w-4" />
-                <span>インストラクター <span className="text-red-500">*</span></span>
+                <span>監督者 <span className="text-red-500">*</span></span>
               </label>
               {loading ? (
                 <div className="w-full px-3 py-2 border border-gray-300 rounded-md">
@@ -159,7 +159,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                   required
                 >
-                  <option value="">インストラクターを選択してください</option>
+                  <option value="">監督者を選択してください</option>
                   {availableInstructors.map((instructor) => (
                     <option key={instructor.attendance_id} value={instructor.attendance_id}>
                       {instructor.user_name || instructor.user_email || `指導者${instructor.attendance_id.slice(-4)}`}
