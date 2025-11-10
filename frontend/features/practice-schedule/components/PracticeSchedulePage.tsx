@@ -169,7 +169,7 @@ export const PracticeSchedulePage: React.FC = () => {
   };
 
   const handleDeleteInstructor = async (instructorId: string) => {
-    if (!confirm('インストラクターを削除しますか？')) {
+    if (!confirm('監督者を削除しますか？')) {
       return;
     }
     
@@ -177,8 +177,8 @@ export const PracticeSchedulePage: React.FC = () => {
       await sessionInstructorService.deleteSessionInstructor(instructorId);
       fetchScheduleDetails();
     } catch (error) {
-      console.error('インストラクター削除エラー:', error);
-      alert('インストラクターの削除に失敗しました');
+      console.error('監督者削除エラー:', error);
+      alert('監督者の削除に失敗しました');
     }
   };
 
@@ -206,8 +206,8 @@ export const PracticeSchedulePage: React.FC = () => {
       fetchScheduleDetails();
       setIsCreatingInstructor(false);
     } catch (error) {
-      console.error('インストラクター追加エラー:', error);
-      alert('インストラクターの追加に失敗しました');
+      console.error('監督者追加エラー:', error);
+      alert('監督者の追加に失敗しました');
     }
   };
 
@@ -382,8 +382,8 @@ export const PracticeSchedulePage: React.FC = () => {
               className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors text-sm sm:text-base"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">インストラクターを追加</span>
-              <span className="sm:hidden">インスト</span>
+              <span className="hidden sm:inline">監督者を追加</span>
+              <span className="sm:hidden">監督者</span>
             </button>
           </div>
         </div>
@@ -431,7 +431,7 @@ export const PracticeSchedulePage: React.FC = () => {
           />
         )}
 
-        {/* インストラクター追加モーダル */}
+        {/* 監督者追加モーダル */}
         {isCreatingInstructor && (
           <InstructorEditorModal
             isOpen={isCreatingInstructor}

@@ -281,7 +281,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 onDelete={onDeleteSession}
                               />
                             ))}
-                            {/* インストラクターカード */}
+                            {/* 監督者カード */}
                             {venueInstructors.map((instructor) => (
                               <InstructorCard
                                 key={instructor.id}
