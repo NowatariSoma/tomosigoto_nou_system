@@ -33,13 +33,14 @@ class AttendanceRepository:
         return serialized_data
 
     def _format_attendance_with_user_info(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """出欠記録にユーザー情報（user_name, user_email）を追加"""
+        """出欠記録にユーザー情報（user_name, user_email, user_year）を追加"""
         formatted_item = item.copy()
         user_data = item.get("users", {})
         # account_setting_profileビューから取得
         profile_data = item.get("account_setting_profile", {})
-        
+
         user_name = None
+        user_year = None
         if profile_data:
             first_name = profile_data.get("first_name_kanji", "")
             last_name = profile_data.get("last_name_kanji", "")
@@ -49,14 +50,18 @@ class AttendanceRepository:
                 user_name = first_name
             elif last_name:
                 user_name = last_name
-        
+
+            # 学年情報を取得
+            user_year = profile_data.get("grade")
+
         if not user_name and user_data:
             meta_data = user_data.get("raw_user_meta_data", {})
             user_name = meta_data.get("name") or user_data.get("email", "").split("@")[0]
-        
+
         formatted_item["user_name"] = user_name or f"User {str(user_data.get('id', ''))[:8]}"
         formatted_item["user_email"] = user_data.get("email", "")
-        
+        formatted_item["user_year"] = user_year
+
         return formatted_item
 
     @handle_supabase_errors("find_all")
@@ -74,7 +79,7 @@ class AttendanceRepository:
         # account_setting_profileから一括取得
         profile_response = (
             self.client.table("account_setting_profile")
-            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .select("user_id, first_name_kanji, last_name_kanji, email, grade")
             .in_("user_id", user_ids)
             .execute()
         )
@@ -127,7 +132,7 @@ class AttendanceRepository:
         # account_setting_profileから取得
         profile_response = (
             self.client.table("account_setting_profile")
-            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .select("user_id, first_name_kanji, last_name_kanji, email, grade")
             .eq("user_id", user_id_str)
             .execute()
         )
@@ -170,7 +175,7 @@ class AttendanceRepository:
         # account_setting_profileから一括取得
         profile_response = (
             self.client.table("account_setting_profile")
-            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .select("user_id, first_name_kanji, last_name_kanji, email, grade")
             .in_("user_id", user_ids)
             .execute()
         )
@@ -228,7 +233,7 @@ class AttendanceRepository:
         # account_setting_profileから取得
         profile_response = (
             self.client.table("account_setting_profile")
-            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .select("user_id, first_name_kanji, last_name_kanji, email, grade")
             .eq("user_id", user_id_str)
             .execute()
         )
