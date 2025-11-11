@@ -5,7 +5,7 @@ import {
   practiceScheduleService, 
   CalendarEvent, 
   MonthCalendarResponse 
-} from '../../attendance/services/practice-schedule-service';
+} from '../services/practice-schedule-service';
 
 export interface UsePracticeScheduleCalendarReturn {
   events: CalendarEvent[];

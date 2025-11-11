@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { Calendar, Users, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
-import { attendanceService } from '@/features/attendance/services/attendance-service';
-import { Attendance, PracticeSchedule } from '@/features/attendance/types';
-import { practiceScheduleService } from '@/features/schedule/services/practice-schedule-service';
+import { attendanceService } from '../services/attendance-service';
+import { Attendance, PracticeSchedule } from '../types/attendance';
+import { practiceScheduleService } from '../services/practice-schedule-service';
 
 interface AttendanceSummaryProps {
   currentDate: Date;
