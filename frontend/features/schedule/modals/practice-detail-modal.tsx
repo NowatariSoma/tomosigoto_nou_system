@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useModal } from '@/features/schedule/providers/modal-context';
 import { PracticeScheduleCard } from '@/features/practice-schedule/components/PracticeScheduleCard';
-import { PracticeSchedule } from '@/features/attendance/types';
-import { practiceScheduleService } from '@/features/attendance/services/practice-schedule-service';
+import { PracticeSchedule } from '../types/attendance';
+import { practiceScheduleService } from '../services/practice-schedule-service';
 import { Calendar, Users, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs';
