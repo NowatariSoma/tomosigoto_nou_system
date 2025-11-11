@@ -109,7 +109,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-3 text-slate-600">出欠情報を読み込み中...</span>
@@ -120,7 +120,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-red-200 p-6">
+      <div>
         <div className="flex items-center text-red-600">
           <AlertCircle className="h-5 w-5 mr-2" />
           <span>{error}</span>
@@ -133,7 +133,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
     <div className="space-y-6">
 
       {practiceSchedule && attendances.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
+        <div>
           <h3 className="text-lg font-semibold text-slate-900 mb-4">
             出欠情報詳細
           </h3>
@@ -217,14 +217,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
         </div>
       )}
 
-      {(!practiceSchedule || attendances.length === 0) && !loading && (
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600">この日付の出欠情報はありません</p>
-          </div>
-        </div>
-      )}
+      {(!practiceSchedule || attendances.length === 0) && !loading && null}
     </div>
   );
 };

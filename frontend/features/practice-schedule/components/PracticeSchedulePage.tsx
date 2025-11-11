@@ -7,7 +7,7 @@ import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { ScheduleSearchFilter } from './ScheduleSearchFilter';
 import { usePracticeSchedules, useVenues } from '../hooks';
 import { UI_TEXT } from '../constants';
-import { Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
+import { Plus, Calendar, ArrowLeft, Sparkles, Edit2, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { SessionEditorTableSimpleDnd } from '../../practice-schedule-editor/components/SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from '../../practice-schedule-editor/components/SessionEditorModal';
@@ -35,6 +35,8 @@ export const PracticeSchedulePage: React.FC = () => {
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
   const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState('');
   
   // 編集用のフック
   const {
@@ -108,6 +110,7 @@ export const PracticeSchedulePage: React.FC = () => {
     setEditingScheduleId(schedule.id);
     setEditingScheduleDate(schedule.date);
     setIsEditMode(true);
+    setDescriptionValue(schedule.description || '');
     // スケジュールの開始・終了時間を設定
     if (schedule.startTime) {
       setScheduleStartTime(schedule.startTime.substring(0, 5));
@@ -290,6 +293,28 @@ export const PracticeSchedulePage: React.FC = () => {
     await fetchScheduleDetails();
   };
 
+  const handleEditDescription = () => {
+    setIsEditingDescription(true);
+  };
+
+  const handleSaveDescription = async () => {
+    try {
+      await updateSchedule(editingScheduleId, {
+        description: descriptionValue,
+      });
+      setIsEditingDescription(false);
+    } catch (error) {
+      console.error('練習内容の保存に失敗しました:', error);
+      alert('練習内容の保存に失敗しました');
+    }
+  };
+
+  const handleCancelEditDescription = () => {
+    const currentSchedule = schedules.find(s => s.id === editingScheduleId);
+    setDescriptionValue(currentSchedule?.description || '');
+    setIsEditingDescription(false);
+  };
+
   // 編集モードに入った時にスケジュール詳細を取得
   useEffect(() => {
     if (isEditMode && editingScheduleId) {
@@ -406,6 +431,52 @@ export const PracticeSchedulePage: React.FC = () => {
           onUpdateTimeSlot={updateTimeSlot}
           fallbackInstructors={[]}
         />
+
+        {/* 練習内容編集セクション */}
+        <div className="mt-6 bg-white rounded-lg shadow-md border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">練習内容</h3>
+            {!isEditingDescription && (
+              <button
+                onClick={handleEditDescription}
+                className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+              >
+                <Edit2 className="h-4 w-4" />
+                <span>編集</span>
+              </button>
+            )}
+          </div>
+          {isEditingDescription ? (
+            <div className="space-y-4">
+              <textarea
+                value={descriptionValue}
+                onChange={(e) => setDescriptionValue(e.target.value)}
+                className="w-full min-h-[200px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                placeholder="練習内容を入力してください..."
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={handleCancelEditDescription}
+                  className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                  <span>キャンセル</span>
+                </button>
+                <button
+                  onClick={handleSaveDescription}
+                  className="flex items-center space-x-2 px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>保存</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-slate-700 bg-slate-50 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed whitespace-pre-wrap min-h-[100px]">
+              {descriptionValue || '練習内容が設定されていません'}
+            </div>
+          )}
+        </div>
 
         {/* セッション編集モーダル */}
         {is_modal_open && (
