@@ -22,7 +22,6 @@ import {
   BookOpen,
   Building,
   ReceiptText,
-  Clock,
   Edit3,
   UserCheck
 } from 'lucide-react';
@@ -251,13 +250,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               />
 
               <NavItem
-                icon={<Clock className="w-4 h-4" />}
-                label="出席管理"
-                active={pathname === '/attendance'}
-                onClick={() => handleNavigateAndClose('/attendance')}
-              />
-
-              <NavItem
                 icon={<Users className="w-4 h-4" />}
                 label="管理者用出席管理"
                 active={pathname === '/admin/attendance'}
@@ -382,14 +374,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "演目一覧"}
             active={pathname === '/performances-list'}
             href="/performances-list"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<Clock className="w-4 h-4" />}
-            label={isCollapsed ? "" : "出席管理"}
-            active={pathname === '/attendance'}
-            href="/attendance"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
