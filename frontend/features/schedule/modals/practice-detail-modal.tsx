@@ -48,9 +48,9 @@ export default function PracticeDetailModal() {
 
   const handleAttendanceRegistration = () => {
     if (practiceSchedule) {
-      // 出席登録ページに遷移
-      const attendanceUrl = `/attendance?practice=${practiceSchedule.id}`;
-      window.open(attendanceUrl, '_blank');
+      // 出席登録はスケジュール内で行うため、モーダルを閉じる
+      // または、出席登録機能をここに実装
+      alert('出席登録機能はスケジュール画面に統合されました');
     }
   };
 
