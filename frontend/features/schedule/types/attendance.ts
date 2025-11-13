@@ -82,27 +82,6 @@ export interface User {
   email: string;
 }
 
-export interface PracticeSchedule {
-  id: string;
-  schedule_date: string;
-  start_time: string;
-  end_time: string;
-  division_count: number;
-  title?: string;
-  description?: string;
-  schedule_type?: string;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
-  venues?: {
-    id: string;
-    name: string;
-    campus: string;
-  }[];
-}
-
 export interface AttendanceSummary {
   practice_schedule_id: string;
   practice_date: string;

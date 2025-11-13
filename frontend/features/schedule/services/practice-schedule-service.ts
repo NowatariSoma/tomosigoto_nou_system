@@ -76,7 +76,7 @@ export class PracticeScheduleService {
    * @param scheduleId - 練習スケジュールID
    * @returns 練習スケジュールの詳細情報
    */
-  async getPracticeScheduleDetails(scheduleId: string): Promise<any> {
+  async getPracticeScheduleDetails(scheduleId: string): Promise<PracticeSchedule> {
     const response = await fetchApi(`${this.basePath}/${scheduleId}/details`);
     return response.json();
   }
