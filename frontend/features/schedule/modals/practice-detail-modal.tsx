@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useModal } from '@/features/schedule/providers/modal-context';
 import { PracticeScheduleCard } from '@/features/practice-schedule/components/PracticeScheduleCard';
-import { PracticeSchedule } from '@/features/attendance/types';
-import { practiceScheduleService } from '@/features/attendance/services/practice-schedule-service';
+import { PracticeSchedule } from '../types/attendance';
+import { practiceScheduleService } from '../services/practice-schedule-service';
 import { Calendar, Users, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs';
@@ -48,9 +48,9 @@ export default function PracticeDetailModal() {
 
   const handleAttendanceRegistration = () => {
     if (practiceSchedule) {
-      // 出席登録ページに遷移
-      const attendanceUrl = `/attendance?practice=${practiceSchedule.id}`;
-      window.open(attendanceUrl, '_blank');
+      // 出席登録はスケジュール内で行うため、モーダルを閉じる
+      // または、出席登録機能をここに実装
+      alert('出席登録機能はスケジュール画面に統合されました');
     }
   };
 
