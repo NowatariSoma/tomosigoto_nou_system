@@ -48,11 +48,10 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <h4 className="font-bold text-blue-900 text-lg">{part.name}</h4>
-                      {part.member_assignments.length > 0 && (
-                        <span className="text-sm text-gray-600">
-                          {part.member_assignments[0].user.name}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>舞: {part.member_assignments.filter(ma => ma.category === 'mai').length}人</span>
+                        <span>謡: {part.member_assignments.filter(ma => ma.category === 'utai').length}人</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
