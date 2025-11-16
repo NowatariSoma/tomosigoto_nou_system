@@ -19,7 +19,6 @@ import {
   Calendar,
   CalendarDays,
   Theater,
-  BookOpen,
   Building,
   Edit3,
   UserCheck
