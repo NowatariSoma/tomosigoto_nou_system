@@ -21,7 +21,6 @@ import {
   Theater,
   BookOpen,
   Building,
-  ReceiptText,
   Edit3,
   UserCheck
 } from 'lucide-react';
@@ -241,14 +240,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 active={pathname === '/member-assignments-setting'}
                 onClick={() => handleNavigateAndClose('/member-assignments-setting')}
               />
-
-              <NavItem
-                icon={<ReceiptText className="w-4 h-4" />}
-                label="演目一覧"
-                active={pathname === '/performances-list'}
-                onClick={() => handleNavigateAndClose('/performances-list')}
-              />
-
+              
               <NavItem
                 icon={<Users className="w-4 h-4" />}
                 label="管理者用出席管理"
@@ -366,14 +358,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "メンバー所属設定"}
             active={pathname === '/member-assignments-setting'}
             href="/member-assignments-setting"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<ReceiptText className="w-4 h-4" />}
-            label={isCollapsed ? "" : "演目一覧"}
-            active={pathname === '/performances-list'}
-            href="/performances-list"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
