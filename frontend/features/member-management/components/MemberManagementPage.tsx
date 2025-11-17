@@ -13,9 +13,9 @@ const ROLE_LABELS: Record<'admin' | 'basic' | 'viewer', string> = {
 };
 
 const ROLE_BADGE_STYLES: Record<'admin' | 'basic' | 'viewer', string> = {
-  admin: 'bg-purple-100 text-purple-800 border border-purple-200',
-  basic: 'bg-blue-100 text-blue-800 border border-blue-200',
-  viewer: 'bg-gray-100 text-gray-700 border border-gray-200'
+  admin: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-purple-600 text-white border-purple-600 shadow-sm',
+  basic: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-blue-600 text-white border-blue-600 shadow-sm',
+  viewer: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-gray-600 text-white border-gray-600 shadow-sm'
 };
 
 const ROLE_BUTTON_STYLES: Record<'admin' | 'basic' | 'viewer', { active: string; inactive: string }> = {
@@ -28,14 +28,14 @@ const ROLE_BUTTON_STYLES: Record<'admin' | 'basic' | 'viewer', { active: string;
     inactive: 'border border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
   },
   viewer: {
-    active: 'border border-slate-700 bg-slate-700 text-white shadow-sm',
-    inactive: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+    active: 'border border-gray-600 bg-gray-600 text-white shadow-sm',
+    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
   }
 };
 
 const INSTRUCTOR_BADGE_STYLES: Record<'instructor' | 'member', string> = {
-  instructor: 'bg-amber-100 text-amber-800 border border-amber-200',
-  member: 'bg-gray-100 text-gray-600 border border-gray-200'
+  instructor: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-amber-600 text-white border-amber-600 shadow-sm',
+  member: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-gray-500 text-white border-gray-500 shadow-sm'
 };
 
 const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string; inactive: string }> = {
@@ -44,8 +44,8 @@ const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string
     inactive: 'border border-amber-200 text-amber-700 bg-white hover:bg-amber-50'
   },
   member: {
-    active: 'border border-slate-600 bg-slate-600 text-white shadow-sm',
-    inactive: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+    active: 'border border-gray-500 bg-gray-500 text-white shadow-sm',
+    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
   }
 };
 
@@ -206,7 +206,7 @@ export function MemberManagementPage() {
 
     if (!isEditMode) {
       return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+        <span className={ROLE_BADGE_STYLES[currentRole]}>
           {ROLE_LABELS[currentRole]}
         </span>
       );
@@ -238,7 +238,7 @@ export function MemberManagementPage() {
     if (!isEditMode) {
       const variant = currentInstructor ? 'instructor' : 'member';
       return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded ${INSTRUCTOR_BADGE_STYLES[variant]}`}>
+        <span className={INSTRUCTOR_BADGE_STYLES[variant]}>
           {currentInstructor ? '指導者' : '一般'}
         </span>
       );
@@ -476,7 +476,7 @@ export function MemberManagementPage() {
                       <div className="text-xs text-gray-500">{member.email}</div>
                     </div>
                     {!isEditMode && (
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+                      <span className={ROLE_BADGE_STYLES[currentRole]}>
                         {ROLE_LABELS[currentRole]}
                       </span>
                     )}
@@ -502,7 +502,7 @@ export function MemberManagementPage() {
                           })}
                         </div>
                       ) : (
-                        <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+                        <span className={ROLE_BADGE_STYLES[currentRole]}>
                           {ROLE_LABELS[currentRole]}
                         </span>
                       )}
@@ -528,7 +528,7 @@ export function MemberManagementPage() {
                           })}
                         </div>
                       ) : (
-                        <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}`}>
+                        <span className={INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}>
                           {currentInstructor ? '指導者' : '一般'}
                         </span>
                       )}
