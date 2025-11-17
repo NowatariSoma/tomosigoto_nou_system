@@ -7,8 +7,6 @@ import { supabase } from '../../../lib/supabase';
 
 export class PartAssignmentsService {
   async getStagesWithPartsAndAssignments(): Promise<StageWithPartsAndAssignments[]> {
-    console.log('[DEBUG] Starting to fetch stages with parts and assignments...');
-
     const { data, error } = await supabase
       .from('stages')
       .select(`
@@ -36,8 +34,6 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch stages with parts and assignments: ${error.message}`);
     }
 
-    console.log(`[DEBUG] Fetched ${data?.length || 0} stages`);
-
     // すべてのユーザーIDを収集
     const allUserIds = new Set<string>();
     data?.forEach(stage => {
@@ -49,8 +45,6 @@ export class PartAssignmentsService {
         });
       });
     });
-
-    console.log(`[DEBUG] Found ${allUserIds.size} unique users`);
 
     // ユーザー情報を一括で取得（単一のクエリで全ユーザー情報を取得）
     const userMap = new Map<string, any>();
@@ -67,8 +61,6 @@ export class PartAssignmentsService {
         userMap.set(user.user_id, user);
       });
     }
-
-    console.log(`[DEBUG] Fetched user data for ${userMap.size} users in single query`);
 
     // データをマッピング（ユーザー情報は事前取得したものを使用）
     return (data || []).map(stage => this.mapStageResponseToStageWithPartsAndAssignments(stage, userMap));

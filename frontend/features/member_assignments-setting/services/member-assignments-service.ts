@@ -18,7 +18,6 @@ export class MemberAssignmentsService {
       throw new Error(`Failed to fetch member assignments: ${error.message}`);
     }
 
-    console.log('Fetched member assignments from DB:', data);
     return (data || []).map(this.mapMemberAssignmentResponseToMemberAssignmentData);
   }
 
@@ -64,8 +63,6 @@ export class MemberAssignmentsService {
     if (data.category !== undefined) updateData.category = data.category;
     if (data.display_order !== undefined) updateData.display_order = data.display_order;
 
-    console.log('Updating member assignment with data:', updateData);
-
     const { data: result, error } = await supabase
       .from(this.tableName)
       .update(updateData)
@@ -77,7 +74,6 @@ export class MemberAssignmentsService {
       throw new Error(`Failed to update member assignment: ${error.message}`);
     }
 
-    console.log('Updated member assignment result:', result);
     return this.mapMemberAssignmentResponseToMemberAssignmentData(result);
   }
 
@@ -93,7 +89,6 @@ export class MemberAssignmentsService {
   }
 
   private mapMemberAssignmentResponseToMemberAssignmentData(assignment: any): MemberAssignmentData {
-    console.log('Mapping member assignment data:', assignment);
     const mapped = {
       id: assignment.id,
       user_id: assignment.user_id,
@@ -103,7 +98,6 @@ export class MemberAssignmentsService {
       created_at: assignment.created_at,
       updated_at: assignment.updated_at,
     };
-    console.log('Mapped member assignment data:', mapped);
     return mapped;
   }
 }
