@@ -46,8 +46,6 @@ export class UserService {
   }
 
   async searchUsersByName(firstName: string, lastName: string): Promise<User[]> {
-    console.log('Searching users with:', { firstName, lastName });
-    
     let query = supabase
       .from('account_setting_profile')
       .select(`
@@ -63,32 +61,24 @@ export class UserService {
 
     // 姓が入力されている場合のみ姓で検索
     if (lastName.trim()) {
-      console.log('Adding last name filter:', `%${lastName.trim()}%`);
       query = query.ilike('last_name_katakana', `%${lastName.trim()}%`);
     }
 
     // 名が入力されている場合のみ名で検索
     if (firstName.trim()) {
-      console.log('Adding first name filter:', `%${firstName.trim()}%`);
       query = query.ilike('first_name_katakana', `%${firstName.trim()}%`);
     }
 
     // どちらも入力されていない場合は全件取得
     if (!firstName.trim() && !lastName.trim()) {
-      console.log('No search terms, returning all users');
       return this.getUsers();
     }
 
     const { data, error } = await query.order('last_name_katakana', { ascending: true });
 
     if (error) {
-      console.error('Search error:', error);
       throw new Error(`Failed to search users: ${error.message}`);
     }
-
-    console.log('Search results:', data?.length || 0, 'users found');
-    console.log('Raw data:', data);
-    console.log('First user data:', data?.[0]);
 
     const mappedUsers = (data || []).map((profile: any) => ({
       id: profile.user_id,
@@ -101,10 +91,7 @@ export class UserService {
       created_at: profile.created_at,
       updated_at: profile.updated_at
     }));
-    
-    console.log('Mapped users:', mappedUsers);
-    console.log('First mapped user:', mappedUsers[0]);
-    
+
     return mappedUsers;
   }
 

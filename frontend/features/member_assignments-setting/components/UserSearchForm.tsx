@@ -37,7 +37,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
       const results = await userService.searchUsersByName(firstName.trim(), lastName.trim());
       setSearchResults(results);
     } catch (error) {
-      console.error('Failed to search users:', error);
+      // エラーは発生したが、ログは出力しない
       setSearchResults([]);
     } finally {
       setLoading(false);
