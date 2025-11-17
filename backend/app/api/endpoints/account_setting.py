@@ -21,6 +21,18 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 router = APIRouter()
 
 
+@router.get("/profile/exists")
+async def check_profile_exists(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    account_setting_service: AccountSettingService = Depends(get_account_setting_service),
+):
+    """現在認証されているユーザーのプロフィール存在確認"""
+    user_id = current_user["id"]
+    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    
+    return {"exists": profile is not None}
+
+
 @router.get("/profile", response_model=AccountSettingProfileResponse)
 async def get_current_user_profile(
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -28,7 +40,6 @@ async def get_current_user_profile(
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
     user_id = current_user["id"]
-    print(f"Getting profile for user_id: {user_id}")
     profile = await account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:
@@ -109,10 +120,7 @@ async def create_public_profile(
         
         return profile
     except Exception as e:
-        # エラーが発生した場合はログを出力してエラーを再発生
-        print(f"Error creating profile: {e}")
-        import traceback
-        traceback.print_exc()
+        # エラーが発生した場合はエラーを再発生
         raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
 
@@ -165,10 +173,7 @@ async def update_public_profile(
         
         return profile
     except Exception as e:
-        # エラーが発生した場合はログを出力してエラーを再発生
-        print(f"Error updating profile: {e}")
-        import traceback
-        traceback.print_exc()
+        # エラーが発生した場合はエラーを再発生
         raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
 
