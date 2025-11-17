@@ -1,4 +1,18 @@
-from app.api.endpoints import users, venues, parts, member_assignments, stages, attendance, auth, account_setting, practice_slots, session_instructors, schedule_available_venues, scheduling
+from app.api.endpoints import (
+    account_setting,
+    admin_members,
+    attendance,
+    auth,
+    member_assignments,
+    parts,
+    practice_slots,
+    schedule_available_venues,
+    scheduling,
+    session_instructors,
+    stages,
+    users,
+    venues,
+)
 from fastapi import APIRouter
 
 api_router = APIRouter()
@@ -17,3 +31,4 @@ api_router.include_router(practice_slots.router, prefix="/practice_schedules", t
 api_router.include_router(session_instructors.router, prefix="/session-instructors", tags=["session-instructors"])
 api_router.include_router(schedule_available_venues.router, prefix="/schedule-available-venues", tags=["schedule-available-venues"])
 api_router.include_router(scheduling.router, prefix="/scheduling", tags=["scheduling"])
+api_router.include_router(admin_members.router, prefix="/admin/members", tags=["admin-members"])

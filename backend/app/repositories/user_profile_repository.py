@@ -69,6 +69,23 @@ class UserProfileRepository:
         logger.info(f"User profile not found for user: {user_id}")
         return None
 
+    @handle_supabase_errors("get_profiles_by_user_ids")
+    async def get_profiles_by_user_ids(self, user_ids: List[str]) -> List[Dict[str, Any]]:
+        """
+        複数ユーザーIDのプロフィールをまとめて取得
+        """
+        if not user_ids:
+            return []
+
+        response = (
+            self.client.table(self.table_name)
+            .select("user_id, first_name_kanji, last_name_kanji")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+
+        return response.data or []
+
     @handle_supabase_errors("get_profile_by_student_id")
     async def get_profile_by_student_id(self, student_id: str) -> Optional[Dict[str, Any]]:
         """

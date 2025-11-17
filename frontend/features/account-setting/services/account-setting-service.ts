@@ -28,6 +28,7 @@ export class AccountSettingService {
         headers,
       });
 
+      // 404はプロフィールが存在しないことを示す正常な状態
       if (response.status === 404) {
         return null;
       }
@@ -38,6 +39,8 @@ export class AccountSettingService {
 
       return response.json();
     } catch (error) {
+      // fetchが失敗した場合（ネットワークエラーなど）のみエラーを投げる
+      // 404は正常な状態なので、ここでは処理しない
       if (error instanceof ApiError && error.status === 404) {
         return null;
       }

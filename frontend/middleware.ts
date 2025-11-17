@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isSignUpPage = request.nextUrl.pathname === '/signup';
-  const isAccountSettingPage = request.nextUrl.pathname === '/account-setting';
+  const isSettingsPage = request.nextUrl.pathname === '/settings';
   const isPublicRoute = request.nextUrl.pathname === '/login' ||
                        request.nextUrl.pathname === '/signup' ||
                        request.nextUrl.pathname.startsWith('/api/') ||
@@ -77,7 +77,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (user && !isAccountSettingPage) {
+  if (user && !isSettingsPage) {
     try {
       const {
         data: { session },
@@ -95,7 +95,7 @@ export async function middleware(request: NextRequest) {
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           if (!profileData.exists) {
-            return NextResponse.redirect(new URL('/account-setting', request.url));
+            return NextResponse.redirect(new URL('/settings', request.url));
           }
         }
       }
