@@ -21,6 +21,17 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 router = APIRouter()
 
 
+@router.get("/profile/exists")
+async def check_profile_exists(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    account_setting_service: AccountSettingService = Depends(get_account_setting_service),
+):
+    """プロフィールの存在をチェック"""
+    user_id = current_user["id"]
+    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    return {"exists": profile is not None}
+
+
 @router.get("/profile", response_model=AccountSettingProfileResponse)
 async def get_current_user_profile(
     current_user: Dict[str, Any] = Depends(get_current_user),
