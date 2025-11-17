@@ -19,16 +19,6 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  // デバッグ用: 会場情報をコンソールに出力
-  React.useEffect(() => {
-    console.log('PracticeScheduleCard - schedule data:', {
-      id: schedule.id,
-      venueName: schedule.venueName,
-      venues: schedule.venues,
-      venueIds: schedule.venueIds
-    });
-  }, [schedule]);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
@@ -152,15 +142,6 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
             )}
           </div>
         </div>
-
-        {schedule.description && (
-          <div className="mt-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">練習内容</div>
-            <p className="text-sm text-slate-700 bg-slate-100 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed whitespace-pre-wrap">
-              {schedule.description}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
