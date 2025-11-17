@@ -228,86 +228,16 @@ export const useStageParts = () => {
 
   useEffect(() => {
     console.log('[DEBUG] useEffect triggered for initial fetch');
-    let isSubscribed = true;
+    isMountedRef.current = true;
 
-    const fetchData = async () => {
-      if (!isSubscribed) return;
-
-      fetchCountRef.current += 1;
-      console.log(`[DEBUG] fetchData called: ${fetchCountRef.current} times`);
-
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-      try {
-        console.log('[DEBUG] Starting to fetch stages...');
-
-        // 舞台を取得
-        const stages = await stagesService.getStages();
-        console.log(`[DEBUG] Fetched ${stages.length} stages`);
-
-        if (!isSubscribed) return;
-
-        // すべての舞台のパートを並列で取得
-        console.log('[DEBUG] Starting to fetch parts for all stages...');
-        const partsPromises = stages.map(stage =>
-          partsService.getPartsByStageId(stage.id)
-            .catch(error => {
-              console.error(`[DEBUG] Failed to fetch parts for stage ${stage.id}:`, error);
-              return []; // エラーの場合は空配列を返す
-            })
-        );
-
-        // すべてのパート取得を並列で待つ
-        const allParts = await Promise.all(partsPromises);
-        console.log(`[DEBUG] Fetched parts for ${allParts.length} stages`);
-
-        if (!isSubscribed) return;
-
-        // 舞台とパートを統合
-        const stagesWithParts: StageWithParts[] = stages.map((stage, index) => {
-          const parts = allParts[index];
-          const partNames = parts.map(part => part.name);
-
-          return {
-            id: stage.id,
-            date: stage.performanceDate || '',
-            stageName: stage.name,
-            description: stage.description,
-            status: stage.status,
-            parts: partNames,
-            partCount: partNames.length,
-          };
-        });
-
-        console.log(`[DEBUG] Processed ${stagesWithParts.length} stages with parts`);
-
-        if (isSubscribed) {
-          setState({
-            stages: stagesWithParts,
-            loading: false,
-            error: null,
-          });
-          console.log('[DEBUG] State updated successfully');
-        }
-      } catch (error) {
-        console.error('[DEBUG] Error in fetchData:', error);
-        if (isSubscribed) {
-          setState((prev) => ({
-            ...prev,
-            loading: false,
-            error: error instanceof Error ? error.message : '舞台・パートの取得に失敗しました',
-          }));
-        }
-      }
-    };
-
-    fetchData();
+    // fetchStagesWithPartsを直接呼び出し（重複を排除）
+    fetchStagesWithParts();
 
     return () => {
       console.log('[DEBUG] Component unmounting');
-      isSubscribed = false;
       isMountedRef.current = false;
     };
-  }, []); // 空の依存配列に変更して初回のみ実行
+  }, [fetchStagesWithParts]); // fetchStagesWithPartsを依存配列に追加
 
   return {
     ...state,

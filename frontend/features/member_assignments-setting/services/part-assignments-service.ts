@@ -52,26 +52,23 @@ export class PartAssignmentsService {
 
     console.log(`[DEBUG] Found ${allUserIds.size} unique users`);
 
-    // ユーザー情報を一括で取得
+    // ユーザー情報を一括で取得（単一のクエリで全ユーザー情報を取得）
     const userMap = new Map<string, any>();
     if (allUserIds.size > 0) {
       const userIds = Array.from(allUserIds);
 
-      // Supabaseの制限を考慮して、100件ずつバッチ処理
-      for (let i = 0; i < userIds.length; i += 100) {
-        const batch = userIds.slice(i, i + 100);
-        const { data: userData } = await supabase
-          .from('account_setting_profile')
-          .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
-          .in('user_id', batch);
+      // 単一のクエリで全てのユーザー情報を取得
+      const { data: userData } = await supabase
+        .from('account_setting_profile')
+        .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
+        .in('user_id', userIds);
 
-        userData?.forEach(user => {
-          userMap.set(user.user_id, user);
-        });
-      }
+      userData?.forEach(user => {
+        userMap.set(user.user_id, user);
+      });
     }
 
-    console.log(`[DEBUG] Fetched user data for ${userMap.size} users`);
+    console.log(`[DEBUG] Fetched user data for ${userMap.size} users in single query`);
 
     // データをマッピング（ユーザー情報は事前取得したものを使用）
     return (data || []).map(stage => this.mapStageResponseToStageWithPartsAndAssignments(stage, userMap));
