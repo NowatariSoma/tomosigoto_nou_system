@@ -176,18 +176,6 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
             </div>
           </div>
 
-          {/* 場所 */}
-          <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">場所</label>
-            <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-300">
-              <img
-                src={formData.location || 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg'}
-                alt="場所の地図"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
           {/* 説明 */}
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-3">説明</label>
