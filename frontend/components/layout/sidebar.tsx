@@ -238,7 +238,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleNavigateAndClose('/')}
               />
 
-              <NavTitle label="練習管理（ユーザー向け）" />
+              <NavTitle label="練習管理" />
 
               <NavItem
                 icon={<CalendarDays className="w-4 h-4" />}
@@ -380,7 +380,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
-          {!isCollapsed && <NavTitle label="練習管理（ユーザー向け）" />}
+          {!isCollapsed && <NavTitle label="練習管理" />}
 
           <NavItem
             icon={<CalendarDays className="w-4 h-4" />}
