@@ -60,7 +60,6 @@ export async function middleware(request: NextRequest) {
   const isAccountSettingPage = request.nextUrl.pathname === '/account-setting';
   const isPublicRoute = request.nextUrl.pathname === '/login' ||
                        request.nextUrl.pathname === '/signup' ||
-                       request.nextUrl.pathname === '/account-setting' ||
                        request.nextUrl.pathname.startsWith('/api/') ||
                        request.nextUrl.pathname.startsWith('/_next/') ||
                        request.nextUrl.pathname === '/favicon.ico' ||
@@ -69,48 +68,41 @@ export async function middleware(request: NextRequest) {
                        request.nextUrl.pathname.startsWith('/icons/');
 
   // セッションを取得
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // If user is not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated, check if profile exists
-  if (user && !isPublicRoute) {
+  if (user && !isAccountSettingPage) {
     try {
-      // Get session to get access token
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.access_token) {
-        // Check if profile exists
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const checkResponse = await fetch(`${apiUrl}/account_setting/profile/exists`, {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken = session?.access_token;
+      if (accessToken) {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+        const profileResponse = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
-        if (checkResponse.ok) {
-          const { exists } = await checkResponse.json();
-          
-          // If profile doesn't exist and not already on account-setting page, redirect
-          if (!exists && !isAccountSettingPage) {
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (!profileData.exists) {
             return NextResponse.redirect(new URL('/account-setting', request.url));
           }
         }
       }
     } catch (error) {
-      // If there's an error checking profile, allow access (fail open)
-      // This prevents blocking users if the API is down
-      console.error('Error checking profile existence:', error);
+      console.error('Failed to verify profile existence in middleware:', error);
     }
   }
-
-  // If user is authenticated and trying to access login/signup page, redirect to home
-  // if (user && (isLoginPage || isSignUpPage)) {
-  //   return NextResponse.redirect(new URL('/', request.url));
-  // }
 
   return response;
 }

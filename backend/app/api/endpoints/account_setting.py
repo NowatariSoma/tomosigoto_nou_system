@@ -26,9 +26,10 @@ async def check_profile_exists(
     current_user: Dict[str, Any] = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
-    """プロフィールの存在をチェック"""
+    """現在認証されているユーザーのプロフィール存在確認"""
     user_id = current_user["id"]
     profile = await account_setting_service.get_profile_by_user_id(user_id)
+    
     return {"exists": profile is not None}
 
 
