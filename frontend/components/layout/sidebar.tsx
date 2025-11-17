@@ -10,7 +10,6 @@ import {
   ChevronRight,
   FileText,
   Users,
-  User,
   X,
   Home,
   Settings,
@@ -311,17 +310,17 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               <NavTitle label="その他" />
 
               <NavItem
-                icon={<User className="w-4 h-4" />}
-                label="アカウント設定"
-                active={pathname === '/account-setting'}
-                onClick={() => handleNavigateAndClose('/account-setting')}
-              />
-
-              <NavItem
                 icon={<Settings className="w-4 h-4" />}
                 label="設定"
                 active={pathname === '/settings'}
                 onClick={() => handleNavigateAndClose('/settings')}
+              />
+
+              <NavItem
+                icon={<Users className="w-4 h-4" />}
+                label="メンバー管理"
+                active={pathname === '/member-management'}
+                onClick={() => handleNavigateAndClose('/member-management')}
               />
             </div>
           </div>
@@ -456,18 +455,18 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           {!isCollapsed && <NavTitle label="その他" />}
 
           <NavItem
-            icon={<User className="w-4 h-4" />}
-            label={isCollapsed ? "" : "アカウント設定"}
-            active={pathname === '/account-setting'}
-            href="/account-setting"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
             icon={<Settings className="w-4 h-4" />}
             label={isCollapsed ? "" : "設定"}
             active={pathname === '/settings'}
             href="/settings"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+
+          <NavItem
+            icon={<Users className="w-4 h-4" />}
+            label={isCollapsed ? "" : "メンバー管理"}
+            active={pathname === '/member-management'}
+            href="/member-management"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
         </div>
