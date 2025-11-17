@@ -62,7 +62,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
         const usersData = await userService.getUsers();
         setUsers(usersData);
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        // エラーは発生したが、ログは出力しない
       } finally {
         setLoading(false);
       }
