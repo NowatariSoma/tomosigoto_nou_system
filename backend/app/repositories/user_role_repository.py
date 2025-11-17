@@ -16,7 +16,7 @@ class UserRoleRepository:
             supabase_client: Supabaseクライアント
         """
         self.client = supabase_client
-        self.table_name = "user_role"  # リモートのSupabaseでは単数形
+        self.table_name = "user_roles"  # リモートのSupabaseでは複数形
 
     @handle_supabase_errors("get_role_by_user_id")
     async def get_role_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:

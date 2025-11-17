@@ -39,7 +39,7 @@ class MemberAdminService:
         # user_rolesテーブルからis_instructorフラグを取得
         user_roles_with_instructor = await self.user_role_repository.get_user_roles_with_instructor()
         instructor_map = {
-            role["user_id"]: role.get("is_instructor", False)
+            role["user_id"]: bool(role.get("is_instructor", False)) if role.get("is_instructor") is not None else False
             for role in user_roles_with_instructor
             if role.get("user_id")
         }
@@ -49,7 +49,7 @@ class MemberAdminService:
                 user,
                 profile_map.get(user["id"]),
                 user["id"] in admin_user_ids,
-                instructor_map.get(user["id"], False)
+                bool(instructor_map.get(user["id"], False))
             )
             for user in users
         ]
@@ -63,7 +63,7 @@ class MemberAdminService:
         profile = await self.user_profile_repository.get_profile_by_user_id(user_id)
         admin_role = await self.user_role_repository.get_role_by_user_and_type(user_id, "admin")
         is_instructor = await self.user_role_repository.get_instructor_flag(user_id)
-        return self._serialize_member(user, profile, admin_role is not None, is_instructor)
+        return self._serialize_member(user, profile, admin_role is not None, bool(is_instructor) if is_instructor is not None else False)
 
     async def update_member_role(self, user_id: str, role: str) -> Dict[str, Any]:
         """管理者権限の付与/剥奪（user_roleテーブルで）"""
