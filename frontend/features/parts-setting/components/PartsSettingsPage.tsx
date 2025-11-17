@@ -65,7 +65,7 @@ export const PartsSettingsPage: React.FC = () => {
       setEditingStage(null);
       setShowForm(false);
     } catch (error) {
-      console.error('Failed to save stage:', error);
+      // エラーは発生したが、ログは出力しない
     }
   };
 
