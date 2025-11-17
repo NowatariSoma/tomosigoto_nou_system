@@ -1,12 +1,14 @@
-import { 
-  PartWithAssignments, 
+import {
+  PartWithAssignments,
   StageWithPartsAndAssignments,
-  MemberAssignmentWithDetails 
+  MemberAssignmentWithDetails
 } from '../types';
 import { supabase } from '../../../lib/supabase';
 
 export class PartAssignmentsService {
   async getStagesWithPartsAndAssignments(): Promise<StageWithPartsAndAssignments[]> {
+    console.log('[DEBUG] Starting to fetch stages with parts and assignments...');
+
     const { data, error } = await supabase
       .from('stages')
       .select(`
@@ -34,7 +36,45 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch stages with parts and assignments: ${error.message}`);
     }
 
-    return Promise.all((data || []).map(stage => this.mapStageResponseToStageWithPartsAndAssignments(stage)));
+    console.log(`[DEBUG] Fetched ${data?.length || 0} stages`);
+
+    // すべてのユーザーIDを収集
+    const allUserIds = new Set<string>();
+    data?.forEach(stage => {
+      stage.parts?.forEach((part: any) => {
+        part.member_assignments?.forEach((assignment: any) => {
+          if (assignment.user_id) {
+            allUserIds.add(assignment.user_id);
+          }
+        });
+      });
+    });
+
+    console.log(`[DEBUG] Found ${allUserIds.size} unique users`);
+
+    // ユーザー情報を一括で取得
+    const userMap = new Map<string, any>();
+    if (allUserIds.size > 0) {
+      const userIds = Array.from(allUserIds);
+
+      // Supabaseの制限を考慮して、100件ずつバッチ処理
+      for (let i = 0; i < userIds.length; i += 100) {
+        const batch = userIds.slice(i, i + 100);
+        const { data: userData } = await supabase
+          .from('account_setting_profile')
+          .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
+          .in('user_id', batch);
+
+        userData?.forEach(user => {
+          userMap.set(user.user_id, user);
+        });
+      }
+    }
+
+    console.log(`[DEBUG] Fetched user data for ${userMap.size} users`);
+
+    // データをマッピング（ユーザー情報は事前取得したものを使用）
+    return (data || []).map(stage => this.mapStageResponseToStageWithPartsAndAssignments(stage, userMap));
   }
 
   async getPartWithAssignments(partId: string): Promise<PartWithAssignments> {
@@ -65,7 +105,22 @@ export class PartAssignmentsService {
       throw new Error(`Failed to fetch part with assignments: ${error.message}`);
     }
 
-    return await this.mapPartResponseToPartWithAssignments(data);
+    // このパートに関連するユーザー情報を一括取得
+    const userIds = (data.member_assignments || []).map((a: any) => a.user_id).filter(Boolean);
+    const userMap = new Map<string, any>();
+
+    if (userIds.length > 0) {
+      const { data: userData } = await supabase
+        .from('account_setting_profile')
+        .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
+        .in('user_id', userIds);
+
+      userData?.forEach(user => {
+        userMap.set(user.user_id, user);
+      });
+    }
+
+    return this.mapPartResponseToPartWithAssignments(data, userMap);
   }
 
   async getAssignmentsByStage(stageId: string): Promise<MemberAssignmentWithDetails[]> {
@@ -89,49 +144,64 @@ export class PartAssignmentsService {
           )
         )
       `)
-      .eq('part.stage_id', stageId)
-      .order('display_order', { ascending: true });
+      .eq('part.stage_id', stageId);
 
     if (error) {
       throw new Error(`Failed to fetch assignments by stage: ${error.message}`);
     }
 
-    return Promise.all((data || []).map(assignment => this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment)));
+    // ユーザー情報を一括取得
+    const userIds = (data || []).map(a => a.user_id).filter(Boolean);
+    const userMap = new Map<string, any>();
+
+    if (userIds.length > 0) {
+      const { data: userData } = await supabase
+        .from('account_setting_profile')
+        .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
+        .in('user_id', userIds);
+
+      userData?.forEach(user => {
+        userMap.set(user.user_id, user);
+      });
+    }
+
+    return (data || []).map(assignment =>
+      this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment, userMap)
+    );
   }
 
-  private async mapStageResponseToStageWithPartsAndAssignments(stage: any): Promise<StageWithPartsAndAssignments> {
+  private mapStageResponseToStageWithPartsAndAssignments(stage: any, userMap: Map<string, any>): StageWithPartsAndAssignments {
     return {
       id: stage.id,
       name: stage.name,
       performance_date: stage.performance_date,
       description: stage.description,
-      parts: await Promise.all((stage.parts || []).map((part: any) => this.mapPartResponseToPartWithAssignments(part))),
+      parts: (stage.parts || []).map((part: any) => this.mapPartResponseToPartWithAssignments(part, userMap)),
     };
   }
 
-  private async mapPartResponseToPartWithAssignments(part: any): Promise<PartWithAssignments> {
+  private mapPartResponseToPartWithAssignments(part: any, userMap: Map<string, any>): PartWithAssignments {
     return {
       id: part.id,
       name: part.name,
       stage_id: part.stage_id || part.stage?.id,
       stage_name: part.stage?.name || '',
       performance_date: part.stage?.performance_date || '',
-      member_assignments: await Promise.all((part.member_assignments || []).map((assignment: any) => 
-        this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment)
-      )),
+      member_assignments: (part.member_assignments || []).map((assignment: any) =>
+        this.mapAssignmentResponseToMemberAssignmentWithDetails(assignment, userMap)
+      ),
     };
   }
 
-  private async mapAssignmentResponseToMemberAssignmentWithDetails(assignment: any): Promise<MemberAssignmentWithDetails> {
-    // ユーザー情報を別途取得（account_setting_profileビューから）
-    const { data: userData } = await supabase
-      .from('account_setting_profile')
-      .select('user_id, first_name_katakana, last_name_katakana, first_name_kanji, last_name_kanji, email')
-      .eq('user_id', assignment.user_id)
-      .single();
+  private mapAssignmentResponseToMemberAssignmentWithDetails(
+    assignment: any,
+    userMap: Map<string, any>
+  ): MemberAssignmentWithDetails {
+    // 事前に取得したユーザー情報を使用
+    const userData = userMap.get(assignment.user_id);
 
     // 名前を構築
-    const userName = userData 
+    const userName = userData
       ? `${userData.last_name_katakana} ${userData.first_name_katakana}`
       : 'Unknown User';
 
