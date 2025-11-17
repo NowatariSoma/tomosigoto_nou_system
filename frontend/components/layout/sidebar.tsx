@@ -304,6 +304,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                     active={pathname === '/member-assignments-setting'}
                     onClick={() => handleNavigateAndClose('/member-assignments-setting')}
                   />
+
+                  <SubNavItem
+                    icon={<Users className="w-4 h-4" />}
+                    label="メンバー管理"
+                    active={pathname === '/member-management'}
+                    onClick={() => handleNavigateAndClose('/member-management')}
+                  />
                 </>
               )}
 
@@ -314,13 +321,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 label="設定"
                 active={pathname === '/settings'}
                 onClick={() => handleNavigateAndClose('/settings')}
-              />
-
-              <NavItem
-                icon={<Users className="w-4 h-4" />}
-                label="メンバー管理"
-                active={pathname === '/member-management'}
-                onClick={() => handleNavigateAndClose('/member-management')}
               />
             </div>
           </div>
@@ -449,6 +449,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 active={pathname === '/member-assignments-setting'}
                 href="/member-assignments-setting"
               />
+
+              <SubNavItem
+                icon={<Users className="w-4 h-4" />}
+                label="メンバー管理"
+                active={pathname === '/member-management'}
+                href="/member-management"
+              />
             </>
           )}
 
@@ -459,14 +466,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label={isCollapsed ? "" : "設定"}
             active={pathname === '/settings'}
             href="/settings"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          <NavItem
-            icon={<Users className="w-4 h-4" />}
-            label={isCollapsed ? "" : "メンバー管理"}
-            active={pathname === '/member-management'}
-            href="/member-management"
             className={isCollapsed ? "justify-center px-2" : ""}
           />
         </div>
