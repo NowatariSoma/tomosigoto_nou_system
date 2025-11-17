@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
-import { Calendar, Plus, Minus } from 'lucide-react';
+import { Calendar, Plus, Minus, Edit2 } from 'lucide-react';
 import { DraggableSessionCard } from './DraggableSessionCard';
 import { PartCard } from './PartCard';
 import { InstructorCard } from './InstructorCard';
 import { EditableTimeSlot } from './EditableTimeSlot';
 import { TimeSlotEditorModal } from './TimeSlotEditorModal';
-import { VenueEditor } from './VenueEditor';
+import { SelectionModal } from '@/components/ui/interactive/selection-modal';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
@@ -58,6 +58,8 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   const [dragOverCell, setDragOverCell] = useState<{ venueId: string; timeSlot: string } | null>(null);
   const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
   const [editingTimeSlot, setEditingTimeSlot] = useState<TimeSlot | null>(null);
+  const [isVenueModalOpen, setIsVenueModalOpen] = useState(false);
+  const [selectedVenues, setSelectedVenues] = useState<VenueInfo[]>([]);
 
   // セッションを会場と時間でグループ化
   const groupedSessions = React.useMemo(() => {
@@ -220,6 +222,36 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
     setEditingTimeSlot(null);
   };
 
+  // 会場編集モーダルのハンドラー
+  const handleOpenVenueModal = () => {
+    // 現在選択されている会場を初期選択として設定
+    setSelectedVenues(venues);
+    setIsVenueModalOpen(true);
+  };
+
+  const handleCloseVenueModal = () => {
+    setIsVenueModalOpen(false);
+  };
+
+  const handleConfirmVenueSelection = (newSelectedVenues: VenueInfo[]) => {
+    // 新しく選択された会場
+    const newVenues = newSelectedVenues.filter(room => !venues.some(v => v.id === room.id));
+    if (newVenues.length > 0 && onAddVenues) {
+      onAddVenues(newVenues);
+    }
+
+    // 選択解除された会場を削除
+    const removedVenueIds = venues
+      .filter(venue => !newSelectedVenues.some(room => room.id === venue.id))
+      .map(venue => venue.id);
+
+    if (onRemoveVenue) {
+      removedVenueIds.forEach(id => onRemoveVenue(id));
+    }
+
+    setIsVenueModalOpen(false);
+  };
+
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
@@ -235,23 +267,33 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   }
 
   return (
-    <div className="flex gap-4 h-full">
-      {/* 左側: テーブル */}
-      <div className="flex-1 bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* テーブル全体 */}
+    <>
+      {/* テーブル全体 */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <table className="w-full table-fixed min-w-[600px]">
+        <table className="w-full table-fixed min-w-[600px]">
           <thead>
             <tr>
               <th className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</th>
               {venues.map((venue, index) => (
-                <th 
-                  key={`${venue.id}-${index}`} 
-                  className="px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-r border-b border-gray-600 last:border-r-0 hover:bg-gray-800 transition-colors whitespace-nowrap"
+                <th
+                  key={`${venue.id}-${index}`}
+                  className="px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-r border-b border-gray-600 hover:bg-gray-800 transition-colors whitespace-nowrap"
                 >
                   {venue.name || `会場${venue.id.slice(-4)}`}
                 </th>
               ))}
+              {edit_mode === 'edit' && (
+                <th className="w-24 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-b border-gray-600">
+                  <button
+                    onClick={handleOpenVenueModal}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                    会場編集
+                  </button>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -309,13 +351,17 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                     </td>
                   );
                 })}
+                {/* 会場編集列の空セル */}
+                {edit_mode === 'edit' && (
+                  <td className="border-gray-200 min-h-[60px] sm:min-h-[80px] align-top bg-gray-50 p-0.5 sm:p-1"></td>
+                )}
               </tr>
             ))}
             
             {/* 時間追加・削除ボタン行 */}
             {edit_mode === 'edit' && (onAddTimeSlot || onRemoveTimeSlot) && (
               <tr className="border-t-2 border-gray-200">
-                <td colSpan={venues.length + 1} className="px-2 sm:px-4 py-2 sm:py-3 bg-white">
+                <td colSpan={venues.length + 2} className="px-2 sm:px-4 py-2 sm:py-3 bg-white">
                   <div className="flex items-center justify-center flex-wrap gap-2">
                     {onRemoveTimeSlot && (
                       <button
@@ -346,6 +392,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* 統計情報 - 目立たないデザイン */}
@@ -384,28 +431,29 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
         </div>
       )}
 
-        {/* 時間スロット編集モーダル */}
-        <TimeSlotEditorModal
-          isOpen={isTimeSlotModalOpen}
-          onClose={handleTimeSlotModalClose}
-          onSave={handleTimeSlotSave}
-          timeSlot={editingTimeSlot}
-        />
-      </div>
+      {/* 時間スロット編集モーダル */}
+      <TimeSlotEditorModal
+        isOpen={isTimeSlotModalOpen}
+        onClose={handleTimeSlotModalClose}
+        onSave={handleTimeSlotSave}
+        timeSlot={editingTimeSlot}
+      />
 
-      {/* 右側: 会場編集 */}
-      {edit_mode === 'edit' && (
-        <div className="w-80">
-          <VenueEditor
-            venues={venues}
-            availableRooms={availableRooms}
-            onAddVenues={onAddVenues || (() => {})}
-            onRemoveVenue={onRemoveVenue || (() => {})}
-            onUpdateVenue={onUpdateVenue || (() => {})}
-            isEditMode={edit_mode === 'edit'}
-          />
-        </div>
-      )}
-    </div>
+      {/* 会場選択モーダル */}
+      <SelectionModal<VenueInfo>
+        isOpen={isVenueModalOpen}
+        onClose={handleCloseVenueModal}
+        onConfirm={handleConfirmVenueSelection}
+        items={availableRooms}
+        selectedItems={selectedVenues}
+        title="会場を選択"
+        columns={2}
+        getItemLabel={(room) => room.name}
+        getItemSubLabel={(room) => room.campus ? `${room.campus}キャンパス` : undefined}
+        selectedCountText={(count) => `${count}個の会場を選択中`}
+        confirmButtonText="確定"
+        cancelButtonText="キャンセル"
+      />
+    </>
   );
 };
