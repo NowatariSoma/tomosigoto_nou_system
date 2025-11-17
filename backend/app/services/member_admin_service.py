@@ -32,23 +32,22 @@ class MemberAdminService:
         profiles = await self.user_profile_repository.get_profiles_by_user_ids(user_ids)
         profile_map = {profile["user_id"]: profile for profile in profiles}
 
-        # user_roleテーブルから管理者を取得
-        admin_roles = await self.user_role_repository.get_roles_by_type("admin")
-        admin_user_ids = {role["user_id"] for role in admin_roles if role.get("user_id")}
-        
-        # user_rolesテーブルからis_instructorフラグを取得
+        # user_rolesテーブルからロール & is_instructorを取得
         user_roles_with_instructor = await self.user_role_repository.get_user_roles_with_instructor()
-        instructor_map = {
-            role["user_id"]: bool(role.get("is_instructor", False)) if role.get("is_instructor") is not None else False
-            for role in user_roles_with_instructor
-            if role.get("user_id")
-        }
+        role_map: Dict[str, str] = {}
+        instructor_map: Dict[str, bool] = {}
+        for record in user_roles_with_instructor:
+            user_id = record.get("user_id")
+            if not user_id:
+                continue
+            role_map[user_id] = self._normalize_role_type(record.get("role_type"))
+            instructor_map[user_id] = bool(record.get("is_instructor")) if record.get("is_instructor") is not None else False
 
         return [
             self._serialize_member(
                 user,
                 profile_map.get(user["id"]),
-                user["id"] in admin_user_ids,
+                role_map.get(user["id"], "basic"),
                 bool(instructor_map.get(user["id"], False))
             )
             for user in users
@@ -61,33 +60,30 @@ class MemberAdminService:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
 
         profile = await self.user_profile_repository.get_profile_by_user_id(user_id)
-        admin_role = await self.user_role_repository.get_role_by_user_and_type(user_id, "admin")
+        role_record = await self.user_role_repository.get_role_by_user_id(user_id)
+        normalized_role = self._normalize_role_type(role_record.get("role_type") if role_record else None)
         is_instructor = await self.user_role_repository.get_instructor_flag(user_id)
-        return self._serialize_member(user, profile, admin_role is not None, bool(is_instructor) if is_instructor is not None else False)
+        return self._serialize_member(
+            user,
+            profile,
+            normalized_role,
+            bool(is_instructor) if is_instructor is not None else False,
+        )
 
     async def update_member_role(self, user_id: str, role: str) -> Dict[str, Any]:
         """管理者権限の付与/剥奪（user_roleテーブルで）"""
         await self.user_service.get_user_by_id(user_id)  # ensure user exists
 
-        # user_roleテーブルでrole_typeを更新
+        role_type_value = self._to_role_type_value(role)
+
         existing_role = await self.user_role_repository.get_role_by_user_id(user_id)
-        if role == "admin":
-            if not existing_role:
-                await self.user_role_repository.create_role({
-                    "user_id": user_id,
-                    "role_type": "admin",
-                })
-            elif existing_role.get("role_type") != "admin":
-                await self.user_role_repository.update_role(user_id, {"role_type": "admin"})
+        if existing_role:
+            await self.user_role_repository.update_role(user_id, {"role_type": role_type_value})
         else:
-            # basicまたはviewerに変更
-            if not existing_role:
-                await self.user_role_repository.create_role({
-                    "user_id": user_id,
-                    "role_type": "user",  # デフォルトはuser
-                })
-            elif existing_role.get("role_type") == "admin":
-                await self.user_role_repository.update_role(user_id, {"role_type": "user"})
+            await self.user_role_repository.create_role({
+                "user_id": user_id,
+                "role_type": role_type_value,
+            })
 
         return await self.get_member(user_id)
 
@@ -106,7 +102,7 @@ class MemberAdminService:
         self,
         user: Dict[str, Any],
         profile: Optional[Dict[str, Any]],
-        is_admin: bool,
+        role: str,
         is_instructor: bool = False,
     ) -> Dict[str, Any]:
         display_name = self._build_display_name(profile, user)
@@ -114,10 +110,24 @@ class MemberAdminService:
             "id": user["id"],
             "email": user.get("email"),
             "name": display_name,
-            "role": "admin" if is_admin else "basic",
+            "role": role,
             "is_instructor": is_instructor,
             "last_active_at": user.get("last_sign_in_at"),
         }
+
+    def _normalize_role_type(self, role_type: Optional[str]) -> str:
+        if role_type == "admin":
+            return "admin"
+        if role_type == "viewer":
+            return "viewer"
+        return "basic"
+
+    def _to_role_type_value(self, role: str) -> str:
+        if role == "admin":
+            return "admin"
+        if role == "viewer":
+            return "viewer"
+        return "user"
 
     def _build_display_name(
         self,
