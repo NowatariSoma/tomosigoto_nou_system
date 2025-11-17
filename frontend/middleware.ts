@@ -57,8 +57,10 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isSignUpPage = request.nextUrl.pathname === '/signup';
+  const isAccountSettingPage = request.nextUrl.pathname === '/account-setting';
   const isPublicRoute = request.nextUrl.pathname === '/login' ||
                        request.nextUrl.pathname === '/signup' ||
+                       request.nextUrl.pathname === '/account-setting' ||
                        request.nextUrl.pathname.startsWith('/api/') ||
                        request.nextUrl.pathname.startsWith('/_next/') ||
                        request.nextUrl.pathname === '/favicon.ico' ||
@@ -72,6 +74,37 @@ export async function middleware(request: NextRequest) {
   // If user is not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // If user is authenticated, check if profile exists
+  if (user && !isPublicRoute) {
+    try {
+      // Get session to get access token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.access_token) {
+        // Check if profile exists
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const checkResponse = await fetch(`${apiUrl}/account_setting/profile/exists`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (checkResponse.ok) {
+          const { exists } = await checkResponse.json();
+          
+          // If profile doesn't exist and not already on account-setting page, redirect
+          if (!exists && !isAccountSettingPage) {
+            return NextResponse.redirect(new URL('/account-setting', request.url));
+          }
+        }
+      }
+    } catch (error) {
+      // If there's an error checking profile, allow access (fail open)
+      // This prevents blocking users if the API is down
+      console.error('Error checking profile existence:', error);
+    }
   }
 
   // If user is authenticated and trying to access login/signup page, redirect to home

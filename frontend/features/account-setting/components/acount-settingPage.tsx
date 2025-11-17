@@ -2,6 +2,7 @@
 
 import Select, { SelectOption } from '../../../components/ui/inputs/select';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, CheckCircle, AlertCircle, Loader2, Edit, X } from 'lucide-react';
 import { useAccountSetting } from '../hooks/useAccountSetting';
 import { AccountSettingProfile, Department } from '../types';
@@ -35,6 +36,7 @@ const faculties: SelectOption[] = [
 ];
 
 const AccountSettings: React.FC = () => {
+  const router = useRouter();
   const {
     profile,
     departments,
@@ -159,10 +161,19 @@ const AccountSettings: React.FC = () => {
         year: formData.year || 1,
       };
 
+      const wasNewProfile = !profile;
       const success = await saveProfile(dataToSave);
       if (success) {
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        
+        // 新規プロフィール作成の場合は、ホームページにリダイレクト
+        if (wasNewProfile) {
+          setTimeout(() => {
+            router.push('/');
+          }, 1000);
+        } else {
+          setTimeout(() => setSaveSuccess(false), 3000);
+        }
       } else if (validation && !validation.is_valid) {
         const errors: Record<string, string> = {};
         validation.errors.forEach(error => {
@@ -249,6 +260,20 @@ const AccountSettings: React.FC = () => {
                   <span className="text-gray-900">{new Date(userInfo.last_sign_in_at).toLocaleString('ja-JP')}</span>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {!profile && !isEditMode && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-blue-500 mr-2" />
+              <div>
+                <p className="text-blue-800 font-semibold">プロフィール設定が必須です</p>
+                <p className="text-blue-700 text-sm mt-1">
+                  アプリを使用するには、プロフィール情報の登録が必要です。以下の情報を入力してください。
+                </p>
+              </div>
             </div>
           </div>
         )}
