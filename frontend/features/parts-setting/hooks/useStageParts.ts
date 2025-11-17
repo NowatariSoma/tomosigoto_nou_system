@@ -29,36 +29,28 @@ export const useStageParts = () => {
   // 舞台とパートを並列で取得する最適化版
   const fetchStagesWithParts = useCallback(async () => {
     fetchCountRef.current += 1;
-    console.log(`[DEBUG] fetchStagesWithParts called: ${fetchCountRef.current} times`);
 
     if (!isMountedRef.current) {
-      console.log('[DEBUG] Component is unmounted, skipping fetch');
       return;
     }
 
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      console.log('[DEBUG] Starting to fetch stages...');
-
       // 舞台を取得
       const stages = await stagesService.getStages();
-      console.log(`[DEBUG] Fetched ${stages.length} stages`);
 
       if (!isMountedRef.current) return;
 
       // すべての舞台のパートを並列で取得
-      console.log('[DEBUG] Starting to fetch parts for all stages...');
       const partsPromises = stages.map(stage =>
         partsService.getPartsByStageId(stage.id)
           .catch(error => {
-            console.error(`[DEBUG] Failed to fetch parts for stage ${stage.id}:`, error);
             return []; // エラーの場合は空配列を返す
           })
       );
 
       // すべてのパート取得を並列で待つ
       const allParts = await Promise.all(partsPromises);
-      console.log(`[DEBUG] Fetched parts for ${allParts.length} stages`);
 
       if (!isMountedRef.current) return;
 
@@ -78,18 +70,14 @@ export const useStageParts = () => {
         };
       });
 
-      console.log(`[DEBUG] Processed ${stagesWithParts.length} stages with parts`);
-
       if (isMountedRef.current) {
         setState({
           stages: stagesWithParts,
           loading: false,
           error: null,
         });
-        console.log('[DEBUG] State updated successfully');
       }
     } catch (error) {
-      console.error('[DEBUG] Error in fetchStagesWithParts:', error);
       if (isMountedRef.current) {
         setState((prev) => ({
           ...prev,
@@ -152,8 +140,6 @@ export const useStageParts = () => {
   const updateStage = useCallback(async (id: string, data: UpdateStageRequest) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      console.log('updateStage called with:', { id, data });
-
       // 1. 舞台を更新
       const updatedStage = await stagesService.updateStage(id, {
         name: data.stageName,
@@ -161,8 +147,6 @@ export const useStageParts = () => {
         performanceDate: data.date,
         status: data.status,
       });
-
-      console.log('Stage updated, result:', updatedStage);
 
       // 2. パートのステータスを舞台のステータスに合わせて更新
       await partsService.updatePartsStatusByStageId(id, data.status || 'active');
@@ -185,9 +169,7 @@ export const useStageParts = () => {
       }
 
       // 4. 統合データを再取得
-      console.log('Refetching stages after update...');
       await fetchStagesWithParts();
-      console.log('Stages refetched');
 
       return {
         id: updatedStage.id,
@@ -227,14 +209,12 @@ export const useStageParts = () => {
   }, [fetchStagesWithParts]);
 
   useEffect(() => {
-    console.log('[DEBUG] useEffect triggered for initial fetch');
     isMountedRef.current = true;
 
     // fetchStagesWithPartsを直接呼び出し（重複を排除）
     fetchStagesWithParts();
 
     return () => {
-      console.log('[DEBUG] Component unmounting');
       isMountedRef.current = false;
     };
   }, [fetchStagesWithParts]); // fetchStagesWithPartsを依存配列に追加
