@@ -29,8 +29,7 @@ export const mapVenueToRoom = (venue: VenueResponse | null | undefined): Room =>
       campus: DEFAULTS.CAMPUS,
       capacity: DEFAULTS.CAPACITY,
       danceAllowed: DEFAULTS.DANCE_ALLOWED,
-      description: '',
-      location: ''
+      description: ''
     };
   }
   
@@ -40,8 +39,7 @@ export const mapVenueToRoom = (venue: VenueResponse | null | undefined): Room =>
     campus: venue.campus === CAMPUS.IMADEGAWA ? CAMPUS.IMADEGAWA : CAMPUS.KYOTANABE,
     capacity: venue.capacity || DEFAULTS.CAPACITY,
     danceAllowed: venue.can_mai || DEFAULTS.DANCE_ALLOWED,
-    description: venue.description || '',
-    location: venue.address || ''
+    description: venue.description || ''
   };
 };
 
