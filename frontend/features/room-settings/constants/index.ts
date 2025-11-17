@@ -18,8 +18,7 @@ export const INITIAL_ROOM_FORM = {
   campus: CAMPUS.KYOTANABE,
   capacity: 0,
   danceAllowed: false,
-  description: '',
-  location: ''
+  description: ''
 } as const;
 
 // UI表示用テキスト

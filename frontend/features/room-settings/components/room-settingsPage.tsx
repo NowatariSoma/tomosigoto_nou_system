@@ -38,8 +38,7 @@ export const RoomSettingsPage: React.FC = () => {
           campus: updatedRoom.campus,
           capacity: updatedRoom.capacity,
           danceAllowed: updatedRoom.danceAllowed,
-          description: updatedRoom.description,
-          location: updatedRoom.location
+          description: updatedRoom.description
         });
       } else {
         // 新規登録モード
@@ -48,8 +47,7 @@ export const RoomSettingsPage: React.FC = () => {
           campus: updatedRoom.campus,
           capacity: updatedRoom.capacity,
           danceAllowed: updatedRoom.danceAllowed,
-          description: updatedRoom.description,
-          location: updatedRoom.location
+          description: updatedRoom.description
         });
       }
       handleCloseModal();
