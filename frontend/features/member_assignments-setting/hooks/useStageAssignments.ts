@@ -67,7 +67,6 @@ export const useStageAssignments = () => {
   }, [getStage]);
 
   useEffect(() => {
-    console.log('[DEBUG] useStageAssignments: useEffect triggered');
     fetchStagesWithAssignments();
   }, []); // 空の依存配列に変更して初回のみ実行
 

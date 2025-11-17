@@ -55,13 +55,10 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   const loadExistingMembers = async () => {
     try {
       setLoading(true);
-      console.log('Loading existing members for partId:', partId);
       const partData = await partAssignmentsService.getPartWithAssignments(partId);
-      console.log('Loaded part data:', partData);
-      console.log('Member assignments:', partData.member_assignments);
       setExistingMembers(partData.member_assignments || []);
     } catch (error) {
-      console.error('Failed to load existing members:', error);
+      // エラーは発生したが、ログは出力しない
     } finally {
       setLoading(false);
     }
@@ -76,11 +73,9 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
     setHasSearched(true);
     try {
       const results = await userService.searchUsersByName(firstName.trim(), lastName.trim());
-      console.log('Search results in modal:', results);
-      console.log('First result:', results[0]);
       setSearchResults(results);
     } catch (error) {
-      console.error('Failed to search users:', error);
+      // エラーは発生したが、ログは出力しない
       setSearchResults([]);
     } finally {
       setLoading(false);
@@ -88,12 +83,6 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   };
 
   const handleUserSelect = (user: UserType) => {
-    console.log('Selected user:', user);
-    console.log('User kanji names:', {
-      first_name_kanji: user.first_name_kanji,
-      last_name_kanji: user.last_name_kanji
-    });
-    
     // 既に選択されているかチェック
     if (selectedUsers.find(u => u.id === user.id)) {
       setErrorMessage('このユーザーは既に選択されています。');
@@ -154,7 +143,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Failed to create assignments:', error);
+      // エラーは発生したが、ログは出力しない
       alert('メンバー登録に失敗しました。');
     } finally {
       setSubmitting(false);
@@ -174,20 +163,17 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
   const handleDeleteMember = async (assignmentId: string) => {
     try {
       setSubmitting(true);
-      console.log('Deleting member assignment:', assignmentId);
-      
+
       // 即座にUIを更新（楽観的更新）
       setExistingMembers(prev => prev.filter(member => member.id !== assignmentId));
-      
+
       await memberAssignmentService.deleteMemberAssignment(assignmentId);
-      console.log('Member assignment deleted successfully');
-      
+
       // サーバーから最新データを取得して同期
       await loadExistingMembers();
-      console.log('Existing members reloaded');
       // 削除の場合は親コンポーネントへの通知は不要（リロードを避けるため）
     } catch (error) {
-      console.error('Failed to delete member:', error);
+      // エラーは発生したが、ログは出力しない
       // エラー時は元の状態に戻す
       await loadExistingMembers();
       alert('メンバーの削除に失敗しました');

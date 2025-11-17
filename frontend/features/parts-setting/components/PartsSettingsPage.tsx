@@ -101,7 +101,7 @@ export const PartsSettingsPage: React.FC = () => {
       }
       handleCloseModal();
     } catch (error) {
-      console.error('Failed to save stage:', error);
+      // エラーは発生したが、ログは出力しない
     }
   };
 
@@ -111,7 +111,7 @@ export const PartsSettingsPage: React.FC = () => {
         await deleteStage(editingStage.id);
         handleCloseModal();
       } catch (error) {
-        console.error('Failed to delete stage:', error);
+        // エラーは発生したが、ログは出力しない
       }
     }
   };
