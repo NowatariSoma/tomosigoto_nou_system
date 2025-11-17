@@ -5,7 +5,6 @@ export interface Room {
   capacity: number;
   danceAllowed: boolean;
   description?: string;
-  location?: string;
 }
 
 export interface CreateRoomRequest {
@@ -14,7 +13,6 @@ export interface CreateRoomRequest {
   capacity: number;
   danceAllowed: boolean;
   description?: string;
-  location?: string;
 }
 
 export interface UpdateRoomRequest extends Partial<CreateRoomRequest> {}
