@@ -228,6 +228,18 @@ const AccountSettings: React.FC = () => {
         </div>
       )}
 
+      {!profile && (
+        <div className="mb-6 p-4 bg-white border border-blue-200 rounded-md flex items-start space-x-3 shadow-sm">
+          <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+          <div>
+            <p className="text-gray-900 font-semibold">プロフィール設定が必要です</p>
+            <p className="text-sm text-gray-800 mt-1">
+              サインアップ後の初回ログインでは、ここでプロフィールを登録するまで他のページへは移動できません。
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         {userInfo && (
           <div className="pb-6 border-b border-gray-200">

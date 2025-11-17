@@ -57,6 +57,7 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isSignUpPage = request.nextUrl.pathname === '/signup';
+  const isAccountSettingPage = request.nextUrl.pathname === '/account-setting';
   const isPublicRoute = request.nextUrl.pathname === '/login' ||
                        request.nextUrl.pathname === '/signup' ||
                        request.nextUrl.pathname.startsWith('/api/') ||
@@ -67,17 +68,41 @@ export async function middleware(request: NextRequest) {
                        request.nextUrl.pathname.startsWith('/icons/');
 
   // セッションを取得
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // If user is not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated and trying to access login/signup page, redirect to home
-  // if (user && (isLoginPage || isSignUpPage)) {
-  //   return NextResponse.redirect(new URL('/', request.url));
-  // }
+  if (user && !isAccountSettingPage) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken = session?.access_token;
+      if (accessToken) {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+        const profileResponse = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (!profileData.exists) {
+            return NextResponse.redirect(new URL('/account-setting', request.url));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to verify profile existence in middleware:', error);
+    }
+  }
 
   return response;
 }

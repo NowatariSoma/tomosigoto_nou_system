@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 interface UserRole {
   role_type: string;
@@ -27,10 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
   const isAdmin = userRole?.role_type === 'admin';
 
-  const fetchUserRole = async (currentUser: User | null) => {
+  const fetchUserRole = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
       setUserRole(null);
       return;
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/role`, {
+      const response = await fetch(`${apiBaseUrl}/users/me/role`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -59,9 +62,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to fetch user role:', error);
       setUserRole({ role_type: 'general', is_visible_to_general: true });
     }
-  };
+  }, [apiBaseUrl]);
 
-  const checkAuth = async () => {
+  const ensureProfileExists = useCallback(async (currentUser: User | null) => {
+    if (!currentUser) {
+      return;
+    }
+
+    if (typeof window !== 'undefined' && window.location.pathname === '/account-setting') {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const { exists } = await response.json();
+        if (!exists) {
+          router.replace('/account-setting');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to ensure profile exists:', error);
+    }
+  }, [apiBaseUrl, router]);
+
+  const checkAuth = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -72,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('authToken', session.access_token);
         }
         await fetchUserRole(user);
+        await ensureProfileExists(user);
       } else {
         setUserRole(null);
       }
@@ -82,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchUserRole, ensureProfileExists]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -167,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem('authToken', session.access_token);
           }
           await fetchUserRole(currentUser);
+          await ensureProfileExists(currentUser);
         } else {
           setUserRole(null);
           // localStorageから認証トークンを削除
@@ -177,12 +215,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAuth, fetchUserRole, ensureProfileExists]);
 
   // 外部から呼び出し可能なラッパー関数
-  const refreshUserRole = async () => {
+  const refreshUserRole = useCallback(async () => {
     await fetchUserRole(user);
-  };
+  }, [fetchUserRole, user]);
 
   return (
     <AuthContext.Provider value={{ user, userRole, isAdmin, isLoading, login, signUp, logout, checkAuth, refreshUserRole }}>
