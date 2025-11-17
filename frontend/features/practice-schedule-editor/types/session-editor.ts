@@ -89,8 +89,9 @@ export interface TimeSlot {
 export interface VenueInfo {
   id: string;
   name: string;
-  is_preferred: boolean;
-  priority: number;
+  campus?: string;
+  is_preferred?: boolean;
+  priority?: number;
   notes?: string;
 }
 
@@ -154,6 +155,9 @@ export type SessionEditorAction =
   | { type: 'SET_INSTRUCTORS'; payload: any[] } // SessionInstructorWithDetails[]
   | { type: 'UPDATE_INSTRUCTOR'; payload: any } // SessionInstructorWithDetails
   | { type: 'SET_VENUES'; payload: VenueInfo[] }
+  | { type: 'ADD_VENUES'; payload: VenueInfo[] }
+  | { type: 'REMOVE_VENUE'; payload: string }
+  | { type: 'UPDATE_VENUE'; payload: VenueInfo }
   | { type: 'SET_TIME_SLOTS'; payload: TimeSlot[] }
   | { type: 'UPDATE_TIME_SLOT'; payload: TimeSlot }
   | { type: 'SELECT_SESSION'; payload: Session | null }

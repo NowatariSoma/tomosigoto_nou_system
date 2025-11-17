@@ -15,7 +15,8 @@ import { InstructorEditorModal } from '../../practice-schedule-editor/components
 import { ScheduleTimeEditor } from '../../practice-schedule-editor/components/ScheduleTimeEditor';
 import { OptimizationModal } from '../../practice-schedule-editor/components/OptimizationModal';
 import { useSessionEditor } from '../../practice-schedule-editor/hooks';
-import { sessionInstructorService } from '../../practice-schedule-editor/services';
+import { sessionInstructorService, practiceScheduleEditorService } from '../../practice-schedule-editor/services';
+import { VenueInfo } from '../../practice-schedule-editor/types/session-editor';
 
 export const PracticeSchedulePage: React.FC = () => {
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
@@ -37,6 +38,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState('');
+  const [availableRooms, setAvailableRooms] = useState<VenueInfo[]>([]);
   
   // 編集用のフック
   const {
@@ -61,6 +63,9 @@ export const PracticeSchedulePage: React.FC = () => {
     closeModal,
     toggleEditMode,
     updateTimeSlot,
+    addVenues,
+    removeVenue,
+    updateVenue,
   } = useSessionEditor(editingScheduleId);
 
   const handleCreateClick = () => {
@@ -104,6 +109,23 @@ export const PracticeSchedulePage: React.FC = () => {
     setIsFormOpen(false);
     setEditingSchedule(null);
   };
+
+  // 利用可能な部屋を取得
+  useEffect(() => {
+    const fetchAvailableRooms = async () => {
+      try {
+        console.log('部屋データを取得開始...');
+        const venues = await practiceScheduleEditorService.getVenues();
+        console.log('取得した会場データ:', venues);
+        setAvailableRooms(venues);
+      } catch (error) {
+        console.error('会場データの取得に失敗しました:', error);
+        setAvailableRooms([]);
+      }
+    };
+
+    fetchAvailableRooms();
+  }, []);
 
   // 編集モード関連のハンドラー
   const handleScheduleClick = (schedule: PracticeSchedule) => {
@@ -418,6 +440,7 @@ export const PracticeSchedulePage: React.FC = () => {
           sessions={sessions}
           instructors={instructors}
           venues={editorVenues}
+          availableRooms={availableRooms}
           time_slots={time_slots}
           edit_mode={edit_mode}
           scheduleId={editingScheduleId}
@@ -429,6 +452,9 @@ export const PracticeSchedulePage: React.FC = () => {
           onAddTimeSlot={handleAddTimeSlot}
           onRemoveTimeSlot={handleRemoveTimeSlot}
           onUpdateTimeSlot={updateTimeSlot}
+          onAddVenues={addVenues}
+          onRemoveVenue={removeVenue}
+          onUpdateVenue={updateVenue}
           fallbackInstructors={[]}
         />
 

@@ -9,12 +9,13 @@ import { PartCard } from './PartCard';
 import { InstructorCard } from './InstructorCard';
 import { EditableTimeSlot } from './EditableTimeSlot';
 import { TimeSlotEditorModal } from './TimeSlotEditorModal';
+import { VenueEditor } from './VenueEditor';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
-
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
   instructors: any[]; // SessionInstructorWithDetails[]
   venues: VenueInfo[];
+  availableRooms?: VenueInfo[]; // 利用可能な部屋一覧
   time_slots: TimeSlot[];
   edit_mode: EditMode;
   scheduleId: string;
@@ -26,6 +27,9 @@ interface SessionEditorTableSimpleDndProps {
   onAddTimeSlot?: () => void;
   onRemoveTimeSlot?: () => void;
   onUpdateTimeSlot?: (timeSlot: TimeSlot) => void;
+  onAddVenues?: (venues: VenueInfo[]) => void;
+  onRemoveVenue?: (venueId: string) => void;
+  onUpdateVenue?: (venueId: string, venue: VenueInfo) => void;
   fallbackInstructors?: string[]; // フォールバック用のインストラクター名配列
 }
 
@@ -33,6 +37,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   sessions,
   instructors,
   venues,
+  availableRooms = [],
   time_slots,
   edit_mode,
   scheduleId,
@@ -44,6 +49,9 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   onAddTimeSlot,
   onRemoveTimeSlot,
   onUpdateTimeSlot,
+  onAddVenues,
+  onRemoveVenue,
+  onUpdateVenue,
   fallbackInstructors = [],
 }) => {
   const [draggedItem, setDraggedItem] = useState<{type: 'session' | 'instructor', data: Session | SessionInstructorWithDetails} | null>(null);
@@ -227,10 +235,12 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* テーブル全体 */}
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <table className="w-full table-fixed min-w-[600px]">
+    <div className="flex gap-4 h-full">
+      {/* 左側: テーブル */}
+      <div className="flex-1 bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* テーブル全体 */}
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <table className="w-full table-fixed min-w-[600px]">
           <thead>
             <tr>
               <th className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</th>
@@ -374,13 +384,28 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
         </div>
       )}
 
-      {/* 時間スロット編集モーダル */}
-      <TimeSlotEditorModal
-        isOpen={isTimeSlotModalOpen}
-        onClose={handleTimeSlotModalClose}
-        onSave={handleTimeSlotSave}
-        timeSlot={editingTimeSlot}
-      />
+        {/* 時間スロット編集モーダル */}
+        <TimeSlotEditorModal
+          isOpen={isTimeSlotModalOpen}
+          onClose={handleTimeSlotModalClose}
+          onSave={handleTimeSlotSave}
+          timeSlot={editingTimeSlot}
+        />
+      </div>
+
+      {/* 右側: 会場編集 */}
+      {edit_mode === 'edit' && (
+        <div className="w-80">
+          <VenueEditor
+            venues={venues}
+            availableRooms={availableRooms}
+            onAddVenues={onAddVenues || (() => {})}
+            onRemoveVenue={onRemoveVenue || (() => {})}
+            onUpdateVenue={onUpdateVenue || (() => {})}
+            isEditMode={edit_mode === 'edit'}
+          />
+        </div>
+      )}
     </div>
   );
 };
