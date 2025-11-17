@@ -40,7 +40,6 @@ async def get_current_user_profile(
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
     user_id = current_user["id"]
-    print(f"Getting profile for user_id: {user_id}")
     profile = await account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:
@@ -121,10 +120,7 @@ async def create_public_profile(
         
         return profile
     except Exception as e:
-        # エラーが発生した場合はログを出力してエラーを再発生
-        print(f"Error creating profile: {e}")
-        import traceback
-        traceback.print_exc()
+        # エラーが発生した場合はエラーを再発生
         raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
 
@@ -177,10 +173,7 @@ async def update_public_profile(
         
         return profile
     except Exception as e:
-        # エラーが発生した場合はログを出力してエラーを再発生
-        print(f"Error updating profile: {e}")
-        import traceback
-        traceback.print_exc()
+        # エラーが発生した場合はエラーを再発生
         raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
 
