@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (typeof window !== 'undefined' && window.location.pathname === '/account-setting') {
+    if (typeof window !== 'undefined' && window.location.pathname === '/settings') {
       return;
     }
 
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const { exists } = await response.json();
         if (!exists) {
-          router.replace('/account-setting');
+          router.replace('/settings');
         }
       }
     } catch (error) {

@@ -2,25 +2,25 @@
 
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Settings as SettingsIcon } from 'lucide-react';
-import { SettingsPage } from '@/features/settings/components/SettingsPage';
+import { AccountSettingsPage } from '@/features/account-setting';
 
 export default function Settings() {
   return (
     <AppTemplate
       title="設定"
-      description="アカウント設定とチーム管理を行います"
+      description="アカウントの基本情報を管理します"
       icon={<SettingsIcon className="h-8 w-8 text-blue-600" />}
       developmentBadge={{
-        level: 'stable',
-        text: '安定版'
+        level: 'alpha',
+        text: 'バックエンド作成'
       }}
       permissionBadge={{
         level: 'basic',
-        text: 'システム管理者'
+        text: '基本権限'
       }}
       maxWidth="7xl"
     >
-      <SettingsPage />
+      <AccountSettingsPage />
     </AppTemplate>
   );
-} 
+}
