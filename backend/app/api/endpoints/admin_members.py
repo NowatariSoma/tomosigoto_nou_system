@@ -1,0 +1,40 @@
+from typing import Any, Dict, List
+from uuid import UUID
+
+from app.api.deps import get_member_admin_service, require_admin
+from app.schemas.member_admin import MemberRoleUpdateRequest, MemberSummaryResponse
+from app.services.member_admin_service import MemberAdminService
+from fastapi import APIRouter, Depends, status
+
+router = APIRouter()
+
+
+@router.get("/", response_model=List[MemberSummaryResponse])
+async def list_members(
+    _: Dict[str, Any] = Depends(require_admin),
+    member_admin_service: MemberAdminService = Depends(get_member_admin_service),
+) -> List[MemberSummaryResponse]:
+    """メンバー一覧を取得"""
+    return await member_admin_service.list_members()
+
+
+@router.patch("/{user_id}/role", response_model=MemberSummaryResponse)
+async def update_member_role(
+    user_id: UUID,
+    payload: MemberRoleUpdateRequest,
+    _: Dict[str, Any] = Depends(require_admin),
+    member_admin_service: MemberAdminService = Depends(get_member_admin_service),
+) -> MemberSummaryResponse:
+    """メンバーの管理者権限を更新"""
+    return await member_admin_service.update_member_role(str(user_id), payload.role)
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_member(
+    user_id: UUID,
+    _: Dict[str, Any] = Depends(require_admin),
+    member_admin_service: MemberAdminService = Depends(get_member_admin_service),
+) -> None:
+    """メンバーアカウントを削除"""
+    await member_admin_service.remove_member(str(user_id))
+

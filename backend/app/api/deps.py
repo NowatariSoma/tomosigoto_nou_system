@@ -9,6 +9,7 @@ from app.repositories.stage_repository import StageRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.venue_repository import VenueRepository
 
+from app.services.member_admin_service import MemberAdminService
 from app.services.member_assignment_service import MemberAssignmentService
 from app.services.part_service import PartService
 from app.services.stage_service import StageService
@@ -302,6 +303,15 @@ def get_session_instructor_service(
 ) -> SessionInstructorService:
     """SessionInstructorServiceのインスタンスを依存性注入で取得"""
     return SessionInstructorService(session_instructor_repository)
+
+
+def get_member_admin_service(
+    user_service: UserService = Depends(get_user_service),
+    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+) -> MemberAdminService:
+    """MemberAdminServiceのインスタンスを依存性注入で取得"""
+    return MemberAdminService(user_service, user_role_repository, user_profile_repository)
 
 
 def get_schedule_available_venue_repository(

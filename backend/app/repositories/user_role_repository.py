@@ -44,6 +44,25 @@ class UserRoleRepository:
         logger.info(f"User role not found for user: {user_id}")
         return None
 
+    @handle_supabase_errors("get_role_by_user_and_type")
+    async def get_role_by_user_and_type(self, user_id: str, role_type: str) -> Optional[Dict[str, Any]]:
+        """
+        ユーザーIDとロール種別でロールを取得
+        """
+        response = (
+            self.client.table(self.table_name)
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("role_type", role_type)
+            .limit(1)
+            .execute()
+        )
+        if response.data:
+            logger.info(f"Found {role_type} role for user: {user_id}")
+            return response.data[0]
+        logger.info(f"{role_type} role not found for user: {user_id}")
+        return None
+
     @handle_supabase_errors("create_role")
     async def create_role(self, role_data: dict) -> Dict[str, Any]:
         """
@@ -117,6 +136,24 @@ class UserRoleRepository:
             return True
         
         logger.warning(f"No role found to delete for user: {user_id}")
+        return False
+
+    @handle_supabase_errors("delete_role_by_type")
+    async def delete_role_by_type(self, user_id: str, role_type: str) -> bool:
+        """
+        指定したロールのみ削除
+        """
+        response = (
+            self.client.table(self.table_name)
+            .delete()
+            .eq("user_id", user_id)
+            .eq("role_type", role_type)
+            .execute()
+        )
+        if response.data:
+            logger.info(f"{role_type} role deleted for user: {user_id}")
+            return True
+        logger.info(f"No {role_type} role found to delete for user: {user_id}")
         return False
 
     @handle_supabase_errors("get_roles_by_type")
