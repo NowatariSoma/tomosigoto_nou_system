@@ -13,7 +13,7 @@ export class RoomService {
   }
 
   async getRoom(id: string): Promise<Room> {
-    const response = await fetchApi(`${this.basePath}/${id}`);
+    const response = await fetchApi(`${this.basePath}${id}`);
     const venue = await response.json();
     return mapVenueToRoom(venue);
   }
@@ -30,7 +30,7 @@ export class RoomService {
 
   async updateRoom(id: string, data: UpdateRoomRequest): Promise<Room> {
     const venueData = mapRoomToVenue(data);
-    const response = await fetchApi(`${this.basePath}/${id}`, {
+    const response = await fetchApi(`${this.basePath}${id}`, {
       method: 'PATCH',
       body: JSON.stringify(venueData),
     });
@@ -39,7 +39,7 @@ export class RoomService {
   }
 
   async deleteRoom(id: string): Promise<void> {
-    await fetchApi(`${this.basePath}/${id}`, {
+    await fetchApi(`${this.basePath}${id}`, {
       method: 'DELETE',
     });
   }
