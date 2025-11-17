@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SessionEditorTableSimpleDnd } from './SessionEditorTableSimpleDnd';
 import { SessionEditorModal } from './SessionEditorModal';
 import { InstructorEditorModal } from './InstructorEditorModal';
@@ -10,7 +10,8 @@ import { OptimizationModal } from './OptimizationModal';
 import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
 import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
-import { sessionInstructorService } from '../services';
+import { sessionInstructorService, practiceScheduleEditorService } from '../services';
+import { VenueInfo } from '../types/session-editor';
 
 interface PracticeScheduleEditorPageProps {
   scheduleId?: string;
@@ -24,6 +25,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   const [currentScheduleId, setCurrentScheduleId] = useState(initialScheduleId || '');
   const [currentScheduleDate, setCurrentScheduleDate] = useState(initialScheduleDate || '');
   const [isScheduleSelected, setIsScheduleSelected] = useState(!!initialScheduleId);
+  const [availableRooms, setAvailableRooms] = useState<VenueInfo[]>([]);
   
   console.log('PracticeScheduleEditorPage初期化:', {
     initialScheduleId,
@@ -58,11 +60,31 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     closeModal,
     toggleEditMode,
     updateTimeSlot,
+    addVenues,
+    removeVenue,
+    updateVenue,
   } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
   const [isCreatingInstructor, setIsCreatingInstructor] = useState(false);
+
+  // 利用可能な部屋を取得
+  useEffect(() => {
+    const fetchAvailableRooms = async () => {
+      try {
+        console.log('部屋データを取得開始...');
+        const venues = await practiceScheduleEditorService.getVenues();
+        console.log('取得した会場データ:', venues);
+        setAvailableRooms(venues);
+      } catch (error) {
+        console.error('会場データの取得に失敗しました:', error);
+        setAvailableRooms([]);
+      }
+    };
+
+    fetchAvailableRooms();
+  }, []);
 
   const handleCreateSession = () => {
     setIsCreating(true);
@@ -348,6 +370,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         sessions={sessions}
         instructors={instructors}
         venues={venues}
+        availableRooms={availableRooms}
         time_slots={time_slots}
         edit_mode={edit_mode}
         scheduleId={currentScheduleId}
@@ -359,6 +382,9 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
         onAddTimeSlot={handleAddTimeSlot}
         onRemoveTimeSlot={handleRemoveTimeSlot}
         onUpdateTimeSlot={updateTimeSlot}
+        onAddVenues={addVenues}
+        onRemoveVenue={removeVenue}
+        onUpdateVenue={updateVenue}
         fallbackInstructors={[]} // フォールバック用のインストラクター名配列（必要に応じて設定）
       />
 

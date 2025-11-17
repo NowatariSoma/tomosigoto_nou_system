@@ -51,6 +51,20 @@ const sessionEditorReducer = (
       };
     case 'SET_VENUES':
       return { ...state, venues: action.payload };
+    case 'ADD_VENUES':
+      return { ...state, venues: [...state.venues, ...action.payload] };
+    case 'REMOVE_VENUE':
+      return {
+        ...state,
+        venues: state.venues.filter(v => v.id !== action.payload)
+      };
+    case 'UPDATE_VENUE':
+      return {
+        ...state,
+        venues: state.venues.map(v =>
+          v.id === action.payload.id ? action.payload : v
+        )
+      };
     case 'SET_TIME_SLOTS':
       return { ...state, time_slots: action.payload };
     case 'UPDATE_TIME_SLOT':
@@ -542,6 +556,27 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'UPDATE_TIME_SLOT', payload: updatedTimeSlot });
   }, []);
 
+  /**
+   * 会場を追加
+   */
+  const addVenues = useCallback((venues: VenueInfo[]) => {
+    dispatch({ type: 'ADD_VENUES', payload: venues });
+  }, []);
+
+  /**
+   * 会場を削除
+   */
+  const removeVenue = useCallback((venueId: string) => {
+    dispatch({ type: 'REMOVE_VENUE', payload: venueId });
+  }, []);
+
+  /**
+   * 会場を更新
+   */
+  const updateVenue = useCallback((venueId: string, venue: VenueInfo) => {
+    dispatch({ type: 'UPDATE_VENUE', payload: venue });
+  }, []);
+
   // 初期化
   useEffect(() => {
     console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
@@ -571,5 +606,8 @@ export const useSessionEditor = (scheduleId: string) => {
     closeModal,
     toggleEditMode,
     updateTimeSlot,
+    addVenues,
+    removeVenue,
+    updateVenue,
   };
 };
