@@ -253,7 +253,8 @@ class UserRoleRepository:
                 self.client.table("user_roles")
                 .insert({
                     "user_id": user_id,
-                    "is_instructor": is_instructor
+                    "is_instructor": is_instructor,
+                    "role_type": "user",
                 })
                 .execute()
             )

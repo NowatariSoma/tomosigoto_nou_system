@@ -2,7 +2,7 @@ export interface MemberSummary {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'basic';
+  role: 'admin' | 'basic' | 'viewer';
   is_instructor: boolean;
   last_active_at: string | null;
 }

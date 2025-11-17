@@ -9,13 +9,13 @@ class MemberSummaryResponse(BaseModel):
     id: UUID
     email: str
     name: str
-    role: Literal["admin", "basic"]
+    role: Literal["admin", "basic", "viewer"]
     is_instructor: bool = False
     last_active_at: Optional[datetime] = None
 
 
 class MemberRoleUpdateRequest(BaseModel):
-    role: Literal["admin", "basic"]
+    role: Literal["admin", "basic", "viewer"]
 
 
 class MemberInstructorUpdateRequest(BaseModel):
