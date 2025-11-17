@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { accountSettingService } from '../services/account-setting-service';
 import { AccountSettingProfile, AccountSettingUpdateRequest, Department, ValidationResponse, UserRole, UserInfo } from '../types';
 
@@ -45,6 +46,7 @@ export function useAccountSetting(): UseAccountSettingReturn {
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const router = useRouter();
 
   const clearError = useCallback(() => {
     setError(null);
@@ -157,12 +159,21 @@ export function useAccountSetting(): UseAccountSettingReturn {
         return false;
       }
       
+      const wasProfileMissing = profile === null;
       const savedProfile = profile
         ? await accountSettingService.updateProfile(data)
         : await accountSettingService.createProfile(data);
       
       setProfile(savedProfile);
       setIsEditMode(false);
+
+      // 最新情報を取得して状態を同期
+      await loadProfile();
+      await loadUserInfo();
+
+      if (wasProfileMissing) {
+        router.push('/');
+      }
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'プロフィールの保存に失敗しました';
@@ -172,7 +183,7 @@ export function useAccountSetting(): UseAccountSettingReturn {
     } finally {
       setIsSaving(false);
     }
-  }, [profile, validateProfile]);
+  }, [profile, validateProfile, loadProfile, loadUserInfo, router]);
 
   const setEditMode = useCallback((mode: boolean) => {
     setIsEditMode(mode);
