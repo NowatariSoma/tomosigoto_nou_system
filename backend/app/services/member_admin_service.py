@@ -32,15 +32,25 @@ class MemberAdminService:
         profiles = await self.user_profile_repository.get_profiles_by_user_ids(user_ids)
         profile_map = {profile["user_id"]: profile for profile in profiles}
 
-        roles = await self.user_role_repository.get_all_roles(include_hidden=True)
-        admin_user_ids = {
-            role["user_id"]
-            for role in roles
-            if role.get("role_type") == "admin"
+        # user_roleテーブルから管理者を取得
+        admin_roles = await self.user_role_repository.get_roles_by_type("admin")
+        admin_user_ids = {role["user_id"] for role in admin_roles if role.get("user_id")}
+        
+        # user_rolesテーブルからis_instructorフラグを取得
+        user_roles_with_instructor = await self.user_role_repository.get_user_roles_with_instructor()
+        instructor_map = {
+            role["user_id"]: role.get("is_instructor", False)
+            for role in user_roles_with_instructor
+            if role.get("user_id")
         }
 
         return [
-            self._serialize_member(user, profile_map.get(user["id"]), user["id"] in admin_user_ids)
+            self._serialize_member(
+                user,
+                profile_map.get(user["id"]),
+                user["id"] in admin_user_ids,
+                instructor_map.get(user["id"], False)
+            )
             for user in users
         ]
 
@@ -52,23 +62,39 @@ class MemberAdminService:
 
         profile = await self.user_profile_repository.get_profile_by_user_id(user_id)
         admin_role = await self.user_role_repository.get_role_by_user_and_type(user_id, "admin")
-        return self._serialize_member(user, profile, admin_role is not None)
+        is_instructor = await self.user_role_repository.get_instructor_flag(user_id)
+        return self._serialize_member(user, profile, admin_role is not None, is_instructor)
 
     async def update_member_role(self, user_id: str, role: str) -> Dict[str, Any]:
-        """管理者権限の付与/剥奪"""
+        """管理者権限の付与/剥奪（user_roleテーブルで）"""
         await self.user_service.get_user_by_id(user_id)  # ensure user exists
 
+        # user_roleテーブルでrole_typeを更新
+        existing_role = await self.user_role_repository.get_role_by_user_id(user_id)
         if role == "admin":
-            existing_admin_role = await self.user_role_repository.get_role_by_user_and_type(user_id, "admin")
-            if not existing_admin_role:
+            if not existing_role:
                 await self.user_role_repository.create_role({
                     "user_id": user_id,
                     "role_type": "admin",
-                    "is_visible_to_general": True,
                 })
+            elif existing_role.get("role_type") != "admin":
+                await self.user_role_repository.update_role(user_id, {"role_type": "admin"})
         else:
-            await self.user_role_repository.delete_role_by_type(user_id, "admin")
+            # basicまたはviewerに変更
+            if not existing_role:
+                await self.user_role_repository.create_role({
+                    "user_id": user_id,
+                    "role_type": "user",  # デフォルトはuser
+                })
+            elif existing_role.get("role_type") == "admin":
+                await self.user_role_repository.update_role(user_id, {"role_type": "user"})
 
+        return await self.get_member(user_id)
+
+    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> Dict[str, Any]:
+        """指導者フラグの更新（user_rolesテーブルで）"""
+        await self.user_service.get_user_by_id(user_id)  # ensure user exists
+        await self.user_role_repository.update_instructor_flag(user_id, is_instructor)
         return await self.get_member(user_id)
 
     async def remove_member(self, user_id: str) -> None:
@@ -81,6 +107,7 @@ class MemberAdminService:
         user: Dict[str, Any],
         profile: Optional[Dict[str, Any]],
         is_admin: bool,
+        is_instructor: bool = False,
     ) -> Dict[str, Any]:
         display_name = self._build_display_name(profile, user)
         return {
@@ -88,6 +115,7 @@ class MemberAdminService:
             "email": user.get("email"),
             "name": display_name,
             "role": "admin" if is_admin else "basic",
+            "is_instructor": is_instructor,
             "last_active_at": user.get("last_sign_in_at"),
         }
 

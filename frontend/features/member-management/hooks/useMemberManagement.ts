@@ -43,6 +43,25 @@ export const useMemberManagement = () => {
     }
   }, [members]);
 
+  const handleInstructorFlagChange = useCallback(async (memberId: string, isInstructor: boolean) => {
+    const target = members.find(member => member.id === memberId);
+    if (!target || target.is_instructor === isInstructor) return;
+
+    const previousMembers = [...members];
+    setMembers(prev =>
+      prev.map(member =>
+        member.id === memberId ? { ...member, is_instructor: isInstructor } : member
+      )
+    );
+
+    try {
+      await memberManagementService.updateInstructorFlag(memberId, { is_instructor: isInstructor });
+    } catch (err) {
+      setMembers(previousMembers);
+      setError(err instanceof Error ? err.message : '指導者フラグの更新に失敗しました');
+    }
+  }, [members]);
+
   const handleRemoveMember = useCallback(async (memberId: string) => {
     const previousMembers = [...members];
     setMembers(prev => prev.filter(member => member.id !== memberId));
@@ -66,6 +85,7 @@ export const useMemberManagement = () => {
     adminCount,
     fetchMembers,
     handleRoleChange,
+    handleInstructorFlagChange,
     handleRemoveMember,
   };
 };

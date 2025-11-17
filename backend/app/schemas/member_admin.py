@@ -10,9 +10,14 @@ class MemberSummaryResponse(BaseModel):
     email: str
     name: str
     role: Literal["admin", "basic"]
+    is_instructor: bool = False
     last_active_at: Optional[datetime] = None
 
 
 class MemberRoleUpdateRequest(BaseModel):
     role: Literal["admin", "basic"]
+
+
+class MemberInstructorUpdateRequest(BaseModel):
+    is_instructor: bool
 

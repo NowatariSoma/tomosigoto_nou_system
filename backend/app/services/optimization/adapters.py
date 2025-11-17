@@ -163,11 +163,13 @@ class SchedulingDataAdapter:
                             players.append(player)
         
         # user_rolesから指導者を追加（session_instructors_dataが空の場合のフォールバック）
+        # is_instructorフラグを確認
         if (not session_instructors_data or len(session_instructors_data) == 0) and user_roles_data:
             instructor_ids = set(str(p.id) for p in players if p.is_instructor)  # 既存の指導者ID
             
             for role_data in user_roles_data:
-                if role_data.get('role_type') == 'instructor':
+                # is_instructorフラグを確認
+                if role_data.get('is_instructor', False):
                     user_id = role_data.get('user_id')
                     if user_id and user_id not in instructor_ids:
                         instructor_ids.add(user_id)

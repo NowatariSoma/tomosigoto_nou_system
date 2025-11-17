@@ -19,6 +19,7 @@ export function MemberManagementPage() {
     error,
     adminCount,
     handleRoleChange,
+    handleInstructorFlagChange,
     fetchMembers,
   } = useMemberManagement();
 
@@ -35,7 +36,7 @@ export function MemberManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">メンバー管理</h2>
-          <p className="text-gray-600">権限の更新を行えます</p>
+          <p className="text-gray-600">権限と指導者フラグの更新を行えます</p>
         </div>
         <Button variant="outline" onClick={fetchMembers} className="w-full sm:w-auto">
           最新情報に更新
@@ -99,6 +100,9 @@ export function MemberManagementPage() {
                     権限
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    指導者
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     最終アクティブ
                   </th>
                 </tr>
@@ -106,13 +110,13 @@ export function MemberManagementPage() {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                       読み込み中です…
                     </td>
                   </tr>
                 ) : members.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                       メンバーが登録されていません
                     </td>
                   </tr>
@@ -134,6 +138,14 @@ export function MemberManagementPage() {
                           <option value="admin">{ROLE_LABELS.admin}</option>
                           <option value="basic">{ROLE_LABELS.basic}</option>
                         </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={member.is_instructor}
+                          onChange={(e) => handleInstructorFlagChange(member.id, e.target.checked)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {member.last_active_at ? formatDateTime(member.last_active_at) : '記録なし'}

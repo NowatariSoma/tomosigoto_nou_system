@@ -247,11 +247,12 @@ class SchedulingOptimizationService:
                 return []
         
         async def get_user_roles():
-            """ユーザーロールデータを取得（エラー時は空リストを返す）"""
+            """ユーザーロールデータを取得（is_instructorフラグを含む、エラー時は空リストを返す）"""
             try:
                 from app.repositories.user_role_repository import UserRoleRepository
                 user_role_repo = UserRoleRepository(self.user_repository.client)
-                return await user_role_repo.get_all_roles(include_hidden=True)
+                # user_rolesテーブルからis_instructorフラグを含むデータを取得
+                return await user_role_repo.get_user_roles_with_instructor()
             except Exception as e:
                 logger.warning(f"ユーザーロールデータの取得に失敗しました: {e}")
                 return []

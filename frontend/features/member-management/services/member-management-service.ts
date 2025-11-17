@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { MemberSummary, UpdateMemberRolePayload } from '../types';
+import { MemberSummary, UpdateMemberRolePayload, UpdateInstructorFlagPayload } from '../types';
 
 export class MemberManagementService {
   private readonly apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -27,13 +27,29 @@ export class MemberManagementService {
 
   async listMembers(): Promise<MemberSummary[]> {
     const headers = await this.getAuthHeaders();
-    return this.request<MemberSummary[]>(this.basePath, { headers });
+    const data = await this.request<MemberSummary[] | { data: MemberSummary[] }>(this.basePath, { headers });
+    if (Array.isArray(data)) {
+      return data;
+    }
+    return data.data;
   }
 
   async updateRole(memberId: string, payload: UpdateMemberRolePayload): Promise<MemberSummary> {
     const headers = await this.getAuthHeaders(true);
     return this.request<MemberSummary>(
       `${this.basePath}/${memberId}/role`,
+      {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async updateInstructorFlag(memberId: string, payload: UpdateInstructorFlagPayload): Promise<MemberSummary> {
+    const headers = await this.getAuthHeaders(true);
+    return this.request<MemberSummary>(
+      `${this.basePath}/${memberId}/instructor`,
       {
         method: 'PATCH',
         headers,
