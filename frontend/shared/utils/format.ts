@@ -48,4 +48,34 @@ export const formatDateToYYYYMMDD = (date: Date): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-}; 
+};
+
+export const formatRelativeLastActive = (dateString: string | null): string => {
+  if (!dateString) {
+    return '記録なし';
+  }
+
+  const target = new Date(dateString);
+  if (Number.isNaN(target.getTime())) {
+    return '記録なし';
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - target.getTime();
+  if (diffMs < 0) {
+    return '予定';
+  }
+
+  const monthsDifference = (now.getFullYear() - target.getFullYear()) * 12 + (now.getMonth() - target.getMonth());
+
+  if (monthsDifference <= 0) {
+    return '今月';
+  }
+
+  if (monthsDifference < 12) {
+    return `${monthsDifference}ヶ月前`;
+  }
+
+  const years = Math.floor(monthsDifference / 12);
+  return `${years}年前`;
+};

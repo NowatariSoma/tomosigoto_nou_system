@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState, useCallback, type ReactNode } from 'react';
-import { Users, Shield, UserCheck, Filter, RefreshCw, Search, Loader2, AlertCircle } from 'lucide-react';
+import { Users, Shield, UserCheck, Filter, Search, Loader2, AlertCircle, Edit, Save, X } from 'lucide-react';
 import { useMemberManagement } from '../hooks/useMemberManagement';
-import { formatDateTime } from '@/shared/utils/format';
+import { MemberSummary } from '../types';
+import { formatRelativeLastActive } from '@/shared/utils/format';
 
 const ROLE_LABELS: Record<'admin' | 'basic' | 'viewer', string> = {
   admin: '管理者',
@@ -17,11 +18,50 @@ const ROLE_BADGE_STYLES: Record<'admin' | 'basic' | 'viewer', string> = {
   viewer: 'bg-gray-100 text-gray-700 border border-gray-200'
 };
 
+const ROLE_BUTTON_STYLES: Record<'admin' | 'basic' | 'viewer', { active: string; inactive: string }> = {
+  admin: {
+    active: 'border border-purple-600 bg-purple-600 text-white shadow-sm',
+    inactive: 'border border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+  },
+  basic: {
+    active: 'border border-blue-600 bg-blue-600 text-white shadow-sm',
+    inactive: 'border border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
+  },
+  viewer: {
+    active: 'border border-slate-700 bg-slate-700 text-white shadow-sm',
+    inactive: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+  }
+};
+
+const INSTRUCTOR_BADGE_STYLES: Record<'instructor' | 'member', string> = {
+  instructor: 'bg-amber-100 text-amber-800 border border-amber-200',
+  member: 'bg-gray-100 text-gray-600 border border-gray-200'
+};
+
+const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string; inactive: string }> = {
+  instructor: {
+    active: 'border border-amber-600 bg-amber-600 text-white shadow-sm',
+    inactive: 'border border-amber-200 text-amber-700 bg-white hover:bg-amber-50'
+  },
+  member: {
+    active: 'border border-slate-600 bg-slate-600 text-white shadow-sm',
+    inactive: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+  }
+};
+
 const instructorFilterOptions = [
   { value: 'all', label: 'すべて' },
   { value: 'only', label: '指導者のみ' },
   { value: 'exclude', label: '指導者以外' },
 ] as const;
+
+const roleOptions: MemberSummary['role'][] = ['admin', 'basic', 'viewer'];
+const instructorOptions = [
+  { value: true, label: '指導者' },
+  { value: false, label: '一般' },
+] as const;
+
+type DraftChange = Partial<Pick<MemberSummary, 'role' | 'is_instructor'>>;
 
 export function MemberManagementPage() {
   const {
@@ -31,16 +71,20 @@ export function MemberManagementPage() {
     adminCount,
     handleRoleChange,
     handleInstructorFlagChange,
-    fetchMembers,
   } = useMemberManagement();
 
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'basic' | 'viewer'>('all');
   const [instructorFilter, setInstructorFilter] = useState<'all' | 'only' | 'exclude'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [draftChanges, setDraftChanges] = useState<Record<string, DraftChange>>({});
 
   const totalMembers = members.length;
   const viewerCount = useMemo(() => members.filter(member => member.role === 'viewer').length, [members]);
   const instructorCount = useMemo(() => members.filter(member => member.is_instructor).length, [members]);
+  const pendingChangeCount = Object.keys(draftChanges).length;
 
   const filteredMembers = useMemo(() => {
     return members.filter(member => {
@@ -69,45 +113,157 @@ export function MemberManagementPage() {
     });
   }, [members, roleFilter, instructorFilter, searchQuery]);
 
-  const renderRoleSelect = useCallback((memberId: string, role: 'admin' | 'basic' | 'viewer') => (
-    <select
-      value={role}
-      onChange={(e) => handleRoleChange(memberId, e.target.value as 'admin' | 'basic' | 'viewer')}
-      className="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
-      {Object.entries(ROLE_LABELS).map(([value, label]) => (
-        <option key={value} value={value}>
-          {label}
-        </option>
-      ))}
-    </select>
-  ), [handleRoleChange]);
+  const resolveDraftRole = useCallback((member: MemberSummary) => {
+    return draftChanges[member.id]?.role ?? member.role;
+  }, [draftChanges]);
 
-  const renderInstructorToggle = useCallback((memberId: string, checked: boolean) => (
-    <label className="inline-flex items-center cursor-pointer space-x-2">
-      <span className="relative inline-flex items-center">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => handleInstructorFlagChange(memberId, e.target.checked)}
-          className="sr-only peer"
-        />
-        <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-200 peer-checked:bg-blue-600 transition-colors"></div>
-        <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow peer-checked:translate-x-full transition-transform"></div>
-      </span>
-      <span className="text-sm text-gray-600">
-        {checked ? '指導者' : '一般'}
-      </span>
-    </label>
-  ), [handleInstructorFlagChange]);
+  const resolveDraftInstructor = useCallback((member: MemberSummary) => {
+    return draftChanges[member.id]?.is_instructor ?? member.is_instructor;
+  }, [draftChanges]);
 
-  const renderLastActive = (timestamp: string | null) => (
-    timestamp ? (
-      <div className="text-sm text-gray-900">{formatDateTime(timestamp)}</div>
-    ) : (
-      <span className="text-sm text-gray-400">記録なし</span>
-    )
-  );
+  const updateDraft = useCallback((memberId: string, updates: DraftChange) => {
+    setDraftChanges(prev => {
+      const target = members.find(member => member.id === memberId);
+      if (!target) {
+        return prev;
+      }
+
+      const merged = { ...prev[memberId], ...updates };
+      const nextRole = merged.role ?? target.role;
+      const nextInstructor = merged.is_instructor ?? target.is_instructor;
+
+      const roleChanged = nextRole !== target.role;
+      const instructorChanged = nextInstructor !== target.is_instructor;
+
+      if (!roleChanged && !instructorChanged) {
+        if (!(memberId in prev)) {
+          return prev;
+        }
+        const { [memberId]: _, ...rest } = prev;
+        return rest;
+      }
+
+      const normalized: DraftChange = {};
+      if (roleChanged) {
+        normalized.role = nextRole;
+      }
+      if (instructorChanged) {
+        normalized.is_instructor = nextInstructor;
+      }
+
+      return {
+        ...prev,
+        [memberId]: normalized,
+      };
+    });
+  }, [members]);
+
+  const handleEnterEditMode = useCallback(() => {
+    setSaveError(null);
+    setIsEditMode(true);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    if (pendingChangeCount > 0 && !confirm('保存されていない変更があります。キャンセルしますか？')) {
+      return;
+    }
+    setDraftChanges({});
+    setSaveError(null);
+    setIsEditMode(false);
+  }, [pendingChangeCount]);
+
+  const handleSaveChanges = useCallback(async () => {
+    if (pendingChangeCount === 0) {
+      setIsEditMode(false);
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      for (const [memberId, changes] of Object.entries(draftChanges)) {
+        if (changes.role !== undefined) {
+          await handleRoleChange(memberId, changes.role);
+        }
+        if (changes.is_instructor !== undefined) {
+          await handleInstructorFlagChange(memberId, changes.is_instructor);
+        }
+      }
+
+      setDraftChanges({});
+      setIsEditMode(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '変更の保存に失敗しました';
+      setSaveError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [draftChanges, handleInstructorFlagChange, handleRoleChange, pendingChangeCount]);
+
+  const renderRoleCell = (member: MemberSummary) => {
+    const currentRole = resolveDraftRole(member);
+
+    if (!isEditMode) {
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+          {ROLE_LABELS[currentRole]}
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex gap-1.5">
+        {roleOptions.map(option => {
+          const isActive = currentRole === option;
+          const styles = isActive ? ROLE_BUTTON_STYLES[option].active : ROLE_BUTTON_STYLES[option].inactive;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => updateDraft(member.id, { role: option })}
+              className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+            >
+              {ROLE_LABELS[option]}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderInstructorCell = (member: MemberSummary) => {
+    const currentInstructor = resolveDraftInstructor(member);
+
+    if (!isEditMode) {
+      const variant = currentInstructor ? 'instructor' : 'member';
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded ${INSTRUCTOR_BADGE_STYLES[variant]}`}>
+          {currentInstructor ? '指導者' : '一般'}
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex gap-1.5">
+        {instructorOptions.map(option => {
+          const variant = option.value ? 'instructor' : 'member';
+          const isActive = currentInstructor === option.value;
+          const styles = isActive ? INSTRUCTOR_BUTTON_STYLES[variant].active : INSTRUCTOR_BUTTON_STYLES[variant].inactive;
+          return (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => updateDraft(member.id, { is_instructor: option.value })}
+              className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -123,13 +279,38 @@ export function MemberManagementPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={fetchMembers}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100"
-            >
-              <RefreshCw className="h-4 w-4" />
-              最新情報を取得
-            </button>
+            {isEditMode ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <X className="h-4 w-4" />
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveChanges}
+                  disabled={pendingChangeCount === 0 || isSaving}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEnterEditMode}
+                disabled={isLoading || members.length === 0}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Edit className="h-4 w-4" />
+                編集モード
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -214,6 +395,13 @@ export function MemberManagementPage() {
         </div>
       )}
 
+      {saveError && (
+        <div className="flex items-center gap-2 p-4 rounded-md border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+          <AlertCircle className="h-4 w-4" />
+          {saveError}
+        </div>
+      )}
+
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="hidden md:block">
           <table className="min-w-full divide-y divide-gray-200">
@@ -243,24 +431,21 @@ export function MemberManagementPage() {
                 </tr>
               ) : (
                 filteredMembers.map(member => (
-                  <tr key={member.id} className="hover:bg-gray-50/70">
+                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-sm font-semibold text-gray-900">{member.name}</span>
                         <span className="text-xs text-gray-500">{member.email}</span>
-                        <span className={`inline-flex items-center px-2 py-0.5 mt-2 text-xs font-medium rounded ${ROLE_BADGE_STYLES[member.role]}`}>
-                          {ROLE_LABELS[member.role]}
-                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 align-top">
-                      {renderRoleSelect(member.id, member.role)}
+                      {renderRoleCell(member)}
                     </td>
                     <td className="px-6 py-4 align-top">
-                      {renderInstructorToggle(member.id, member.is_instructor)}
+                      {renderInstructorCell(member)}
                     </td>
                     <td className="px-6 py-4 align-top">
-                      {renderLastActive(member.last_active_at)}
+                      <span className="text-sm text-gray-700">{formatRelativeLastActive(member.last_active_at)}</span>
                     </td>
                   </tr>
                 ))
@@ -269,7 +454,6 @@ export function MemberManagementPage() {
           </table>
         </div>
 
-        {/* Mobile cards */}
         <div className="md:hidden divide-y divide-gray-200">
           {isLoading ? (
             <div className="py-10 text-center text-gray-500">
@@ -281,33 +465,82 @@ export function MemberManagementPage() {
               該当するメンバーがいません
             </div>
           ) : (
-            filteredMembers.map(member => (
-              <div key={member.id} className="p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">{member.name}</div>
-                    <div className="text-xs text-gray-500">{member.email}</div>
+            filteredMembers.map(member => {
+              const currentRole = resolveDraftRole(member);
+              const currentInstructor = resolveDraftInstructor(member);
+              return (
+                <div key={member.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{member.name}</div>
+                      <div className="text-xs text-gray-500">{member.email}</div>
+                    </div>
+                    {!isEditMode && (
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+                        {ROLE_LABELS[currentRole]}
+                      </span>
+                    )}
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[member.role]}`}>
-                    {ROLE_LABELS[member.role]}
-                  </span>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
+                      {isEditMode ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {roleOptions.map(option => {
+                            const isActive = currentRole === option;
+                            const styles = isActive ? ROLE_BUTTON_STYLES[option].active : ROLE_BUTTON_STYLES[option].inactive;
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => updateDraft(member.id, { role: option })}
+                                className={`px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+                              >
+                                {ROLE_LABELS[option]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${ROLE_BADGE_STYLES[currentRole]}`}>
+                          {ROLE_LABELS[currentRole]}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
+                      {isEditMode ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {instructorOptions.map(option => {
+                            const variant = option.value ? 'instructor' : 'member';
+                            const isActive = currentInstructor === option.value;
+                            const styles = isActive ? INSTRUCTOR_BUTTON_STYLES[variant].active : INSTRUCTOR_BUTTON_STYLES[variant].inactive;
+                            return (
+                              <button
+                                key={option.label}
+                                type="button"
+                                onClick={() => updateDraft(member.id, { is_instructor: option.value })}
+                                className={`px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}`}>
+                          {currentInstructor ? '指導者' : '一般'}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 mb-1">最終アクティブ</p>
+                      <span className="text-sm text-gray-700">{formatRelativeLastActive(member.last_active_at)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
-                    {renderRoleSelect(member.id, member.role)}
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
-                    {renderInstructorToggle(member.id, member.is_instructor)}
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1">最終アクティブ</p>
-                    {renderLastActive(member.last_active_at)}
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
