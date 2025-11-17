@@ -33,7 +33,6 @@ export class StagesService {
       throw new Error(`Failed to fetch stages: ${error.message}`);
     }
 
-    console.log('Fetched stages from DB:', data);
     return (data || []).map(this.mapStageResponseToStageData);
   }
 
@@ -79,8 +78,6 @@ export class StagesService {
     if (data.performanceDate !== undefined) updateData.performance_date = data.performanceDate;
     if (data.status !== undefined) updateData.status = data.status;
 
-    console.log('Updating stage with data:', updateData);
-
     const { data: result, error } = await supabase
       .from(this.tableName)
       .update(updateData)
@@ -92,7 +89,6 @@ export class StagesService {
       throw new Error(`Failed to update stage: ${error.message}`);
     }
 
-    console.log('Updated stage result:', result);
     return this.mapStageResponseToStageData(result);
   }
 
@@ -108,7 +104,6 @@ export class StagesService {
   }
 
   private mapStageResponseToStageData(stage: any): StageData {
-    console.log('Mapping stage data:', stage);
     const mapped = {
       id: stage.id,
       name: stage.name,
@@ -118,7 +113,6 @@ export class StagesService {
       createdAt: stage.created_at,
       updatedAt: stage.updated_at,
     };
-    console.log('Mapped stage data:', mapped);
     return mapped;
   }
 }
