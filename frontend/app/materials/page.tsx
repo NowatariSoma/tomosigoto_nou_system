@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Search, Archive, Plus, Edit, Heart } from 'lucide-react';
+import { Search, Archive, Edit, Heart } from 'lucide-react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MaterialFilterSelects } from '@/features/materials/components/MaterialFilterSelects';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
@@ -59,14 +59,6 @@ export default function Home() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={() => router.push('/materials/new')}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                新しく追加
-              </Button>
               <Button
                 onClick={() => router.push('/materials/edit')}
                 className="flex items-center gap-2"
