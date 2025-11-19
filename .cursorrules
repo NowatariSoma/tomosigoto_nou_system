@@ -1,43 +1,43 @@
 ## 全体方針
-- すべての会話・コメント・説明は **日本語** で行う。
-- なるべく既存コードパターン（例: `roomsettings` 関連のフォルダ構成・型定義）にならう。
+- すべての会話・コメント・説明は **日本語** で行う
+- なるべく既存コードパターン（例: `roomsettings` 関連のフォルダ構成・型定義）にならう
 
 ## 開発環境
-- **Docker での開発を基本とする**（バックエンドのローカル venv 実行は、ユーザーからの指示があるときのみ提案）。
-- 破壊的なコマンド（データ削除・マイグレーションのロールバック等）は **提案のみ** にとどめ、自動実行しない。
-- `.env` や `supabase/config.toml` などの中身は回答に出さない（キー名の説明まで）。
+- **Docker での開発を基本とする**（バックエンドのローカル venv 実行は、ユーザーからの指示があるときのみ提案）
+- 破壊的なコマンド（データ削除・マイグレーションのロールバック等）は **提案のみ** にとどめ、自動実行しない
+- `.env` や `supabase/config.toml` などの中身は回答に出さない（キー名の説明まで）
 
 ## 実装・編集の方針
-- 既存ファイルの責務を壊さない。
-- API の I/O を変える場合は、フロント/バックエンド両方の影響をセットで考える。
-- 重複ロジックが増えそうな場合は、既存の `shared/utils` や `shared/types` などへの共通化を検討する。
-- 大きなリファクタやファイル移動は、ユーザーの明示的な指示がある場合のみ行う。
+- 既存ファイルの責務を壊さない
+- API の I/O を変える場合は、フロント/バックエンド両方の影響をセットで考える
+- 重複ロジックが増えそうな場合は、既存の `shared/utils` や `shared/types` などへの共通化を検討する
+- 大きなリファクタやファイル移動は、ユーザーの明示的な指示がある場合のみ行う
 
 ## コーディングの簡易ルール
-- **Python**: PEP 8 準拠、型ヒントを付ける、必要に応じてカスタム例外と Docstring（Google Style）。
-- **TypeScript / React**: 関数コンポーネント + Hooks、Props / API レスポンスに型を定義し、既存の `frontend/shared/types` などに合わせる。
+- **Python**: PEP 8 準拠、型ヒントを付ける、必要に応じてカスタム例外と Docstring（Google Style）
+- **TypeScript / React**: 関数コンポーネント + Hooks、Props / API レスポンスに型を定義し、既存の `frontend/shared/types` などに合わせる
 
 ### フロントエンド（@room-settings 準拠）
-- 新しい機能は、可能な限り `room-settings` と同じ構成で作る：`components/`, `constants/`, `hooks/`, `mappers/`, `services/`, `types/`。
-- API 呼び出しは `services` でクラス化し、`fetchApi` + `constants` + `mappers` を使って I/O をまとめる（例: `RoomService`）。
-- 画面側では `hooks` にカスタムフックを定義し、`loading` / `error` / データ配列 と CRUD 関数を返す（例: `useRooms`）。
-- ドメイン型・リクエスト型・レスポンス型は `types/` 配下にまとめ、`index.ts` から再エクスポートする。
+- 新しい機能は、可能な限り `room-settings` と同じ構成で作る：`components/`, `constants/`, `hooks/`, `mappers/`, `services/`, `types/`
+- API 呼び出しは `services` でクラス化し、`fetchApi` + `constants` + `mappers` を使って I/O をまとめる（例: `RoomService`）
+- 画面側では `hooks` にカスタムフックを定義し、`loading` / `error` / データ配列 と CRUD 関数を返す（例: `useRooms`）
+- ドメイン型・リクエスト型・レスポンス型は `types/` 配下にまとめ、`index.ts` から再エクスポートする
 
 ### バックエンド（Repository / Service 準拠）
-- Supabase テーブルごとに Repository クラスを定義し、`table_name` と基本 CRUD（`find_all`, `find_by_id`, `create`, `update`, `delete`）を実装する（例: `VenueRepository`）。
-- Repository では Supabase クライアントへの直接アクセスのみを行い、`handle_supabase_errors` で例外をラップする。
-- Service クラス（例: `VenueService`）では Repository を注入し、メソッド名は `get_〜`, `create_〜`, `update_〜`, `remove_〜` などの動詞 + 名詞で統一する。
-- Service 層でビジネスルール・バリデーション・エラー変換（`APIException` など）を行い、Repository にはロジックを持たせない。
+- Supabase テーブルごとに Repository クラスを定義し、`table_name` と基本 CRUD（`find_all`, `find_by_id`, `create`, `update`, `delete`）を実装する（例: `VenueRepository`）
+- Repository では Supabase クライアントへの直接アクセスのみを行い、`handle_supabase_errors` で例外をラップする
+- Service クラス（例: `VenueService`）では Repository を注入し、メソッド名は `get_〜`, `create_〜`, `update_〜`, `remove_〜` などの動詞 + 名詞で統一する
+- Service 層でビジネスルール・バリデーション・エラー変換（`APIException` など）を行い、Repository にはロジックを持たせない
 
 ## テスト・ビルド
-- 重要なビジネスロジックを変えるときは、既存のテスト構造（`backend/tests/`, `frontend/__tests__/`）に合わせてテスト追加/修正を検討する。
-- **コミット前には `frontend/` で `npm run build` が通ることを確認するように提案する。**
+- 重要なビジネスロジックを変えるときは、既存のテスト構造（`backend/tests/`, `frontend/__tests__/`）に合わせてテスト追加/修正を検討する
+- **コミット前には `frontend/` で `npm run build` が通ることを確認するように提案する**
 
 ## コマンド実行ポリシー（Cursor 内）
-- コマンドは基本的に **プロジェクトルート** から実行する前提で提示する。
-- 破壊的操作は「こういうコマンドを実行するとよい」という形で提案し、ユーザーの意図が明確なときだけ実行を検討する。
+- コマンドは基本的に **プロジェクトルート** から実行する前提で提示する
+- 破壊的操作は「こういうコマンドを実行するとよい」という形で提案し、ユーザーの意図が明確なときだけ実行を検討する
 
 ## 会話スタイル
-- 説明は簡潔かつ具体的に行い、必要に応じてファイルパスや関数名を **バッククォート** で示す。
-- 関連ファイルや影響範囲、テスト方法など、ユーザーが知るべきポイントを短く補足する。
+- 説明は簡潔かつ具体的に行い、必要に応じてファイルパスや関数名を **バッククォート** で示す
+- 関連ファイルや影響範囲、テスト方法など、ユーザーが知るべきポイントを短く補足する
 
