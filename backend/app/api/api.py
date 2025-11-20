@@ -3,6 +3,7 @@ from app.api.endpoints import (
     admin_members,
     attendance,
     auth,
+    contacts,
     member_assignments,
     parts,
     practice_slots,
@@ -20,6 +21,7 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(venues.router, prefix="/venues", tags=["venues"])
+api_router.include_router(contacts.router, prefix="/contacts", tags=["contacts"])
 
 api_router.include_router(stages.router, prefix="/stages", tags=["stages"])
 api_router.include_router(parts.router, prefix="/parts", tags=["parts"])
