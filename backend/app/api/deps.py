@@ -8,6 +8,7 @@ from app.repositories.part_repository import PartRepository
 from app.repositories.stage_repository import StageRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.venue_repository import VenueRepository
+from app.repositories.contact_repository import ContactRepository
 
 from app.services.member_admin_service import MemberAdminService
 from app.services.member_assignment_service import MemberAssignmentService
@@ -22,6 +23,7 @@ from app.repositories.account_setting_history_repository import AccountSettingHi
 
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
+from app.services.contact_service import ContactService
 from app.services.attendance_service import AttendanceService
 from app.services.account_setting_service import AccountSettingService
 from app.services.session_instructor_service import SessionInstructorService
@@ -118,6 +120,13 @@ def get_venue_service(
     return VenueService(venue_repository, supabase_client.auth)
 
 
+def get_contact_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> ContactRepository:
+    """ContactRepositoryのインスタンスを取得"""
+    return ContactRepository(supabase_client)
+
+
 def get_part_repository(
     supabase_client: Client = Depends(get_supabase),
 ) -> PartRepository:
@@ -176,6 +185,14 @@ def get_user_profile_repository(
 ) -> UserProfileRepository:
     """UserProfileRepositoryのインスタンスを取得"""
     return UserProfileRepository(supabase_client)
+
+
+def get_contact_service(
+    contact_repository: ContactRepository = Depends(get_contact_repository),
+    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+) -> ContactService:
+    """ContactServiceのインスタンスを依存性注入で取得"""
+    return ContactService(contact_repository, user_profile_repository)
 
 
 def get_attendance_service(
