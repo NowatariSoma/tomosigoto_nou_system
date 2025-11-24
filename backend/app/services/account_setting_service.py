@@ -158,10 +158,10 @@ class AccountSettingService:
             logger.warning(f"Invalid department code: {profile_data.department_code}")
             raise APIException(ErrorMessage.BAD_REQUEST)
 
-        # 学籍番号の重複チェックは一時的に無効化
-        # if await self.repository.check_student_id_exists(profile_data.student_id):
-        #     logger.warning(f"Student ID already exists: {profile_data.student_id}")
-        #     raise APIException(ErrorMessage.BAD_REQUEST)
+        # 学籍番号の重複チェック
+        if await self.user_profile_repo.check_student_id_exists(profile_data.student_id):
+            logger.warning(f"Student ID already exists: {profile_data.student_id}")
+            raise APIException(ErrorMessage.STUDENT_ID_ALREADY_EXISTS)
 
         # メールアドレスの重複チェックは一時的に無効化
         # if await self.repository.check_email_exists(profile_data.email, user_id):
@@ -359,13 +359,13 @@ class AccountSettingService:
                     message="学籍番号は5文字以上である必要があります",
                     value=student_id
                 ))
-            # 学籍番号の重複チェックは一時的に無効化
-            # elif await self.repository.check_student_id_exists(student_id, user_id):
-            #     errors.append(AccountSettingValidationError(
-            #         field="student_id",
-            #         message="この学籍番号は既に使用されています",
-            #         value=student_id
-            #     ))
+            # 学籍番号の重複チェック
+            elif await self.user_profile_repo.check_student_id_exists(student_id, exclude_user_id=user_id):
+                errors.append(AccountSettingValidationError(
+                    field="student_id",
+                    message="この学籍番号は既に使用されています",
+                    value=student_id
+                ))
 
         # メールアドレスのバリデーション（緩和版）
         if "email" in profile_data:
