@@ -43,6 +43,10 @@ class ErrorMessage:
         status_code = status.HTTP_409_CONFLICT
         text = "このメールアドレスは既に使用されています"
     
+    class STUDENT_ID_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "この学籍番号は既に使用されています"
+    
     class INACTIVE_USER(BaseMessage):
         status_code = status.HTTP_403_FORBIDDEN
         text = "このユーザーは無効化されています"
