@@ -9,14 +9,18 @@ import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 interface ScheduleTableProps {
   className?: string;
   currentDate: Date;
+  initialIdealData?: IdealScheduleData | null;
+  initialIdealDate?: string | null;
 }
 
 const ScheduleTable: React.FC<ScheduleTableProps> = ({ 
   className,
-  currentDate
+  currentDate,
+  initialIdealData,
+  initialIdealDate
 }) => {
   // 理想的な形式のスケジュール管理フック
-  const { idealData, loading, error, fetchIdealScheduleByDate } = useIdealSchedule();
+  const { idealData, loading, error, fetchIdealScheduleByDate, setIdealData } = useIdealSchedule(initialIdealData ?? undefined);
 
   /**
    * 時間文字列からslot_orderを計算する
@@ -48,8 +52,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   useEffect(() => {
     const dateString = formatDateToYYYYMMDD(currentDate);
     console.log('ScheduleTable - 日付変更:', dateString);
+
+    if (initialIdealData && initialIdealDate === dateString) {
+      setIdealData(initialIdealData);
+      return;
+    }
+
     fetchIdealScheduleByDate(dateString);
-  }, [currentDate, fetchIdealScheduleByDate]);
+  }, [currentDate, fetchIdealScheduleByDate, initialIdealData, initialIdealDate, setIdealData]);
 
   const handleCellClick = (time: string, venueId: string, parts: any[]) => {
     console.log('ScheduleTable - セルクリック:', { time, venueId, parts });

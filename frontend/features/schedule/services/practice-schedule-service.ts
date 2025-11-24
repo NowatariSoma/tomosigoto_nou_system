@@ -3,7 +3,7 @@
  * room-settingsパターンに合わせて統一的なAPIアプローチを採用
  */
 
-import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/practice-schedule-types';
+import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData, PracticeScheduleBundleResponse } from '../types/practice-schedule-types';
 import { ApiResponse } from '../types/api-types';
 import { API_ENDPOINTS } from '../constants/practice-schedule-constants';
 import { fetchApi } from '../../../lib/api';
@@ -99,6 +99,23 @@ export class PracticeScheduleService {
     }
   }
 
+  /**
+   * 基本情報のみの練習スケジュールを取得
+   * @param date 対象日付 (YYYY-MM-DD)
+   */
+  async getPracticeScheduleBasicByDate(date: string): Promise<PracticeSchedule | null> {
+    try {
+      const response = await fetchApi(`${this.basePath}/date/${date}`);
+      const data: PracticeSchedule = await response.json();
+      return data;
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   // getPracticeScheduleDetailsByDate メソッドは削除 - idealエンドポイントを使用
 
   /**
@@ -135,6 +152,15 @@ export class PracticeScheduleService {
       }
       throw error;
     }
+  }
+
+  /**
+   * ボトムシート表示用 bundle データを取得
+   * @param date 対象日付 (YYYY-MM-DD形式)
+   */
+  async getPracticeScheduleBundle(date: string): Promise<PracticeScheduleBundleResponse> {
+    const response = await fetchApi(`${this.basePath}/date/${date}/bundle`);
+    return await response.json();
   }
 
   /**

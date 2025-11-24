@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 import asyncio
+from datetime import datetime
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -43,83 +44,32 @@ class PracticeScheduleService:
     # ===== 練習スケジュール CRUD =====
 
     async def get_all_practice_schedules(self) -> List[Dict[str, Any]]:
-        """すべての練習スケジュールを取得"""
-        schedules = await self.practice_schedule_repository.find_all()
-        
-        # 各スケジュールに会場情報を追加
+        """すべての練習スケジュールを取得（関連データ付き最適化版）"""
+        schedules = await self.practice_schedule_repository.find_all_with_relations()
+
         for schedule in schedules:
-            schedule_id = schedule.get("id")
-            if schedule_id:
-                try:
-                    # 複数部屋選択対応: 会場情報を追加
-                    venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
-                    schedule["venue_ids"] = [v["venue_id"] for v in venues]
-                    
-                    # 会場詳細情報を取得
-                    venue_details = []
-                    for venue in venues:
-                        try:
-                            # 会場詳細情報を取得
-                            venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
-                            if venue_info:
-                                venue_details.append({
-                                    "id": venue["venue_id"],
-                                    "name": venue_info.get("name", "不明な会場"),
-                                    "campus": venue_info.get("campus", "不明なキャンパス")
-                                })
-                        except Exception as e:
-                            print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
-                            # エラーの場合は基本的な情報のみ
-                            venue_details.append({
-                                "id": venue["venue_id"],
-                                "name": "不明な会場",
-                                "campus": "不明なキャンパス"
-                            })
-                    
-                    schedule["venues"] = venue_details
-                except Exception as e:
-                    print(f"DEBUG: スケジュール {schedule_id} の会場情報取得エラー: {e}")
-                    schedule["venue_ids"] = []
-                    schedule["venues"] = []
-                
-                # 会場情報が空の場合、デフォルトの会場情報を設定（一時的な解決策）
-                if not schedule.get("venue_ids") and not schedule.get("venues"):
-                    print(f"DEBUG: スケジュール {schedule_id} に会場情報がありません。デフォルト値を設定します。")
-                    schedule["venue_ids"] = []
-                    schedule["venues"] = []
-                    
-                    # 既存のスケジュールにデフォルトの会場情報を追加（マイグレーション処理）
-                    try:
-                        # 利用可能な会場を取得
-                        available_venues = await self.venue_repository.find_all()
-                        if available_venues:
-                            # 最初の会場をデフォルトとして設定
-                            default_venue = available_venues[0]
-                            venue_data = {
-                                "schedule_id": str(schedule_id),
-                                "venue_id": str(default_venue["id"]),
-                                "is_preferred": True,
-                                "priority": 0,
-                                "notes": "マイグレーション処理で追加"
-                            }
-                            await self.schedule_available_venue_repository.create(venue_data)
-                            print(f"DEBUG: スケジュール {schedule_id} にデフォルト会場 {default_venue['name']} を追加しました。")
-                            
-                            # 追加した会場情報を反映
-                            schedule["venue_ids"] = [default_venue["id"]]
-                            schedule["venues"] = [{
-                                "id": default_venue["id"],
-                                "name": default_venue.get("name", "不明な会場"),
-                                "campus": default_venue.get("campus", "不明なキャンパス")
-                            }]
-                    except Exception as migration_error:
-                        print(f"DEBUG: マイグレーション処理エラー: {migration_error}")
-                        schedule["venue_ids"] = []
-                        schedule["venues"] = []
-            else:
-                schedule["venue_ids"] = []
-                schedule["venues"] = []
-        
+            schedule_venues = schedule.pop("schedule_available_venues", []) or []
+            venue_ids = []
+            venue_details = []
+
+            for venue in schedule_venues:
+                venue_id = venue.get("venue_id")
+                if not venue_id:
+                    continue
+
+                venue_ids.append(venue_id)
+                venue_info = venue.get("venues") or {}
+                venue_details.append(
+                    {
+                        "id": venue_id,
+                        "name": venue_info.get("name", "不明な会場"),
+                        "campus": venue_info.get("campus", "不明なキャンパス"),
+                    }
+                )
+
+            schedule["venue_ids"] = venue_ids
+            schedule["venues"] = venue_details
+
         return schedules
 
     async def get_practice_schedule(self, schedule_id: UUID) -> Dict[str, Any]:
@@ -165,6 +115,62 @@ class PracticeScheduleService:
         """指定した日付の練習スケジュール情報を取得"""
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         return schedule  # None を返すことで、エンドポイント側で404を返す
+
+    async def get_practice_schedule_bundle(self, target_date: str, current_user: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """指定日付のボトムシート用 bundle データをまとめて取得"""
+        schedule = await self.practice_schedule_repository.find_by_date(target_date)
+        if not schedule:
+            raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+
+        schedule_id = schedule["id"]
+
+        ideal_task = asyncio.create_task(self.get_practice_schedule_ideal_format_by_id(schedule_id))
+        attendance_task = asyncio.create_task(self.attendance_repository.find_by_practice_schedule(schedule_id))
+        users_task = asyncio.create_task(self._get_bundle_users())
+
+        ideal_data, attendance_entries, bundle_users = await asyncio.gather(
+            ideal_task, attendance_task, users_task, return_exceptions=False
+        )
+
+        current_user_id = str(current_user["id"]) if current_user and current_user.get("id") else None
+        my_attendance = None
+        if current_user_id:
+            for entry in attendance_entries:
+                if str(entry.get("user_id")) == current_user_id:
+                    my_attendance = entry
+                    break
+
+        schedule_block = {
+            "id": str(schedule_id),
+            "schedule_date": str(schedule.get("schedule_date")),
+            "start_time": str(schedule.get("start_time")) if schedule.get("start_time") else None,
+            "end_time": str(schedule.get("end_time")) if schedule.get("end_time") else None,
+            "title": schedule.get("title"),
+            "description": schedule.get("description"),
+            "division_count": schedule.get("division_count"),
+            "venues": await self._get_venues_with_colors(schedule_id),
+        }
+
+        bundle_response = {
+            "schedule": schedule_block,
+            "ideal": ideal_data or {
+                "schedule_info": None,
+                "venues": [],
+                "time_schedule": {},
+                "debug_info": {},
+            },
+            "attendance": {
+                "entries": attendance_entries,
+                "my_entry": my_attendance,
+            },
+            "users": bundle_users,
+            "meta": {
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "version": 1,
+            },
+        }
+
+        return bundle_response
 
     async def get_practice_schedule_with_details(self, schedule_id: UUID) -> Dict[str, Any]:
         """練習スケジュールの詳細情報（利用可能会場、セッション含む）を取得"""
@@ -973,15 +979,25 @@ class PracticeScheduleService:
         # 全てのパートのメンバーを一度に取得
         part_members_map = {}
         if unique_part_ids:
+            fetch_tasks = []
+            normalized_part_ids = []
             for part_id_str in unique_part_ids:
                 try:
-                    # UUIDに変換してからリポジトリに渡す
                     part_id_uuid = UUID(part_id_str) if isinstance(part_id_str, str) else part_id_str
-                    part_members = await self.member_assignment_repository.find_by_part_id(part_id_uuid)
-                    part_members_map[part_id_str] = part_members
+                    fetch_tasks.append(self.member_assignment_repository.find_by_part_id(part_id_uuid))
+                    normalized_part_ids.append(part_id_str)
                 except Exception as e:
-                    print(f"Error fetching members for part {part_id_str}: {e}")
+                    print(f"Error preparing member fetch for part {part_id_str}: {e}")
                     part_members_map[part_id_str] = []
+
+            if fetch_tasks:
+                member_results = await asyncio.gather(*fetch_tasks, return_exceptions=True)
+                for part_id_str, result in zip(normalized_part_ids, member_results):
+                    if isinstance(result, Exception):
+                        print(f"Error fetching members for part {part_id_str}: {result}")
+                        part_members_map[part_id_str] = []
+                    else:
+                        part_members_map[part_id_str] = result
         
         # 練習スケジュールの出欠記録を一度に取得
         attendance_records = []
@@ -1030,6 +1046,7 @@ class PracticeScheduleService:
         # 実際のセッションデータを配置（slot_order順）
         part_colors = settings.DEFAULT_PART_COLORS
         processing_details = []
+        participants_count = await self._get_session_participants_count(schedule["id"])
 
         if sessions:
             # slot_orderでソート済みのセッションを処理
@@ -1124,7 +1141,7 @@ class PracticeScheduleService:
                             "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                             "session_title": session_title,
                             "instructors": await self._get_session_instructors(session.get("id")),
-                            "participants": await self._get_session_participants_count(schedule["id"]),
+                            "participants": participants_count,
                             "status": "confirmed",
                             "slot_order": slot_order,
                             "schedule_available_venue_id": schedule_available_venue_id,
@@ -1153,6 +1170,33 @@ class PracticeScheduleService:
                 "session_processing_details": processing_details
             }
         }
+
+    async def _get_bundle_users(self) -> List[Dict[str, Any]]:
+        """bundle API 用にユーザー一覧を取得"""
+        try:
+            profiles = await self.user_profile_repository.get_all_profiles_basic()
+        except Exception as exc:
+            print(f"Warning: failed to fetch basic user profiles: {exc}")
+            return []
+
+        users = []
+        for profile in profiles:
+            user_id = str(profile.get("user_id"))
+            if not user_id:
+                continue
+            first_name = profile.get("first_name_kanji") or ""
+            last_name = profile.get("last_name_kanji") or ""
+            full_name = f"{last_name} {first_name}".strip()
+            if not full_name:
+                full_name = profile.get("email") or f"User {user_id[:8]}"
+
+            users.append({
+                "id": user_id,
+                "name": full_name,
+                "email": profile.get("email"),
+            })
+
+        return users
 
     async def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
         """指定したIDの練習スケジュールの詳細情報を取得"""

@@ -20,6 +20,36 @@ class PracticeScheduleRepository:
         response = self.client.table(self.table_name).select("*").limit(10000).execute()
         return response.data
 
+    @handle_supabase_errors("find_all_with_relations")
+    async def find_all_with_relations(self) -> List[Dict[str, Any]]:
+        """関連データ込みですべての練習スケジュールを取得"""
+        response = (
+            self.client.table(self.table_name)
+            .select(
+                """
+                *,
+                schedule_available_venues(
+                    id,
+                    venue_id,
+                    is_preferred,
+                    priority,
+                    venues(id, name, campus)
+                ),
+                sessions(
+                    id,
+                    title,
+                    slot_order,
+                    schedule_available_venue_id,
+                    part_id,
+                    parts(id, name)
+                )
+                """
+            )
+            .order("schedule_date", desc=False)
+            .execute()
+        )
+        return response.data
+
     @handle_supabase_errors("find_by_id")
     async def find_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
         """指定されたIDの練習スケジュールを取得"""
