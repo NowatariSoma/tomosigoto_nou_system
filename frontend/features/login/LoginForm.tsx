@@ -20,13 +20,18 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     e.preventDefault();
     setError('');
 
-    try {
-      await login(email, password);
-      onLogin();
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。');
-    }
+    // ログイン機能をコメントアウト
+    // try {
+    //   await login(email, password);
+    //   onLogin();
+    // } catch (err: any) {
+    //   console.error('Login error:', err);
+    //   setError(err.message || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。');
+    // }
+    
+    // ログイン機能が無効化されているため、直接ホームにリダイレクト
+    console.log('ログイン機能は現在無効化されています');
+    onLogin();
   };
 
   return (

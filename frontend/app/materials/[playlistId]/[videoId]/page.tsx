@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Search, Archive } from 'lucide-react';
+import { ArrowLeft, Search, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
@@ -95,26 +95,17 @@ export default function VideoListPage() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">{playlistData.title}</h1>
-              <div className="flex items-center gap-4 text-slate-600">
-                <span>{stageData.year}年</span>
-                <span>•</span>
-                <span>{stageData.stage}</span>
-                <span>•</span>
-                <span className="text-slate-600 font-medium">
-                  {playlistData.phase}
-                </span>
-              </div>
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">{playlistData.title}</h1>
+            <div className="flex items-center gap-4 text-slate-600">
+              <span>{stageData.year}年</span>
+              <span>•</span>
+              <span>{stageData.stage}</span>
+              <span>•</span>
+              <span className="text-slate-600 font-medium">
+                {playlistData.phase}
+              </span>
             </div>
-            <Button
-              onClick={() => window.open(playlistData.playlistUrl, '_blank')}
-              className="flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              YouTubeで開く
-            </Button>
           </div>
         </div>
 

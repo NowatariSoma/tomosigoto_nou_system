@@ -36,25 +36,79 @@ export default function NewMaterialPage() {
     thumbnailUrl: '',
   });
 
-  const handlePlaylistSubmit = (e: React.FormEvent) => {
+  const handlePlaylistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: API integration
-    console.log('Creating playlist:', playlistData);
-    router.push('/materials');
+    try {
+      const { materialsService } = await import('@/features/materials/services/materials-service');
+      await materialsService.createPlaylist({
+        title: playlistData.title,
+        stage: playlistData.stage,
+        year: parseInt(playlistData.year, 10),
+        thumbnailUrl: playlistData.thumbnailUrl || undefined,
+      });
+      router.push('/materials');
+    } catch (error) {
+      console.error('Failed to create playlist:', error);
+      alert('プレイリストの作成に失敗しました');
+    }
   };
 
-  const handleSubPlaylistSubmit = (e: React.FormEvent) => {
+  const handleSubPlaylistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: API integration
-    console.log('Creating sub-playlist:', subPlaylistData);
-    router.push('/materials');
+    try {
+      const { materialsService } = await import('@/features/materials/services/materials-service');
+      await materialsService.createSubPlaylist(subPlaylistData.playlistId, {
+        title: subPlaylistData.title,
+        recordedDate: subPlaylistData.recordedDate,
+        phase: subPlaylistData.phase,
+        playlistUrl: subPlaylistData.playlistUrl,
+        thumbnailUrl: subPlaylistData.thumbnailUrl || undefined,
+      });
+      router.push('/materials');
+    } catch (error) {
+      console.error('Failed to create sub-playlist:', error);
+      alert('サブプレイリストの作成に失敗しました');
+    }
   };
 
-  const handleVideoSubmit = (e: React.FormEvent) => {
+  const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: API integration
-    console.log('Creating video:', videoData);
-    router.push('/materials');
+    try {
+      const { materialsService } = await import('@/features/materials/services/materials-service');
+      const subPlaylistId = videoData.subPlaylistId;
+      
+      // すべてのプレイリストからサブプレイリストを探してプレイリストIDを取得
+      const playlists = await materialsService.getPlaylists();
+      let playlistId = '';
+      for (const playlist of playlists) {
+        try {
+          const subPlaylists = await materialsService.getSubPlaylists(playlist.id);
+          const subPlaylist = subPlaylists.find(sp => sp.id === subPlaylistId);
+          if (subPlaylist) {
+            playlistId = playlist.id;
+            break;
+          }
+        } catch (err) {
+          // エラーを無視して続行
+        }
+      }
+      
+      if (!playlistId) {
+        alert('サブプレイリストが見つかりませんでした');
+        return;
+      }
+      
+      await materialsService.createVideo(playlistId, subPlaylistId, {
+        title: videoData.title,
+        videoUrl: videoData.videoUrl,
+        recordedDate: videoData.recordedDate,
+        thumbnailUrl: videoData.thumbnailUrl || undefined,
+      });
+      router.push('/materials');
+    } catch (error) {
+      console.error('Failed to create video:', error);
+      alert('動画の作成に失敗しました');
+    }
   };
 
   const handleCancel = () => {

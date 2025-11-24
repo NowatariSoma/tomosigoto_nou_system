@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Input } from '@/components/ui/inputs/input';
 import { Label } from '@/components/ui/inputs/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/inputs/select';
-import { playlistVideos } from '@/features/materials/data/playlist_data';
-import { mockData } from '@/features/materials/data/material_data';
+import { SubPlaylist, Playlist } from '@/features/materials/types/material_types';
+import { materialsService } from '@/features/materials/services/materials-service';
 
 interface VideoData {
   subPlaylistId: string;
@@ -27,6 +28,35 @@ export function CreateVideoForm({
   onSubmit,
   onCancel,
 }: CreateVideoFormProps) {
+  const [subPlaylists, setSubPlaylists] = useState<Array<SubPlaylist & { parentPlaylist?: Playlist }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSubPlaylists = async () => {
+      try {
+        setIsLoading(true);
+        const playlists = await materialsService.getPlaylists();
+        const allSubPlaylists: Array<SubPlaylist & { parentPlaylist?: Playlist }> = [];
+        
+        for (const playlist of playlists) {
+          try {
+            const subPlaylistsData = await materialsService.getSubPlaylists(playlist.id);
+            allSubPlaylists.push(...subPlaylistsData.map(sp => ({ ...sp, parentPlaylist: playlist })));
+          } catch (err) {
+            console.error(`Failed to load sub-playlists for playlist ${playlist.id}:`, err);
+          }
+        }
+        
+        setSubPlaylists(allSubPlaylists);
+      } catch (error) {
+        console.error('Failed to load sub-playlists:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSubPlaylists();
+  }, []);
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
@@ -57,17 +87,20 @@ export function CreateVideoForm({
                   <SelectValue placeholder="プレイリストを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {playlistVideos.map((playlist) => {
-                    const parentPlaylist = mockData.find(p => p.id === playlist.playlistId);
-                    const playlistLabel = parentPlaylist
-                      ? `${parentPlaylist.year}年 ${parentPlaylist.stage} - ${playlist.title}`
-                      : playlist.title;
-                    return (
-                      <SelectItem key={playlist.id} value={playlist.id}>
-                        {playlistLabel}
-                      </SelectItem>
-                    );
-                  })}
+                  {isLoading ? (
+                    <SelectItem value="loading" disabled>読み込み中...</SelectItem>
+                  ) : (
+                    subPlaylists.map((playlist) => {
+                      const playlistLabel = playlist.parentPlaylist
+                        ? `${playlist.parentPlaylist.year}年 ${playlist.parentPlaylist.stage} - ${playlist.title}`
+                        : playlist.title;
+                      return (
+                        <SelectItem key={playlist.id} value={playlist.id}>
+                          {playlistLabel}
+                        </SelectItem>
+                      );
+                    })
+                  )}
                 </SelectContent>
               </Select>
             </div>

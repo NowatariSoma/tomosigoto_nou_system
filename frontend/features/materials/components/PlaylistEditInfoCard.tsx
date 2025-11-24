@@ -45,21 +45,23 @@ export const PlaylistEditInfoCard = ({ playlist, onSave, onDelete }: PlaylistEdi
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>プレイリスト情報</CardTitle>
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-lg sm:text-xl">プレイリスト情報</CardTitle>
+          <div className="flex flex-wrap gap-2">
             {isEditing ? (
               <>
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   キャンセル
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   保存
                 </Button>
@@ -69,7 +71,8 @@ export const PlaylistEditInfoCard = ({ playlist, onSave, onDelete }: PlaylistEdi
                 <Button
                   variant="outline"
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   <Edit className="h-4 w-4" />
                   編集
@@ -77,7 +80,8 @@ export const PlaylistEditInfoCard = ({ playlist, onSave, onDelete }: PlaylistEdi
                 <Button
                   variant="destructive"
                   onClick={() => onDelete(playlist.id)}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   <Trash2 className="h-4 w-4" />
                   削除

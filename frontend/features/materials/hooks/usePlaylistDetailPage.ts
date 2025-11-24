@@ -1,24 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FilterOption } from '@/shared/types/filter_types';
 import { Playlist, SubPlaylist, Video } from '../types/material_types';
-import { mockData } from '../data/material_data';
-import { playlistVideos } from '../data/playlist_data';
-import { videos } from '../data/video_data';
 import { useFavoriteVideos } from './useFavoriteVideos';
+import { materialsService } from '../services/materials-service';
 
 export const usePlaylistDetailPage = (playlistId: string) => {
+  const [stageData, setStageData] = useState<Playlist | null>(null);
+  const [stagePlaylists, setStagePlaylists] = useState<SubPlaylist[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const { isFavorite, toggleFavorite } = useFavoriteVideos();
 
-  // 年度+舞台データを取得
-  const stageData = mockData.find((item: Playlist) => item.id === playlistId);
+  // データ取得
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  // その年度+舞台のプレイリスト一覧を取得
-  const stagePlaylists = playlistVideos.filter((playlist: SubPlaylist) =>
-    playlist.playlistId === stageData?.id
-  );
+        // プレイリスト詳細を取得
+        const playlist = await materialsService.getPlaylist(playlistId);
+        setStageData(playlist);
+
+        // サブプレイリスト一覧を取得
+        const subPlaylists = await materialsService.getSubPlaylists(playlistId);
+        setStagePlaylists(subPlaylists);
+
+        // すべての動画を取得
+        const allVideos: Video[] = [];
+        for (const subPlaylist of subPlaylists) {
+          try {
+            const videosData = await materialsService.getVideos(playlistId, subPlaylist.id);
+            allVideos.push(...videosData);
+          } catch (err) {
+            console.error(`Failed to load videos for sub-playlist ${subPlaylist.id}:`, err);
+          }
+        }
+        setVideos(allVideos);
+      } catch (err) {
+        console.error('Failed to load playlist data:', err);
+        setError(err instanceof Error ? err.message : 'データの読み込みに失敗しました');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (playlistId) {
+      loadData();
+    }
+  }, [playlistId]);
 
   // フェーズオプションの定義
   const phaseOptions: FilterOption[] = [
@@ -38,11 +73,11 @@ export const usePlaylistDetailPage = (playlistId: string) => {
     );
 
   // 動画検索の場合
-  let filteredVideos: Video[] = [];
+  const filteredVideos: Video[] = [];
   if (isVideoSearch) {
-    filteredVideos = videos.filter((video: Video) => {
-      const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
-      if (!subPlaylist || subPlaylist.playlistId !== playlistId) return false;
+    videos.forEach((video: Video) => {
+      const subPlaylist = stagePlaylists.find(item => item.id === video.subPlaylistId);
+      if (!subPlaylist || subPlaylist.playlistId !== playlistId) return;
 
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
@@ -53,7 +88,9 @@ export const usePlaylistDetailPage = (playlistId: string) => {
       const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
       const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
 
-      return matchesSearch && matchesPhase && matchesFavorite;
+      if (matchesSearch && matchesPhase && matchesFavorite) {
+        filteredVideos.push(video);
+      }
     });
   }
 
@@ -89,6 +126,9 @@ export const usePlaylistDetailPage = (playlistId: string) => {
   return {
     stageData,
     stagePlaylists,
+    videos,
+    isLoading,
+    error,
     searchQuery,
     setSearchQuery,
     selectedPhase,

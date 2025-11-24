@@ -1,30 +1,85 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Play, Heart, Archive } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { Video } from '@/features/materials/types/material_types';
-import { videos } from '@/features/materials/data/video_data';
-import { playlistVideos } from '@/features/materials/data/playlist_data';
-import { mockData } from '@/features/materials/data/material_data';
-import { Playlist, SubPlaylist } from '@/features/materials/types/material_types';
+import { Video, Playlist, SubPlaylist } from '@/features/materials/types/material_types';
 import { useFavoriteVideos } from '@/features/materials/hooks/useFavoriteVideos';
+import { materialsService } from '@/features/materials/services/materials-service';
 import { MaterialSearchInput } from '@/features/materials/components/MaterialSearchInput';
 import { Search } from 'lucide-react';
 
 export default function FavoritesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const { favorites, isFavorite, toggleFavorite } = useFavoriteVideos();
+  const { favorites, isFavorite, toggleFavorite, isLoading: favoritesLoading } = useFavoriteVideos();
+  const [favoriteVideosList, setFavoriteVideosList] = useState<Video[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [subPlaylists, setSubPlaylists] = useState<SubPlaylist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // お気に入りの動画を取得
-  const favoriteVideoIds = Array.from(favorites);
-  const favoriteVideosList = videos.filter((video: Video) => 
-    favoriteVideoIds.includes(video.id)
-  );
+  // お気に入り動画とその関連データを取得
+  useEffect(() => {
+    const loadFavoriteVideos = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // お気に入り一覧を取得
+        const favoritesList = await materialsService.getFavorites();
+        const favoriteVideoIds = favoritesList.map(fav => fav.video_id);
+
+        if (favoriteVideoIds.length === 0) {
+          setFavoriteVideosList([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // プレイリスト一覧を取得
+        const playlistsData = await materialsService.getPlaylists();
+        setPlaylists(playlistsData);
+
+        // すべてのサブプレイリストを取得
+        const allSubPlaylists: SubPlaylist[] = [];
+        for (const playlist of playlistsData) {
+          try {
+            const subPlaylistsData = await materialsService.getSubPlaylists(playlist.id);
+            allSubPlaylists.push(...subPlaylistsData);
+          } catch (err) {
+            console.error(`Failed to load sub-playlists for playlist ${playlist.id}:`, err);
+          }
+        }
+        setSubPlaylists(allSubPlaylists);
+
+        // お気に入りに含まれる動画を取得
+        const allVideos: Video[] = [];
+        for (const subPlaylist of allSubPlaylists) {
+          try {
+            const videosData = await materialsService.getVideos(subPlaylist.playlistId, subPlaylist.id);
+            // お気に入りに含まれる動画のみをフィルタリング
+            const favoriteVideos = videosData.filter(video => favoriteVideoIds.includes(video.id));
+            allVideos.push(...favoriteVideos);
+          } catch (err) {
+            console.error(`Failed to load videos for sub-playlist ${subPlaylist.id}:`, err);
+          }
+        }
+        setFavoriteVideosList(allVideos);
+      } catch (err) {
+        console.error('Failed to load favorite videos:', err);
+        setError(err instanceof Error ? err.message : 'データの読み込みに失敗しました');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!favoritesLoading) {
+      loadFavoriteVideos();
+    }
+  }, [favoritesLoading, favorites]);
 
   // 検索でフィルタリング
   const filteredVideos = favoriteVideosList.filter((video: Video) => {
@@ -45,15 +100,21 @@ export default function FavoritesPage() {
 
   // 各動画の親情報を取得
   const getVideoMetadata = (video: Video) => {
-    const subPlaylist = playlistVideos.find((item: SubPlaylist) => item.id === video.subPlaylistId);
-    const stageData = mockData.find((item: Playlist) => item.id === subPlaylist?.playlistId);
+    const subPlaylist = subPlaylists.find((item: SubPlaylist) => item.id === video.subPlaylistId);
+    const stageData = playlists.find((item: Playlist) => item.id === subPlaylist?.playlistId);
     return { subPlaylist, stageData };
   };
 
   // お気に入り切り替え（イベントハンドラー）
-  const handleToggleFavorite = (videoId: string, e: React.MouseEvent) => {
+  const handleToggleFavorite = async (videoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleFavorite(videoId);
+    try {
+      await toggleFavorite(videoId);
+      // お気に入りから削除された場合は、リストからも削除
+      setFavoriteVideosList(prev => prev.filter(v => v.id !== videoId));
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    }
   };
 
   return (
@@ -86,10 +147,17 @@ export default function FavoritesPage() {
           <div className="mb-4">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">お気に入り動画</h1>
             <div className="text-slate-600">
-              {favoriteVideosList.length}件のお気に入り動画
+              {isLoading ? '読み込み中...' : `${favoriteVideosList.length}件のお気に入り動画`}
             </div>
           </div>
         </div>
+
+        {/* エラー表示 */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* 検索フィールド */}
         <div className="mb-8">
@@ -109,7 +177,11 @@ export default function FavoritesPage() {
             検索結果 ({filteredVideos.length}件)
           </h2>
 
-          {filteredVideos.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16">
+              <p className="text-slate-500 text-lg">読み込み中...</p>
+            </div>
+          ) : filteredVideos.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredVideos.map((video) => {
                 const { subPlaylist, stageData } = getVideoMetadata(video);
@@ -142,7 +214,7 @@ export default function FavoritesPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
                       <CardDescription className="text-xs line-clamp-2">
-                        {stageData?.year}年 {stageData?.stage} • {video.recordedDate ? formatDate(video.recordedDate) : '日付不明'} • {subPlaylist.phase}
+                        {stageData?.year}年 {stageData?.name} • {video.recordedDate ? formatDate(video.recordedDate) : '日付不明'} • {subPlaylist.phase}
                       </CardDescription>
                     </CardHeader>
                   </Card>
@@ -165,4 +237,5 @@ export default function FavoritesPage() {
     </AppTemplate>
   );
 }
+
 

@@ -32,11 +32,6 @@ export const EditVideoCard = ({
   const [editTitle, setEditTitle] = useState(video.title);
 
   const handleSave = () => {
-    // TODO: API integration
-    console.log('Saving video:', {
-      id: video.id,
-      title: editTitle,
-    });
     alert('動画タイトルを保存しました\n（実際のAPI連携は未実装）');
     setIsEditing(false);
   };

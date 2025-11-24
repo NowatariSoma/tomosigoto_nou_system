@@ -9,14 +9,20 @@
  * - 含まれる動画のプレビュー表示（最大4件）
  * - 動画数のカウント表示
  */
-import { useState } from 'react';
-import { Edit, Trash2, ChevronRight, Plus } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Edit, Trash2, ChevronRight, Plus, ChevronDown, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/inputs/input';
 import { Label } from '@/components/ui/inputs/label';
 import { Badge } from '@/components/ui/feedback/badge';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/overlays/popover';
 import { SubPlaylist } from '@/features/materials/types/material_types';
+import { materialsService } from '@/features/materials/services/materials-service';
 
 interface EditSubPlaylistCardProps {
   subPlaylist: SubPlaylist;
@@ -27,6 +33,8 @@ interface EditSubPlaylistCardProps {
   formatDate?: (dateString?: string) => string;
   getVideosForSubPlaylist: (subPlaylistId: string) => any[];
   onVideoDelete: (id: string) => void;
+  onClick?: (id: string) => void;
+  playlistId?: string;
 }
 
 export const EditSubPlaylistCard = ({
@@ -37,21 +45,85 @@ export const EditSubPlaylistCard = ({
   onVideoAdd,
   formatDate,
   getVideosForSubPlaylist,
-  onVideoDelete
+  onVideoDelete,
+  onClick,
+  playlistId,
 }: EditSubPlaylistCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(subPlaylist.title);
   const [editDate, setEditDate] = useState(subPlaylist.recordedDate);
   const [editPhase, setEditPhase] = useState(subPlaylist.phase);
+  const [isPhasePopoverOpen, setIsPhasePopoverOpen] = useState(false);
+  const [availablePhases, setAvailablePhases] = useState<string[]>([]);
+  const [existingSubPlaylists, setExistingSubPlaylists] = useState<SubPlaylist[]>([]);
+  const [removedPhases, setRemovedPhases] = useState<Set<string>>(new Set());
+  const phaseListRef = useRef<HTMLDivElement>(null);
+
+  // デフォルトのフェーズ候補
+  const defaultPhases = ['本番', '稽古'];
+
+  // 既存のサブプレイリストからフェーズを取得
+  useEffect(() => {
+    const loadPhases = async () => {
+      if (playlistId) {
+        try {
+          const subPlaylists = await materialsService.getSubPlaylists(playlistId);
+          setExistingSubPlaylists(subPlaylists);
+          // 既存のサブプレイリストからフェーズを抽出（空文字を除く）
+          const phases = Array.from(
+            new Set(
+              subPlaylists
+                .map(sp => sp.phase)
+                .filter((phase): phase is string => Boolean(phase && phase.trim()))
+            )
+          );
+          
+          // デフォルトのフェーズと既存のフェーズを結合（重複を除く）
+          const allPhases = Array.from(new Set([...defaultPhases, ...phases]));
+          setAvailablePhases(allPhases);
+        } catch (error) {
+          console.error('Failed to load phases:', error);
+          setAvailablePhases(defaultPhases);
+        }
+      } else {
+        setAvailablePhases(defaultPhases);
+      }
+    };
+    loadPhases();
+  }, [playlistId]);
+
+  const handlePhaseSelect = (phase: string) => {
+    setEditPhase(phase);
+    setIsPhasePopoverOpen(false);
+  };
+
+  const handlePhaseClear = () => {
+    setEditPhase('');
+  };
+
+  // 表示するフェーズ候補を取得（削除されたものを除く）
+  const getDisplayPhases = () => {
+    return availablePhases.filter(phase => !removedPhases.has(phase));
+  };
+
+  // フェーズが他のサブプレイリストで使われているかチェック
+  const isPhaseUsedInOtherSubPlaylists = (phase: string): boolean => {
+    if (!existingSubPlaylists || existingSubPlaylists.length === 0) {
+      return false;
+    }
+    // 現在編集中のサブプレイリストを除外
+    const otherSubPlaylists = existingSubPlaylists.filter(sp => sp.id !== subPlaylist.id);
+    return otherSubPlaylists.some(sp => sp.phase === phase);
+  };
+
+  const handlePhaseRemove = (phase: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isPhaseUsedInOtherSubPlaylists(phase)) {
+      setRemovedPhases(prev => new Set(prev).add(phase));
+    }
+  };
 
   const handleSave = () => {
-    // TODO: API integration
-    console.log('Saving sub-playlist:', {
-      id: subPlaylist.id,
-      title: editTitle,
-      recordedDate: editDate,
-      phase: editPhase,
-    });
     alert('サブプレイリスト情報を保存しました\n（実際のAPI連携は未実装）');
     setIsEditing(false);
   };
@@ -63,8 +135,25 @@ export const EditSubPlaylistCard = ({
     setIsEditing(false);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // ボタンや入力フィールドがクリックされた場合は、カードのクリックイベントを発火しない
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('label') ||
+      isEditing
+    ) {
+      return;
+    }
+    onClick?.(subPlaylist.id);
+  };
+
   return (
-    <Card>
+    <Card 
+      onClick={handleCardClick}
+      className={onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}
+    >
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-3 flex-1">
@@ -84,12 +173,12 @@ export const EditSubPlaylistCard = ({
               </div>
             </div>
           </div>
-          <div className="flex justify-start sm:justify-end gap-2 flex-shrink-0 sm:ml-4">
+          <div className="flex flex-wrap justify-start sm:justify-end gap-2 flex-shrink-0 sm:ml-4">
             <Button
               variant="ghost"
               onClick={() => onMove(subPlaylist.id)}
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 flex-1 sm:flex-initial"
             >
               <ChevronRight className="h-4 w-4" />
               移動
@@ -99,7 +188,7 @@ export const EditSubPlaylistCard = ({
                 variant="outline"
                 onClick={() => onVideoAdd(subPlaylist.id)}
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-1 sm:flex-initial"
               >
                 <Plus className="h-4 w-4" />
                 追加
@@ -109,7 +198,7 @@ export const EditSubPlaylistCard = ({
               variant="outline"
               onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 flex-1 sm:flex-initial"
             >
               <Edit className="h-4 w-4" />
               編集
@@ -118,7 +207,7 @@ export const EditSubPlaylistCard = ({
               variant="destructive"
               onClick={() => onDelete(subPlaylist.id)}
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 flex-1 sm:flex-initial"
             >
               <Trash2 className="h-4 w-4" />
               削除
@@ -150,15 +239,94 @@ export const EditSubPlaylistCard = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor={`sub-phase-${subPlaylist.id}`}>フェーズ</Label>
-                <select
-                  id={`sub-phase-${subPlaylist.id}`}
-                  value={editPhase}
-                  onChange={(e) => setEditPhase(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="本番">本番</option>
-                  <option value="稽古">稽古</option>
-                </select>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id={`sub-phase-${subPlaylist.id}`}
+                      type="text"
+                      value={editPhase}
+                      onChange={(e) => setEditPhase(e.target.value)}
+                      placeholder="フェーズを入力または選択"
+                      autoComplete="off"
+                      className="pr-8"
+                    />
+                    {editPhase && (
+                      <button
+                        type="button"
+                        onClick={handlePhaseClear}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <Popover open={isPhasePopoverOpen} onOpenChange={setIsPhasePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="px-3"
+                        onClick={() => setIsPhasePopoverOpen(true)}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-[200px] p-0" 
+                      align="end"
+                    >
+                      <div 
+                        ref={phaseListRef}
+                        className="overflow-y-auto"
+                        style={{ 
+                          maxHeight: '300px',
+                          minHeight: '100px'
+                        }}
+                        onWheel={(e) => {
+                          const target = e.currentTarget;
+                          const delta = e.deltaY;
+                          target.scrollTop += delta;
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        {getDisplayPhases().length > 0 ? (
+                          getDisplayPhases().map((phase) => {
+                            const isUsed = isPhaseUsedInOtherSubPlaylists(phase);
+                            return (
+                              <div
+                                key={phase}
+                                className="flex items-center justify-between w-full px-4 py-2 hover:bg-accent hover:text-accent-foreground focus-within:bg-accent focus-within:text-accent-foreground group"
+                              >
+                                <button
+                                  type="button"
+                                  className="flex-1 text-left focus:outline-none"
+                                  onClick={() => handlePhaseSelect(phase)}
+                                >
+                                  {phase}
+                                </button>
+                                {!isUsed && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handlePhaseRemove(phase, e)}
+                                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity ml-2"
+                                    title="候補から削除"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            候補なし
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -178,23 +346,33 @@ export const EditSubPlaylistCard = ({
         </CardContent>
       ) : (
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {getVideosForSubPlaylist(subPlaylist.id).slice(0, 4).map((video: any) => (
-              <div key={video.id} className="aspect-video bg-slate-200 rounded">
-                <img
-                  src={video.thumbnailUrl}
-                  alt={video.title}
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
-            ))}
-            {getVideosForSubPlaylist(subPlaylist.id).length > 4 && (
-              <div className="flex items-center justify-center border border-slate-300 rounded bg-slate-50">
-                <p className="text-sm text-slate-500">
-                  +{getVideosForSubPlaylist(subPlaylist.id).length - 4}件
-                </p>
-              </div>
-            )}
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+              {getVideosForSubPlaylist(subPlaylist.id).map((video: any, index: number) => {
+                const videos = getVideosForSubPlaylist(subPlaylist.id);
+                // 表示する動画数を制限（例: 最大5件まで表示）
+                const maxVisible = 5;
+                if (index >= maxVisible) return null;
+                
+                return (
+                  <div key={video.id} className="flex-shrink-0">
+                    <div className="w-32 aspect-video bg-slate-200 rounded overflow-hidden">
+                      <img
+                        src={video.thumbnailUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {/* 動画が表示上限を超えている場合、「...」を表示 */}
+              {getVideosForSubPlaylist(subPlaylist.id).length > 5 && (
+                <div className="flex-shrink-0 flex items-center justify-center w-32 aspect-video bg-slate-100 border border-slate-300 rounded">
+                  <span className="text-2xl text-slate-500 font-bold">...</span>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       )}
