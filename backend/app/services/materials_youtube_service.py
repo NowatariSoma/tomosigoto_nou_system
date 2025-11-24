@@ -1,0 +1,600 @@
+import re
+import logging
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+from datetime import datetime
+
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from supabase import Client
+
+from app.core.error_messages import ErrorMessage
+from app.core.exceptions import APIException
+from app.repositories.materials_youtube_repository import MaterialsPlaylistRepository, MaterialsSubPlaylistRepository, MaterialsVideoRepository, MaterialsFavoriteRepository
+
+logger = logging.getLogger(__name__)
+
+class MaterialsPlaylistService:
+    """プレイリストの関連の機能を実装するクラス"""
+
+    def __init__(self, materials_playlist_repository: MaterialsPlaylistRepository):
+        self.materials_playlist_repository = materials_playlist_repository
+
+    async def get_all_materials_playlists(self) -> List[Dict[str, Any]]:
+        """すべてのプレイリストを取得"""
+        return await self.materials_playlist_repository.find_all()
+
+    async def get_materials_playlist_by_id(self, playlist_id: UUID) -> Dict[str, Any]:
+        """指定したIDのプレイリストを取得"""
+        return await self.materials_playlist_repository.find_by_id(playlist_id)
+
+    async def create_materials_playlist(self, playlist_data: Dict[str, Any]) -> Dict[str, Any]:
+        """プレイリストを作成"""
+        return await self.materials_playlist_repository.create(playlist_data)
+
+    async def update_materials_playlist(self, playlist_id: UUID, playlist_data: Dict[str, Any]) -> Dict[str, Any]:
+        """プレイリストを更新"""
+        return await self.materials_playlist_repository.update(playlist_id, playlist_data)
+
+    async def delete_materials_playlist(self, playlist_id: UUID) -> bool:
+        """プレイリストを削除"""
+        return await self.materials_playlist_repository.delete(playlist_id)
+
+
+class MaterialsSubPlaylistService:
+    """サブプレイリストの関連の機能を実装するクラス"""
+
+    def __init__(
+        self, 
+        materials_sub_playlist_repository: MaterialsSubPlaylistRepository,
+        materials_video_repository: MaterialsVideoRepository,
+        supabase_client: Client
+    ):
+        self.materials_sub_playlist_repository = materials_sub_playlist_repository
+        self.materials_video_repository = materials_video_repository
+        self.supabase_client = supabase_client
+        self.youtube_scopes = [
+            'https://www.googleapis.com/auth/youtube.readonly'
+        ]
+
+    async def get_all_materials_sub_playlists(self, playlist_id: UUID) -> List[Dict[str, Any]]:
+        """指定されたプレイリストのサブプレイリストを取得"""
+        return await self.materials_sub_playlist_repository.find_all(playlist_id)
+
+    async def get_materials_sub_playlist_by_id(self, playlist_id: UUID, sub_playlist_id: UUID) -> Dict[str, Any]:
+        """指定したIDのサブプレイリストを取得"""
+        return await self.materials_sub_playlist_repository.find_by_id(playlist_id, sub_playlist_id)
+
+    def _extract_playlist_id(self, playlist_url: str) -> str:
+        """
+        YouTube再生リストURLからプレイリストIDを抽出
+        
+        Args:
+            playlist_url: YouTube再生リストURL
+            
+        Returns:
+            プレイリストID
+            
+        Raises:
+            APIException: URLが無効な場合
+        """
+        patterns = [
+            r"list=([a-zA-Z0-9_-]+)",
+            r"/playlist\?list=([a-zA-Z0-9_-]+)",
+            r"playlist/([a-zA-Z0-9_-]+)",
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, playlist_url)
+            if match:
+                return match.group(1)
+        
+        raise APIException(
+            error_code="INVALID_PLAYLIST_URL",
+            error_msg="無効な再生リストURLです"
+        )
+
+    async def _get_system_credentials(self) -> Optional[Credentials]:
+        """
+        システム管理者のOAuth認証情報を取得
+        
+        Returns:
+            Google認証情報、またはNone（トークンがない場合）
+        """
+        try:
+            response = (
+                self.supabase_client.table("youtube_oauth_tokens")
+                .select("*")
+                .eq("account_type", "system")
+                .execute()
+            )
+            
+            if not response.data:
+                return None
+            
+            token_data = response.data[0]
+            
+            creds = Credentials(
+                token=token_data["access_token"],
+                refresh_token=token_data.get("refresh_token"),
+                token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
+                client_id=token_data.get("client_id"),
+                client_secret=token_data.get("client_secret"),
+                scopes=token_data.get("scopes", [])
+            )
+            
+            # トークンが期限切れの場合はリフレッシュ
+            if creds.expired and creds.refresh_token:
+                try:
+                    creds.refresh(Request())
+                    # 更新されたトークンをDBに保存
+                    self.supabase_client.table("youtube_oauth_tokens").update({
+                        "access_token": creds.token,
+                        "expiry": creds.expiry.isoformat() if creds.expiry else None,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }).eq("id", token_data["id"]).execute()
+                    logger.info("YouTube OAuth token refreshed successfully")
+                except Exception as e:
+                    logger.error(f"Failed to refresh YouTube OAuth token: {str(e)}")
+                    raise APIException(
+                        error_code="TOKEN_REFRESH_FAILED",
+                        error_msg=f"トークンのリフレッシュに失敗しました: {str(e)}"
+                    )
+            
+            return creds
+        except APIException:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to get system credentials: {str(e)}")
+            return None
+
+    async def _get_videos_from_playlist(
+        self,
+        playlist_url: str,
+        credentials: Optional[Credentials] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        YouTube APIから再生リスト内の動画一覧を取得（限定公開動画も含む）
+        
+        Args:
+            playlist_url: YouTube再生リストURL
+            credentials: OAuth認証情報（Noneの場合はシステム管理者のトークンを使用）
+            
+        Returns:
+            動画情報のリスト
+            
+        Raises:
+            APIException: APIエラーが発生した場合
+        """
+        playlist_id = self._extract_playlist_id(playlist_url)
+        videos = []
+        next_page_token = None
+        
+        # 認証情報が指定されていない場合はシステム管理者のトークンを使用
+        if not credentials:
+            credentials = await self._get_system_credentials()
+        
+        if not credentials:
+            raise APIException(
+                error_code="OAUTH_TOKEN_NOT_FOUND",
+                error_msg="YouTube OAuthトークンが見つかりません。先に認証を行ってください。"
+            )
+        
+        try:
+            service = build("youtube", "v3", credentials=credentials)
+            
+            while True:
+                # プレイリストアイテムを取得
+                response = service.playlistItems().list(
+                    part="snippet,contentDetails",
+                    playlistId=playlist_id,
+                    maxResults=50,
+                    pageToken=next_page_token
+                ).execute()
+                
+                if not response.get("items"):
+                    break
+                
+                # 動画IDのリストを作成
+                video_ids = [
+                    item["contentDetails"]["videoId"]
+                    for item in response["items"]
+                ]
+                
+                if not video_ids:
+                    break
+                
+                # 動画の詳細情報を取得
+                video_response = service.videos().list(
+                    part="snippet,contentDetails",
+                    id=",".join(video_ids)
+                ).execute()
+                
+                # 動画情報を整形
+                for video in video_response.get("items", []):
+                    snippet = video["snippet"]
+                    videos.append({
+                        "youtube_video_id": video["id"],
+                        "title": snippet["title"],
+                        "description": snippet.get("description", ""),
+                        "published_at": snippet.get("publishedAt"),
+                        "thumbnail_url": (
+                            snippet.get("thumbnails", {})
+                            .get("high", {})
+                            .get("url") or
+                            snippet.get("thumbnails", {})
+                            .get("default", {})
+                            .get("url")
+                        ),
+                    })
+                
+                next_page_token = response.get("nextPageToken")
+                if not next_page_token:
+                    break
+                    
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"YouTube API error: {error_msg}")
+            
+            if "quotaExceeded" in error_msg or "quota" in error_msg.lower():
+                raise APIException(
+                    error_code="YOUTUBE_QUOTA_EXCEEDED",
+                    error_msg="YouTube APIのクォータを超過しました"
+                )
+            elif "forbidden" in error_msg.lower() or "403" in error_msg:
+                raise APIException(
+                    error_code="YOUTUBE_ACCESS_DENIED",
+                    error_msg="この再生リストにアクセスできません。限定公開動画を含む場合は適切なOAuth認証が必要です。"
+                )
+            elif "notFound" in error_msg.lower() or "404" in error_msg:
+                raise APIException(
+                    error_code="YOUTUBE_PLAYLIST_NOT_FOUND",
+                    error_msg="指定された再生リストが見つかりません"
+                )
+            else:
+                raise APIException(
+                    error_code="YOUTUBE_API_ERROR",
+                    error_msg=f"YouTube APIからの取得に失敗しました: {error_msg}"
+                )
+        
+        return videos
+
+    async def _import_videos_from_playlist(
+        self,
+        playlist_url: str,
+        sub_playlist_id: UUID,
+        recorded_date: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        再生リストURLから動画を取得し、指定されたサブプレイリストに登録
+        
+        Args:
+            playlist_url: YouTube再生リストURL
+            sub_playlist_id: 登録先のサブプレイリストID
+            recorded_date: 録画日（オプション）
+            
+        Returns:
+            インポート結果（imported_count, skipped_count, total_count, warnings）
+        """
+        imported_count = 0
+        skipped_count = 0
+        warnings = []
+        
+        try:
+            # YouTube APIから動画一覧を取得
+            videos = await self._get_videos_from_playlist(playlist_url)
+            
+            if not videos:
+                return {
+                    "imported_count": 0,
+                    "skipped_count": 0,
+                    "total_count": 0,
+                    "warnings": ["動画が見つかりませんでした"]
+                }
+            
+            # 動画をDBに登録
+            for video in videos:
+                # 既存チェック（video_urlで判定）
+                video_url = f"https://www.youtube.com/watch?v={video['youtube_video_id']}"
+                
+                existing = (
+                    self.supabase_client.table("videos")
+                    .select("id")
+                    .eq("sub_playlist_id", str(sub_playlist_id))
+                    .eq("video_url", video_url)
+                    .execute()
+                )
+                
+                if existing.data:
+                    skipped_count += 1
+                    continue
+                
+                # published_atからrecorded_dateを推測（サブプレイリストのrecorded_dateがない場合）
+                video_recorded_date = recorded_date
+                if not video_recorded_date and video.get("published_at"):
+                    try:
+                        published = datetime.fromisoformat(
+                            video["published_at"].replace("Z", "+00:00")
+                        )
+                        video_recorded_date = published.date().isoformat()
+                    except Exception:
+                        pass
+                
+                # 動画を登録
+                video_data = {
+                    "sub_playlist_id": str(sub_playlist_id),
+                    "title": video["title"],
+                    "video_url": video_url,
+                    "recorded_date": video_recorded_date,
+                    "thumbnail_url": video.get("thumbnail_url")
+                }
+                
+                await self.materials_video_repository.create(
+                    sub_playlist_id,
+                    video_data
+                )
+                imported_count += 1
+            
+            return {
+                "imported_count": imported_count,
+                "skipped_count": skipped_count,
+                "total_count": len(videos),
+                "warnings": warnings
+            }
+            
+        except APIException as e:
+            # API例外は警告として返す
+            logger.warning(f"Failed to import videos from playlist: {e.error_msg}")
+            warnings.append(f"動画のインポートに失敗しました: {e.error_msg}")
+            return {
+                "imported_count": imported_count,
+                "skipped_count": skipped_count,
+                "total_count": 0,
+                "warnings": warnings
+            }
+        except Exception as e:
+            # その他のエラーも警告として返す
+            logger.error(f"Unexpected error during video import: {str(e)}")
+            warnings.append(f"動画のインポート中にエラーが発生しました: {str(e)}")
+            return {
+                "imported_count": imported_count,
+                "skipped_count": skipped_count,
+                "total_count": 0,
+                "warnings": warnings
+            }
+
+    async def create_materials_sub_playlist(
+        self, 
+        playlist_id: UUID, 
+        sub_playlist_data: Dict[str, Any],
+        auto_import_videos: bool = True
+    ) -> Dict[str, Any]:
+        """
+        サブプレイリストを作成し、playlist_urlがある場合は動画を自動インポート
+        
+        Args:
+            playlist_id: プレイリストID
+            sub_playlist_data: サブプレイリストデータ
+            auto_import_videos: 動画を自動インポートするかどうか
+        """
+        # サブプレイリストを作成
+        sub_playlist = await self.materials_sub_playlist_repository.create(
+            playlist_id, 
+            sub_playlist_data
+        )
+        
+        # playlist_urlが存在し、自動インポートが有効な場合
+        playlist_url = sub_playlist_data.get("playlist_url")
+        if playlist_url and auto_import_videos:
+            sub_playlist_id = UUID(sub_playlist["id"])
+            recorded_date = sub_playlist_data.get("recorded_date")
+            
+            # recorded_dateを文字列に変換（既に文字列の場合はそのまま）
+            recorded_date_str = None
+            if recorded_date:
+                if isinstance(recorded_date, str):
+                    recorded_date_str = recorded_date
+                elif hasattr(recorded_date, 'isoformat'):
+                    recorded_date_str = recorded_date.isoformat()
+                else:
+                    recorded_date_str = str(recorded_date)
+            
+            # 動画をインポート
+            import_result = await self._import_videos_from_playlist(
+                playlist_url,
+                sub_playlist_id,
+                recorded_date_str
+            )
+            
+            # インポート結果をサブプレイリストに追加
+            sub_playlist["import_result"] = import_result
+            if import_result["warnings"]:
+                sub_playlist["import_warnings"] = import_result["warnings"]
+        
+        return sub_playlist
+
+    async def update_materials_sub_playlist(
+        self, 
+        playlist_id: UUID, 
+        sub_playlist_id: UUID, 
+        sub_playlist_data: Dict[str, Any],
+        auto_import_videos: bool = True
+    ) -> Dict[str, Any]:
+        """
+        サブプレイリストを更新し、playlist_urlが変更された場合は動画を再インポート
+        
+        Args:
+            playlist_id: プレイリストID
+            sub_playlist_id: サブプレイリストID
+            sub_playlist_data: 更新データ
+            auto_import_videos: 動画を自動インポートするかどうか
+        """
+        # 既存のサブプレイリストを取得
+        existing_sub_playlist = await self.materials_sub_playlist_repository.find_by_id(
+            playlist_id, sub_playlist_id
+        )
+        
+        if not existing_sub_playlist:
+            raise APIException(
+                error_code="NOT_FOUND",
+                error_msg="指定されたサブプレイリストが見つかりません"
+            )
+        
+        # サブプレイリストを更新
+        updated_sub_playlist = await self.materials_sub_playlist_repository.update(
+            playlist_id, 
+            sub_playlist_id, 
+            sub_playlist_data
+        )
+        
+        # playlist_urlが変更された場合、動画を再インポート
+        new_playlist_url = sub_playlist_data.get("playlist_url")
+        old_playlist_url = existing_sub_playlist.get("playlist_url")
+        
+        if new_playlist_url and new_playlist_url != old_playlist_url and auto_import_videos:
+            recorded_date = sub_playlist_data.get("recorded_date") or existing_sub_playlist.get("recorded_date")
+            
+            # recorded_dateを文字列に変換（既に文字列の場合はそのまま）
+            recorded_date_str = None
+            if recorded_date:
+                if isinstance(recorded_date, str):
+                    recorded_date_str = recorded_date
+                elif hasattr(recorded_date, 'isoformat'):
+                    recorded_date_str = recorded_date.isoformat()
+                else:
+                    recorded_date_str = str(recorded_date)
+            
+            # 動画をインポート
+            import_result = await self._import_videos_from_playlist(
+                new_playlist_url,
+                sub_playlist_id,
+                recorded_date_str
+            )
+            
+            # インポート結果をサブプレイリストに追加
+            updated_sub_playlist["import_result"] = import_result
+            if import_result["warnings"]:
+                updated_sub_playlist["import_warnings"] = import_result["warnings"]
+        
+        return updated_sub_playlist
+
+    async def delete_materials_sub_playlist(self, playlist_id: UUID, sub_playlist_id: UUID) -> bool:
+        """サブプレイリストを削除"""
+        return await self.materials_sub_playlist_repository.delete(playlist_id, sub_playlist_id)
+
+
+class MaterialsVideoService:
+    """ビデオの関連の機能を実装するクラス"""
+
+    def __init__(
+        self, 
+        materials_video_repository: MaterialsVideoRepository,
+        materials_sub_playlist_repository: MaterialsSubPlaylistRepository
+    ):
+        self.materials_video_repository = materials_video_repository
+        self.materials_sub_playlist_repository = materials_sub_playlist_repository
+
+    async def _validate_sub_playlist_belongs_to_playlist(self, playlist_id: UUID, sub_playlist_id: UUID) -> None:
+        """サブプレイリストが指定されたプレイリストに属しているかを検証"""
+        sub_playlist = await self.materials_sub_playlist_repository.find_by_id(playlist_id, sub_playlist_id)
+        if not sub_playlist:
+            raise APIException(
+                error_code="NOT_FOUND",
+                error_msg="指定されたサブプレイリストが見つかりません、または指定されたプレイリストに属していません"
+            )
+
+    async def get_all_materials_videos(self, playlist_id: UUID, sub_playlist_id: UUID) -> List[Dict[str, Any]]:
+        """指定されたサブプレイリストのビデオを取得"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.find_all(sub_playlist_id)
+
+    async def get_materials_video_by_id(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID) -> Dict[str, Any]:
+        """指定したIDのビデオを取得"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.find_by_id(sub_playlist_id, video_id)
+
+    async def create_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ビデオを作成"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.create(sub_playlist_id, video_data)
+
+    async def update_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID, video_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ビデオを更新"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.update(sub_playlist_id, video_id, video_data)
+
+    async def delete_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID) -> bool:
+        """ビデオを削除"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.delete(sub_playlist_id, video_id)
+
+
+class MaterialsFavoriteService:
+    """お気に入りの関連の機能を実装するクラス"""
+
+    def __init__(self, materials_favorite_repository: MaterialsFavoriteRepository):
+        self.materials_favorite_repository = materials_favorite_repository
+
+    async def get_all_materials_favorites(self) -> List[Dict[str, Any]]:
+        """すべてのお気に入りを取得"""
+        return await self.materials_favorite_repository.find_all()
+
+    async def get_materials_favorite_by_id(self, favorite_id: UUID) -> Dict[str, Any]:
+        """指定したIDのお気に入りを取得"""
+        return await self.materials_favorite_repository.find_by_id(favorite_id)
+
+    async def get_favorites_by_user_id(self, user_id: UUID) -> List[Dict[str, Any]]:
+        """指定したユーザーIDのお気に入り一覧を取得"""
+        return await self.materials_favorite_repository.find_by_user_id(user_id)
+
+    async def is_favorited(self, user_id: UUID, video_id: UUID) -> bool:
+        """指定したユーザーがビデオをお気に入り登録しているかチェック"""
+        favorite = await self.materials_favorite_repository.find_by_user_id_and_video_id(user_id, video_id)
+        return favorite is not None
+
+    async def create_materials_favorite(self, favorite_data: Dict[str, Any]) -> Dict[str, Any]:
+        """お気に入りを作成"""
+        # 既に存在する場合はエラーを返す
+        user_id = favorite_data.get("user_id")
+        video_id = favorite_data.get("video_id")
+        if user_id and video_id:
+            existing = await self.materials_favorite_repository.find_by_user_id_and_video_id(
+                UUID(user_id) if isinstance(user_id, str) else user_id,
+                UUID(video_id) if isinstance(video_id, str) else video_id
+            )
+            if existing:
+                raise APIException(
+                    error_code="FAVORITE_ALREADY_EXISTS",
+                    error_msg="既にお気に入りに登録されています"
+                )
+        return await self.materials_favorite_repository.create(favorite_data)
+
+    async def toggle_favorite(self, user_id: UUID, video_id: UUID) -> Dict[str, Any]:
+        """お気に入りの追加/削除を切り替え"""
+        existing = await self.materials_favorite_repository.find_by_user_id_and_video_id(user_id, video_id)
+        
+        if existing:
+            # 既に存在する場合は削除
+            await self.materials_favorite_repository.delete_by_user_id_and_video_id(user_id, video_id)
+            return {"is_favorited": False, "message": "お気に入りを解除しました"}
+        else:
+            # 存在しない場合は追加
+            favorite_data = {
+                "user_id": str(user_id),
+                "video_id": str(video_id)
+            }
+            favorite = await self.materials_favorite_repository.create(favorite_data)
+            return {"is_favorited": True, "favorite": favorite, "message": "お気に入りに追加しました"}
+
+    async def delete_materials_favorite(self, user_id: UUID, video_id: UUID) -> bool:
+        """指定したユーザーIDとビデオIDのお気に入りを削除"""
+        return await self.materials_favorite_repository.delete_by_user_id_and_video_id(user_id, video_id)
+
+    async def update_materials_favorite(self, favorite_id: UUID, favorite_data: Dict[str, Any]) -> Dict[str, Any]:
+        """お気に入りを更新"""
+        return await self.materials_favorite_repository.update(favorite_id, favorite_data)
+
+    async def delete_materials_favorite_by_id(self, favorite_id: UUID) -> bool:
+        """お気に入りを削除（ID指定）"""
+        return await self.materials_favorite_repository.delete(favorite_id)

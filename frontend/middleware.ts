@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
       const accessToken = session?.access_token;
       if (accessToken) {
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-        
+
         // プロフィール存在チェック
         const profileResponse = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
           headers: {
@@ -127,4 +127,4 @@ export const config = {
      */
     '/((?!api|_next/static|_next/image|favicon.ico|favicon.png|images|icons).*)',
   ],
-}; 
+};

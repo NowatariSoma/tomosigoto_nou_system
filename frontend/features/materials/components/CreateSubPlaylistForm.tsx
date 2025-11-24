@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Input } from '@/components/ui/inputs/input';
 import { Label } from '@/components/ui/inputs/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/inputs/select';
-import { mockData } from '@/features/materials/data/material_data';
+import { Playlist } from '@/features/materials/types/material_types';
+import { materialsService } from '@/features/materials/services/materials-service';
 
 interface SubPlaylistData {
   playlistId: string;
@@ -27,6 +29,24 @@ export function CreateSubPlaylistForm({
   onSubmit,
   onCancel,
 }: CreateSubPlaylistFormProps) {
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPlaylists = async () => {
+      try {
+        setIsLoading(true);
+        const data = await materialsService.getPlaylists();
+        setPlaylists(data);
+      } catch (error) {
+        console.error('Failed to load playlists:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadPlaylists();
+  }, []);
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
@@ -57,11 +77,15 @@ export function CreateSubPlaylistForm({
                   <SelectValue placeholder="年度と舞台を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockData.map((playlist) => (
-                    <SelectItem key={playlist.id} value={playlist.id}>
-                      {playlist.year}年 {playlist.stage}
-                    </SelectItem>
-                  ))}
+                  {isLoading ? (
+                    <SelectItem value="loading" disabled>読み込み中...</SelectItem>
+                  ) : (
+                    playlists.map((playlist) => (
+                      <SelectItem key={playlist.id} value={playlist.id}>
+                        {playlist.year}年 {playlist.stage}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
