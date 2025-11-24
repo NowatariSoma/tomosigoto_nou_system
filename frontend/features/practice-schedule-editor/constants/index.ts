@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
   SESSIONS: '/practice_schedules/sessions',
   VENUES: '/venues/',
   PRACTICE_SCHEDULE_DETAILS: '/practice_schedules/',
+  SCHEDULE_TIME_SLOTS: '/schedule-time-slots',
 } as const;
 
 // 時間関連の定数

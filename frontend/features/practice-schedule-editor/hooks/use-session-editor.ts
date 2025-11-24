@@ -17,7 +17,7 @@ import {
   IdealVenueInfo,
   IdealPartInfo
 } from '../types/api';
-import { sessionService, practiceScheduleEditorService, sessionInstructorService } from '../services';
+import { sessionService, practiceScheduleEditorService, sessionInstructorService, scheduleTimeSlotService } from '../services';
 import { partService, Part } from '../services/part-service';
 import { generateTimeSlots } from '../mappers/time-slot-mapper';
 
@@ -223,15 +223,37 @@ export const useSessionEditor = (scheduleId: string) => {
 
       dispatch({ type: 'SET_VENUES', payload: venues });
 
-      // 時間スロットの生成（常にdivision_countベースで生成）
+      // 時間スロットの取得（DBから取得、なければ計算で生成）
       let timeSlots: TimeSlot[] = [];
 
-      if (basicSchedule) {
-        const startTime = basicSchedule.start_time || '09:00';
-        const endTime = basicSchedule.end_time || '17:00';
-        const divisionCount = basicSchedule.division_count || 6;
-        
-        timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
+      try {
+        // まずDBから時間スロットを取得
+        const dbTimeSlots = await scheduleTimeSlotService.getTimeSlotsBySchedule(scheduleId);
+        if (dbTimeSlots && dbTimeSlots.length > 0) {
+          // DBから取得した時間スロットを使用
+          timeSlots = scheduleTimeSlotService.convertToTimeSlots(dbTimeSlots);
+          console.log('DBから時間スロットを取得:', timeSlots);
+        } else {
+          // DBに時間スロットがない場合は計算で生成（フォールバック）
+          if (basicSchedule) {
+            const startTime = basicSchedule.start_time || '09:00';
+            const endTime = basicSchedule.end_time || '17:00';
+            const divisionCount = basicSchedule.division_count || 6;
+            
+            timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
+            console.log('計算で時間スロットを生成:', timeSlots);
+          }
+        }
+      } catch (error) {
+        console.error('時間スロット取得エラー:', error);
+        // エラー時は計算で生成（フォールバック）
+        if (basicSchedule) {
+          const startTime = basicSchedule.start_time || '09:00';
+          const endTime = basicSchedule.end_time || '17:00';
+          const divisionCount = basicSchedule.division_count || 6;
+          
+          timeSlots = practiceScheduleEditorService.generateTimeSlots(startTime, endTime, divisionCount);
+        }
       }
 
       dispatch({ type: 'SET_TIME_SLOTS', payload: timeSlots });
