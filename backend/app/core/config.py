@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     SCHEDULE_END_HOUR: int = 17
     SCHEDULE_SLOT_MINUTES: int = 30
     
+    # Discord Webhook設定
+    DISCORD_WEBHOOK_URL: Optional[str] = None
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # BACKEND_CORS_ORIGINSが文字列の場合、JSONとして解析
