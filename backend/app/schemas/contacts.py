@@ -30,8 +30,10 @@ class ContactBase(BaseModel):
 
 
 class ContactCreate(ContactBase):
-    """お問い合わせ作成用スキーマ"""
-    user_id: UUID
+    """お問い合わせ作成用スキーマ
+    
+    注意: user_idはエンドポイントで認証済みユーザーから自動設定されます
+    """
 
 
 class ContactUpdate(BaseModel):
