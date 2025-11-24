@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Attendance, AttendanceCreate, AttendanceUpdate } from '../types/attendance';
 import { attendanceService } from '../services/attendance-service';
 
-export const useAttendance = (practiceScheduleId?: string) => {
+interface UseAttendanceOptions {
+  initialAttendances?: Attendance[];
+  autoFetch?: boolean;
+}
+
+export const useAttendance = (practiceScheduleId?: string, options?: UseAttendanceOptions) => {
+  const initialAttendances = options?.initialAttendances;
+  const autoFetch = options?.autoFetch ?? true;
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const skipInitialFetch = useRef<boolean>(Boolean(initialAttendances));
 
   const fetchAttendances = async () => {
     try {
@@ -32,6 +40,14 @@ export const useAttendance = (practiceScheduleId?: string) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialAttendances) {
+      setAttendances(initialAttendances);
+      setLoading(false);
+    }
+    skipInitialFetch.current = Boolean(initialAttendances);
+  }, [initialAttendances]);
 
   const getAttendancesByUser = async (userId: string) => {
     try {
@@ -104,12 +120,21 @@ export const useAttendance = (practiceScheduleId?: string) => {
   };
 
   useEffect(() => {
+    if (!autoFetch) {
+      return;
+    }
+
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
+
     if (practiceScheduleId) {
       fetchAttendancesByPractice(practiceScheduleId);
     } else {
       fetchAttendances();
     }
-  }, [practiceScheduleId]);
+  }, [practiceScheduleId, autoFetch]);
 
   return {
     attendances,

@@ -1,5 +1,5 @@
 from datetime import datetime, date, time
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -208,3 +208,69 @@ class PracticeScheduleDisplayResponse(BaseModel):
     sessions: List[SessionDisplayInfo] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BundleVenueInfo(BaseModel):
+    """bundle API 用の会場情報"""
+
+    id: Optional[str] = None  # schedule_available_venue_id
+    venue_id: Optional[str] = None
+    name: str
+    color: Optional[str] = None
+    is_preferred: Optional[bool] = None
+    priority: Optional[int] = None
+    campus: Optional[str] = None
+
+
+class PracticeScheduleBundleSchedule(BaseModel):
+    """bundle API のスケジュール情報"""
+
+    id: str
+    schedule_date: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    division_count: Optional[int] = None
+    venues: List[BundleVenueInfo] = []
+
+
+class PracticeScheduleBundleIdeal(BaseModel):
+    """bundle API のidealデータ"""
+
+    schedule_info: Optional[Dict[str, Any]] = None
+    venues: Optional[List[Dict[str, Any]]] = None
+    time_schedule: Optional[Dict[str, Any]] = None
+    debug_info: Optional[Dict[str, Any]] = None
+
+
+class PracticeScheduleBundleAttendance(BaseModel):
+    """bundle API の出欠情報"""
+
+    entries: List[Dict[str, Any]] = []
+    my_entry: Optional[Dict[str, Any]] = None
+
+
+class PracticeScheduleBundleUser(BaseModel):
+    """bundle API のユーザー情報"""
+
+    id: str
+    name: str
+    email: Optional[str] = None
+
+
+class PracticeScheduleBundleMeta(BaseModel):
+    """bundle API のメタ情報"""
+
+    generated_at: str
+    version: int = 1
+
+
+class PracticeScheduleBundleResponse(BaseModel):
+    """bundle API 全体レスポンス"""
+
+    schedule: PracticeScheduleBundleSchedule
+    ideal: PracticeScheduleBundleIdeal
+    attendance: PracticeScheduleBundleAttendance
+    users: List[PracticeScheduleBundleUser] = []
+    meta: PracticeScheduleBundleMeta
