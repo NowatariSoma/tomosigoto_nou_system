@@ -9,3 +9,4 @@ export {
 } from './scheduling-optimization-service';
 export { sessionInstructorService } from './session-instructor-service';
 export { attendanceService } from './attendance-service';
+export { scheduleTimeSlotService } from './schedule-time-slot-service';
