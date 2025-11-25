@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { PracticeScheduleList } from './PracticeScheduleList';
 import { PracticeScheduleForm } from './PracticeScheduleForm';
@@ -19,15 +20,17 @@ import { sessionInstructorService, practiceScheduleEditorService } from '../../p
 import { VenueInfo } from '../../practice-schedule-editor/types/session-editor';
 
 export const PracticeSchedulePage: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
   const { venues, loading: venuesLoading, error: venuesError } = useVenues();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<PracticeSchedule | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  
+
   // 編集モードのstate
   const [editingScheduleId, setEditingScheduleId] = useState<string>('');
   const [editingScheduleDate, setEditingScheduleDate] = useState<string>('');
@@ -39,7 +42,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState('');
   const [availableRooms, setAvailableRooms] = useState<VenueInfo[]>([]);
-  
+
   // 編集用のフック
   const {
     sessions,
@@ -129,23 +132,11 @@ export const PracticeSchedulePage: React.FC = () => {
 
   // 編集モード関連のハンドラー
   const handleScheduleClick = (schedule: PracticeSchedule) => {
-    setEditingScheduleId(schedule.id);
-    setEditingScheduleDate(schedule.date);
-    setIsEditMode(true);
-    setDescriptionValue(schedule.description || '');
-    // スケジュールの開始・終了時間を設定
-    if (schedule.startTime) {
-      setScheduleStartTime(schedule.startTime.substring(0, 5));
-    }
-    if (schedule.endTime) {
-      setScheduleEndTime(schedule.endTime.substring(0, 5));
-    }
+    router.push(`/practice-schedule?id=${schedule.id}`);
   };
 
   const handleBackToList = () => {
-    setIsEditMode(false);
-    setEditingScheduleId('');
-    setEditingScheduleDate('');
+    router.push('/practice-schedule');
   };
 
   const handleCreateSession = () => {
@@ -197,7 +188,7 @@ export const PracticeSchedulePage: React.FC = () => {
     if (!confirm('監督者を削除しますか？')) {
       return;
     }
-    
+
     try {
       await sessionInstructorService.deleteSessionInstructor(instructorId);
       fetchScheduleDetails();
@@ -260,12 +251,12 @@ export const PracticeSchedulePage: React.FC = () => {
       const newDivisionCount = currentDivisionCount + 1;
       const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
       const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
-      
+
       if (newDivisionCount > 24) {
         alert('時間スロットは最大24個までです');
         return;
       }
-      
+
       await practiceScheduleEditorService.updateScheduleTime(
         editingScheduleId,
         actualStartTime,
@@ -287,12 +278,12 @@ export const PracticeSchedulePage: React.FC = () => {
       const newDivisionCount = currentDivisionCount - 1;
       const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
       const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
-      
+
       if (newDivisionCount < 1) {
         alert('時間スロットは最低1個必要です');
         return;
       }
-      
+
       await practiceScheduleEditorService.updateScheduleTime(
         editingScheduleId,
         actualStartTime,
@@ -337,28 +328,47 @@ export const PracticeSchedulePage: React.FC = () => {
     setIsEditingDescription(false);
   };
 
+  // クエリパラメータからスケジュールIDを読み取り、編集モードを制御
+  useEffect(() => {
+    const scheduleId = searchParams?.get('id');
+
+    if (scheduleId) {
+      // URLにIDがある場合は編集モードに入る
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        setEditingScheduleId(schedule.id);
+        setEditingScheduleDate(schedule.date);
+        setIsEditMode(true);
+        setDescriptionValue(schedule.description || '');
+
+        // スケジュールの開始・終了時間を設定
+        if (schedule.startTime) {
+          setScheduleStartTime(schedule.startTime.substring(0, 5));
+        }
+        if (schedule.endTime) {
+          setScheduleEndTime(schedule.endTime.substring(0, 5));
+        }
+      }
+    } else {
+      // URLにIDがない場合は編集モードを終了
+      setIsEditMode(false);
+      setEditingScheduleId('');
+      setEditingScheduleDate('');
+    }
+  }, [searchParams, schedules]);
+
   // 編集モードに入った時にスケジュール詳細を取得
   useEffect(() => {
     if (isEditMode && editingScheduleId) {
       fetchScheduleDetails();
-      // スケジュールの開始・終了時間を取得
-      const currentSchedule = schedules.find(s => s.id === editingScheduleId);
-      if (currentSchedule) {
-        if (currentSchedule.startTime) {
-          setScheduleStartTime(currentSchedule.startTime.substring(0, 5));
-        }
-        if (currentSchedule.endTime) {
-          setScheduleEndTime(currentSchedule.endTime.substring(0, 5));
-        }
-      }
     }
-  }, [isEditMode, editingScheduleId, schedules, fetchScheduleDetails]);
+  }, [isEditMode, editingScheduleId, fetchScheduleDetails]);
 
   // フィルタリングされたスケジュール
   const filteredSchedules = schedules.filter(schedule => {
     const matchesSearch = schedule.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
+      schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesDate = !selectedDate || schedule.date === selectedDate;
 
