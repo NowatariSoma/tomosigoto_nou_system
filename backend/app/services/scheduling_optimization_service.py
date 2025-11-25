@@ -67,11 +67,12 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data, time_slots_data = await self._get_related_data(schedule_id)
             
-            # データの妥当性を検証（session_instructors_dataも渡す）
+            # データの妥当性を検証（session_instructors_dataとuser_roles_dataも渡す）
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data, session_instructors_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
+                session_instructors_data, user_roles_data
             )
             if validation_errors:
                 raise APIException(f"最適化に必要なデータが不足しています:\n" + "\n".join(f"・{err}" for err in validation_errors))
@@ -79,15 +80,19 @@ class SchedulingOptimizationService:
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
                 schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
-                attendance_data=attendance_data, user_roles_data=user_roles_data
+                attendance_data=attendance_data, user_roles_data=user_roles_data, time_slots_data=time_slots_data
             )
             
             # 最適化を実行
             optimizer = SchedulingOptimizer(problem)
-            solution = optimizer.solve(
-                time_limit_seconds=params['time_limit_seconds'],
-                equality_weight=params['equality_weight']
-            )
+            try:
+                solution = optimizer.solve(
+                    time_limit_seconds=params['time_limit_seconds'],
+                    equality_weight=params['equality_weight']
+                )
+            except ValueError as e:
+                # 診断メッセージを含むエラーをフロントエンドに返す
+                raise APIException(str(e))
             
             if not solution:
                 raise APIException(ErrorMessages.NO_SOLUTION_FOUND)
@@ -148,11 +153,12 @@ class SchedulingOptimizationService:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
             
             # 関連データを取得
-            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await self._get_related_data(schedule_id)
+            venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data, time_slots_data = await self._get_related_data(schedule_id)
             
-            # データの妥当性を検証（session_instructors_dataも渡す）
+            # データの妥当性を検証（session_instructors_dataとuser_roles_dataも渡す）
             validation_errors = SchedulingDataAdapter.validate_scheduling_data(
-                schedule_data, venues_data, parts_data, users_data, member_assignments_data, session_instructors_data
+                schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
+                session_instructors_data, user_roles_data
             )
             if validation_errors:
                 raise APIException(f"最適化に必要なデータが不足しています:\n" + "\n".join(f"・{err}" for err in validation_errors))
@@ -160,15 +166,19 @@ class SchedulingOptimizationService:
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
                 schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
-                attendance_data=attendance_data, user_roles_data=user_roles_data
+                attendance_data=attendance_data, user_roles_data=user_roles_data, time_slots_data=time_slots_data
             )
             
             # 最適化を実行
             optimizer = SchedulingOptimizer(problem)
-            solution = optimizer.solve(
-                time_limit_seconds=params['time_limit_seconds'],
-                equality_weight=params['equality_weight']
-            )
+            try:
+                solution = optimizer.solve(
+                    time_limit_seconds=params['time_limit_seconds'],
+                    equality_weight=params['equality_weight']
+                )
+            except ValueError as e:
+                # 診断メッセージを含むエラーをフロントエンドに返す
+                raise APIException(str(e))
             
             if not solution:
                 raise APIException(ErrorMessages.NO_SOLUTION_FOUND)
@@ -248,18 +258,29 @@ class SchedulingOptimizationService:
                 logger.warning(f"ユーザーロールデータの取得に失敗しました: {e}")
                 return []
         
+        async def get_time_slots():
+            """時間スロットデータを取得（エラー時は空リストを返す）"""
+            try:
+                from app.repositories.schedule_time_slot_repository import ScheduleTimeSlotRepository
+                time_slot_repo = ScheduleTimeSlotRepository(self.session_repository.client)
+                return await time_slot_repo.find_by_schedule(schedule_id)
+            except Exception as e:
+                logger.warning(f"時間スロットデータの取得に失敗しました: {e}")
+                return []
+        
         # 並列実行
-        venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data = await asyncio.gather(
+        venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data, time_slots_data = await asyncio.gather(
             get_venues(),
             get_parts(),
             get_users(),
             get_member_assignments(),
             get_attendance(),
             get_session_instructors(),
-            get_user_roles()
+            get_user_roles(),
+            get_time_slots()
         )
         
-        return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data
+        return venues_data, parts_data, users_data, member_assignments_data, attendance_data, session_instructors_data, user_roles_data, time_slots_data
     
     async def _create_sessions_from_solution(
         self, 
