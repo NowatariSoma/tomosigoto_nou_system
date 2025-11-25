@@ -589,6 +589,7 @@ class PracticeScheduleService:
 
                     venue_info = {
                         "id": str(schedule_venue.get('id')),  # schedule_available_venue_idを使用
+                        "venue_id": str(schedule_venue.get('venue_id')),  # 元の会場マスターID
                         "name": venue_name,
                         "is_preferred": is_preferred,
                         "priority": venue_priority,
