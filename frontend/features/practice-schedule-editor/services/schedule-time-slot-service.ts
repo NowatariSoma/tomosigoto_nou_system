@@ -53,6 +53,19 @@ export class ScheduleTimeSlotService {
   }
 
   /**
+   * 時間スロットを更新
+   * @param timeSlotId - 時間スロットID
+   * @param data - 更新するデータ
+   */
+  async updateTimeSlot(timeSlotId: string, data: { start_time: string; end_time: string }): Promise<ScheduleTimeSlotResponse> {
+    const response = await fetchApi(`${this.basePath}/${timeSlotId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+
+  /**
    * 時間スロットを一括作成
    * @param scheduleId - スケジュールID
    * @param timeSlots - 時間スロット一覧
@@ -88,6 +101,8 @@ export class ScheduleTimeSlotService {
       const startTime = slot.start_time.substring(0, 5); // HH:MM形式に変換
       const endTime = slot.end_time.substring(0, 5);
       return {
+        id: slot.id,
+        slot_order: slot.slot_order,
         time: startTime,
         start_time: startTime,
         end_time: endTime,

@@ -77,6 +77,8 @@ export interface AttendanceInfo {
  * 時間スロット情報
  */
 export interface TimeSlot {
+  id?: string;
+  slot_order?: number;
   time: string;
   start_time: string;
   end_time: string;
