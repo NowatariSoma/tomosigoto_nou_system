@@ -19,7 +19,7 @@ import { sessionInstructorService, practiceScheduleEditorService } from '../../p
 import { VenueInfo } from '../../practice-schedule-editor/types/session-editor';
 
 export const PracticeSchedulePage: React.FC = () => {
-  const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule } = usePracticeSchedules();
+  const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule, fetchSchedules } = usePracticeSchedules();
   const { venues, loading: venuesLoading, error: venuesError } = useVenues();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -246,6 +246,8 @@ export const PracticeSchedulePage: React.FC = () => {
       );
       setScheduleStartTime(startTime);
       setScheduleEndTime(endTime);
+      await fetchScheduleDetails();
+      await fetchSchedules();
     } catch (error) {
       console.error('スケジュール時間の更新に失敗しました:', error);
       alert('スケジュール時間の更新に失敗しました');

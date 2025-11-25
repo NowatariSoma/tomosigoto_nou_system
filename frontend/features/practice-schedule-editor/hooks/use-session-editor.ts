@@ -70,9 +70,10 @@ const sessionEditorReducer = (
     case 'UPDATE_TIME_SLOT':
       return { 
         ...state, 
-        time_slots: state.time_slots.map(ts => 
-          ts.time === action.payload.time ? action.payload : ts
-        ) 
+        time_slots: state.time_slots.map(ts => {
+          const isSameSlot = (action.payload.id && ts.id && ts.id === action.payload.id) || ts.time === action.payload.time;
+          return isSameSlot ? action.payload : ts;
+        }) 
       };
     case 'SELECT_SESSION':
       return { ...state, selected_session: action.payload };
@@ -576,7 +577,24 @@ export const useSessionEditor = (scheduleId: string) => {
    */
   const updateTimeSlot = useCallback((updatedTimeSlot: TimeSlot) => {
     dispatch({ type: 'UPDATE_TIME_SLOT', payload: updatedTimeSlot });
-  }, []);
+
+    if (!updatedTimeSlot.id) {
+      console.warn('時間スロットIDが存在しないため、API更新をスキップします');
+      return;
+    }
+
+    const normalizeTime = (value: string) => (value && value.length === 5 ? `${value}:00` : value);
+
+    scheduleTimeSlotService
+      .updateTimeSlot(updatedTimeSlot.id, {
+        start_time: normalizeTime(updatedTimeSlot.start_time),
+        end_time: normalizeTime(updatedTimeSlot.end_time),
+      })
+      .then(() => fetchScheduleDetails())
+      .catch((error) => {
+        console.error('時間スロットの更新に失敗しました:', error);
+      });
+  }, [fetchScheduleDetails]);
 
   /**
    * 会場を追加
