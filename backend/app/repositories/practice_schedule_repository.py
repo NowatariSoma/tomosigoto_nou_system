@@ -311,13 +311,16 @@ class SessionRepository:
             .order("slot_order", desc=False)
             .execute()
         )
-        
+
         # パート名を取得して追加（JOIN済みデータを使用）
         formatted_data = []
+        # JOINが失敗した場合のフォールバック用にパート情報をキャッシュ
+        parts_cache = {}
+
         for item in response.data:
             formatted_item = dict(item)
             formatted_item["part_name"] = None
-            
+
             # パート情報を取得（JOIN済みデータを使用）
             part_info = item.get("parts")
             if part_info and isinstance(part_info, dict):
@@ -325,9 +328,24 @@ class SessionRepository:
             elif part_info and isinstance(part_info, list) and len(part_info) > 0:
                 # リスト形式の場合（通常は発生しないが念のため）
                 formatted_item["part_name"] = part_info[0].get("name")
-            
+
+            # JOINが失敗した場合のフォールバック: part_idから直接取得
+            if formatted_item["part_name"] is None and item.get("part_id"):
+                part_id = str(item["part_id"])
+                if part_id not in parts_cache:
+                    try:
+                        part_response = self.client.table("parts").select("id, name").eq("id", part_id).execute()
+                        if part_response.data:
+                            parts_cache[part_id] = part_response.data[0].get("name")
+                        else:
+                            parts_cache[part_id] = None
+                    except Exception as e:
+                        print(f"Warning: Failed to fetch part {part_id}: {e}")
+                        parts_cache[part_id] = None
+                formatted_item["part_name"] = parts_cache.get(part_id)
+
             formatted_data.append(formatted_item)
-        
+
         return formatted_data
 
     @handle_supabase_errors("find_by_id")
