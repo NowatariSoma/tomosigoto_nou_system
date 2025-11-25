@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, X, Check } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TimeSlot } from '../types/session-editor';
 import { TimePicker } from './TimePicker';
@@ -83,6 +83,19 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
     onClose();
   };
 
+  // モーダル外クリック時：バリデーション成功なら保存、失敗なら閉じる
+  const handleOverlayClick = () => {
+    if (localTimeSlot && validateTimeSlot()) {
+      const updatedTimeSlot: TimeSlot = {
+        ...localTimeSlot,
+        time: localTimeSlot.start_time,
+        display_time: `${localTimeSlot.start_time}-${localTimeSlot.end_time}`
+      };
+      onSave(updatedTimeSlot);
+    }
+    onClose();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       handleSave();
@@ -96,9 +109,9 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* オーバーレイ */}
-      <div 
+      <div
         className="absolute inset-0 bg-black bg-opacity-50"
-        onClick={handleCancel}
+        onClick={handleOverlayClick}
       />
       
       {/* モーダル */}
@@ -107,17 +120,11 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
         className
       )}>
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-center p-4 border-b border-gray-200">
           <div className="flex items-center space-x-2">
             <Clock className="h-5 w-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-900">時間スロット編集</h2>
           </div>
-          <button
-            onClick={handleCancel}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
         </div>
 
         {/* ボディ */}
@@ -142,30 +149,6 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
 
         </div>
 
-        {/* フッター */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex items-center space-x-2"
-          >
-            <Check className="h-4 w-4" />
-            <span>保存</span>
-          </button>
-        </div>
-
-        {/* キーボードショートカットのヒント */}
-        <div className="px-6 pb-4">
-          <p className="text-xs text-gray-500">
-            <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl + Enter</kbd> で保存、
-            <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs ml-1">Esc</kbd> でキャンセル
-          </p>
-        </div>
       </div>
     </div>
   );

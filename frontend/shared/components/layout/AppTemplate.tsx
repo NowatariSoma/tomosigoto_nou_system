@@ -25,7 +25,7 @@ interface AppTemplateProps {
     level: 'basic' | 'admin' | 'super';
     text: string;
   };
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '7xl' | 'full';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '7xl' | 'full';
   className?: string;
 }
 
@@ -63,6 +63,7 @@ export function AppTemplate({
       case 'lg': return 'max-w-lg';
       case 'xl': return 'max-w-xl';
       case '2xl': return 'max-w-2xl';
+      case '4xl': return 'max-w-4xl';
       case '7xl': return 'max-w-7xl';
       case 'full': return 'max-w-full';
       default: return 'max-w-7xl';
