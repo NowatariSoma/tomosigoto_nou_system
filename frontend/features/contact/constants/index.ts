@@ -32,7 +32,7 @@ export const UI_TEXT = {
 
 // フォーム初期値
 export const INITIAL_CONTACT_FORM = {
-  category: CATEGORY.QUESTION as const,
+  category: CATEGORY.QUESTION,
   content: '',
 } as const;
 
