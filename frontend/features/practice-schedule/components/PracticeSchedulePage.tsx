@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { PracticeScheduleList } from './PracticeScheduleList';
 import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { ScheduleSearchFilter } from './ScheduleSearchFilter';
-import { usePracticeSchedules, useVenues } from '../hooks';
+import { usePracticeSchedules, useVenues, usePracticeScheduleRouting } from '../hooks';
 import { UI_TEXT } from '../constants';
 import { Plus, Calendar, ArrowLeft, Sparkles, Edit2, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
@@ -19,19 +19,19 @@ import { sessionInstructorService, practiceScheduleEditorService } from '../../p
 import { VenueInfo } from '../../practice-schedule-editor/types/session-editor';
 
 export const PracticeSchedulePage: React.FC = () => {
+  const { currentScheduleId, isEditMode, navigateToSchedule, navigateToList } = usePracticeScheduleRouting();
   const { schedules, loading, error, createSchedule, updateSchedule, deleteSchedule, fetchSchedules } = usePracticeSchedules();
   const { venues, loading: venuesLoading, error: venuesError } = useVenues();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<PracticeSchedule | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  
-  // 編集モードのstate
-  const [editingScheduleId, setEditingScheduleId] = useState<string>('');
+
+  // 編集モードのstate（currentScheduleIdから派生）
+  const editingScheduleId = currentScheduleId ?? '';
   const [editingScheduleDate, setEditingScheduleDate] = useState<string>('');
-  const [isEditMode, setIsEditMode] = useState(false);
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
@@ -39,7 +39,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState('');
   const [availableRooms, setAvailableRooms] = useState<VenueInfo[]>([]);
-  
+
   // 編集用のフック
   const {
     sessions,
@@ -127,26 +127,14 @@ export const PracticeSchedulePage: React.FC = () => {
     fetchAvailableRooms();
   }, []);
 
-  // 編集モード関連のハンドラー
-  const handleScheduleClick = (schedule: PracticeSchedule) => {
-    setEditingScheduleId(schedule.id);
-    setEditingScheduleDate(schedule.date);
-    setIsEditMode(true);
-    setDescriptionValue(schedule.description || '');
-    // スケジュールの開始・終了時間を設定
-    if (schedule.startTime) {
-      setScheduleStartTime(schedule.startTime.substring(0, 5));
-    }
-    if (schedule.endTime) {
-      setScheduleEndTime(schedule.endTime.substring(0, 5));
-    }
-  };
+  // 編集モード関連のハンドラー（ルーティングフックを使用）
+  const handleScheduleClick = useCallback((schedule: PracticeSchedule) => {
+    navigateToSchedule(schedule);
+  }, [navigateToSchedule]);
 
-  const handleBackToList = () => {
-    setIsEditMode(false);
-    setEditingScheduleId('');
-    setEditingScheduleDate('');
-  };
+  const handleBackToList = useCallback(() => {
+    navigateToList();
+  }, [navigateToList]);
 
   const handleCreateSession = () => {
     selectSession(null);
@@ -197,7 +185,7 @@ export const PracticeSchedulePage: React.FC = () => {
     if (!confirm('監督者を削除しますか？')) {
       return;
     }
-    
+
     try {
       await sessionInstructorService.deleteSessionInstructor(instructorId);
       fetchScheduleDetails();
@@ -262,12 +250,12 @@ export const PracticeSchedulePage: React.FC = () => {
       const newDivisionCount = currentDivisionCount + 1;
       const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
       const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
-      
+
       if (newDivisionCount > 24) {
         alert('時間スロットは最大24個までです');
         return;
       }
-      
+
       await practiceScheduleEditorService.updateScheduleTime(
         editingScheduleId,
         actualStartTime,
@@ -289,12 +277,12 @@ export const PracticeSchedulePage: React.FC = () => {
       const newDivisionCount = currentDivisionCount - 1;
       const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
       const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
-      
+
       if (newDivisionCount < 1) {
         alert('時間スロットは最低1個必要です');
         return;
       }
-      
+
       await practiceScheduleEditorService.updateScheduleTime(
         editingScheduleId,
         actualStartTime,
@@ -333,34 +321,47 @@ export const PracticeSchedulePage: React.FC = () => {
     }
   };
 
-  const handleCancelEditDescription = () => {
-    const currentSchedule = schedules.find(s => s.id === editingScheduleId);
+  // 現在の編集対象スケジュールをメモ化（schedulesからIDで検索）
+  const currentSchedule = useMemo(() => {
+    if (!currentScheduleId) return null;
+    return schedules.find(s => s.id === currentScheduleId) ?? null;
+  }, [currentScheduleId, schedules]);
+
+  const handleCancelEditDescription = useCallback(() => {
     setDescriptionValue(currentSchedule?.description || '');
     setIsEditingDescription(false);
-  };
+  }, [currentSchedule?.description]);
+
+  // 編集対象スケジュールの情報が変更された時に状態を更新
+  useEffect(() => {
+    if (currentSchedule) {
+      setEditingScheduleDate(currentSchedule.date);
+      setDescriptionValue(currentSchedule.description || '');
+
+      // スケジュールの開始・終了時間を設定
+      if (currentSchedule.startTime) {
+        setScheduleStartTime(currentSchedule.startTime.substring(0, 5));
+      }
+      if (currentSchedule.endTime) {
+        setScheduleEndTime(currentSchedule.endTime.substring(0, 5));
+      }
+    } else {
+      setEditingScheduleDate('');
+    }
+  }, [currentSchedule?.id, currentSchedule?.date, currentSchedule?.description, currentSchedule?.startTime, currentSchedule?.endTime]);
 
   // 編集モードに入った時にスケジュール詳細を取得
   useEffect(() => {
     if (isEditMode && editingScheduleId) {
       fetchScheduleDetails();
-      // スケジュールの開始・終了時間を取得
-      const currentSchedule = schedules.find(s => s.id === editingScheduleId);
-      if (currentSchedule) {
-        if (currentSchedule.startTime) {
-          setScheduleStartTime(currentSchedule.startTime.substring(0, 5));
-        }
-        if (currentSchedule.endTime) {
-          setScheduleEndTime(currentSchedule.endTime.substring(0, 5));
-        }
-      }
     }
-  }, [isEditMode, editingScheduleId, schedules, fetchScheduleDetails]);
+  }, [isEditMode, editingScheduleId, fetchScheduleDetails]);
 
   // フィルタリングされたスケジュール
   const filteredSchedules = schedules.filter(schedule => {
     const matchesSearch = schedule.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
+      schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesDate = !selectedDate || schedule.date === selectedDate;
 
