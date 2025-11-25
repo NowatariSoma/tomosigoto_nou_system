@@ -385,40 +385,45 @@ class SessionInstructorRepository:
 
     @handle_supabase_errors("find_instructor_candidates")
     async def find_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
-        """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
-        # 学年4のユーザーで、指定された練習スケジュールに出席記録があるユーザーを取得
+        """インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）"""
+        # 指定された練習スケジュールに出席記録があり、かつis_instructor=trueのユーザーを取得
         # まず出席記録を取得
         attendance_response = self.client.table("practice_user_attendance").select(
             "id, user_id, status"
         ).eq("practice_schedule_id", str(practice_schedule_id)).execute()
-        
+
         candidates = []
         for attendance in attendance_response.data:
             if attendance.get("status") in ["present", "late"]:
-                # ユーザー情報を取得
-                user_response = self.client.table("users").select(
-                    "id, email"
-                ).eq("id", attendance["user_id"]).execute()
-                
-                if user_response.data:
-                    user = user_response.data[0]
-                    # ユーザープロフィールを取得
-                    profile_response = self.client.table("user_profiles").select(
-                        "first_name_kanji, last_name_kanji, student_id, grade"
-                    ).eq("user_id", user["id"]).execute()
-                    
-                    if profile_response.data:
-                        profile = profile_response.data[0]
-                        if profile.get("grade") == 4:
-                            candidates.append({
-                                "user_id": user["id"],
-                                "email": user["email"],
-                                "first_name_kanji": profile.get("first_name_kanji"),
-                                "last_name_kanji": profile.get("last_name_kanji"),
-                                "student_id": profile.get("student_id"),
-                                "grade": profile.get("grade"),
-                                "attendance_id": attendance["id"],
-                                "attendance_status": attendance["status"]
-                            })
-        
+                # user_rolesテーブルからis_instructorフラグを確認
+                role_response = self.client.table("user_roles").select(
+                    "is_instructor"
+                ).eq("user_id", attendance["user_id"]).execute()
+
+                # is_instructorがtrueの場合のみ候補に追加
+                if role_response.data and role_response.data[0].get("is_instructor") == True:
+                    # ユーザー情報を取得
+                    user_response = self.client.table("users").select(
+                        "id, email"
+                    ).eq("id", attendance["user_id"]).execute()
+
+                    if user_response.data:
+                        user = user_response.data[0]
+                        # ユーザープロフィールを取得
+                        profile_response = self.client.table("user_profiles").select(
+                            "first_name_kanji, last_name_kanji, student_id, grade"
+                        ).eq("user_id", user["id"]).execute()
+
+                        profile = profile_response.data[0] if profile_response.data else {}
+                        candidates.append({
+                            "user_id": user["id"],
+                            "email": user["email"],
+                            "first_name_kanji": profile.get("first_name_kanji"),
+                            "last_name_kanji": profile.get("last_name_kanji"),
+                            "student_id": profile.get("student_id"),
+                            "grade": profile.get("grade"),
+                            "attendance_id": attendance["id"],
+                            "attendance_status": attendance["status"]
+                        })
+
         return candidates

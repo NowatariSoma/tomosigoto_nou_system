@@ -223,7 +223,7 @@ class SessionInstructorService:
         return True
 
     async def get_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
-        """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
+        """インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）"""
         return await self.repository.find_instructor_candidates(practice_schedule_id)
     
     async def move_session_instructor(

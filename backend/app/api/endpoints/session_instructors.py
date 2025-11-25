@@ -26,7 +26,7 @@ async def get_instructor_candidates(
     practice_schedule_id: UUID = Query(..., description="練習スケジュールID"),
     session_instructor_service: SessionInstructorService = Depends(get_session_instructor_service),
 ):
-    """インストラクター候補を取得（学年4かつ出席記録があるユーザー）"""
+    """インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）"""
     candidates = await session_instructor_service.get_instructor_candidates(practice_schedule_id)
     return candidates
 
