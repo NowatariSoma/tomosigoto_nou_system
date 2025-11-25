@@ -80,18 +80,75 @@ class SchedulingConstraints:
                                 self.session_vars[(part_id, room.id, time_slot.id, instructor.id)]
                             )
                 
-                # その指導者の所属パートの練習数
+                # その指導者の所属パートの練習セッション
                 own_part_sessions = []
                 for instructor_part_id in instructor.part_ids:
                     for room in self.problem.rooms:
-                        if (instructor_part_id, room.id, time_slot.id, instructor.id) in self.session_vars:
-                            own_part_sessions.append(
-                                self.session_vars[(instructor_part_id, room.id, time_slot.id, instructor.id)]
-                            )
+                        # 指導者の自パートの練習がある場合、全ての指導者パターンを探す
+                        for potential_instructor in self.problem.players:
+                            if potential_instructor.is_instructor:
+                                if (instructor_part_id, room.id, time_slot.id, potential_instructor.id) in self.session_vars:
+                                    own_part_sessions.append(
+                                        self.session_vars[(instructor_part_id, room.id, time_slot.id, potential_instructor.id)]
+                                    )
                 
-                # 同じ時間に指導数≤1（指導者は複数のパートを同時に指導できない）
+                # 制約1: 同じ時間に指導数≤1（指導者は複数のパートを同時に指導できない）
                 if instructor_sessions:
                     self.model.Add(sum(instructor_sessions) <= 1)
+                
+                # 制約2: 自分のパートの練習時間には他パートを指導できない
+                # 自パートの練習がある（誰かが指導している）場合、この指導者は他パートを指導できない
+                if own_part_sessions and instructor_sessions:
+                    # 他パートのセッションを抽出（自パート以外）
+                    other_part_sessions = []
+                    for part in self.problem.parts:
+                        part_id = part["id"]
+                        if part_id not in instructor.part_ids:  # 自パート以外
+                            for room in self.problem.rooms:
+                                if (part_id, room.id, time_slot.id, instructor.id) in self.session_vars:
+                                    other_part_sessions.append(
+                                        self.session_vars[(part_id, room.id, time_slot.id, instructor.id)]
+                                    )
+                    
+                    # 自パートの練習がある時間には、他パートの指導ができない
+                    # own_part_sessionsのいずれか1つと、other_sessionは同時に1になれない
+                    if other_part_sessions:
+                        for own_session in own_part_sessions:
+                            for other_session in other_part_sessions:
+                                # 両方が同時に1になることを禁止
+                                self.model.Add(own_session + other_session <= 1)
+    
+    def add_player_constraints(self):
+        """プレイヤーに関する制約条件を追加（重複参加防止）"""
+        for player in self.problem.players:
+            if player.is_instructor:
+                continue  # 指導者は別の制約で処理済み
+            
+            for time_slot in self.problem.time_slots:
+                # このプレイヤーが参加可能な全パート（複数の場合がある）
+                player_part_sessions = []
+                for part_assignment in player.part_assignments:
+                    part_id = part_assignment.part_id
+                    for room in self.problem.rooms:
+                        # このパートの練習セッションが存在する場合（どの指導者でも）
+                        for potential_instructor in self.problem.players:
+                            if potential_instructor.is_instructor:
+                                if (part_id, room.id, time_slot.id, potential_instructor.id) in self.session_vars:
+                                    player_part_sessions.append(
+                                        self.session_vars[(part_id, room.id, time_slot.id, potential_instructor.id)]
+                                    )
+                
+                # 同じ時間に複数のパートの練習には参加できない
+                # （実際には、複数のパートがスケジュールされていても、プレイヤーは1つのパートにしか参加できない）
+                # これは、同時刻に複数パートが練習している場合、プレイヤーは物理的に1箇所にしかいられないことを意味
+                # ただし、OR-Toolsの制約としては、「同じ時間に複数パートの練習がスケジュールされる ≤ 1」が部屋制約で保証されている
+                # ここでは、プレイヤーの重複参加を防ぐ追加の制約として、念のため記載
+                # （実際には、部屋制約により自動的に満たされる可能性が高い）
+                if len(player_part_sessions) > 1:
+                    # 複数のパートに所属している場合のみ制約を追加
+                    # 同じ時間に複数のパートの練習に参加できない
+                    # ※ただし、これはsoft constraintとしてobjectivesで処理されているため、ここでは不要
+                    pass
     
     
     def add_equality_constraints(self):

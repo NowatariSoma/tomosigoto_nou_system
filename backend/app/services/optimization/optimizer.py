@@ -38,18 +38,107 @@ class SchedulingOptimizer:
         status = solver.Solve(model)
         solve_time = time.time() - start_time
         
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+        # ステータスごとの詳細なログ出力
+        if status == cp_model.OPTIMAL:
+            logger.info("最適解が見つかりました")
             sessions = self._extract_solution(solver)
             objective_value = self._calculate_objective_value(sessions)
             
             return SchedulingSolution(
                 sessions=sessions,
                 objective_value=objective_value,
-                is_optimal=(status == cp_model.OPTIMAL),
+                is_optimal=True,
                 solve_time_seconds=solve_time
             )
+        elif status == cp_model.FEASIBLE:
+            logger.info("実行可能解が見つかりました（最適ではない可能性があります）")
+            sessions = self._extract_solution(solver)
+            objective_value = self._calculate_objective_value(sessions)
+            
+            return SchedulingSolution(
+                sessions=sessions,
+                objective_value=objective_value,
+                is_optimal=False,
+                solve_time_seconds=solve_time
+            )
+        elif status == cp_model.INFEASIBLE:
+            logger.error("制約が矛盾しています（実行不可能）")
+            
+            # 詳細な診断メッセージを生成
+            error_details = self._diagnose_infeasibility()
+            for detail in error_details:
+                logger.error(f"  - {detail}")
+            
+            # エラー情報を例外に含める
+            error_message = "最適化に失敗しました。以下の問題が考えられます:\n" + "\n".join(f"・{detail}" for detail in error_details)
+            raise ValueError(error_message)
+        elif status == cp_model.MODEL_INVALID:
+            logger.error("モデルが不正です")
+            logger.error("制約条件の設定に問題がある可能性があります")
+            raise ValueError("最適化モデルが不正です。システム管理者に連絡してください。")
         else:
-            return None
+            logger.error(f"予期しないソルバーステータス: {status}")
+            logger.error("最適化が完了しませんでした")
+            raise ValueError(f"最適化が完了しませんでした（ステータス: {status}）")
+    
+    def _diagnose_infeasibility(self) -> List[str]:
+        """実行不可能な理由を診断する"""
+        # 基本情報を取得
+        num_parts = len(self.problem.parts)
+        num_time_slots = len(self.problem.time_slots)
+        num_rooms = len(self.problem.rooms)
+        instructors = [p for p in self.problem.players if p.is_instructor]
+        num_instructors = len(instructors)
+        
+        # 1. 容量の基本チェック（各パートは1回だけ練習）
+        total_capacity = num_time_slots * num_rooms
+        if total_capacity < num_parts:
+            min_slots_needed = (num_parts + num_rooms - 1) // num_rooms
+            return [f"時間コマ数または部屋数が不足しています（{num_time_slots}コマ × {num_rooms}部屋 = {total_capacity}セッション < {num_parts}パート）。時間コマを{min_slots_needed}コマ以上に増やすか、部屋を追加してください。"]
+        
+        # 2. 指導者数の基本チェック
+        if num_instructors == 0:
+            return ["指導者が設定されていません。is_instructorフラグを持つユーザーを設定してください。"]
+        
+        # 3. 各パートに対応可能な指導者がいるかチェック
+        parts_without_instructors = []
+        for part in self.problem.parts:
+            part_id = part["id"]
+            part_name = part["name"]
+            available_instructors = [p for p in instructors if part_id in p.part_ids]
+            if not available_instructors:
+                parts_without_instructors.append(part_name)
+        
+        if parts_without_instructors:
+            parts_list = "、".join(parts_without_instructors)
+            return [f"指導者不在のパートがあります: {parts_list}。各パートに少なくとも1人の指導者を割り当ててください。"]
+        
+        # 4. 均等割り振り制約の厳しさチェック
+        if num_instructors > 1:
+            # 各指導者が担当可能なパート数をカウント
+            instructor_loads = {}
+            for instructor in instructors:
+                assignable_parts = [p for p in self.problem.parts if p["id"] in instructor.part_ids]
+                instructor_loads[instructor.name] = len(assignable_parts)
+            
+            max_load = max(instructor_loads.values())
+            min_load = min(instructor_loads.values())
+            
+            if max_load - min_load > 1:
+                load_info = "、".join([f"{name}:{load}パート" for name, load in instructor_loads.items()])
+                return [f"指導者間の担当可能パート数に差があり、均等割り振りできません（{load_info}）。指導者のパート割り当てを調整してください。"]
+            
+            # 時間コマ数が少なすぎる場合
+            if num_time_slots < 3 and num_parts >= num_instructors * 2:
+                return [f"時間コマ数が少なく、制約を満たせません（現在{num_time_slots}コマ）。時間コマを{num_time_slots + 1}コマ以上に増やしてください。"]
+        
+        # 5. 指導者の自パート制約の問題チェック
+        instructor_own_parts_count = sum(1 for inst in instructors if any(p["id"] in inst.part_ids for p in self.problem.parts))
+        if instructor_own_parts_count > 0 and num_time_slots < 3:
+            return [f"指導者が自分のパートにも所属しており、時間コマ数({num_time_slots}コマ)が不足しています。指導者は自パート練習時に他パートを指導できないため、時間コマを増やしてください。"]
+        
+        # 6. デフォルトメッセージ
+        return ["制約条件が複雑で解を見つけられませんでした。時間コマ数を増やす、部屋数を増やす、または指導者の割り当てを調整してください。"]
     
     
     def _extract_solution(self, solver: cp_model.CpSolver) -> List[PracticeSession]:
