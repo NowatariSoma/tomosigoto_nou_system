@@ -76,9 +76,6 @@ class SchedulingOptimizationService:
             if validation_errors:
                 raise APIException(f"最適化に必要なデータが不足しています:\n" + "\n".join(f"・{err}" for err in validation_errors))
             
-            # 時間コマ数を計算
-            division_count = SchedulingDataAdapter.calculate_division_count(parts_data, venues_data)
-            
             # OR-Tools用の問題を作成
             problem = SchedulingDataAdapter.db_to_scheduling_problem(
                 schedule_data, venues_data, parts_data, users_data, member_assignments_data, 
@@ -94,12 +91,6 @@ class SchedulingOptimizationService:
             
             if not solution:
                 raise APIException(ErrorMessages.NO_SOLUTION_FOUND)
-            
-            # 計算したdivision_countをデータベースに保存
-            await self.practice_schedule_repository.update(
-                schedule_id,
-                {"division_count": division_count}
-            )
             
             # 既存のセッションインストラクタを削除
             from app.repositories.session_instructor_repository import SessionInstructorRepository
