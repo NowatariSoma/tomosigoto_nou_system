@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
 import { Information } from './Information';
@@ -12,9 +12,10 @@ import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 import { SimpleAttendanceForm } from './attendance/SimpleAttendanceForm';
 import { useAttendance } from '../hooks/use-attendance';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchApi } from '@/lib/api';
 import { User, PracticeSchedule as AttendancePracticeSchedule } from '../types/attendance';
 import { toast } from 'sonner';
+import { practiceScheduleService } from '../services/practice-schedule-service';
+import { PracticeScheduleBundleResponse } from '../types/practice-schedule-types';
 
 interface BottomSheetScheduleProps {
   date: string; // YYYY-MM-DD形式
@@ -25,8 +26,9 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [practiceSchedules, setPracticeSchedules] = useState<AttendancePracticeSchedule[]>([]);
+  const [bundleData, setBundleData] = useState<PracticeScheduleBundleResponse | null>(null);
+  const [bundleLoading, setBundleLoading] = useState(false);
+  const [bundleError, setBundleError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // dateプロップが変わった時に再計算されるように useMemo を使用
@@ -52,72 +54,110 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const [isDragging, setIsDragging] = useState(false);
   const [screenHeight, setScreenHeight] = useState(1000); // デフォルト値
 
-  // 出席情報を取得
-  const { attendances, loading: attendanceLoading, error: attendanceError, upsertAttendance, deleteAttendance, refetch } = useAttendance();
-
   // 画面の高さを取得
   useEffect(() => {
     setScreenHeight(window.innerHeight);
   }, []);
-
-  // ユーザー一覧を取得
-  const fetchUsers = async () => {
-    try {
-      setUsersLoading(true);
-      const response = await fetchApi('/users/');
-      const usersData = await response.json();
-      setUsers(usersData);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setUsersLoading(false);
-    }
-  };
-
-  // 練習スケジュール一覧を取得
-  const fetchPracticeSchedules = async () => {
-    try {
-      const response = await fetchApi('/practice_schedules/');
-      const data = await response.json();
-      setPracticeSchedules(data || []);
-    } catch (error) {
-      console.error('Error fetching practice schedules:', error);
-    }
-  };
-
-  // ユーザー一覧と練習スケジュールを取得
+  // bundle データ取得
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchUsers();
-      fetchPracticeSchedules();
+    if (!date) {
+      setBundleData(null);
+      return;
     }
-  }, [authLoading, user]);
 
-  // その日の練習スケジュールを取得
-  const todayPracticeSchedule = useMemo(() => {
-    if (!practiceSchedules.length) return null;
+    let isMounted = true;
+    setBundleLoading(true);
+    setBundleError(null);
 
-    // dateをYYYY-MM-DD形式で比較
-    const targetDate = date; // date は既に YYYY-MM-DD 形式
+    practiceScheduleService
+      .getPracticeScheduleBundle(date)
+      .then((data) => {
+        if (!isMounted) return;
+        setBundleData(data);
+        if (data?.users?.length) {
+          setUsers(
+            data.users.map((item) => ({
+              id: item.id,
+              name: item.name,
+              email: item.email || '',
+            }))
+          );
+        } else {
+          setUsers([]);
+        }
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setBundleData(null);
+        setBundleError(error instanceof Error ? error.message : '練習予定の取得に失敗しました');
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setBundleLoading(false);
+      });
 
-    const schedule = practiceSchedules.find(schedule => {
-      // schedule_dateもYYYY-MM-DD形式なので直接比較
-      return schedule.schedule_date === targetDate;
-    });
+    return () => {
+      isMounted = false;
+    };
+  }, [date]);
 
-    return schedule || null;
-  }, [practiceSchedules, date]);
+  const practiceSchedule = useMemo<AttendancePracticeSchedule | null>(() => {
+    if (!bundleData?.schedule) {
+      return null;
+    }
+
+    const divisionCount =
+      bundleData.schedule.division_count ??
+      (bundleData.ideal?.time_schedule ? Object.keys(bundleData.ideal.time_schedule).length : 0);
+
+    return {
+      id: bundleData.schedule.id,
+      schedule_date: bundleData.schedule.schedule_date,
+      start_time: bundleData.schedule.start_time || '',
+      end_time: bundleData.schedule.end_time || '',
+      division_count: divisionCount,
+      title: bundleData.schedule.title,
+      description: bundleData.schedule.description,
+      schedule_type: undefined,
+      status: undefined,
+      created_at: undefined,
+      updated_at: undefined,
+      created_by: undefined,
+      updated_by: undefined,
+      venues: bundleData.schedule.venues?.map((venue) => ({
+        id: venue.venue_id || venue.id || '',
+        name: venue.name,
+        campus: venue.campus || '',
+      })) || [],
+    };
+  }, [bundleData]);
+
+  const attendanceOptions = useMemo(
+    () => ({
+      initialAttendances: bundleData?.attendance?.entries,
+    }),
+    [bundleData?.attendance?.entries]
+  );
+
+  const {
+    attendances,
+    loading: attendanceLoading,
+    error: attendanceError,
+    upsertAttendance,
+    deleteAttendance,
+    refetch,
+  } = useAttendance(practiceSchedule?.id, attendanceOptions);
 
   // その日の練習の自分の出席状況を取得
   const myAttendance = useMemo(() => {
-    if (!todayPracticeSchedule || !user) return null;
+    if (!practiceSchedule || !user) return null;
 
     return attendances.find(
       attendance =>
-        attendance.practice_schedule_id === todayPracticeSchedule.id &&
+        attendance.practice_schedule_id === practiceSchedule.id &&
         attendance.user_id === user.id
     );
-  }, [attendances, todayPracticeSchedule, user]);
+  }, [attendances, practiceSchedule, user]);
 
   // 日付のフォーマット
   const formatDate = (date: Date) => {
@@ -274,26 +314,38 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           className="flex-1 overflow-y-auto px-4 py-6 space-y-6"
         >
           {/* 出席登録フォーム */}
-          {authLoading || usersLoading ? (
+          {authLoading || bundleLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               <span className="ml-2">読み込み中...</span>
             </div>
-          ) : todayPracticeSchedule ? (
+          ) : bundleError ? (
+            <div className="flex items-center justify-center p-8 text-red-600">
+              練習予定の取得に失敗しました: {bundleError}
+            </div>
+          ) : practiceSchedule ? (
             <SimpleAttendanceForm
-              practiceScheduleId={todayPracticeSchedule.id}
-              practiceSchedule={todayPracticeSchedule}
+              practiceScheduleId={practiceSchedule.id}
+              practiceSchedule={practiceSchedule}
               users={users}
               currentUserId={user?.id}
               onSubmit={handleAttendanceSubmit}
               loading={formLoading}
               existingAttendance={myAttendance}
             />
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center p-8 text-gray-500">
+              この日付の練習予定は見つかりませんでした
+            </div>
+          )}
 
           {/* 練習表テーブル */}
           <div className="w-full max-w-7xl mx-auto">
-            <ScheduleTable currentDate={currentDate} />
+            <ScheduleTable
+              currentDate={currentDate}
+              initialIdealData={bundleData?.ideal ?? null}
+              initialIdealDate={bundleData?.schedule?.schedule_date ?? null}
+            />
           </div>
 
           {/* 追加情報 */}

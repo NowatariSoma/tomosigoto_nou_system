@@ -2,7 +2,7 @@
  * 練習スケジュール管理のカスタムフック
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { PracticeScheduleDisplayResponse, PracticeScheduleWithDetailsResponse, IdealScheduleData } from '../types/practice-schedule-types';
 import { practiceScheduleService } from '../services/practice-schedule-service';
 
@@ -121,10 +121,18 @@ export const usePracticeScheduleDetails = () => {
 /**
  * 理想的な形式のスケジュール管理フック
  */
-export const useIdealSchedule = () => {
-  const [idealData, setIdealData] = useState<IdealScheduleData | null>(null);
+export const useIdealSchedule = (initialData?: IdealScheduleData | null) => {
+  const [idealData, setIdealData] = useState<IdealScheduleData | null>(initialData ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof initialData === 'undefined') {
+      return;
+    }
+    setIdealData(initialData);
+    setLoading(false);
+  }, [initialData]);
 
   /**
    * 指定した日付の理想的な形式のスケジュールを取得
@@ -188,5 +196,6 @@ export const useIdealSchedule = () => {
     error,
     fetchIdealScheduleByDate,
     clearIdealData,
+    setIdealData,
   };
 };
