@@ -30,7 +30,7 @@ export const sortVenuesByPriority = (venues: VenueInfo[]): VenueInfo[] => {
     // 優先会場を先に、その後優先度順
     if (a.is_preferred && !b.is_preferred) return -1;
     if (!a.is_preferred && b.is_preferred) return 1;
-    return a.priority - b.priority;
+    return (a.priority ?? 0) - (b.priority ?? 0);
   });
 };
 

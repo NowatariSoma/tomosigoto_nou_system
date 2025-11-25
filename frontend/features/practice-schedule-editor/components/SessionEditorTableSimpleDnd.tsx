@@ -462,7 +462,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
         title="会場を選択"
         columns={2}
         getItemLabel={(room) => room.name}
-        getItemSubLabel={(room) => room.campus ? `${room.campus}キャンパス` : undefined}
+        getItemSubLabel={(room) => room.campus ? `${room.campus}キャンパス` : ''}
         selectedCountText={(count) => `${count}個の会場を選択中`}
         confirmButtonText="確定"
         cancelButtonText="キャンセル"
