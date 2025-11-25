@@ -138,7 +138,13 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   }, [instructors, venues, time_slots]);
 
   // 時間割外のセッションを抽出
+  // 注意: time_slotsがまだロードされていない場合（length === 0）は空配列を返す
   const outOfScheduleSessions = React.useMemo(() => {
+    // 時間スロットがロードされていない場合はバリデーションをスキップ
+    if (time_slots.length === 0) {
+      return [];
+    }
+
     return sessions.filter(session => {
       if (!session.schedule_available_venue_id) return true;
 

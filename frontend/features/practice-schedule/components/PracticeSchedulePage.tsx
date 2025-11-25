@@ -373,7 +373,8 @@ export const PracticeSchedulePage: React.FC = () => {
 
   // 編集モード時の表示
   if (isEditMode) {
-    if (editorLoading && sessions.length === 0 && !is_modal_open) {
+    // スケジュール一覧がまだロード中の場合はローディングを表示
+    if (loading) {
       return (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -382,7 +383,17 @@ export const PracticeSchedulePage: React.FC = () => {
       );
     }
 
-    if (editorError && sessions.length === 0 && !is_modal_open) {
+    // 編集データ（セッションや時間スロット）がロード中の場合もローディングを表示
+    if ((editorLoading || time_slots.length === 0) && sessions.length === 0 && !is_modal_open) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
+        </div>
+      );
+    }
+
+    if (editorError && sessions.length === 0 && !is_modal_open && !loading) {
       return (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           エラー: {editorError}
