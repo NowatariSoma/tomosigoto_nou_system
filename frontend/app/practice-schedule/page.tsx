@@ -1,8 +1,18 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { Calendar } from 'lucide-react';
 import { PracticeSchedulePage } from '@/features/practice-schedule/components';
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <span className="ml-2">読み込み中...</span>
+    </div>
+  );
+}
 
 export default function Page() {
   return (
@@ -20,7 +30,9 @@ export default function Page() {
       }}
       maxWidth="7xl"
     >
-      <PracticeSchedulePage />
+      <Suspense fallback={<LoadingFallback />}>
+        <PracticeSchedulePage />
+      </Suspense>
     </AppTemplate>
   );
 }

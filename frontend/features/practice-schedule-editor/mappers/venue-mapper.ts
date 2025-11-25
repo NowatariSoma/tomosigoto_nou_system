@@ -44,7 +44,7 @@ export const formatVenueDisplay = (venue: VenueInfo): string => {
   if (venue.is_preferred) {
     display += ' ⭐';
   }
-  if (venue.priority > 0) {
+  if (venue.priority && venue.priority > 0) {
     display += ` (優先度: ${venue.priority})`;
   }
   return display;
@@ -68,5 +68,5 @@ export const getVenueColor = (venue: VenueInfo): string => {
     '#06B6D4', // シアン
   ];
   
-  return colors[venue.priority % colors.length];
+  return colors[(venue.priority ?? 0) % colors.length];
 };
