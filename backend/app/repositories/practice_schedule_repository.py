@@ -297,30 +297,34 @@ class SessionRepository:
 
     @handle_supabase_errors("find_by_schedule")
     async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
-        """指定されたスケジュールのセッションを取得"""
+        """指定されたスケジュールのセッションを取得（JOINでN+1問題を回避）"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
             self.client.table(self.table_name)
-            .select("*")
+            .select(
+                """
+                *,
+                parts(id, name)
+                """
+            )
             .eq("schedule_id", schedule_id_str)
             .order("slot_order", desc=False)
             .execute()
         )
         
-        # パート名を取得して追加
+        # パート名を取得して追加（JOIN済みデータを使用）
         formatted_data = []
         for item in response.data:
             formatted_item = dict(item)
             formatted_item["part_name"] = None
             
-            # パート情報を取得
-            if item.get("part_id"):
-                try:
-                    part_response = self.client.table("parts").select("name").eq("id", item["part_id"]).execute()
-                    if part_response.data:
-                        formatted_item["part_name"] = part_response.data[0].get("name")
-                except Exception as e:
-                    print(f"Error fetching part data: {e}")
+            # パート情報を取得（JOIN済みデータを使用）
+            part_info = item.get("parts")
+            if part_info and isinstance(part_info, dict):
+                formatted_item["part_name"] = part_info.get("name")
+            elif part_info and isinstance(part_info, list) and len(part_info) > 0:
+                # リスト形式の場合（通常は発生しないが念のため）
+                formatted_item["part_name"] = part_info[0].get("name")
             
             formatted_data.append(formatted_item)
         
