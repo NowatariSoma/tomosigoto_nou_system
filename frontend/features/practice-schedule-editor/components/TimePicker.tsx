@@ -108,7 +108,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
               {/* 時間選択 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
-                  onClick={incrementHours}
+                  onClick={decrementHours}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   type="button"
                 >
@@ -118,7 +118,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   {hours.toString().padStart(2, '0')}
                 </div>
                 <button
-                  onClick={decrementHours}
+                  onClick={incrementHours}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   type="button"
                 >
@@ -133,7 +133,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
               {/* 分選択 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
-                  onClick={incrementMinutes}
+                  onClick={decrementMinutes}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   type="button"
                 >
@@ -143,7 +143,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   {minutes.toString().padStart(2, '0')}
                 </div>
                 <button
-                  onClick={decrementMinutes}
+                  onClick={incrementMinutes}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   type="button"
                 >
