@@ -17,10 +17,12 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
   onClose,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleOptimize = async () => {
     setLoading(true);
+    setErrorMessage(null);
 
     try {
       await schedulingOptimizationService.optimize(scheduleId);
@@ -37,6 +39,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
         description: errorMessage,
         variant: 'destructive',
       });
+      setErrorMessage(errorMessage);
       console.error('最適化エラー:', err);
     } finally {
       setLoading(false);
@@ -82,12 +85,18 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
                 <p className="text-base font-semibold text-black">最適化の内容</p>
                 <ul className="list-disc list-inside space-y-1.5 text-base text-black">
                   <li>講師の配置を最適化</li>
-                  <li>コマ数を調整</li>
                   <li>利用可能な会場を考慮</li>
                 </ul>
               </div>
             </div>
           </div>
+
+          {/* Error Section */}
+          {errorMessage && (
+            <div className="bg-red-100 border border-red-500 rounded-xl p-4 text-red-900 text-sm font-semibold">
+              {errorMessage}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-3 pt-2">

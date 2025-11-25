@@ -29,14 +29,17 @@ class APIException(HTTPException):
         except Exception:
             error_obj = error
         
-        try:
-            message = error_obj.text.format(error_obj.param)
-        except Exception:
-            message = error_obj.text
+        if hasattr(error_obj, "text"):
+            try:
+                message = error_obj.text.format(getattr(error_obj, "param", ""))
+            except Exception:
+                message = error_obj.text
+        else:
+            message = str(error_obj)
         
-        try:
+        if hasattr(error_obj, "status_code"):
             self.status_code = error_obj.status_code
-        except Exception:
+        else:
             self.status_code = status_code
         
         self.detail = {"error_code": str(error_obj), "error_msg": message}
