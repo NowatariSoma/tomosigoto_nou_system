@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 
 interface ScheduleTimeEditorProps {
@@ -17,6 +17,12 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
   const [localStartTime, setLocalStartTime] = useState(startTime);
   const [localEndTime, setLocalEndTime] = useState(endTime);
   const [isEditing, setIsEditing] = useState(false);
+
+  // 親から渡された値が更新されたらローカルStateを同期
+  useEffect(() => {
+    setLocalStartTime(startTime);
+    setLocalEndTime(endTime);
+  }, [startTime, endTime]);
 
   const handleSave = () => {
     onUpdate(localStartTime, localEndTime);

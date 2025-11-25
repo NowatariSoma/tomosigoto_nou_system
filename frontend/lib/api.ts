@@ -68,9 +68,10 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
               // detailがオブジェクトの場合
               if (errorData.detail) {
                 if (typeof errorData.detail === 'object' && errorData.detail !== null) {
-                  errorMessage = errorData.detail.error_msg || 
-                                errorData.detail.error_code || 
+                  // detailがオブジェクトの場合は優先度順にメッセージを取得
+                  errorMessage = errorData.detail.error_msg ||
                                 errorData.detail.message ||
+                                errorData.detail.error_code ||
                                 JSON.stringify(errorData.detail);
                 } else if (typeof errorData.detail === 'string') {
                   errorMessage = errorData.detail;
