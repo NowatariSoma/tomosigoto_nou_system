@@ -13,6 +13,7 @@ from app.schemas.practice_schedules import (
     SessionResponse,
     SessionUpdate,
     PracticeScheduleWithDetailsResponse,
+    PracticeScheduleBundleResponse,
 )
 from app.services.practice_schedule_service import PracticeScheduleService
 from fastapi import APIRouter, Depends, Query
@@ -164,6 +165,19 @@ async def get_practice_schedule_ideal_format(
     if not ideal_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return ideal_data
+
+
+@router.get("/date/{target_date}/bundle", response_model=PracticeScheduleBundleResponse)
+async def get_practice_schedule_bundle(
+    target_date: str,
+    practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
+    current_user: Dict[str, Any] = Depends(get_current_user_optional),
+):
+    """
+    指定日のボトムシート表示用 bundle データを取得
+    """
+    bundle = await practice_schedule_service.get_practice_schedule_bundle(target_date, current_user)
+    return bundle
 
 
 @router.post("/", response_model=PracticeScheduleResponse)
