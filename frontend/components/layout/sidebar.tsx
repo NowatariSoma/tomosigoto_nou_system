@@ -20,7 +20,8 @@ import {
   Theater,
   Building,
   Edit3,
-  UserCheck
+  UserCheck,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -460,6 +461,15 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
           )}
 
           {!isCollapsed && <NavTitle label="その他" />}
+
+          <NavItem
+            icon={<MessageSquare className="w-4 h-4" />}
+            label={isCollapsed ? "" : "お問い合わせ"}
+            active={pathname === '/contact'}
+            href="/contact"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
+          {/* お問い合わせメニュー */}
 
           <NavItem
             icon={<Settings className="w-4 h-4" />}

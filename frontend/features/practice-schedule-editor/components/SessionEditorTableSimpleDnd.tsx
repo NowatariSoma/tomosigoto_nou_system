@@ -225,7 +225,11 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   // 会場編集モーダルのハンドラー
   const handleOpenVenueModal = () => {
     // 現在選択されている会場を初期選択として設定
-    setSelectedVenues(venues);
+    // venues.venue_idを使ってavailableRoomsからマッチングする
+    const currentlySelectedRooms = availableRooms.filter(room =>
+      venues.some(v => v.venue_id === room.id)
+    );
+    setSelectedVenues(currentlySelectedRooms);
     setIsVenueModalOpen(true);
   };
 
@@ -234,19 +238,22 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   };
 
   const handleConfirmVenueSelection = (newSelectedVenues: VenueInfo[]) => {
-    // 新しく選択された会場
-    const newVenues = newSelectedVenues.filter(room => !venues.some(v => v.id === room.id));
+    // 新しく選択された会場（venue_idでマッチング）
+    // newSelectedVenuesのidはavailableRoomsのid（venue.id）
+    const newVenues = newSelectedVenues.filter(
+      room => !venues.some(v => v.venue_id === room.id)
+    );
     if (newVenues.length > 0 && onAddVenues) {
       onAddVenues(newVenues);
     }
 
-    // 選択解除された会場を削除
-    const removedVenueIds = venues
-      .filter(venue => !newSelectedVenues.some(room => room.id === venue.id))
-      .map(venue => venue.id);
+    // 選択解除された会場を削除（venue_idでマッチング）
+    const removedScheduleVenueIds = venues
+      .filter(venue => !newSelectedVenues.some(room => room.id === venue.venue_id))
+      .map(venue => venue.id); // schedule_available_venue.idを使って削除
 
     if (onRemoveVenue) {
-      removedVenueIds.forEach(id => onRemoveVenue(id));
+      removedScheduleVenueIds.forEach(id => onRemoveVenue(id));
     }
 
     setIsVenueModalOpen(false);

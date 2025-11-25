@@ -17,7 +17,7 @@ import {
   IdealVenueInfo,
   IdealPartInfo
 } from '../types/api';
-import { sessionService, practiceScheduleEditorService, sessionInstructorService, scheduleTimeSlotService } from '../services';
+import { sessionService, practiceScheduleEditorService, sessionInstructorService, scheduleTimeSlotService, scheduleAvailableVenueService } from '../services';
 import { partService, Part } from '../services/part-service';
 import { generateTimeSlots } from '../mappers/time-slot-mapper';
 
@@ -192,15 +192,14 @@ export const useSessionEditor = (scheduleId: string) => {
       dispatch({ type: 'SET_SESSIONS', payload: sessions });
 
       // 会場情報を設定（idealフォーマットから変換）
-      // details.venuesにはvenue_idが含まれているが、フロントエンドでは
-      // schedule_available_venue_idを使用する必要がある
-      // ここでは、venue.idをschedule_available_venue_idとして扱う
+      // venue.idはschedule_available_venue_idを表す
+      // venue.venue_idは元の会場マスターID
       const venueMap = new Map<string, VenueInfo>();
       details.venues.forEach(venue => {
-        // venue.idは実際にはschedule_available_venue_idを表している
         if (!venueMap.has(venue.id)) {
           venueMap.set(venue.id, {
-            id: venue.id, // schedule_available_venue_idとして使用
+            id: venue.id, // schedule_available_venue_id
+            venue_id: venue.venue_id, // 元の会場マスターID
             name: venue.name,
             is_preferred: false, // デフォルト値
             priority: venue.priority,
@@ -598,17 +597,93 @@ export const useSessionEditor = (scheduleId: string) => {
 
   /**
    * 会場を追加
+   * APIを呼び出してデータベースに保存し、成功したら状態を更新
    */
-  const addVenues = useCallback((venues: VenueInfo[]) => {
-    dispatch({ type: 'ADD_VENUES', payload: venues });
-  }, []);
+  const addVenues = useCallback(async (venues: VenueInfo[]) => {
+    if (!scheduleId || scheduleId.trim() === '') {
+      console.error('addVenues: スケジュールIDが空です');
+      return;
+    }
+
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    try {
+      // 一括作成APIを呼び出し
+      const bulkData = {
+        schedule_id: scheduleId,
+        venues: venues.map(venue => ({
+          venue_id: venue.id,
+          is_preferred: venue.is_preferred || false,
+          priority: venue.priority || 0,
+          notes: venue.notes || '',
+        })),
+      };
+
+      console.log('addVenues: 会場追加開始', bulkData);
+
+      const result = await scheduleAvailableVenueService.createBulk(bulkData);
+
+      console.log('addVenues: 会場追加成功', result);
+
+      // 作成されたアイテムを状態に追加
+      // APIレスポンスから新しいIDを取得して会場情報を更新
+      const newVenues: VenueInfo[] = result.created_items.map(item => ({
+        id: item.id, // schedule_available_venue.id を使用
+        venue_id: item.venue_id, // 元の会場マスターIDを保持
+        name: venues.find(v => v.id === item.venue_id)?.name || '',
+        campus: venues.find(v => v.id === item.venue_id)?.campus,
+        is_preferred: item.is_preferred,
+        priority: item.priority,
+        notes: item.notes || '',
+      }));
+
+      dispatch({ type: 'ADD_VENUES', payload: newVenues });
+
+      if (result.errors.length > 0) {
+        console.warn('addVenues: 一部の会場追加に失敗', result.errors);
+      }
+    } catch (error) {
+      console.error('addVenues: エラー', error);
+      const errorMessage = error instanceof Error ? error.message : '会場の追加に失敗しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      alert(`❌ 会場の追加に失敗しました\n\n${errorMessage}`);
+    }
+  }, [scheduleId]);
 
   /**
    * 会場を削除
+   * APIを呼び出してデータベースから削除し、成功したら状態を更新
    */
-  const removeVenue = useCallback((venueId: string) => {
+  const removeVenue = useCallback(async (venueId: string) => {
+    // 現在の会場情報を保存（ロールバック用）
+    const originalVenue = state.venues.find(v => v.id === venueId);
+    if (!originalVenue) {
+      console.error('removeVenue: 削除対象の会場が見つかりません:', venueId);
+      return;
+    }
+
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    // 楽観的UI更新: 即座にUIから削除
     dispatch({ type: 'REMOVE_VENUE', payload: venueId });
-  }, []);
+
+    try {
+      // venueIdはschedule_available_venue.idなので、そのまま削除APIを呼び出す
+      console.log('removeVenue: 会場削除開始', venueId);
+
+      await scheduleAvailableVenueService.delete(venueId);
+
+      console.log('removeVenue: 会場削除成功', venueId);
+    } catch (error) {
+      // API失敗: 会場を復元
+      console.error('removeVenue: エラー', error);
+      dispatch({ type: 'ADD_VENUES', payload: [originalVenue] });
+
+      const errorMessage = error instanceof Error ? error.message : '会場の削除に失敗しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      alert(`❌ 会場の削除に失敗しました\n\n${errorMessage}\n\n会場を復元しました。`);
+    }
+  }, [state.venues]);
 
   /**
    * 会場を更新

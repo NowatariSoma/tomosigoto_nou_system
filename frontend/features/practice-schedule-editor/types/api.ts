@@ -89,7 +89,8 @@ export interface PracticeScheduleDetailsApiResponse {
  * Idealフォーマット用の会場情報
  */
 export interface IdealVenueInfo {
-  id: string;
+  id: string;           // schedule_available_venue.id
+  venue_id?: string;    // 元の会場マスターID（venue.id）
   name: string;
   priority: number;
   color: string;

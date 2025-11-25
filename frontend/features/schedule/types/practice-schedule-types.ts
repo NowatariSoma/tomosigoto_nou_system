@@ -2,6 +2,8 @@
  * 練習スケジュール関連の型定義
  */
 
+import { Attendance } from './attendance';
+
 /**
  * 練習スケジュールの基本情報
  */
@@ -313,4 +315,52 @@ export interface DateNavigationProps {
 export interface InformationProps {
   className?: string;
   currentDate?: Date;
+}
+
+/**
+ * bundle API 用の会場情報
+ */
+export interface BundleVenueInfo {
+  id?: string;
+  venue_id?: string;
+  name: string;
+  color?: string;
+  is_preferred?: boolean;
+  priority?: number;
+  campus?: string;
+}
+
+export interface PracticeScheduleBundleSchedule {
+  id: string;
+  schedule_date: string;
+  start_time?: string;
+  end_time?: string;
+  title?: string;
+  description?: string;
+  division_count?: number;
+  venues: BundleVenueInfo[];
+}
+
+export interface PracticeScheduleBundleAttendance {
+  entries: Attendance[];
+  my_entry?: Attendance | null;
+}
+
+export interface PracticeScheduleBundleUser {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface PracticeScheduleBundleMeta {
+  generated_at: string;
+  version: number;
+}
+
+export interface PracticeScheduleBundleResponse {
+  schedule: PracticeScheduleBundleSchedule;
+  ideal: IdealScheduleData | null;
+  attendance: PracticeScheduleBundleAttendance;
+  users: PracticeScheduleBundleUser[];
+  meta: PracticeScheduleBundleMeta;
 }

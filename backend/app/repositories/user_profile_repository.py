@@ -261,3 +261,17 @@ class UserProfileRepository:
         exists = len(response.data or []) > 0
         logger.info(f"Email {email} exists: {exists}")
         return exists
+
+    @handle_supabase_errors("get_all_profiles_basic")
+    async def get_all_profiles_basic(self) -> List[Dict[str, Any]]:
+        """
+        account_setting_profileビューから基本情報（氏名・メール）を取得
+        """
+        response = (
+            self.client.table("account_setting_profile")
+            .select("user_id, first_name_kanji, last_name_kanji, email")
+            .order("last_name_kanji", desc=False)
+            .order("first_name_kanji", desc=False)
+            .execute()
+        )
+        return response.data or []
