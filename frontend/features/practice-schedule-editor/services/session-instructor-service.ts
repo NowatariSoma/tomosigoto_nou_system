@@ -292,7 +292,7 @@ export class SessionInstructorService {
   }
 
   /**
-   * インストラクター候補を取得（学年4かつ出席記録があるユーザー）
+   * インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）
    * @param practiceScheduleId - 練習スケジュールID
    * @returns インストラクター候補一覧
    */
