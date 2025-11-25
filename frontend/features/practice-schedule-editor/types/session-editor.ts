@@ -87,7 +87,8 @@ export interface TimeSlot {
  * 会場情報（編集用）
  */
 export interface VenueInfo {
-  id: string;
+  id: string;           // schedule_available_venue.id または venue.id
+  venue_id?: string;    // 元の会場マスターのID（venue.id）
   name: string;
   campus?: string;
   is_preferred?: boolean;
