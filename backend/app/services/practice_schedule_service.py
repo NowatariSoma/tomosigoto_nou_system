@@ -81,25 +81,23 @@ class PracticeScheduleService:
             print(f"DEBUG get_practice_schedule: Schedule not found for id={schedule_id}")
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         
-        # 複数部屋選択対応: 会場情報を追加
+        # 複数部屋選択対応: 会場情報を追加（JOIN済みデータを使用してN+1問題を回避）
         venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
         schedule["venue_ids"] = [v["venue_id"] for v in venues]
         
-        # 会場詳細情報を取得
+        # 会場詳細情報を取得（find_by_scheduleで既にJOIN済み）
         venue_details = []
         for venue in venues:
-            try:
-                # 会場詳細情報を取得
-                venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
-                if venue_info:
-                    venue_details.append({
-                        "id": venue["venue_id"],
-                        "name": venue_info.get("name", "不明な会場"),
-                        "campus": venue_info.get("campus", "不明なキャンパス")
-                    })
-            except Exception as e:
-                print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
-                # エラーの場合は基本的な情報のみ
+            # find_by_scheduleで既にvenues(*)をJOINしているので、個別取得不要
+            venue_info = venue.get("venues")
+            if venue_info and isinstance(venue_info, dict):
+                venue_details.append({
+                    "id": venue["venue_id"],
+                    "name": venue_info.get("name", "不明な会場"),
+                    "campus": venue_info.get("campus", "不明なキャンパス")
+                })
+            else:
+                # JOINデータがない場合のフォールバック
                 venue_details.append({
                     "id": venue["venue_id"],
                     "name": "不明な会場",
@@ -116,20 +114,27 @@ class PracticeScheduleService:
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         return schedule  # None を返すことで、エンドポイント側で404を返す
 
-    async def get_practice_schedule_bundle(self, target_date: str, current_user: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def get_practice_schedule_bundle(self, target_date: str, current_user: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """指定日付のボトムシート用 bundle データをまとめて取得"""
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         if not schedule:
-            raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+            return None
 
         schedule_id = schedule["id"]
 
         ideal_task = asyncio.create_task(self.get_practice_schedule_ideal_format_by_id(schedule_id))
         attendance_task = asyncio.create_task(self.attendance_repository.find_by_practice_schedule(schedule_id))
         users_task = asyncio.create_task(self._get_bundle_users())
+        instructors_task = asyncio.create_task(
+            self.session_instructor_repository.find_all_with_details(
+                limit=1000,
+                offset=0,
+                schedule_id=schedule_id
+            )
+        )
 
-        ideal_data, attendance_entries, bundle_users = await asyncio.gather(
-            ideal_task, attendance_task, users_task, return_exceptions=False
+        ideal_data, attendance_entries, bundle_users, instructors = await asyncio.gather(
+            ideal_task, attendance_task, users_task, instructors_task, return_exceptions=False
         )
 
         current_user_id = str(current_user["id"]) if current_user and current_user.get("id") else None
@@ -151,6 +156,30 @@ class PracticeScheduleService:
             "venues": await self._get_venues_with_colors(schedule_id),
         }
 
+        instructors_by_slot: Dict[str, List[Dict[str, Any]]] = {}
+        for instructor in instructors or []:
+            slot_key = str(instructor.get("slot_order"))
+            formatted_instructor = {
+                "id": str(instructor.get("id")),
+                "attendance_id": str(instructor.get("attendance_id")),
+                "schedule_id": str(instructor.get("schedule_id")),
+                "schedule_available_venue_id": instructor.get("schedule_available_venue_id"),
+                "slot_order": instructor.get("slot_order"),
+                "created_at": instructor.get("created_at"),
+                "updated_at": instructor.get("updated_at"),
+                "user_name": instructor.get("user_name"),
+                "user_email": instructor.get("user_email"),
+                "attendance_status": instructor.get("attendance_status"),
+                "schedule_date": instructor.get("schedule_date"),
+                "schedule_title": instructor.get("schedule_title"),
+                "schedule_start_time": instructor.get("schedule_start_time"),
+                "schedule_end_time": instructor.get("schedule_end_time"),
+                "venue_name": instructor.get("venue_name"),
+                "venue_address": instructor.get("venue_address"),
+                "part_name": instructor.get("part_name"),
+            }
+            instructors_by_slot.setdefault(slot_key, []).append(formatted_instructor)
+
         bundle_response = {
             "schedule": schedule_block,
             "ideal": ideal_data or {
@@ -164,6 +193,7 @@ class PracticeScheduleService:
                 "my_entry": my_attendance,
             },
             "users": bundle_users,
+            "session_instructors": instructors_by_slot,
             "meta": {
                 "generated_at": datetime.utcnow().isoformat() + "Z",
                 "version": 1,
@@ -273,21 +303,19 @@ class PracticeScheduleService:
                 updated_schedule["venue_ids"] = [v["venue_id"] for v in venues_for_details]
                 print(f"DEBUG update_practice_schedule: 既存会場情報を保持")
             
-            # 会場詳細情報を取得
+            # 会場詳細情報を取得（JOIN済みデータを使用してN+1問題を回避）
             venue_details = []
             for venue in venues_for_details:
-                try:
-                    # 会場詳細情報を取得
-                    venue_info = await self.venue_repository.find_by_id(venue["venue_id"])
-                    if venue_info:
-                        venue_details.append({
-                            "id": venue["venue_id"],
-                            "name": venue_info.get("name", "不明な会場"),
-                            "campus": venue_info.get("campus", "不明なキャンパス")
-                        })
-                except Exception as e:
-                    print(f"DEBUG: 会場情報取得エラー venue_id={venue['venue_id']}, error={e}")
-                    # エラーの場合は基本的な情報のみ
+                # find_by_scheduleで既にvenues(*)をJOINしているので、個別取得不要
+                venue_info = venue.get("venues")
+                if venue_info and isinstance(venue_info, dict):
+                    venue_details.append({
+                        "id": venue["venue_id"],
+                        "name": venue_info.get("name", "不明な会場"),
+                        "campus": venue_info.get("campus", "不明なキャンパス")
+                    })
+                else:
+                    # JOINデータがない場合のフォールバック
                     venue_details.append({
                         "id": venue["venue_id"],
                         "name": "不明な会場",
