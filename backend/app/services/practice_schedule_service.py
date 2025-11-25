@@ -617,7 +617,7 @@ class PracticeScheduleService:
                 schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 for i, schedule_venue in enumerate(schedule_venues):
                     # 修正されたfind_by_scheduleメソッドから取得したデータを処理
-                    venue_name = schedule_venue.get("name", f"会場{i+1}")
+                    venue_name = schedule_venue.get("name") or f"会場{i+1}"  # Noneの場合はデフォルト値を使用
                     is_preferred = schedule_venue.get("is_preferred", False)
                     venue_priority = schedule_venue.get("priority", i+1)
 
