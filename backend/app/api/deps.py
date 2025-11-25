@@ -34,8 +34,10 @@ from app.repositories.practice_schedule_repository import (
 from app.repositories.session_repository import SessionRepository as SessionRepositoryNew
 from app.repositories.session_instructor_repository import SessionInstructorRepository
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
+from app.repositories.schedule_time_slot_repository import ScheduleTimeSlotRepository
 from app.services.practice_schedule_service import PracticeScheduleService
 from app.services.schedule_available_venue_service import ScheduleAvailableVenueService
+from app.services.schedule_time_slot_service import ScheduleTimeSlotService
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -273,6 +275,13 @@ def get_session_instructor_repository(
     return SessionInstructorRepository(supabase_client)
 
 
+def get_schedule_time_slot_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> ScheduleTimeSlotRepository:
+    """ScheduleTimeSlotRepositoryのインスタンスを取得"""
+    return ScheduleTimeSlotRepository(supabase_client)
+
+
 def get_practice_schedule_service(
     supabase_client: Client = Depends(get_supabase),
     practice_schedule_repository: PracticeScheduleRepository = Depends(get_practice_schedule_repository),
@@ -283,6 +292,7 @@ def get_practice_schedule_service(
     member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
     attendance_repository: AttendanceRepository = Depends(get_attendance_repository),
     user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+    schedule_time_slot_repository: ScheduleTimeSlotRepository = Depends(get_schedule_time_slot_repository),
 ) -> PracticeScheduleService:
     """PracticeScheduleServiceのインスタンスを依存性注入で取得"""
     return PracticeScheduleService(
@@ -294,6 +304,7 @@ def get_practice_schedule_service(
         member_assignment_repository,
         attendance_repository,
         user_profile_repository,
+        schedule_time_slot_repository,
         supabase_client.auth,
     )
 
@@ -343,6 +354,13 @@ def get_schedule_available_venue_service(
 ) -> ScheduleAvailableVenueService:
     """ScheduleAvailableVenueServiceのインスタンスを依存性注入で取得"""
     return ScheduleAvailableVenueService(schedule_available_venue_repository)
+
+
+def get_schedule_time_slot_service(
+    schedule_time_slot_repository: ScheduleTimeSlotRepository = Depends(get_schedule_time_slot_repository),
+) -> ScheduleTimeSlotService:
+    """ScheduleTimeSlotServiceのインスタンスを依存性注入で取得"""
+    return ScheduleTimeSlotService(schedule_time_slot_repository)
 
 
 def get_scheduling_optimization_service(

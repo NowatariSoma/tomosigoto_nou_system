@@ -8,6 +8,7 @@ from app.core.exceptions import APIException
 from app.repositories.practice_schedule_repository import PracticeScheduleRepository
 from app.repositories.session_repository import SessionRepository
 from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
+from app.repositories.schedule_time_slot_repository import ScheduleTimeSlotRepository
 from app.repositories.venue_repository import VenueRepository
 from app.repositories.session_instructor_repository import SessionInstructorRepository
 from app.repositories.member_assignment_repository import MemberAssignmentRepository
@@ -29,6 +30,7 @@ class PracticeScheduleService:
         member_assignment_repository: MemberAssignmentRepository,
         attendance_repository: AttendanceRepository,
         user_profile_repository: UserProfileRepository,
+        schedule_time_slot_repository: ScheduleTimeSlotRepository,
         auth_client,
     ):
         self.practice_schedule_repository = practice_schedule_repository
@@ -39,6 +41,7 @@ class PracticeScheduleService:
         self.member_assignment_repository = member_assignment_repository
         self.attendance_repository = attendance_repository
         self.user_profile_repository = user_profile_repository
+        self.schedule_time_slot_repository = schedule_time_slot_repository
         self.auth_client = auth_client
 
     # ===== 練習スケジュール CRUD =====
@@ -267,9 +270,92 @@ class PracticeScheduleService:
             venue_ids = schedule_data.pop("venue_ids", None)
             print(f"DEBUG update_practice_schedule: venue_ids={venue_ids}")
             
+            # 時間スロットの再生成が必要かチェック
+            time_slot_needs_regeneration = False
+            old_start_time = schedule.get("start_time")
+            old_end_time = schedule.get("end_time")
+            old_division_count = schedule.get("division_count", 6)
+            
+            new_start_time = schedule_data.get("start_time")
+            new_end_time = schedule_data.get("end_time")
+            new_division_count = schedule_data.get("division_count")
+            
+            if (new_start_time and new_start_time != old_start_time) or \
+               (new_end_time and new_end_time != old_end_time) or \
+               (new_division_count and new_division_count != old_division_count):
+                time_slot_needs_regeneration = True
+                print(f"DEBUG update_practice_schedule: 時間スロットの再生成が必要です")
+            
             # 練習スケジュールを更新
             updated_schedule = await self.practice_schedule_repository.update(schedule_id, schedule_data)
             print(f"DEBUG update_practice_schedule: updated_schedule={updated_schedule}")
+            
+            # 時間スロットを再生成
+            if time_slot_needs_regeneration:
+                try:
+                    from datetime import time as time_type, datetime, timedelta
+                    
+                    # 時間スロットリポジトリを直接使用
+                    time_slot_repo = self.schedule_time_slot_repository
+                    
+                    # 既存の時間スロットを削除
+                    await time_slot_repo.delete_by_schedule(schedule_id)
+                    print(f"DEBUG update_practice_schedule: 既存の時間スロットを削除しました")
+                    
+                    # 新しい時間スロットを生成
+                    final_start_time = new_start_time or old_start_time
+                    final_end_time = new_end_time or old_end_time
+                    final_division_count = new_division_count or old_division_count
+                    
+                    # 時間文字列をtimeオブジェクトに変換
+                    if isinstance(final_start_time, str):
+                        # HH:MM:SS形式またはHH:MM形式をパース
+                        time_parts = final_start_time.split(':')
+                        start_time_obj = time_type(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]) if len(time_parts) > 2 else 0)
+                    else:
+                        start_time_obj = final_start_time
+                    
+                    if isinstance(final_end_time, str):
+                        time_parts = final_end_time.split(':')
+                        end_time_obj = time_type(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]) if len(time_parts) > 2 else 0)
+                    else:
+                        end_time_obj = final_end_time
+                    
+                    # division_countに基づいて時間スロットを生成
+                    time_slots_to_create = []
+                    start_datetime = datetime.combine(datetime.today(), start_time_obj)
+                    end_datetime = datetime.combine(datetime.today(), end_time_obj)
+                    total_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+                    slot_duration = total_minutes / final_division_count
+                    
+                    for i in range(final_division_count):
+                        slot_start_minutes = int(i * slot_duration)
+                        slot_end_minutes = int((i + 1) * slot_duration)
+                        
+                        slot_start_datetime = start_datetime + timedelta(minutes=slot_start_minutes)
+                        slot_end_datetime = start_datetime + timedelta(minutes=slot_end_minutes)
+                        
+                        # 最後のスロットは終了時刻に合わせる
+                        if i == final_division_count - 1:
+                            slot_end_datetime = end_datetime
+                        
+                        time_slots_to_create.append({
+                            "schedule_id": schedule_id,
+                            "slot_order": i + 1,
+                            "start_time": slot_start_datetime.time(),
+                            "end_time": slot_end_datetime.time()
+                        })
+                    
+                    # 時間スロットを一括作成
+                    if time_slots_to_create:
+                        for time_slot_data in time_slots_to_create:
+                            await time_slot_repo.create(time_slot_data)
+                        print(f"DEBUG update_practice_schedule: {len(time_slots_to_create)}個の時間スロットを作成しました")
+                except Exception as e:
+                    print(f"DEBUG update_practice_schedule: 時間スロット再生成エラー: {e}")
+                    import traceback
+                    print(f"DEBUG update_practice_schedule: スタックトレース: {traceback.format_exc()}")
+                    # 時間スロットの再生成に失敗してもスケジュール更新は成功として扱う
             
             # 複数部屋選択対応: 会場情報を更新
             if venue_ids is not None:
@@ -655,10 +741,41 @@ class PracticeScheduleService:
             print(f"Warning: Could not calculate participants for schedule {schedule_id}: {e}")
             return 0  # データなし
 
-    def _calculate_slot_time(self, schedule: Dict[str, Any], slot_order: int, division_count: int) -> str:
-        """slot_orderに基づいて時間スロットを計算"""
-        from datetime import datetime, timedelta
+    async def _get_time_slots_from_db(self, schedule_id: Any) -> List[Dict[str, Any]]:
+        """データベースから時間スロットを取得"""
+        try:
+            # schedule_idが文字列の場合はUUIDに変換
+            if isinstance(schedule_id, str):
+                schedule_id = UUID(schedule_id)
+            elif not isinstance(schedule_id, UUID):
+                # UUIDでも文字列でもない場合はNoneを返す
+                return []
+            time_slots = await self.schedule_time_slot_repository.find_by_schedule(schedule_id)
+            return time_slots
+        except (ValueError, TypeError) as e:
+            print(f"Warning: Invalid schedule_id format: {schedule_id}, error: {e}")
+            return []
+        except Exception as e:
+            print(f"Warning: Could not fetch time slots from DB: {e}")
+            return []
 
+    def _calculate_slot_time(self, schedule: Dict[str, Any], slot_order: int, division_count: int, time_slots: Optional[List[Dict[str, Any]]] = None) -> str:
+        """slot_orderに基づいて時間スロットを計算（DBから取得した時間スロットを優先）"""
+        # データベースから取得した時間スロットがある場合はそれを使用
+        if time_slots:
+            for time_slot in time_slots:
+                if time_slot.get("slot_order") == slot_order:
+                    # start_timeが文字列の場合はそのまま返す、time型の場合はHH:MM形式に変換
+                    start_time = time_slot.get("start_time")
+                    if isinstance(start_time, str):
+                        # HH:MM:SS形式の場合はHH:MM部分のみ取得
+                        return start_time[:5] if ":" in start_time else start_time
+                    elif hasattr(start_time, 'strftime'):
+                        return start_time.strftime("%H:%M")
+                    return str(start_time)[:5]
+        
+        # フォールバック: 計算で時間スロットを生成
+        from datetime import datetime, timedelta
         start_time = datetime.strptime(str(schedule["start_time"]), "%H:%M:%S")
         end_time = datetime.strptime(str(schedule["end_time"]), "%H:%M:%S")
         total_minutes = int((end_time - start_time).total_seconds() / 60)
@@ -668,16 +785,40 @@ class PracticeScheduleService:
         slot_time = start_time + timedelta(minutes=slot_start_minutes)
         return slot_time.strftime("%H:%M")
 
-    def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
-        """時間スケジュールの枠を生成"""
+    async def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
+        """時間スケジュールの枠を生成（データベースから時間スロットを取得）"""
         time_schedule = {}
-
-        # 時間スロットを生成
-        for i in range(division_count):
-            time_str = self._calculate_slot_time(schedule, i + 1, division_count)
-            time_schedule[time_str] = {}
-            for venue in venues:
-                time_schedule[time_str][venue["id"]] = []
+        schedule_id = schedule.get("id")
+        
+        # データベースから時間スロットを取得
+        time_slots = []
+        if schedule_id:
+            time_slots = await self._get_time_slots_from_db(schedule_id)
+        
+        # データベースに時間スロットがある場合はそれを使用
+        if time_slots:
+            for time_slot in time_slots:
+                slot_order = time_slot.get("slot_order", 1)
+                start_time = time_slot.get("start_time")
+                
+                # start_timeを文字列形式に変換
+                if isinstance(start_time, str):
+                    time_str = start_time[:5] if ":" in start_time else start_time
+                elif hasattr(start_time, 'strftime'):
+                    time_str = start_time.strftime("%H:%M")
+                else:
+                    time_str = self._calculate_slot_time(schedule, slot_order, division_count)
+                
+                time_schedule[time_str] = {}
+                for venue in venues:
+                    time_schedule[time_str][venue["id"]] = []
+        else:
+            # フォールバック: 計算で時間スロットを生成
+            for i in range(division_count):
+                time_str = self._calculate_slot_time(schedule, i + 1, division_count)
+                time_schedule[time_str] = {}
+                for venue in venues:
+                    time_schedule[time_str][venue["id"]] = []
 
         return time_schedule
 
@@ -736,7 +877,7 @@ class PracticeScheduleService:
 
         return result
 
-    def _convert_to_ideal_format(self, display_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _convert_to_ideal_format(self, display_data: Dict[str, Any]) -> Dict[str, Any]:
         """表示用データを理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -761,16 +902,22 @@ class PracticeScheduleService:
 
         # 時間スケジュールを生成（動的分割を使用）
         division_count = display_data.get("division_count", 6)
-        time_schedule = self._generate_time_schedule(venues, display_data, division_count)
+        time_schedule = await self._generate_time_schedule(venues, display_data, division_count)
+
+        # データベースから時間スロットを取得
+        schedule_id = display_data.get("id")
+        time_slots = []
+        if schedule_id:
+            time_slots = await self._get_time_slots_from_db(schedule_id)
 
         # セッションを時間スロットに配置
         part_colors = settings.DEFAULT_PART_COLORS
         part_counter = {}
         
         for session in display_data.get("sessions", []):
-            # slot_orderから時間を計算（division_count対応）
+            # slot_orderから時間を計算（division_count対応、DBから取得した時間スロットを使用）
             slot_order = session.get("slot_order", 1)
-            session_start = self._calculate_slot_time(display_data, slot_order, division_count)
+            session_start = self._calculate_slot_time(display_data, slot_order, division_count, time_slots)
             
             # パート名を生成（part_idベース）
             part_id = session.get("part_id", "unknown")
@@ -810,7 +957,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    def _convert_to_ideal_format_simple(self, schedule: Dict[str, Any], details_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _convert_to_ideal_format_simple(self, schedule: Dict[str, Any], details_data: Dict[str, Any]) -> Dict[str, Any]:
         """実データを理想的な形式に変換（シンプル版）"""
         # 基本情報
         schedule_info = {
@@ -839,7 +986,13 @@ class PracticeScheduleService:
 
         # 時間スケジュールを生成（動的分割を使用）
         division_count = schedule.get("division_count", 6)
-        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+
+        # データベースから時間スロットを取得
+        schedule_id = schedule.get("id")
+        time_slots = []
+        if schedule_id:
+            time_slots = await self._get_time_slots_from_db(schedule_id)
 
         # セッションを配置
         part_colors = settings.DEFAULT_PART_COLORS
@@ -847,7 +1000,7 @@ class PracticeScheduleService:
         
         for i, session in enumerate(sessions):
             slot_order = session.get("slot_order", i + 1)
-            session_start = self._calculate_slot_time(schedule, slot_order, division_count)
+            session_start = self._calculate_slot_time(schedule, slot_order, division_count, time_slots)
             
             if session_start in time_schedule:
                 venue_id = venues[i % len(venues)]["id"]
@@ -886,7 +1039,10 @@ class PracticeScheduleService:
         venues = await self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+
+        # データベースから時間スロットを取得
+        time_slots = await self._get_time_slots_from_db(schedule["id"])
 
         # 実際のセッションデータのみを使用（推測データは生成しない）
         sessions = await self.session_repository.find_by_schedule(schedule["id"])
@@ -894,7 +1050,7 @@ class PracticeScheduleService:
         # 実際のセッションデータがある場合のみ配置
         for session in sessions:
             slot_order = session.get("slot_order", 1)
-            session_start = self._calculate_slot_time(schedule, slot_order, division_count)
+            session_start = self._calculate_slot_time(schedule, slot_order, division_count, time_slots)
             if session_start and session_start in time_schedule and venues:
                 venue_index = (slot_order - 1) % len(venues)
                 venue_id = venues[venue_index]["id"]
@@ -993,7 +1149,10 @@ class PracticeScheduleService:
         venues = await self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+
+        # データベースから時間スロットを取得
+        time_slots = await self._get_time_slots_from_db(schedule["id"])
 
         # パフォーマンス最適化: 一度に全てのデータを取得
         # セッションのpart_idリストを取得（UUIDを文字列に変換）
@@ -1089,8 +1248,8 @@ class PracticeScheduleService:
                     "schedule_available_venue_id": session.get("schedule_available_venue_id")
                 }
 
-                # slot_orderに基づいて時間スロットを決定（division_count対応）
-                time_str = self._calculate_slot_time(schedule, slot_order, division_count)
+                # slot_orderに基づいて時間スロットを決定（division_count対応、DBから取得した時間スロットを使用）
+                time_str = self._calculate_slot_time(schedule, slot_order, division_count, time_slots)
 
                 processing_detail["calculated_time"] = time_str
                 processing_detail["time_slot_exists"] = time_str in time_schedule

@@ -8,6 +8,7 @@ from app.api.endpoints import (
     parts,
     practice_slots,
     schedule_available_venues,
+    schedule_time_slots,
     scheduling,
     session_instructors,
     stages,
@@ -32,5 +33,6 @@ api_router.include_router(account_setting.router, prefix="/account-setting", tag
 api_router.include_router(practice_slots.router, prefix="/practice_schedules", tags=["practice_schedules"])
 api_router.include_router(session_instructors.router, prefix="/session-instructors", tags=["session-instructors"])
 api_router.include_router(schedule_available_venues.router, prefix="/schedule-available-venues", tags=["schedule-available-venues"])
+api_router.include_router(schedule_time_slots.router, prefix="/schedule-time-slots", tags=["schedule-time-slots"])
 api_router.include_router(scheduling.router, prefix="/scheduling", tags=["scheduling"])
 api_router.include_router(admin_members.router, prefix="/admin/members", tags=["admin-members"])

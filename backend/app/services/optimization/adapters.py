@@ -1,7 +1,6 @@
 """
 データベースとOR-Toolsデータモデル間の変換アダプター
 """
-import math
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from app.services.optimization.models import (
@@ -13,34 +12,6 @@ from app.services.optimization.constants import ProblemConfig, PriorityConfig, S
 
 class SchedulingDataAdapter:
     """データベースとOR-Toolsデータモデル間の変換を行うアダプター"""
-    
-    @staticmethod
-    def calculate_division_count(
-        parts_data: List[Dict[str, Any]],
-        venues_data: List[Dict[str, Any]]
-    ) -> int:
-        """時間コマ数を動的計算
-        
-        Args:
-            parts_data: パートデータのリスト
-            venues_data: 会場データのリスト
-            
-        Returns:
-            計算された時間コマ数（最小2コマ）
-        
-        計算式: パート数を部屋数で割って切り上げ
-        例: パート数10、部屋数3の場合 → ceil(10/3) = 4コマ
-        """
-        num_parts = len(parts_data)
-        num_rooms = len(venues_data)
-        
-        if num_parts > 0 and num_rooms > 0:
-            # 計算式: パート数÷部屋数を切り上げ（最小2コマ）
-            division_count = math.ceil(num_parts / num_rooms)
-            return max(2, division_count)
-        else:
-            # フォールバック値
-            return ProblemConfig.get_num_time_slots()
     
     @staticmethod
     def db_to_scheduling_problem(
@@ -87,8 +58,10 @@ class SchedulingDataAdapter:
             )
             rooms.append(room)
         
-        # 時間コマ変換（動的計算のみ）
-        division_count = SchedulingDataAdapter.calculate_division_count(parts_data, venues_data)
+        # 時間コマ変換（スケジュール設定に従う）
+        division_count = schedule_data.get("division_count")
+        if not isinstance(division_count, int) or division_count <= 0:
+            division_count = ProblemConfig.get_num_time_slots()
         
         time_slots = []
         for i in range(1, division_count + 1):

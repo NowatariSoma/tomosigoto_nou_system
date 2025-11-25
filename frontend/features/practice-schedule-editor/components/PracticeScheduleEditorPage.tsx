@@ -86,6 +86,39 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     fetchAvailableRooms();
   }, []);
 
+  // スケジュールの開始/終了時間をAPIから同期
+  useEffect(() => {
+    if (!currentScheduleId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const syncScheduleTimes = async () => {
+      try {
+        const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(currentScheduleId);
+        if (!basicSchedule || !isMounted) {
+          return;
+        }
+
+        if (basicSchedule.start_time) {
+          setScheduleStartTime(basicSchedule.start_time.substring(0, 5));
+        }
+        if (basicSchedule.end_time) {
+          setScheduleEndTime(basicSchedule.end_time.substring(0, 5));
+        }
+      } catch (error) {
+        console.error('スケジュール時間の取得に失敗しました:', error);
+      }
+    };
+
+    syncScheduleTimes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentScheduleId]);
+
   const handleCreateSession = () => {
     setIsCreating(true);
     selectSession(null);
@@ -200,6 +233,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       );
       setScheduleStartTime(startTime);
       setScheduleEndTime(endTime);
+      await fetchScheduleDetails();
     } catch (error) {
       console.error('スケジュール時間の更新に失敗しました:', error);
       alert('スケジュール時間の更新に失敗しました');

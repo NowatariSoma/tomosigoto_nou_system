@@ -69,7 +69,8 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
 
     const updatedTimeSlot: TimeSlot = {
       ...localTimeSlot,
-      display_time: `${localTimeSlot.start_time} - ${localTimeSlot.end_time}`
+      time: localTimeSlot.start_time,
+      display_time: `${localTimeSlot.start_time}-${localTimeSlot.end_time}`
     };
 
     onSave(updatedTimeSlot);
