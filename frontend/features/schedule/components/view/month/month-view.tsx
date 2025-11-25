@@ -64,6 +64,12 @@ export default function MonthView({
   } = usePracticeScheduleEvents();
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [today, setToday] = useState<Date | null>(null);
+
+  // クライアントサイドでのみ「今日」を設定（ハイドレーションミスマッチを防ぐ）
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
 
   // useEffect内でデバッグログを出力（レンダリングサイクルに影響しない）
   useEffect(() => {
@@ -415,9 +421,10 @@ export default function MonthView({
                   <div
                     className={clsx(
                       "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 pt-1 sm:pt-2 text-center",
-                      new Date().getDate() === dayObj.day &&
-                        new Date().getMonth() === currentDate.getMonth() &&
-                        new Date().getFullYear() === currentDate.getFullYear()
+                      today &&
+                        today.getDate() === dayObj.day &&
+                        today.getMonth() === currentDate.getMonth() &&
+                        today.getFullYear() === currentDate.getFullYear()
                         ? "text-secondary-500"
                         : isSunday
                         ? "text-red-600"

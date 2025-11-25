@@ -55,6 +55,14 @@ class PracticeScheduleService:
             venue_ids = []
             venue_details = []
 
+            # リレーションクエリが失敗した場合のフォールバック
+            if not schedule_venues and schedule.get("id"):
+                try:
+                    schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+                except Exception as e:
+                    print(f"Warning: Failed to fetch venues for schedule {schedule['id']}: {e}")
+                    schedule_venues = []
+
             for venue in schedule_venues:
                 venue_id = venue.get("venue_id")
                 if not venue_id:
