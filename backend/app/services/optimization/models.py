@@ -3,6 +3,7 @@
 """
 from dataclasses import dataclass
 from typing import List, Dict, Optional
+from datetime import time
 from app.services.optimization.constants import ProblemConfig
 
 
@@ -41,6 +42,8 @@ class TimeSlot:
     """時間コマ"""
     id: int
     name: str  # 例: "1限目", "2限目", "3限目"
+    start_time: Optional[time] = None  # 開始時刻（schedule_time_slotsから取得）
+    end_time: Optional[time] = None    # 終了時刻（schedule_time_slotsから取得）
 
 
 @dataclass

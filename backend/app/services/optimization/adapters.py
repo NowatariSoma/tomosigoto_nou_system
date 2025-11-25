@@ -24,9 +24,11 @@ class SchedulingDataAdapter:
         stage_id: str = None,  # ステージIDを追加
         sessions_data: List[Dict[str, Any]] = None,  # セッションデータを追加
         attendance_data: List[Dict[str, Any]] = None,  # 出席データを追加
-        user_roles_data: List[Dict[str, Any]] = None  # ユーザーロールデータを追加
+        user_roles_data: List[Dict[str, Any]] = None,  # ユーザーロールデータを追加
+        time_slots_data: List[Dict[str, Any]] = None  # 時間スロットデータを追加
     ) -> SchedulingProblem:
         """データベースデータをSchedulingProblemに変換"""
+        from datetime import datetime, time
         
         # ステージIDが指定されていない場合は自動解決
         if not stage_id:
@@ -58,18 +60,66 @@ class SchedulingDataAdapter:
             )
             rooms.append(room)
         
-        # 時間コマ変換（スケジュール設定に従う）
-        division_count = schedule_data.get("division_count")
-        if not isinstance(division_count, int) or division_count <= 0:
-            division_count = ProblemConfig.get_num_time_slots()
-        
+        # 時間コマ変換（schedule_time_slotsを優先、なければdivision_countを使用）
         time_slots = []
-        for i in range(1, division_count + 1):
-            time_slot = TimeSlot(
-                id=i,
-                name=f"{i}限目"
-            )
-            time_slots.append(time_slot)
+        if time_slots_data and len(time_slots_data) > 0:
+            # schedule_time_slotsから時間スロットを作成
+            for slot_data in time_slots_data:
+                slot_order = slot_data.get('slot_order')
+                start_time_str = slot_data.get('start_time')
+                end_time_str = slot_data.get('end_time')
+                
+                # 文字列から時刻に変換
+                start_time_obj = None
+                end_time_obj = None
+                if start_time_str:
+                    if isinstance(start_time_str, str):
+                        # HH:MM:SS形式または時刻オブジェクト
+                        try:
+                            if 'T' in start_time_str or 'Z' in start_time_str:
+                                dt = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+                                start_time_obj = dt.time()
+                            else:
+                                parts_time = start_time_str.split(':')
+                                start_time_obj = time(int(parts_time[0]), int(parts_time[1]), int(parts_time[2]) if len(parts_time) > 2 else 0)
+                        except:
+                            pass
+                    elif isinstance(start_time_str, time):
+                        start_time_obj = start_time_str
+                
+                if end_time_str:
+                    if isinstance(end_time_str, str):
+                        try:
+                            if 'T' in end_time_str or 'Z' in end_time_str:
+                                dt = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+                                end_time_obj = dt.time()
+                            else:
+                                parts_time = end_time_str.split(':')
+                                end_time_obj = time(int(parts_time[0]), int(parts_time[1]), int(parts_time[2]) if len(parts_time) > 2 else 0)
+                        except:
+                            pass
+                    elif isinstance(end_time_str, time):
+                        end_time_obj = end_time_str
+                
+                time_slot = TimeSlot(
+                    id=slot_order,
+                    name=f"{slot_order}限目",
+                    start_time=start_time_obj,
+                    end_time=end_time_obj
+                )
+                time_slots.append(time_slot)
+        else:
+            # フォールバック: division_countから生成
+            division_count = schedule_data.get("division_count")
+            if not isinstance(division_count, int) or division_count <= 0:
+                division_count = ProblemConfig.get_num_time_slots()
+            
+            for i in range(1, division_count + 1):
+                time_slot = TimeSlot(
+                    id=i,
+                    name=f"{i}限目"
+                )
+                time_slots.append(time_slot)
         
         # プレイヤー変換
         players = []
@@ -192,8 +242,8 @@ class SchedulingDataAdapter:
             user_id = ma_data.get('user_id')
             part_id = ma_data.get('part_id')
             
-            # 既に指導者として追加されている場合はスキップ
-            if any(p.id == user_id for p in players if p.is_instructor):
+            # 既に指導者として追加されている場合はスキップ（user_id同士で比較）
+            if any(p.user_id == str(user_id) for p in players if p.is_instructor):
                 continue
             
             # ユーザー情報を取得
@@ -315,7 +365,8 @@ class SchedulingDataAdapter:
         parts_data: List[Dict[str, Any]],
         users_data: List[Dict[str, Any]],
         member_assignments_data: List[Dict[str, Any]],
-        session_instructors_data: List[Dict[str, Any]] = None
+        session_instructors_data: List[Dict[str, Any]] = None,
+        user_roles_data: List[Dict[str, Any]] = None
     ) -> List[str]:
         """スケジューリングデータの妥当性を検証し、エラーメッセージを返す"""
         from app.services.optimization.constants import ErrorMessages
@@ -342,20 +393,19 @@ class SchedulingDataAdapter:
         if not member_assignments_data or len(member_assignments_data) == 0:
             errors.append("メンバー割り当てが設定されていません。パートにメンバーを割り当ててください。")
         
-        # 指導者の存在確認
+        # 指導者の存在確認（is_instructorフラグを確認）
         has_instructors = False
         if session_instructors_data and len(session_instructors_data) > 0:
             has_instructors = True
-        elif member_assignments_data and users_data:
-            # メンバー割り当てから指導者候補を確認
-            for ma in member_assignments_data:
-                user_id = ma.get('user_id')
-                if user_id and any(u.get('id') == user_id for u in users_data):
+        elif user_roles_data:
+            # user_rolesからis_instructorフラグを確認
+            for role_data in user_roles_data:
+                if role_data.get('is_instructor', False):
                     has_instructors = True
                     break
         
         if not has_instructors and not errors:
-            errors.append("指導者が設定されていません。セッションに指導者を割り当ててください。")
+            errors.append("指導者が設定されていません。is_instructorフラグを持つユーザーを設定してください。")
         
         return errors
     
