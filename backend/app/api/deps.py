@@ -20,6 +20,18 @@ from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_role_repository import UserRoleRepository
 from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
+from app.repositories.materials_youtube_repository import (
+    MaterialsPlaylistRepository,
+    MaterialsSubPlaylistRepository,
+    MaterialsVideoRepository,
+    MaterialsFavoriteRepository,
+)
+from app.services.materials_youtube_service import (
+    MaterialsPlaylistService,
+    MaterialsSubPlaylistService,
+    MaterialsVideoService,
+    MaterialsFavoriteService,
+)
 
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
@@ -434,3 +446,67 @@ def get_scheduling_optimization_service(
         attendance_repository,
         user_role_repository
     )
+
+
+# Materials YouTube関連の依存性注入
+def get_materials_playlist_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsPlaylistRepository:
+    """MaterialsPlaylistRepositoryのインスタンスを取得"""
+    return MaterialsPlaylistRepository(supabase_client)
+
+
+def get_materials_sub_playlist_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsSubPlaylistRepository:
+    """MaterialsSubPlaylistRepositoryのインスタンスを取得"""
+    return MaterialsSubPlaylistRepository(supabase_client)
+
+
+def get_materials_video_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsVideoRepository:
+    """MaterialsVideoRepositoryのインスタンスを取得"""
+    return MaterialsVideoRepository(supabase_client)
+
+
+def get_materials_favorite_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsFavoriteRepository:
+    """MaterialsFavoriteRepositoryのインスタンスを取得"""
+    return MaterialsFavoriteRepository(supabase_client)
+
+
+def get_materials_playlist_service(
+    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
+) -> MaterialsPlaylistService:
+    """MaterialsPlaylistServiceのインスタンスを依存性注入で取得"""
+    return MaterialsPlaylistService(materials_playlist_repository)
+
+
+def get_materials_sub_playlist_service(
+    supabase_client: Client = Depends(get_supabase),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
+    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
+) -> MaterialsSubPlaylistService:
+    """MaterialsSubPlaylistServiceのインスタンスを依存性注入で取得"""
+    return MaterialsSubPlaylistService(
+        materials_sub_playlist_repository,
+        materials_video_repository,
+        supabase_client
+    )
+
+
+def get_materials_video_service(
+    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
+) -> MaterialsVideoService:
+    """MaterialsVideoServiceのインスタンスを依存性注入で取得"""
+    return MaterialsVideoService(materials_video_repository, materials_sub_playlist_repository)
+
+
+def get_materials_favorite_service(
+    materials_favorite_repository: MaterialsFavoriteRepository = Depends(get_materials_favorite_repository),
+) -> MaterialsFavoriteService:
+    """MaterialsFavoriteServiceのインスタンスを依存性注入で取得"""
+    return MaterialsFavoriteService(materials_favorite_repository)

@@ -27,6 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 router = APIRouter()
 
 
+@router.get("", response_model=List[MaterialsPlaylistResponse])
 @router.get("/", response_model=List[MaterialsPlaylistResponse])
 async def get_materials_playlists(
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
@@ -35,6 +36,121 @@ async def get_materials_playlists(
     youtubeプレイリスト一覧を取得
     """
     return await materials_playlist_service.get_all_materials_playlists()
+
+
+# お気に入りのAPIエンドポイント（動的パスより前に定義する必要あり）
+@router.get("/favorites", response_model=List[MaterialsFavoritesResponse])
+async def get_user_favorites(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    現在のユーザーのお気に入り一覧を取得
+    """
+    user_id = UUID(current_user["id"])
+    favorites = await materials_favorite_service.get_favorites_by_user_id(user_id)
+
+    if not favorites:
+        return []
+
+    # スキーマに明示的に変換
+    result = []
+    for favorite in favorites:
+        try:
+            # UUIDフィールドを確認して変換
+            favorite_dict = dict(favorite)
+
+            # UUID変換
+            if 'id' in favorite_dict and isinstance(favorite_dict['id'], str):
+                favorite_dict['id'] = UUID(favorite_dict['id'])
+            if 'user_id' in favorite_dict and isinstance(favorite_dict['user_id'], str):
+                favorite_dict['user_id'] = UUID(favorite_dict['user_id'])
+            if 'video_id' in favorite_dict and isinstance(favorite_dict['video_id'], str):
+                favorite_dict['video_id'] = UUID(favorite_dict['video_id'])
+
+            # スキーマに変換
+            favorite_response = MaterialsFavoritesResponse(**favorite_dict)
+            result.append(favorite_response)
+        except (ValidationError, ValueError, KeyError):
+            # バリデーションエラーはスキップして続行
+            continue
+
+    return result
+
+
+@router.get("/videos/{video_id}/favorites/status")
+async def get_favorite_status(
+    video_id: UUID,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    指定したビデオが現在のユーザーにお気に入り登録されているかチェック
+    """
+    user_id = UUID(current_user["id"])
+    is_favorited = await materials_favorite_service.is_favorited(user_id, video_id)
+    return {"is_favorited": is_favorited, "video_id": str(video_id), "user_id": str(user_id)}
+
+
+@router.post("/videos/{video_id}/favorites", response_model=MaterialsFavoritesResponse)
+async def create_favorite(
+    video_id: UUID,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    指定したビデオをお気に入りに追加
+    """
+    user_id = UUID(current_user["id"])
+    favorite_data = {
+        "user_id": str(user_id),
+        "video_id": str(video_id)
+    }
+    try:
+        favorite = await materials_favorite_service.create_materials_favorite(favorite_data)
+        return favorite
+    except APIException as e:
+        if e.error_code == "FAVORITE_ALREADY_EXISTS":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=e.error_msg
+            )
+        raise
+
+
+@router.delete("/videos/{video_id}/favorites")
+async def delete_favorite(
+    video_id: UUID,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    指定したビデオのお気に入りを削除
+    """
+    user_id = UUID(current_user["id"])
+    success = await materials_favorite_service.delete_materials_favorite(user_id, video_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="お気に入りが見つかりません"
+        )
+
+    return {"message": "お気に入りを削除しました", "video_id": str(video_id)}
+
+
+@router.post("/videos/{video_id}/favorites/toggle")
+async def toggle_favorite(
+    video_id: UUID,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    指定したビデオのお気に入りを追加/削除を切り替え
+    """
+    user_id = UUID(current_user["id"])
+    result = await materials_favorite_service.toggle_favorite(user_id, video_id)
+    return result
 
 
 @router.get("/{playlist_id}", response_model=MaterialsPlaylistResponse)
@@ -295,119 +411,3 @@ async def delete_materials_video(
         )
     
     return {"message": "ビデオを削除しました"}
-
-
-# お気に入りのAPIエンドポイント
-@router.get("/favorites", response_model=List[MaterialsFavoritesResponse])
-async def get_user_favorites(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
-):
-    """
-    現在のユーザーのお気に入り一覧を取得
-    """
-    user_id = UUID(current_user["id"])
-    favorites = await materials_favorite_service.get_favorites_by_user_id(user_id)
-    
-    if not favorites:
-        return []
-    
-    # スキーマに明示的に変換
-    result = []
-    for favorite in favorites:
-        try:
-            # UUIDフィールドを確認して変換
-            favorite_dict = dict(favorite)
-            
-            # UUID変換
-            if 'id' in favorite_dict and isinstance(favorite_dict['id'], str):
-                favorite_dict['id'] = UUID(favorite_dict['id'])
-            if 'user_id' in favorite_dict and isinstance(favorite_dict['user_id'], str):
-                favorite_dict['user_id'] = UUID(favorite_dict['user_id'])
-            if 'video_id' in favorite_dict and isinstance(favorite_dict['video_id'], str):
-                favorite_dict['video_id'] = UUID(favorite_dict['video_id'])
-            
-            # スキーマに変換
-            favorite_response = MaterialsFavoritesResponse(**favorite_dict)
-            result.append(favorite_response)
-        except (ValidationError, ValueError, KeyError):
-            # バリデーションエラーはスキップして続行
-            continue
-    
-    return result
-
-
-@router.get("/videos/{video_id}/favorites/status")
-async def get_favorite_status(
-    video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
-):
-    """
-    指定したビデオが現在のユーザーにお気に入り登録されているかチェック
-    """
-    user_id = UUID(current_user["id"])
-    is_favorited = await materials_favorite_service.is_favorited(user_id, video_id)
-    return {"is_favorited": is_favorited, "video_id": str(video_id), "user_id": str(user_id)}
-
-
-@router.post("/videos/{video_id}/favorites", response_model=MaterialsFavoritesResponse)
-async def create_favorite(
-    video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
-):
-    """
-    指定したビデオをお気に入りに追加
-    """
-    user_id = UUID(current_user["id"])
-    favorite_data = {
-        "user_id": str(user_id),
-        "video_id": str(video_id)
-    }
-    try:
-        favorite = await materials_favorite_service.create_materials_favorite(favorite_data)
-        return favorite
-    except APIException as e:
-        if e.error_code == "FAVORITE_ALREADY_EXISTS":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=e.error_msg
-            )
-        raise
-
-
-@router.delete("/videos/{video_id}/favorites")
-async def delete_favorite(
-    video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
-):
-    """
-    指定したビデオのお気に入りを削除
-    """
-    user_id = UUID(current_user["id"])
-    success = await materials_favorite_service.delete_materials_favorite(user_id, video_id)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="お気に入りが見つかりません"
-        )
-    
-    return {"message": "お気に入りを削除しました", "video_id": str(video_id)}
-
-
-@router.post("/videos/{video_id}/favorites/toggle")
-async def toggle_favorite(
-    video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
-):
-    """
-    指定したビデオのお気に入りを追加/削除を切り替え
-    """
-    user_id = UUID(current_user["id"])
-    result = await materials_favorite_service.toggle_favorite(user_id, video_id)
-    return result
-    
