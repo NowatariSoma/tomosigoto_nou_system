@@ -326,6 +326,62 @@ async def require_admin(
     return current_user
 
 
+async def require_instructor_or_admin(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+) -> Dict[str, Any]:
+    """指導者または管理者権限チェック（is_instructorフラグを使用）"""
+    user_id = current_user.get("id")
+    role = await user_role_repository.get_role_by_user_id(user_id)
+
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ユーザーロールが見つかりません"
+        )
+    
+    role_type = role.get("role_type")
+    is_instructor = role.get("is_instructor", False)
+    
+    # admin または basic+is_instructor=true が指導者以上
+    if role_type == "admin" or (role_type == "basic" and is_instructor):
+        return current_user
+    
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="指導者以上の権限が必要です"
+    )
+
+
+async def require_member_or_above(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+) -> Dict[str, Any]:
+    """メンバー以上の権限チェック（閲覧者を除く）"""
+    user_id = current_user.get("id")
+    role = await user_role_repository.get_role_by_user_id(user_id)
+
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ユーザーロールが見つかりません"
+        )
+    
+    role_type = role.get("role_type")
+    
+    # admin, basic（指導者・一般メンバー含む）がメンバー以上
+    # general, viewerは閲覧のみなので除外
+    if role_type in ["admin", "basic"]:
+        return current_user
+    
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="メンバー権限が必要です"
+    )
+
+
+
+
 def get_session_instructor_service(
     session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
 ) -> SessionInstructorService:

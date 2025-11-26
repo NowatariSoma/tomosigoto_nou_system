@@ -1,7 +1,12 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_current_user_optional, get_practice_schedule_service
+from app.api.deps import (
+    get_current_user,
+    get_current_user_optional,
+    get_practice_schedule_service,
+    require_instructor_or_admin,
+)
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
 from app.schemas.practice_schedules import (
@@ -184,7 +189,7 @@ async def get_practice_schedule_bundle(
 async def create_practice_schedule(
     schedule_data: PracticeScheduleCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     新しい練習スケジュールを作成
@@ -214,7 +219,7 @@ async def update_practice_schedule(
     schedule_id: UUID,
     schedule_data: PracticeScheduleUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定した練習スケジュールを更新
@@ -332,7 +337,7 @@ async def get_session(
 async def create_session(
     session_data: SessionCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     新しいセッションを作成
