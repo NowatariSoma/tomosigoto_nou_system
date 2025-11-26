@@ -30,4 +30,5 @@ INSERT INTO departments (department_code, department_name, campus, is_active, cr
 ('GS-LIT', '文学研究科', '今出川', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('GS-SPS', '社会学研究科', '今出川', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('GS-ENG', '理工学研究科', '田辺', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('GS-LHS', '生命医科学研究科', '田辺', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('GS-LHS', '生命医科学研究科', '田辺', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('GS-BUS', 'ビジネス研究科', '今出川', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
