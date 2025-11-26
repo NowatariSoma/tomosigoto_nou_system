@@ -34,11 +34,17 @@ export const PlaylistCard = ({
       onClick={onClick}
     >
       <div className="relative h-48 overflow-hidden bg-slate-200">
-        <img
-          src={playlist.thumbnailUrl}
-          alt={playlist.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {playlist.thumbnailUrl ? (
+          <img
+            src={playlist.thumbnailUrl}
+            alt={playlist.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
+            No Image
+          </div>
+        )}
       </div>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">

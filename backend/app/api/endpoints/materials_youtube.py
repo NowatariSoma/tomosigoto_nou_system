@@ -170,6 +170,7 @@ async def get_materials_playlist_by_id(
     return playlist
 
 
+@router.post("", response_model=MaterialsPlaylistResponse)
 @router.post("/", response_model=MaterialsPlaylistResponse)
 async def create_materials_playlist(
     materials_playlist_data: MaterialsPlaylistCreate,

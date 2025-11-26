@@ -11,6 +11,7 @@ from supabase import Client
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
+from app.core.config import settings
 from app.repositories.materials_youtube_repository import MaterialsPlaylistRepository, MaterialsSubPlaylistRepository, MaterialsVideoRepository, MaterialsFavoriteRepository
 
 logger = logging.getLogger(__name__)
@@ -95,10 +96,19 @@ class MaterialsSubPlaylistService:
             error_msg="無効な再生リストURLです"
         )
 
+    def _get_client_secret(self) -> Optional[str]:
+        """
+        環境変数からclient_secretを取得
+
+        Returns:
+            client_secret、またはNone
+        """
+        return settings.GOOGLE_CLIENT_SECRET
+
     async def _get_system_credentials(self) -> Optional[Credentials]:
         """
         システム管理者のOAuth認証情報を取得
-        
+
         Returns:
             Google認証情報、またはNone（トークンがない場合）
         """
@@ -109,21 +119,31 @@ class MaterialsSubPlaylistService:
                 .eq("account_type", "system")
                 .execute()
             )
-            
+
             if not response.data:
                 return None
-            
+
             token_data = response.data[0]
-            
+
+            # client_secretを取得（DBに保存されていないため環境変数またはファイルから）
+            client_secret = token_data.get("client_secret") or self._get_client_secret()
+
+            if not client_secret:
+                logger.error("client_secret not found in DB or secrets file")
+                raise APIException(
+                    error_code="CLIENT_SECRET_NOT_FOUND",
+                    error_msg="client_secretが見つかりません。GOOGLE_CLIENT_SECRETS_FILEを確認してください。"
+                )
+
             creds = Credentials(
                 token=token_data["access_token"],
                 refresh_token=token_data.get("refresh_token"),
                 token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
                 client_id=token_data.get("client_id"),
-                client_secret=token_data.get("client_secret"),
+                client_secret=client_secret,
                 scopes=token_data.get("scopes", [])
             )
-            
+
             # トークンが期限切れの場合はリフレッシュ
             if creds.expired and creds.refresh_token:
                 try:
@@ -141,7 +161,7 @@ class MaterialsSubPlaylistService:
                         error_code="TOKEN_REFRESH_FAILED",
                         error_msg=f"トークンのリフレッシュに失敗しました: {str(e)}"
                     )
-            
+
             return creds
         except APIException:
             raise

@@ -214,6 +214,8 @@ export const SubPlaylistEditView = ({
               onDelete={onVideoDelete}
               showDate={true}
               formatDate={formatDate}
+              playlistId={playlist?.id}
+              subPlaylistId={subPlaylist.id}
             />
           ))}
         </div>

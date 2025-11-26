@@ -14,26 +14,53 @@ import { Card, CardContent } from '@/components/ui/layout/card';
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/inputs/input';
 import { Video } from '@/features/materials/types/material_types';
+import { materialsService } from '@/features/materials/services/materials-service';
 
 interface EditVideoCardProps {
   video: Video;
   onDelete: (id: string) => void;
   showDate?: boolean;
   formatDate?: (dateString?: string) => string;
+  playlistId?: string;
+  subPlaylistId?: string;
+  onUpdate?: (updatedVideo: Video) => void;
 }
 
-export const EditVideoCard = ({ 
-  video, 
+export const EditVideoCard = ({
+  video,
   onDelete,
   showDate = false,
-  formatDate
+  formatDate,
+  playlistId,
+  subPlaylistId,
+  onUpdate,
 }: EditVideoCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(video.title);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    alert('動画タイトルを保存しました\n（実際のAPI連携は未実装）');
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!playlistId || !subPlaylistId) {
+      alert('エラー: プレイリストIDまたはサブプレイリストIDが指定されていません');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatedVideo = await materialsService.updateVideo(
+        playlistId,
+        subPlaylistId,
+        video.id,
+        { title: editTitle }
+      );
+      onUpdate?.(updatedVideo);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update video:', error);
+      alert('動画タイトルの更新に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -44,11 +71,17 @@ export const EditVideoCard = ({
   return (
     <Card className="relative">
       <div className="aspect-video bg-slate-200 rounded-t">
-        <img
-          src={video.thumbnailUrl}
-          alt={video.title}
-          className="w-full h-full object-cover rounded-t"
-        />
+        {video.thumbnailUrl ? (
+          <img
+            src={video.thumbnailUrl}
+            alt={video.title}
+            className="w-full h-full object-cover rounded-t"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
+            No Image
+          </div>
+        )}
       </div>
       <CardContent className="p-3">
         {isEditing ? (
@@ -71,9 +104,10 @@ export const EditVideoCard = ({
               <Button
                 size="sm"
                 onClick={handleSave}
+                disabled={isSaving}
                 className="flex-1 text-xs"
               >
-                保存
+                {isSaving ? '保存中...' : '保存'}
               </Button>
             </div>
           </div>
