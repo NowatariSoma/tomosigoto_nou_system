@@ -14,7 +14,7 @@ interface FormData {
   first_name_kanji: string;
   last_name_katakana: string;
   first_name_katakana: string;
-  year: number;
+  year: number | '';
   faculty: string;
   department_code: string;
   email: string;
@@ -398,7 +398,10 @@ const AccountSettings: React.FC = () => {
                 <input
                   type="number"
                   value={formData.year}
-                  onChange={(e) => handleInputChange('year', parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleInputChange('year', value === '' ? '' : parseInt(value));
+                  }}
                   min="1"
                   max="6"
                   className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
