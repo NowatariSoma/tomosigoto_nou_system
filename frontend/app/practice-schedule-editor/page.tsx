@@ -1,10 +1,12 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { PracticeScheduleEditorPage } from '@/features/practice-schedule-editor/components';
-import { Edit3, Calendar } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 function PracticeScheduleEditorContent() {
   const searchParams = useSearchParams();
@@ -20,6 +22,19 @@ function PracticeScheduleEditorContent() {
 }
 
 export default function Page() {
+  const router = useRouter();
+  const { canEdit, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !canEdit) {
+      router.push('/');
+    }
+  }, [canEdit, isLoading, router]);
+
+  if (isLoading || !canEdit) {
+    return null;
+  }
+
   return (
     <AppTemplate
       title="練習表編集"
