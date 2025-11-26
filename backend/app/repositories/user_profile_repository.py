@@ -242,24 +242,26 @@ class UserProfileRepository:
         return data
 
     @handle_supabase_errors("check_email_exists")
-    async def check_email_exists(self, email: str) -> bool:
+    async def check_email_exists(self, email: str, exclude_user_id: Optional[str] = None) -> bool:
         """
         メールアドレスの重複チェック
 
         Args:
             email: チェックするメールアドレス
+            exclude_user_id: 除外するユーザーID（更新時など）
 
         Returns:
             メールアドレスが既に存在する場合はTrue
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("id")
-            .eq("email", email)
-            .execute()
-        )
+        query = self.client.table(self.table_name).select("id").eq("email", email)
+
+        if exclude_user_id:
+            query = query.neq("user_id", exclude_user_id)
+
+        response = query.execute()
         exists = len(response.data or []) > 0
-        logger.info(f"Email {email} exists: {exists}")
+        if exists:
+            logger.info(f"Email {email} exists: {exists}")
         return exists
 
     @handle_supabase_errors("get_all_profiles_basic")

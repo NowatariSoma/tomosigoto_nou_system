@@ -132,18 +132,28 @@ async def update_user_profile(
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを更新"""
     user_id = current_user["id"]
-    
+
     # 更新データから None 値を除外
     update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
-    
+
     if not update_dict:
         raise APIException(ErrorMessage.BAD_REQUEST)
-    
+
     # バリデーション
     validation_result = await account_setting_service.validate_profile_data(update_dict, user_id)
     if not validation_result.is_valid:
-        raise APIException(ErrorMessage.BAD_REQUEST)
-    
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Validation failed for user {user_id}: {[e.dict() for e in validation_result.errors]}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_code": "VALIDATION_ERROR",
+                "error_msg": "バリデーションエラー",
+                "errors": [e.dict() for e in validation_result.errors]
+            }
+        )
+
     profile = await account_setting_service.update_profile(user_id, update_data)
     return profile
 
