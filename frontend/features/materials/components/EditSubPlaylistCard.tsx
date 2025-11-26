@@ -35,6 +35,7 @@ interface EditSubPlaylistCardProps {
   onVideoDelete: (id: string) => void;
   onClick?: (id: string) => void;
   playlistId?: string;
+  onUpdate?: (updatedSubPlaylist: SubPlaylist) => void;
 }
 
 export const EditSubPlaylistCard = ({
@@ -48,6 +49,7 @@ export const EditSubPlaylistCard = ({
   onVideoDelete,
   onClick,
   playlistId,
+  onUpdate,
 }: EditSubPlaylistCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(subPlaylist.title);
@@ -123,9 +125,33 @@ export const EditSubPlaylistCard = ({
     }
   };
 
-  const handleSave = () => {
-    alert('サブプレイリスト情報を保存しました\n（実際のAPI連携は未実装）');
-    setIsEditing(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!playlistId) {
+      alert('エラー: プレイリストIDが指定されていません');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatedSubPlaylist = await materialsService.updateSubPlaylist(
+        playlistId,
+        subPlaylist.id,
+        {
+          title: editTitle,
+          recordedDate: editDate,
+          phase: editPhase,
+        }
+      );
+      onUpdate?.(updatedSubPlaylist);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update sub-playlist:', error);
+      alert('サブプレイリストの更新に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -338,8 +364,9 @@ export const EditSubPlaylistCard = ({
               </Button>
               <Button
                 onClick={handleSave}
+                disabled={isSaving}
               >
-                保存
+                {isSaving ? '保存中...' : '保存'}
               </Button>
             </div>
           </div>
@@ -357,11 +384,17 @@ export const EditSubPlaylistCard = ({
                 return (
                   <div key={video.id} className="flex-shrink-0">
                     <div className="w-32 aspect-video bg-slate-200 rounded overflow-hidden">
-                      <img
-                        src={video.thumbnailUrl}
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                      />
+                      {video.thumbnailUrl ? (
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                          No Image
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

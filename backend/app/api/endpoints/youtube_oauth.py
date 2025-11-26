@@ -33,58 +33,54 @@ SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
 STATE_EXPIRY_MINUTES = 10  # stateの有効期限（分）
 
 
-def _validate_oauth_config() -> tuple[str, str]:
+def _validate_oauth_config() -> str:
     """
-    OAuth設定を検証し、必要な値を返す
-    
+    OAuth設定を検証し、redirect_uriを返す
+
     Returns:
-        (client_secrets_file, redirect_uri)のタプル
-        
+        redirect_uri
+
     Raises:
         HTTPException: 設定が不正な場合
     """
-    client_secrets_file = settings.GOOGLE_CLIENT_SECRETS_FILE
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="GOOGLE_CLIENT_ID と GOOGLE_CLIENT_SECRET が設定されていません"
+        )
+
     redirect_uri = settings.YOUTUBE_OAUTH_REDIRECT_URI
-    
-    if not client_secrets_file:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GOOGLE_CLIENT_SECRETS_FILEが設定されていません"
-        )
-    
-    if not os.path.exists(client_secrets_file):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Google OAuth設定ファイルが見つかりません: {client_secrets_file}"
-        )
-    
     if not redirect_uri:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="YOUTUBE_OAUTH_REDIRECT_URIが設定されていません"
         )
-    
-    return client_secrets_file, redirect_uri
+
+    return redirect_uri
 
 
-def _create_oauth_flow(
-    client_secrets_file: str,
-    redirect_uri: str,
-    state: Optional[str] = None
-) -> Flow:
+def _create_oauth_flow(redirect_uri: str, state: Optional[str] = None) -> Flow:
     """
     OAuth Flowインスタンスを作成
-    
+
     Args:
-        client_secrets_file: クライアントシークレットファイルのパス
         redirect_uri: リダイレクトURI
         state: OAuth state（オプション）
-        
+
     Returns:
         Flowインスタンス
     """
-    return Flow.from_client_secrets_file(
-        client_secrets_file,
+    client_config = {
+        "web": {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [redirect_uri],
+        }
+    }
+    return Flow.from_client_config(
+        client_config,
         scopes=SCOPES,
         redirect_uri=redirect_uri,
         state=state
@@ -258,32 +254,32 @@ async def authorize_youtube(
 ):
     """
     YouTube OAuth認証を開始
-    
+
     システム管理者用の認証フローを開始します。
     stateはSupabaseに保存され、CSRF対策として使用されます。
     """
     try:
-        client_secrets_file, redirect_uri = _validate_oauth_config()
-        
+        redirect_uri = _validate_oauth_config()
+
         # OAuth Flowを作成
-        flow = _create_oauth_flow(client_secrets_file, redirect_uri)
-        
+        flow = _create_oauth_flow(redirect_uri)
+
         # 認証URLとstateを生成
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
             prompt='consent'  # リフレッシュトークンを確実に取得
         )
-        
+
         # stateをSupabaseに保存（CSRF対策）
         await _save_oauth_state(supabase_client, state)
-        
+
         return {
             "authorization_url": authorization_url,
             "state": state,  # デバッグ用（本番環境では返さない方が良い）
             "message": "ブラウザでauthorization_urlにアクセスして認証を完了してください"
         }
-        
+
     except HTTPException:
         raise
     except APIException as e:
@@ -329,28 +325,28 @@ async def youtube_oauth_callback(
         )
     
     try:
-        client_secrets_file, redirect_uri = _validate_oauth_config()
-        
+        redirect_uri = _validate_oauth_config()
+
         # 同じstateでFlowを作成（Googleの推奨方法）
-        flow = _create_oauth_flow(client_secrets_file, redirect_uri, state=state)
-        
+        flow = _create_oauth_flow(redirect_uri, state=state)
+
         # トークンを取得
         flow.fetch_token(code=code)
         credentials = flow.credentials
-        
+
         # リフレッシュトークンが取得できなかった場合の警告
         if not credentials.refresh_token:
             logger.warning("Refresh token was not provided. User may need to revoke access and re-authenticate.")
-        
+
         # トークンをDBに保存（client_secretは保存しない）
         _save_oauth_token(supabase_client, credentials)
-        
+
         return {
             "message": "YouTube認証が完了しました",
             "status": "success",
             "has_refresh_token": bool(credentials.refresh_token)
         }
-        
+
     except HTTPException:
         raise
     except APIException as e:

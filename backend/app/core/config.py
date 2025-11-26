@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     SCHEDULE_END_HOUR: int = 17
     SCHEDULE_SLOT_MINUTES: int = 30
 
+    # YouTube API設定
+    YOUTUBE_API_KEY: Optional[str] = None
+    GOOGLE_CLIENT_SECRETS_FILE: Optional[str] = None
+    YOUTUBE_OAUTH_REDIRECT_URI: Optional[str] = None
+    # 環境変数から直接OAuth設定を読む場合
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
     # Discord Webhook設定
     DISCORD_WEBHOOK_URL: Optional[str] = None
 
