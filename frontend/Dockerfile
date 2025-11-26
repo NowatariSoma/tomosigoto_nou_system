@@ -41,7 +41,11 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
 
 # Next.jsをビルド（本番環境のみ）
-RUN if [ "$NODE_ENV" = "production" ]; then \
+RUN echo "=== Build Environment ===" && \
+    echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" && \
+    echo "NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL" && \
+    echo "=========================" && \
+    if [ "$NODE_ENV" = "production" ]; then \
       npm run build; \
     else \
       echo "Skipping build in development mode"; \
