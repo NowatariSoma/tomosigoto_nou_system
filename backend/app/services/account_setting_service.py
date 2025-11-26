@@ -257,7 +257,7 @@ class AccountSettingService:
         if "email" in update_dict:
             from app.core.config import settings
             if settings.ENABLE_EMAIL_DUPLICATE_CHECK:
-                if await self.user_profile_repo.check_email_exists(update_dict["email"]):
+                if await self.user_profile_repo.check_email_exists(update_dict["email"], exclude_user_id=user_id):
                     logger.warning(f"Email already exists: {update_dict['email']}")
                     raise APIException(ErrorMessage.BAD_REQUEST)
 

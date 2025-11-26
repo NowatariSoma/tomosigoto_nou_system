@@ -153,11 +153,15 @@ const AccountSettings: React.FC = () => {
       setSaveSuccess(false);
       setFieldErrors({});
 
+      // facultyはバックエンドで使用しないため除外
+      const { faculty, ...restFormData } = formData;
       const dataToSave = {
-        ...formData,
+        ...restFormData,
         department_code: formData.department_code || 'LIT',
-        year: formData.year || 1,
+        year: typeof formData.year === 'number' && formData.year > 0 ? formData.year : 1,
       };
+
+      console.log('Sending data:', JSON.stringify(dataToSave, null, 2));
 
       const success = await saveProfile(dataToSave);
       if (success) {

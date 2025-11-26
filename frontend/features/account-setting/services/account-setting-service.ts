@@ -98,7 +98,9 @@ export class AccountSettingService {
     });
 
     if (!response.ok) {
-      throw new ApiError(response.status, `HTTP error! status: ${response.status}`);
+      const errorBody = await response.text();
+      console.error('Update profile error response:', errorBody);
+      throw new ApiError(response.status, `HTTP error! status: ${response.status}, body: ${errorBody}`);
     }
 
     return response.json();
