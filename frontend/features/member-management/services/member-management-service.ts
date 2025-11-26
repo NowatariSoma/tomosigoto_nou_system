@@ -3,7 +3,7 @@ import { MemberSummary, UpdateMemberRolePayload, UpdateInstructorFlagPayload } f
 
 export class MemberManagementService {
   private readonly apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-  private readonly basePath = '/admin/members';
+  private readonly basePath = '/admin/members/';
 
   private async getAuthHeaders(contentType: boolean = false): Promise<HeadersInit> {
     const { data: { session } } = await supabase.auth.getSession();
