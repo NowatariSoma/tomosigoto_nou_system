@@ -1,7 +1,12 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_member_assignment_service
+from app.api.deps import (
+    get_current_user,
+    get_member_assignment_service,
+    require_instructor_or_admin,
+    require_member_or_above,
+)
 from app.schemas.member_assignment import (
     MemberAssignmentCreate,
     MemberAssignmentResponse,
@@ -18,7 +23,7 @@ router = APIRouter()
 @router.get("/", response_model=List[MemberAssignmentResponse])
 async def get_member_assignments(
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     すべてのメンバー所属を取得
@@ -39,7 +44,7 @@ async def get_member_assignments(
 async def get_member_assignments_by_user(
     user_id: str,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     指定したユーザーのメンバー所属を取得
@@ -60,7 +65,7 @@ async def get_member_assignments_by_user(
 async def get_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     指定したメンバー所属を取得
@@ -81,7 +86,7 @@ async def get_member_assignment(
 async def create_member_assignment(
     assignment_data: MemberAssignmentCreate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     新しいメンバー所属を作成
@@ -109,7 +114,7 @@ async def bulk_assign_to_part(
     part_id: UUID,
     request: BulkAssignmentRequest,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     パートに複数のユーザーを一括所属させる
@@ -159,7 +164,7 @@ async def update_member_assignment(
     assignment_id: UUID,
     assignment_data: MemberAssignmentUpdate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定したメンバー所属を更新
@@ -189,7 +194,7 @@ async def update_member_assignment(
 async def delete_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定したメンバー所属を削除
@@ -211,7 +216,7 @@ async def delete_member_assignment_by_user_and_part(
     user_id: str,
     part_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     ユーザーIDとパートIDでメンバー所属を削除

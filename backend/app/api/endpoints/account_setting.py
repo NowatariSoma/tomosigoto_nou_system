@@ -3,7 +3,11 @@
 """
 from typing import Any, Dict, List, Optional
 
-from app.api.deps import get_current_user, get_account_setting_service
+from app.api.deps import (
+    get_current_user,
+    get_account_setting_service,
+    require_admin,
+)
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.schemas.account_setting import (
@@ -267,7 +271,7 @@ async def validate_profile_data_public(
 
 @router.get("/statistics")
 async def get_profile_statistics(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_admin),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィール統計情報を取得（管理者用）"""

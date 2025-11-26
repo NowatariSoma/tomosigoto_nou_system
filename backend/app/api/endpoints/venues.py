@@ -1,7 +1,12 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_venue_service
+from app.api.deps import (
+    get_current_user,
+    get_venue_service,
+    require_instructor_or_admin,
+    require_member_or_above,
+)
 from app.schemas.venues import VenueBase, VenueCreate, VenueResponse, VenueUpdate
 from app.services.venue_service import VenueService
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,6 +17,7 @@ router = APIRouter()
 @router.get("/", response_model=List[VenueResponse])
 async def get_venues(
     venue_service: VenueService = Depends(get_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     会場の全情報を取得
@@ -31,6 +37,7 @@ async def get_venues(
 async def get_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     指定した会場情報を取得
@@ -51,6 +58,7 @@ async def get_venue(
 async def create_venue(
     venue_data: VenueCreate,
     venue_service: VenueService = Depends(get_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     新しく会場情報を生成
@@ -72,6 +80,7 @@ async def patch_venue(
     venue_id: UUID,
     venue_data: VenueUpdate,
     venue_service: VenueService = Depends(get_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定した会場情報を部分更新
@@ -92,6 +101,7 @@ async def patch_venue(
 async def delete_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定した会場情報を削除
