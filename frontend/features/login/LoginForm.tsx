@@ -20,24 +20,19 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     e.preventDefault();
     setError('');
 
-    // ログイン機能をコメントアウト
-    // try {
-    //   await login(email, password);
-    //   onLogin();
-    // } catch (err: any) {
-    //   console.error('Login error:', err);
-    //   setError(err.message || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。');
-    // }
-    
-    // ログイン機能が無効化されているため、直接ホームにリダイレクト
-    console.log('ログイン機能は現在無効化されています');
-    onLogin();
+    try {
+      await login(email, password);
+      onLogin();
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。');
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <LoginBackground />
-      
+
       <LoginCard>
         <form onSubmit={handleSubmit} className="space-y-5">
           <LoginLogo />
