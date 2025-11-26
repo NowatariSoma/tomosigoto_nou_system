@@ -1,7 +1,13 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_member_assignment_service, get_part_service
+from app.api.deps import (
+    get_current_user,
+    get_member_assignment_service,
+    get_part_service,
+    require_instructor_or_admin,
+    require_member_or_above,
+)
 from app.schemas.member_assignment import MemberAssignmentWithDetails
 from app.schemas.part import PartBase, PartCreate, PartResponse, PartUpdate
 from app.services.member_assignment_service import MemberAssignmentService
@@ -14,7 +20,7 @@ router = APIRouter()
 @router.get("/", response_model=List[PartResponse])
 async def get_parts(
     part_service: PartService = Depends(get_part_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     パートの全情報を取得
@@ -34,7 +40,7 @@ async def get_parts(
 async def get_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     指定したパート情報を取得
@@ -56,7 +62,7 @@ async def get_part(
 async def create_part(
     part_data: PartCreate,
     part_service: PartService = Depends(get_part_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     新しくパート情報を作成
@@ -84,7 +90,7 @@ async def update_part(
     part_id: UUID,
     part_data: PartUpdate,
     part_service: PartService = Depends(get_part_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定したパート情報を更新
@@ -112,7 +118,7 @@ async def update_part(
 async def delete_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """
     指定したパート情報を削除
@@ -134,7 +140,7 @@ async def get_part_members(
     category: Optional[str] = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
     part_service: PartService = Depends(get_part_service),
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    # current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """
     指定したパートに所属するメンバー一覧を取得

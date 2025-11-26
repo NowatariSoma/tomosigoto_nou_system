@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If user is not authenticated and trying to access protected route
+  // If user  is not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
@@ -86,6 +86,8 @@ export async function middleware(request: NextRequest) {
       const accessToken = session?.access_token;
       if (accessToken) {
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+        
+        // プロフィール存在チェック
         const profileResponse = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -99,6 +101,10 @@ export async function middleware(request: NextRequest) {
           }
         }
       }
+      // NOTE: ページ単位の権限チェックはクライアントサイド (AuthContext) で実施
+      // Next.js Edge Runtime環境ではバックエンドAPIへのfetchに制約があるため、
+      // ここでは基本的な認証チェックのみを行い、
+      // 詳細な権限チェックはクライアントサイドとバックエンドAPIで実施する
     } catch (error) {
       console.error('Failed to verify profile existence in middleware:', error);
     }

@@ -9,7 +9,11 @@ from app.schemas.scheduling import (
     OptimizationRequest, OptimizationResponse, PreviewRequest, PreviewResponse, ErrorResponse
 )
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
-from app.api.deps import get_scheduling_optimization_service, get_current_user
+from app.api.deps import (
+    get_scheduling_optimization_service,
+    get_current_user,
+    require_instructor_or_admin,
+)
 from app.core.exceptions import APIException
 
 router = APIRouter()
