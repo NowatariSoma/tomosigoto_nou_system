@@ -49,6 +49,7 @@ class MaterialsSubPlaylistCreate(MaterialsSubPlaylistBase):
 class MaterialsSubPlaylistResponse(MaterialsSubPlaylistBase):
     """サブプレイリストレスポンス用スキーマ"""
     id: UUID
+    playlist_id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
