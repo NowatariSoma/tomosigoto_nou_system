@@ -1,6 +1,25 @@
 name: tomosigoto-prod
 
 services:
+  # Nginx リバースプロキシ
+  nginx:
+    container_name: tomosigoto-nginx-prod
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      tomosigoto-network:
+        ipv4_address: 172.23.0.4
+    labels:
+      - "project=tomosigoto-supabase"
+      - "description=Nginx reverse proxy"
+
   # FastAPI バックエンド
   backend:
     container_name: tomosigoto-backend-prod
@@ -35,8 +54,8 @@ services:
         - NODE_ENV=production
         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://your-project-ref.supabase.co}
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://noh-system-api.tomosigoto.co.jp/api/v1}
-        - NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL:-https://noh-system-api.tomosigoto.co.jp/api/v1}
+        - NEXT_PUBLIC_API_URL=/api/v1
+        - NEXT_PUBLIC_AUTH_URL=/api/v1
     expose:
       - "3000"
     env_file:
