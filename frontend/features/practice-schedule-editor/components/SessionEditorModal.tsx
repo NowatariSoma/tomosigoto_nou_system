@@ -132,11 +132,13 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               }`}
             >
               <option value="">選択してください</option>
-              {parts.map((part) => (
-                <option key={part.id} value={part.id}>
-                  {part.name}
-                </option>
-              ))}
+              {parts
+                .filter((part) => part.status === 'active')
+                .map((part) => (
+                  <option key={part.id} value={part.id}>
+                    {part.name}
+                  </option>
+                ))}
             </select>
             {errors.part_id && (
               <p className="mt-1 text-sm text-red-600">{errors.part_id}</p>
