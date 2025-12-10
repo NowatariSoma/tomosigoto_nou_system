@@ -267,52 +267,39 @@ export function MemberManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 border border-blue-100">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">メンバー管理</h2>
-              <p className="text-sm text-gray-600">権限と指導者フラグを効率的に管理します</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {isEditMode ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <X className="h-4 w-4" />
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveChanges}
-                  disabled={pendingChangeCount === 0 || isSaving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleEnterEditMode}
-                disabled={isLoading || members.length === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Edit className="h-4 w-4" />
-                編集モード
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="flex justify-end gap-2">
+        {isEditMode ? (
+          <>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <X className="h-4 w-4" />
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveChanges}
+              disabled={pendingChangeCount === 0 || isSaving}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={handleEnterEditMode}
+            disabled={isLoading || members.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Edit className="h-4 w-4" />
+            編集モード
+          </button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
