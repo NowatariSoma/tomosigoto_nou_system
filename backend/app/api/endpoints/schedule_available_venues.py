@@ -4,7 +4,12 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.api.deps import get_current_user, get_schedule_available_venue_service
+from app.api.deps import (
+    get_current_user,
+    get_schedule_available_venue_service,
+    require_instructor_or_admin,
+    require_member_or_above,
+)
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.schemas.schedule_available_venues import (
@@ -28,6 +33,7 @@ async def get_schedule_available_venues(
     venue_id: Optional[UUID] = Query(None, description="会場IDでフィルタ"),
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """スケジュール利用可能会場一覧を取得"""
     result = await schedule_venue_service.get_all_schedule_available_venues(
@@ -42,6 +48,7 @@ async def get_schedule_available_venue(
     schedule_venue_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """指定したIDのスケジュール利用可能会場を取得"""
     schedule_venue = await schedule_venue_service.get_schedule_available_venue(schedule_venue_id)
@@ -53,6 +60,7 @@ async def get_schedule_available_venues_by_schedule(
     schedule_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """指定したスケジュールの利用可能会場一覧を取得"""
     schedule_venues = await schedule_venue_service.get_schedule_available_venues_by_schedule(schedule_id)
@@ -64,6 +72,7 @@ async def get_schedule_available_venues_by_venue(
     venue_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_member_or_above),
 ):
     """指定した会場のスケジュール利用可能性一覧を取得"""
     schedule_venues = await schedule_venue_service.get_schedule_available_venues_by_venue(venue_id)
@@ -75,6 +84,7 @@ async def create_schedule_available_venue(
     schedule_venue_data: ScheduleAvailableVenueCreate,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """スケジュール利用可能会場を作成"""
     schedule_venue = await schedule_venue_service.create_schedule_available_venue(
@@ -88,6 +98,7 @@ async def create_schedule_available_venues_bulk(
     bulk_data: ScheduleAvailableVenueBulkCreate,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """スケジュール利用可能会場を一括作成"""
     result = await schedule_venue_service.create_schedule_available_venues_bulk(
@@ -103,6 +114,7 @@ async def update_schedule_available_venue(
     update_data: ScheduleAvailableVenueUpdate,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """スケジュール利用可能会場を更新"""
     # None値を除外
@@ -126,6 +138,7 @@ async def update_venue_availability_bulk(
     update_data: VenueAvailabilityUpdate,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """会場利用可能性を一括更新"""
     result = await schedule_venue_service.update_venue_availability_bulk(
@@ -140,6 +153,7 @@ async def delete_schedule_available_venue(
     schedule_venue_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """スケジュール利用可能会場を削除"""
     success = await schedule_venue_service.delete_schedule_available_venue(schedule_venue_id)
@@ -158,6 +172,7 @@ async def delete_schedule_available_venues_by_schedule(
     schedule_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """指定したスケジュールの利用可能会場をすべて削除"""
     deleted_count = await schedule_venue_service.delete_schedule_available_venues_by_schedule(schedule_id)
@@ -173,6 +188,7 @@ async def delete_schedule_available_venues_by_venue(
     venue_id: UUID,
     #current_user: Dict[str, Any] = Depends(get_current_user),
     schedule_venue_service: ScheduleAvailableVenueService = Depends(get_schedule_available_venue_service),
+    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
 ):
     """指定した会場の利用可能性をすべて削除"""
     deleted_count = await schedule_venue_service.delete_schedule_available_venues_by_venue(venue_id)

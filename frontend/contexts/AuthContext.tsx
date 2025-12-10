@@ -15,6 +15,10 @@ interface AuthContextType {
   userRole: UserRole | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isInstructor: boolean;
+  isMember: boolean;
+  canEdit: boolean;  // スケジュール編集権限（指導者以上）
+  canManage: boolean; // 管理権限（管理者のみ）
   login: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,7 +35,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-  const isAdmin = userRole?.role_type === 'admin';
+  // 権限フラグの計算（is_instructorフラグを使用）
+  const roleType = userRole?.role_type;
+  const isInstructorFlag = userRole?.is_instructor || false;
+  
+  const isAdmin = roleType === 'admin';
+  // admin または basic+is_instructor=true が指導者
+  const isInstructor = isAdmin || (roleType === 'basic' && isInstructorFlag);
+  // admin, basic（指導者・一般メンバー含む）がメンバー以上
+  const isMember = isAdmin || roleType === 'basic';
+  const canEdit = isInstructor;  // スケジュール編集は指導者以上
+  const canManage = isAdmin;     // 管理機能は管理者のみ
+
+
 
   const fetchUserRole = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
@@ -223,7 +239,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserRole, user]);
 
   return (
-    <AuthContext.Provider value={{ user, userRole, isAdmin, isLoading, login, signUp, logout, checkAuth, refreshUserRole }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userRole, 
+      isAdmin, 
+      isInstructor,
+      isMember,
+      canEdit,
+      canManage,
+      isLoading, 
+      login, 
+      signUp, 
+      logout, 
+      checkAuth, 
+      refreshUserRole 
+    }}>
       {children}
     </AuthContext.Provider>
   );

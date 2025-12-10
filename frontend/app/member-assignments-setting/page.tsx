@@ -1,10 +1,26 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { MemberAssignmentsSettingsPage } from '@/features/member_assignments-setting/components';
 import { UserCheck } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Page() {
+  const router = useRouter();
+  const { canEdit, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !canEdit) {
+      router.push('/');
+    }
+  }, [canEdit, isLoading, router]);
+
+  if (isLoading || !canEdit) {
+    return null;
+  }
+
   return (
     <AppTemplate
       title="メンバー所属設定ページ"
@@ -15,8 +31,8 @@ export default function Page() {
         text: 'バックエンド結合'
       }}
       permissionBadge={{
-        level: 'basic',
-        text: '管理者'
+        level: 'instructor',
+        text: '指導者以上'
       }}
       maxWidth="7xl"
     >

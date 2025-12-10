@@ -1,10 +1,28 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
 import { RoomSettingsPage } from '@/features/room-settings/components/room-settingsPage';
 import { Activity } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Page() {
+  const router = useRouter();
+  const { canEdit, isLoading } = useAuth();
+
+  useEffect(() => {
+    // ローディング完了後、権限がない場合はリダイレクト
+    if (!isLoading && !canEdit) {
+      router.push('/');
+    }
+  }, [canEdit, isLoading, router]);
+
+  // ローディング中または権限がない場合は何も表示しない
+  if (isLoading || !canEdit) {
+    return null;
+  }
+
   return (
     <AppTemplate
       title="部屋登録ページ"
@@ -15,8 +33,8 @@ export default function Page() {
         text: 'バックエンド結合'
       }}
       permissionBadge={{
-        level: 'basic',
-        text: '管理者'
+        level: 'instructor',
+        text: '指導者以上'
       }}
       maxWidth="7xl"
     >
