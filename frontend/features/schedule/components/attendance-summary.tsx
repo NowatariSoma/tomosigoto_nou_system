@@ -1,59 +1,24 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { Calendar, Users, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
-import { attendanceService } from '../services/attendance-service';
+import React, { useMemo } from 'react';
+import { XCircle, Clock, AlertCircle } from 'lucide-react';
 import { Attendance, PracticeSchedule } from '../types/attendance';
-import { practiceScheduleService } from '../services/practice-schedule-service';
 
 interface AttendanceSummaryProps {
   currentDate: Date;
+  attendances?: Attendance[];
+  practiceSchedule?: PracticeSchedule | null;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDate }) => {
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
-  const [practiceSchedule, setPracticeSchedule] = useState<PracticeSchedule | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const dateString = currentDate.toISOString().split('T')[0];
-        const schedule = await practiceScheduleService.getPracticeScheduleByDate(dateString);
-        
-        if (!schedule) {
-          setPracticeSchedule(null);
-          setAttendances([]);
-          return;
-        }
-
-        const practiceScheduleData: PracticeSchedule = {
-          id: schedule.id,
-          schedule_date: schedule.schedule_date,
-          start_time: schedule.start_time || '',
-          end_time: schedule.end_time || '',
-          division_count: (schedule as any).division_count || 1,
-          title: schedule.title,
-          description: schedule.description,
-        };
-        setPracticeSchedule(practiceScheduleData);
-
-        const scheduleAttendances = await attendanceService.getAttendancesByPractice(schedule.id);
-        setAttendances(scheduleAttendances);
-      } catch (err) {
-        console.error('出欠情報の取得に失敗:', err);
-        setError(err instanceof Error ? err.message : '出欠情報の取得に失敗しました');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [currentDate]);
+export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
+  currentDate,
+  attendances = [],
+  practiceSchedule = null,
+  loading = false,
+  error = null
+}) => {
 
   const { stats, groupedAttendances } = useMemo(() => {
     const present = attendances.filter(a => a.status === 'present');

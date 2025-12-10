@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
 import { Information } from './Information';
-import { AttendanceSummary } from './attendance-summary';
 import { Button } from '@/components/ui/forms/button';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 import { SimpleAttendanceForm } from './attendance/SimpleAttendanceForm';
@@ -15,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User, PracticeSchedule as AttendancePracticeSchedule } from '../types/attendance';
 import { toast } from 'sonner';
 import { practiceScheduleService } from '../services/practice-schedule-service';
-import { PracticeScheduleBundleResponse } from '../types/practice-schedule-types';
+import { PracticeScheduleBundleResponse, PracticeScheduleDisplayResponse } from '../types/practice-schedule-types';
 
 interface BottomSheetScheduleProps {
   date: string; // YYYY-MM-DD形式
@@ -26,6 +25,13 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+
+  // 軽量データ（出席フォーム + 練習内容用）- 先にロード
+  const [basicSchedule, setBasicSchedule] = useState<PracticeScheduleDisplayResponse | null>(null);
+  const [basicLoading, setBasicLoading] = useState(false);
+  const [basicError, setBasicError] = useState<string | null>(null);
+
+  // 重いデータ（時間割、出欠詳細用）- 後からロード
   const [bundleData, setBundleData] = useState<PracticeScheduleBundleResponse | null>(null);
   const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleError, setBundleError] = useState<string | null>(null);
@@ -47,7 +53,40 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   useEffect(() => {
     setScreenHeight(window.innerHeight);
   }, []);
-  // bundle データ取得
+
+  // 1. 軽量データ取得（出席フォーム + 練習内容用）- 先にロード
+  useEffect(() => {
+    if (!date) {
+      setBasicSchedule(null);
+      return;
+    }
+
+    let isMounted = true;
+    setBasicLoading(true);
+    setBasicError(null);
+
+    practiceScheduleService
+      .getPracticeScheduleByDate(date)
+      .then((data) => {
+        if (!isMounted) return;
+        setBasicSchedule(data);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setBasicSchedule(null);
+        setBasicError(error instanceof Error ? error.message : '練習予定の取得に失敗しました');
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setBasicLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [date]);
+
+  // 2. 重いデータ取得（時間割、出欠詳細用）- 後からロード
   useEffect(() => {
     if (!date) {
       setBundleData(null);
@@ -90,36 +129,29 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
     };
   }, [date]);
 
+  // 出席フォーム用のスケジュール（軽量データから先に取得）
   const practiceSchedule = useMemo<AttendancePracticeSchedule | null>(() => {
-    if (!bundleData?.schedule) {
-      return null;
+    // basicScheduleから先に生成（高速表示）
+    if (basicSchedule) {
+      return {
+        id: basicSchedule.id,
+        schedule_date: basicSchedule.schedule_date,
+        start_time: basicSchedule.start_time || '',
+        end_time: basicSchedule.end_time || '',
+        division_count: 1,
+        title: basicSchedule.title,
+        description: basicSchedule.description,
+        schedule_type: basicSchedule.schedule_type,
+        status: basicSchedule.status,
+        created_at: undefined,
+        updated_at: undefined,
+        created_by: undefined,
+        updated_by: undefined,
+        venues: [],
+      };
     }
-
-    const divisionCount =
-      bundleData.schedule.division_count ??
-      (bundleData.ideal?.time_schedule ? Object.keys(bundleData.ideal.time_schedule).length : 0);
-
-    return {
-      id: bundleData.schedule.id,
-      schedule_date: bundleData.schedule.schedule_date,
-      start_time: bundleData.schedule.start_time || '',
-      end_time: bundleData.schedule.end_time || '',
-      division_count: divisionCount,
-      title: bundleData.schedule.title,
-      description: bundleData.schedule.description,
-      schedule_type: undefined,
-      status: undefined,
-      created_at: undefined,
-      updated_at: undefined,
-      created_by: undefined,
-      updated_by: undefined,
-      venues: bundleData.schedule.venues?.map((venue) => ({
-        id: venue.venue_id || venue.id || '',
-        name: venue.name,
-        campus: venue.campus || '',
-      })) || [],
-    };
-  }, [bundleData]);
+    return null;
+  }, [basicSchedule]);
 
   const attendanceOptions = useMemo(
     () => ({
@@ -302,15 +334,15 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           style={{ x }}
           className="flex-1 overflow-y-auto px-4 py-6 space-y-6"
         >
-          {/* 出席登録フォーム */}
-          {authLoading || bundleLoading ? (
+          {/* 1. 出席登録フォーム（最初にロード） */}
+          {authLoading || basicLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               <span className="ml-2">読み込み中...</span>
             </div>
-          ) : bundleError ? (
+          ) : basicError ? (
             <div className="flex items-center justify-center p-8 text-red-600">
-              練習予定の取得に失敗しました: {bundleError}
+              練習予定の取得に失敗しました: {basicError}
             </div>
           ) : practiceSchedule ? (
             <SimpleAttendanceForm
@@ -328,18 +360,27 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
             </div>
           )}
 
-          {/* 練習表テーブル */}
+          {/* 2. 練習内容（2番目にロード） */}
           <div className="w-full max-w-7xl mx-auto">
-            <ScheduleTable
+            <Information
               currentDate={currentDate}
-              initialIdealData={bundleData?.ideal ?? null}
-              initialIdealDate={bundleData?.schedule?.schedule_date ?? null}
+              basicSchedule={basicSchedule}
+              basicLoading={basicLoading}
+              basicError={basicError}
+              bundleData={bundleData}
+              bundleLoading={bundleLoading}
+              bundleError={bundleError}
             />
           </div>
 
-          {/* 追加情報 */}
+          {/* 3. 練習表テーブル（最後にロード） */}
           <div className="w-full max-w-7xl mx-auto">
-            <Information currentDate={currentDate} />
+            <ScheduleTable
+              currentDate={currentDate}
+              idealData={bundleData?.ideal ?? null}
+              loading={bundleLoading}
+              error={bundleError}
+            />
           </div>
         </motion.div>
       </motion.div>
