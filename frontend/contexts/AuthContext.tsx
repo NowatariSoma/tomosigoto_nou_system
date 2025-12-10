@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 interface UserRole {
   role_type: string;
   is_visible_to_general: boolean;
+  is_instructor?: boolean;
 }
 
 interface AuthContextType {

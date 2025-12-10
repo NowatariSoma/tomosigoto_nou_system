@@ -22,7 +22,7 @@ interface AppTemplateProps {
     text: string;
   };
   permissionBadge?: {
-    level: 'basic' | 'admin' | 'super';
+    level: 'basic' | 'instructor' | 'admin' | 'super';
     text: string;
   };
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '7xl' | 'full';
