@@ -71,19 +71,6 @@ export default function MonthView({
     setToday(new Date());
   }, []);
 
-  // useEffect内でデバッグログを出力（レンダリングサイクルに影響しない）
-  useEffect(() => {
-    console.log('MonthView Debug:', {
-      practiceEventsCount: practiceEvents.length,
-      rawEventsCount: rawEvents.length,
-      loading,
-      error,
-      totalCount,
-      currentYear,
-      currentMonth,
-      firstEvent: practiceEvents[0] ? { id: practiceEvents[0].id, title: practiceEvents[0].title } : null,
-    });
-  }, [practiceEvents, rawEvents, loading, error, totalCount, currentYear, currentMonth]);
   const [direction, setDirection] = useState<number>(0);
 
   const daysInMonth = getters.getDaysInMonth(
@@ -131,13 +118,6 @@ export default function MonthView({
       0
     );
     const dateStr = formatDateToYYYYMMDD(clickedDate); // YYYY-MM-DD形式
-    console.log('handleDateClick:', {
-      selectedDay,
-      clickedDate,
-      dateStr,
-      currentDateYear: currentDate.getFullYear(),
-      currentDateMonth: currentDate.getMonth()
-    });
     router.push(`/schedule?date=${dateStr}`);
   }
 
@@ -367,37 +347,11 @@ export default function MonthView({
                      eventDate.getMonth() === currentDate.getMonth() &&
                      eventDate.getFullYear() === currentDate.getFullYear();
               
-              // デバッグ用ログ（10月12日と13日のみ）
-              if (dayObj.day === 12 || dayObj.day === 13) {
-                console.log(`Day ${dayObj.day} Filter:`, {
-                  eventTitle: event.title,
-                  eventStartDate: event.startDate,
-                  eventDateParsed: eventDate,
-                  eventDay: eventDate.getDate(),
-                  eventMonth: eventDate.getMonth(),
-                  eventYear: eventDate.getFullYear(),
-                  currentDay: dayObj.day,
-                  currentMonth: currentDate.getMonth(),
-                  currentYear: currentDate.getFullYear(),
-                  matches
-                });
-              }
-              
               return matches;
             });
             
             // 全てのイベントを統合
             const dayEvents = [...schedulerEvents, ...dayPracticeEvents];
-            
-            // デバッグ用ログ（10月12日と13日のみ）
-            if (dayObj.day === 12 || dayObj.day === 13) {
-              console.log(`Day ${dayObj.day} Final:`, {
-                schedulerEventsCount: schedulerEvents.length,
-                dayPracticeEventsCount: dayPracticeEvents.length,
-                totalDayEventsCount: dayEvents.length,
-                dayEvents: dayEvents.map(e => ({ id: e.id, title: e.title }))
-              });
-            }
             
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayObj.day);
             const dayOfWeek = date.getDay();

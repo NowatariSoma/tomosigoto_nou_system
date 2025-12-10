@@ -251,6 +251,28 @@ class PracticeScheduleBundleAttendance(BaseModel):
     my_entry: Optional[Dict[str, Any]] = None
 
 
+class PracticeScheduleBundleInstructor(BaseModel):
+    """bundle API の指導者情報"""
+
+    id: str
+    attendance_id: str
+    schedule_id: str
+    schedule_available_venue_id: Optional[str] = None
+    slot_order: int
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    attendance_status: Optional[str] = None
+    schedule_date: Optional[str] = None
+    schedule_title: Optional[str] = None
+    schedule_start_time: Optional[str] = None
+    schedule_end_time: Optional[str] = None
+    venue_name: Optional[str] = None
+    venue_address: Optional[str] = None
+    part_name: Optional[str] = None
+
+
 class PracticeScheduleBundleUser(BaseModel):
     """bundle API のユーザー情報"""
 
@@ -273,4 +295,5 @@ class PracticeScheduleBundleResponse(BaseModel):
     ideal: PracticeScheduleBundleIdeal
     attendance: PracticeScheduleBundleAttendance
     users: List[PracticeScheduleBundleUser] = []
+    session_instructors: Dict[str, List[PracticeScheduleBundleInstructor]] = {}
     meta: PracticeScheduleBundleMeta
