@@ -1,26 +1,23 @@
 import * as React from 'react';
-import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useIdealSchedule } from '../hooks/use-practice-schedule-data';
 import { IdealScheduleData } from '../types/practice-schedule-types';
 import { InstructorDisplay } from './InstructorDisplay';
-import { formatDateToYYYYMMDD } from '@/shared/utils/format';
 
 interface ScheduleTableProps {
   className?: string;
   currentDate: Date;
-  initialIdealData?: IdealScheduleData | null;
-  initialIdealDate?: string | null;
+  idealData?: IdealScheduleData | null;
+  loading?: boolean;
+  error?: string | null;
 }
 
-const ScheduleTable: React.FC<ScheduleTableProps> = ({ 
+const ScheduleTable: React.FC<ScheduleTableProps> = ({
   className,
   currentDate,
-  initialIdealData,
-  initialIdealDate
+  idealData = null,
+  loading = false,
+  error = null
 }) => {
-  // 理想的な形式のスケジュール管理フック
-  const { idealData, loading, error, fetchIdealScheduleByDate, setIdealData } = useIdealSchedule(initialIdealData ?? undefined);
 
   /**
    * 時間文字列からslot_orderを計算する
@@ -47,18 +44,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       return 1;
     }
   };
-
-  // 日付が変更されたときにAPIからデータを取得
-  useEffect(() => {
-    const dateString = formatDateToYYYYMMDD(currentDate);
-
-    if (initialIdealData && initialIdealDate === dateString) {
-      setIdealData(initialIdealData);
-      return;
-    }
-
-    fetchIdealScheduleByDate(dateString);
-  }, [currentDate, fetchIdealScheduleByDate, initialIdealData, initialIdealDate, setIdealData]);
 
   const handleCellClick = (time: string, venueId: string, parts: any[]) => {
     // セルクリック時の処理（将来の機能拡張用）
