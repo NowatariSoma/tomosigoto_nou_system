@@ -469,22 +469,13 @@ export function MemberManagementPage() {
               const currentRole = resolveDraftRole(member);
               const currentInstructor = resolveDraftInstructor(member);
               return (
-                <div key={member.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
+                <div key={member.id} className="p-3">
+                  {isEditMode ? (
+                    // 編集モード：縦レイアウト
+                    <div className="space-y-3">
                       <div className="text-sm font-semibold text-gray-900">{member.name}</div>
-                      <div className="text-xs text-gray-500">{member.email}</div>
-                    </div>
-                    {!isEditMode && (
-                      <span className={ROLE_BADGE_STYLES[currentRole]}>
-                        {ROLE_LABELS[currentRole]}
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
-                      {isEditMode ? (
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
                         <div className="grid grid-cols-3 gap-2">
                           {roleOptions.map(option => {
                             const isActive = currentRole === option;
@@ -501,15 +492,9 @@ export function MemberManagementPage() {
                             );
                           })}
                         </div>
-                      ) : (
-                        <span className={ROLE_BADGE_STYLES[currentRole]}>
-                          {ROLE_LABELS[currentRole]}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
-                      {isEditMode ? (
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
                         <div className="grid grid-cols-2 gap-2">
                           {instructorOptions.map(option => {
                             const variant = option.value ? 'instructor' : 'member';
@@ -527,17 +512,25 @@ export function MemberManagementPage() {
                             );
                           })}
                         </div>
-                      ) : (
+                      </div>
+                    </div>
+                  ) : (
+                    // 通常モード：横一列レイアウト
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 truncate flex-shrink min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 truncate">{member.name}</span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={ROLE_BADGE_STYLES[currentRole]}>
+                          {ROLE_LABELS[currentRole]}
+                        </span>
                         <span className={INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}>
                           {currentInstructor ? '指導者' : '一般'}
                         </span>
-                      )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">最終アクティブ</p>
-                      <span className="text-sm text-gray-700">{formatRelativeLastActive(member.last_active_at)}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               );
             })
