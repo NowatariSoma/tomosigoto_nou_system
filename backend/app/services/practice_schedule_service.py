@@ -144,8 +144,10 @@ class PracticeScheduleService:
             )
         )
 
-        ideal_data, attendance_entries, bundle_users, instructors = await asyncio.gather(
-            ideal_task, attendance_task, users_task, instructors_task, return_exceptions=False
+        venues_task = asyncio.create_task(self._get_venues_with_colors(schedule_id))
+
+        ideal_data, attendance_entries, bundle_users, instructors, venues = await asyncio.gather(
+            ideal_task, attendance_task, users_task, instructors_task, venues_task, return_exceptions=False
         )
 
         current_user_id = str(current_user["id"]) if current_user and current_user.get("id") else None
@@ -164,7 +166,7 @@ class PracticeScheduleService:
             "title": schedule.get("title"),
             "description": schedule.get("description"),
             "division_count": schedule.get("division_count"),
-            "venues": await self._get_venues_with_colors(schedule_id),
+            "venues": venues,
         }
 
         instructors_by_slot: Dict[str, List[Dict[str, Any]]] = {}
@@ -1172,28 +1174,31 @@ class PracticeScheduleService:
                 part_ids.append(str(part_id) if isinstance(part_id, UUID) else part_id)
         unique_part_ids = list(set(part_ids)) if part_ids else []
         
-        # 全てのパートのメンバーを一度に取得
+        # 全てのパートのメンバーを一度に取得（IN句で最適化）
         part_members_map = {}
         if unique_part_ids:
-            fetch_tasks = []
-            normalized_part_ids = []
-            for part_id_str in unique_part_ids:
-                try:
-                    part_id_uuid = UUID(part_id_str) if isinstance(part_id_str, str) else part_id_str
-                    fetch_tasks.append(self.member_assignment_repository.find_by_part_id(part_id_uuid))
-                    normalized_part_ids.append(part_id_str)
-                except Exception as e:
-                    print(f"Error preparing member fetch for part {part_id_str}: {e}")
-                    part_members_map[part_id_str] = []
-
-            if fetch_tasks:
-                member_results = await asyncio.gather(*fetch_tasks, return_exceptions=True)
-                for part_id_str, result in zip(normalized_part_ids, member_results):
-                    if isinstance(result, Exception):
-                        print(f"Error fetching members for part {part_id_str}: {result}")
+            try:
+                # UUIDに変換
+                part_id_uuids = []
+                for part_id_str in unique_part_ids:
+                    try:
+                        part_id_uuid = UUID(part_id_str) if isinstance(part_id_str, str) else part_id_str
+                        part_id_uuids.append(part_id_uuid)
+                    except Exception as e:
+                        print(f"Error converting part_id {part_id_str} to UUID: {e}")
                         part_members_map[part_id_str] = []
-                    else:
-                        part_members_map[part_id_str] = result
+                
+                # 一度のクエリで全てのパートのメンバーを取得
+                if part_id_uuids:
+                    members_by_part = await self.member_assignment_repository.find_by_part_ids(part_id_uuids)
+                    # 文字列キーに変換してマップに格納
+                    for part_id_str in unique_part_ids:
+                        part_members_map[part_id_str] = members_by_part.get(part_id_str, [])
+            except Exception as e:
+                print(f"Error fetching members for parts: {e}")
+                # エラー時は空のマップを設定
+                for part_id_str in unique_part_ids:
+                    part_members_map[part_id_str] = []
         
         # 練習スケジュールの出欠記録を一度に取得
         attendance_records = []
@@ -1219,25 +1224,14 @@ class PracticeScheduleService:
                     if attendance and attendance.get("status") in ["absent", "late", "no_show"]:
                         user_ids_needed.add(str(user_id))
         
-        # ユーザープロフィールを並列取得（パフォーマンス改善）
+        # ユーザープロフィールを一度に取得（IN句で最適化）
         user_profiles_map = {}
         if user_ids_needed:
             try:
-                # 並列でプロフィールを取得
-                profile_tasks = [
-                    self.user_profile_repository.get_profile_by_user_id(user_id)
-                    for user_id in user_ids_needed
-                ]
-                profiles = await asyncio.gather(*profile_tasks, return_exceptions=True)
-                
-                # 結果をマップに格納
-                for user_id, profile in zip(user_ids_needed, profiles):
-                    if isinstance(profile, Exception):
-                        print(f"Error fetching profile for user {user_id}: {profile}")
-                    elif profile:
-                        user_profiles_map[user_id] = profile
+                # IN句で一度に全てのプロフィールを取得
+                user_profiles_map = await self.user_profile_repository.get_profiles_by_user_ids(list(user_ids_needed))
             except Exception as e:
-                print(f"Error in parallel profile fetch: {e}")
+                print(f"Error fetching profiles: {e}")
 
         # 実際のセッションデータを配置（slot_order順）
         part_colors = settings.DEFAULT_PART_COLORS
@@ -1413,33 +1407,45 @@ class PracticeScheduleService:
         return await self._convert_to_details_format(schedule, sessions)
 
     async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
-        """指定したIDの練習スケジュールのidealフォーマット詳細情報を取得"""
-        # 基本スケジュール情報を取得
+        """指定したIDの練習スケジュールのidealフォーマット詳細情報を取得（並列化で高速化）"""
+        import time
+        ideal_start = time.time()
+        
+        # 基本スケジュール情報を取得（他のクエリに依存するため先に実行）
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             return None
 
-        # セッション情報を安全に取得
-        sessions = []
-        try:
-            sessions = await self.session_repository.find_by_schedule(schedule_id)
-        except Exception as e:
-            print(f"Warning: Could not fetch sessions for schedule {schedule_id}: {e}")
-            sessions = []
+        # セッション情報と会場情報を並列取得
+        async def get_sessions():
+            try:
+                return await self.session_repository.find_by_schedule(schedule_id)
+            except Exception as e:
+                print(f"Warning: Could not fetch sessions for schedule {schedule_id}: {e}")
+                return []
 
-        # 会場情報を安全に取得
-        venues = []
-        try:
-            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
-        except Exception as e:
-            print(f"Warning: Could not fetch venues for schedule {schedule_id}: {e}")
-            venues = []
+        async def get_venues():
+            try:
+                return await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+            except Exception as e:
+                print(f"Warning: Could not fetch venues for schedule {schedule_id}: {e}")
+                return []
+
+        gather_start = time.time()
+        sessions, venues = await asyncio.gather(get_sessions(), get_venues())
+        gather_elapsed = time.time() - gather_start
+        print(f"DEBUG: ideal gather実行時間: {gather_elapsed:.3f}秒")
 
         # データベースからdivision_countを取得
         division_count = schedule.get("division_count", 6)
 
         # 理想形式を生成（日付指定と同じメソッドを使用）
-        return await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, [], division_count)
+        convert_start = time.time()
+        result = await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, [], division_count)
+        convert_elapsed = time.time() - convert_start
+        ideal_total = time.time() - ideal_start
+        print(f"DEBUG: ideal convert実行時間: {convert_elapsed:.3f}秒, ideal合計: {ideal_total:.3f}秒")
+        return result
 
     async def _convert_to_details_format(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
         """基本スケジュールデータとセッション情報から詳細形式に変換"""

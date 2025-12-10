@@ -177,7 +177,9 @@ async def get_practice_schedule_bundle(
     指定日のボトムシート表示用 bundle データを取得
     """
     bundle = await practice_schedule_service.get_practice_schedule_bundle(target_date, current_user)
-    return bundle
+    if not bundle:
+        raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
+    return PracticeScheduleBundleResponse(**bundle)
 
 
 @router.post("/", response_model=PracticeScheduleResponse)

@@ -144,7 +144,17 @@ class ScheduleAvailableVenueRepository:
         """指定したスケジュールの利用可能会場一覧を取得"""
         response = (
             self.client.table(self.table_name)
-            .select("*, venues(*)")
+            .select(
+                """
+                *,
+                venues(
+                    id,
+                    name,
+                    campus,
+                    address
+                )
+                """
+            )
             .eq("schedule_id", str(schedule_id))
             .order("priority", desc=True)
             .order("created_at")
@@ -155,10 +165,13 @@ class ScheduleAvailableVenueRepository:
         formatted_data = []
         for item in response.data:
             formatted_item = dict(item)
-            if item.get("venues"):
-                formatted_item["name"] = item["venues"].get("name")
-                formatted_item["is_preferred"] = item["venues"].get("is_preferred", False)
-                formatted_item["priority"] = item["venues"].get("priority", 0)
+            venue_info = item.get("venues") or {}
+
+            # venuesテーブルの情報を平坦化して格納
+            formatted_item["name"] = venue_info.get("name")
+            formatted_item["campus"] = venue_info.get("campus")
+            formatted_item["address"] = venue_info.get("address")
+
             formatted_data.append(formatted_item)
         
         return formatted_data
