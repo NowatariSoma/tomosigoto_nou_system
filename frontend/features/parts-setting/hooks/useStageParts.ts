@@ -151,19 +151,34 @@ export const useStageParts = () => {
       // 2. パートのステータスを舞台のステータスに合わせて更新
       await partsService.updatePartsStatusByStageId(id, data.status || 'active');
 
-      // 3. パートを更新（既存を削除して新しく作成）
-      if (data.parts && data.parts.length > 0) {
-        // 既存のパートを削除
-        await partsService.deletePartsByStageId(id);
+      // 3. パートを差分更新（既存パートを保持しつつ、追加・削除のみ行う）
+      if (data.parts) {
+        // 既存のパートを取得
+        const existingParts = await partsService.getPartsByStageId(id);
+        const existingPartNames = existingParts.map(part => part.name);
+        const newPartNames = data.parts.filter(name => name.trim() !== '');
 
-        // 新しいパートを作成（空のパート名をフィルタ）
-        const partsData: CreatePartRequest[] = data.parts
-          .filter(partName => partName.trim() !== '')
-          .map(partName => ({
+        // 削除対象: 既存にあるが新しいリストにないパート
+        const partsToDelete = existingParts.filter(
+          part => !newPartNames.includes(part.name)
+        );
+
+        // 追加対象: 新しいリストにあるが既存にないパート
+        const partsToAdd = newPartNames.filter(
+          name => !existingPartNames.includes(name)
+        );
+
+        // 削除対象のパートを削除
+        if (partsToDelete.length > 0) {
+          await partsService.deleteParts(partsToDelete.map(part => part.id));
+        }
+
+        // 追加対象のパートを作成
+        if (partsToAdd.length > 0) {
+          const partsData: CreatePartRequest[] = partsToAdd.map(name => ({
             stageId: id,
-            name: partName,
+            name: name,
           }));
-        if (partsData.length > 0) {
           await partsService.createParts(partsData);
         }
       }

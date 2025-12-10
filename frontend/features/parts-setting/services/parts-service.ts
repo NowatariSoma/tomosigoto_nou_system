@@ -135,6 +135,19 @@ export class PartsService {
     }
   }
 
+  async deleteParts(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    const { error } = await supabase
+      .from(this.tableName)
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      throw new Error(`Failed to delete parts: ${error.message}`);
+    }
+  }
+
   async updatePartsStatusByStageId(stageId: string, status: 'active' | 'inactive'): Promise<void> {
     const { error } = await supabase
       .from(this.tableName)
