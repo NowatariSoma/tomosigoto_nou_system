@@ -18,6 +18,7 @@ const statusBadgeVariants = cva(
         stable: '',
         // Permission levels
         basic: '',
+        instructor: '',
         admin: '',
         super: '',
       },
@@ -47,6 +48,11 @@ const statusBadgeVariants = cva(
       },
       {
         type: 'permission',
+        level: 'instructor',
+        class: 'border-transparent bg-teal-500 text-white hover:bg-teal-600',
+      },
+      {
+        type: 'permission',
         level: 'admin',
         class: 'border-transparent bg-blue-500 text-white hover:bg-blue-600',
       },
@@ -67,7 +73,7 @@ export interface StatusBadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof statusBadgeVariants> {
   type: 'development' | 'permission';
-  level: 'alpha' | 'beta' | 'stable' | 'basic' | 'admin' | 'super';
+  level: 'alpha' | 'beta' | 'stable' | 'basic' | 'instructor' | 'admin' | 'super';
 }
 
 function StatusBadge({ 
