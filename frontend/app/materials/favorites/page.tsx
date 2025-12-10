@@ -214,7 +214,7 @@ export default function FavoritesPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
                       <CardDescription className="text-xs line-clamp-2">
-                        {stageData?.year}年 {stageData?.name} • {video.recordedDate ? formatDate(video.recordedDate) : '日付不明'} • {subPlaylist.phase}
+                        {stageData?.year}年 {stageData?.stage} • {video.recordedDate ? formatDate(video.recordedDate) : '日付不明'} • {subPlaylist.phase}
                       </CardDescription>
                     </CardHeader>
                   </Card>

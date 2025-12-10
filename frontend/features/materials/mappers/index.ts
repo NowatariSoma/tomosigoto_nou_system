@@ -108,7 +108,7 @@ export const mapApiVideoToVideo = (api: VideoApiResponse): Video => {
 };
 
 // フロントエンド型 → APIリクエスト型
-export const mapPlaylistToApiRequest = (playlist: CreatePlaylistRequest | UpdatePlaylistRequest): PlaylistApiRequest => {
+export const mapPlaylistToApiRequest = (playlist: CreatePlaylistRequest): PlaylistApiRequest => {
   return {
     title: playlist.title,
     name: playlist.stage, // stage → name に変換
@@ -117,8 +117,17 @@ export const mapPlaylistToApiRequest = (playlist: CreatePlaylistRequest | Update
   };
 };
 
+export const mapUpdatePlaylistToApiRequest = (playlist: UpdatePlaylistRequest): Partial<PlaylistApiRequest> => {
+  const result: Partial<PlaylistApiRequest> = {};
+  if (playlist.title !== undefined) result.title = playlist.title;
+  if (playlist.stage !== undefined) result.name = playlist.stage;
+  if (playlist.year !== undefined) result.year = playlist.year;
+  if (playlist.thumbnailUrl !== undefined) result.thumbnail_url = playlist.thumbnailUrl || null;
+  return result;
+};
+
 export const mapSubPlaylistToApiRequest = (
-  subPlaylist: CreateSubPlaylistRequest | UpdateSubPlaylistRequest
+  subPlaylist: CreateSubPlaylistRequest
 ): SubPlaylistApiRequest => {
   return {
     title: subPlaylist.title,
@@ -129,12 +138,33 @@ export const mapSubPlaylistToApiRequest = (
   };
 };
 
-export const mapVideoToApiRequest = (video: CreateVideoRequest | UpdateVideoRequest): VideoApiRequest => {
+export const mapUpdateSubPlaylistToApiRequest = (
+  subPlaylist: UpdateSubPlaylistRequest
+): Partial<SubPlaylistApiRequest> => {
+  const result: Partial<SubPlaylistApiRequest> = {};
+  if (subPlaylist.title !== undefined) result.title = subPlaylist.title;
+  if (subPlaylist.recordedDate !== undefined) result.recorded_date = subPlaylist.recordedDate;
+  if (subPlaylist.phase !== undefined) result.phase = subPlaylist.phase;
+  if (subPlaylist.playlistUrl !== undefined) result.playlist_url = subPlaylist.playlistUrl;
+  if (subPlaylist.thumbnailUrl !== undefined) result.thumbnail_url = subPlaylist.thumbnailUrl || null;
+  return result;
+};
+
+export const mapVideoToApiRequest = (video: CreateVideoRequest): VideoApiRequest => {
   return {
     title: video.title,
     video_url: video.videoUrl,
     recorded_date: video.recordedDate,
     thumbnail_url: video.thumbnailUrl || null,
   };
+};
+
+export const mapUpdateVideoToApiRequest = (video: UpdateVideoRequest): Partial<VideoApiRequest> => {
+  const result: Partial<VideoApiRequest> = {};
+  if (video.title !== undefined) result.title = video.title;
+  if (video.videoUrl !== undefined) result.video_url = video.videoUrl;
+  if (video.recordedDate !== undefined) result.recorded_date = video.recordedDate;
+  if (video.thumbnailUrl !== undefined) result.thumbnail_url = video.thumbnailUrl || null;
+  return result;
 };
 

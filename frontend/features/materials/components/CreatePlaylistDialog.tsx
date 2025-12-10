@@ -27,7 +27,7 @@ interface CreatePlaylistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   playlistData: PlaylistFormData;
-  setPlaylistData: (data: PlaylistFormData) => void;
+  setPlaylistData: React.Dispatch<React.SetStateAction<PlaylistFormData>>;
   onSubmit: (e: React.FormEvent) => void;
 }
 

@@ -16,8 +16,11 @@ import {
   mapApiSubPlaylistToSubPlaylist,
   mapApiVideoToVideo,
   mapPlaylistToApiRequest,
+  mapUpdatePlaylistToApiRequest,
   mapSubPlaylistToApiRequest,
+  mapUpdateSubPlaylistToApiRequest,
   mapVideoToApiRequest,
+  mapUpdateVideoToApiRequest,
 } from '../mappers';
 
 export class MaterialsService {
@@ -47,7 +50,7 @@ export class MaterialsService {
   }
 
   async updatePlaylist(playlistId: string, data: UpdatePlaylistRequest): Promise<Playlist> {
-    const apiData = mapPlaylistToApiRequest(data);
+    const apiData = mapUpdatePlaylistToApiRequest(data);
     const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}`), {
       method: 'PUT',
       body: JSON.stringify(apiData),
@@ -90,7 +93,7 @@ export class MaterialsService {
     subPlaylistId: string,
     data: UpdateSubPlaylistRequest
   ): Promise<SubPlaylist> {
-    const apiData = mapSubPlaylistToApiRequest(data);
+    const apiData = mapUpdateSubPlaylistToApiRequest(data);
     const response = await fetchApi(
       buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`),
       {
@@ -144,7 +147,7 @@ export class MaterialsService {
     videoId: string,
     data: UpdateVideoRequest
   ): Promise<Video> {
-    const apiData = mapVideoToApiRequest(data);
+    const apiData = mapUpdateVideoToApiRequest(data);
     const response = await fetchApi(
       buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`),
       {
