@@ -210,17 +210,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   return (
     <>
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3 sm:p-6">
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <div className="bg-blue-100 p-1.5 sm:p-2 rounded-lg">
-            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-          </div>
-          <h2 className="text-lg sm:text-2xl font-semibold text-gray-900">
-            {UI_TEXT.ATTENDANCE_TABLE}
-          </h2>
-        </div>
-
-        {/* モード切り替えと保存ボタン */}
+      <div className="flex justify-end mb-4 sm:mb-6">
         <div className="flex items-center gap-2">
           {isEditMode ? (
             <>
@@ -516,8 +506,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           </table>
         </div>
 
-          {/* モバイル用カード */}
-          <div className="md:hidden space-y-3">
+          {/* モバイル用リスト */}
+          <div className="md:hidden divide-y divide-gray-200">
             {tableData.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-400" />
@@ -532,137 +522,120 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 const currentNotes = getCurrentValue(user.id, 'notes') as string;
 
                 return (
-                  <div key={user.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                    {/* ユーザー情報 */}
-                    <div className="mb-3 pb-3 border-b border-gray-200">
-                      <div className="text-sm font-medium text-gray-900 mb-1">{user.name}</div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
-                    </div>
-
-                    {/* 出席状況 */}
-                    <div className="mb-3">
-                      <div className="text-xs font-medium text-gray-700 mb-2">出席状況</div>
-                      {isEditMode ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                            className={`px-2 py-2 text-xs font-medium rounded-md border transition-all ${
-                              currentStatus === ATTENDANCE_STATUS.PRESENT
-                                ? 'bg-green-600 text-white border-green-600 shadow-sm'
-                                : 'bg-white text-green-700 border-green-300'
-                            }`}
-                          >
-                            出席
-                          </button>
-                          <button
-                            onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                            className={`px-2 py-2 text-xs font-medium rounded-md border transition-all ${
-                              currentStatus === ATTENDANCE_STATUS.ABSENT
-                                ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                                : 'bg-white text-red-700 border-red-300'
-                            }`}
-                          >
-                            欠席
-                          </button>
-                          <button
-                            onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                            className={`px-2 py-2 text-xs font-medium rounded-md border transition-all ${
-                              currentStatus === ATTENDANCE_STATUS.LATE
-                                ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
-                                : 'bg-white text-yellow-700 border-yellow-300'
-                            }`}
-                          >
-                            遅刻
-                          </button>
-                          <button
-                            onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                            className={`px-2 py-2 text-xs font-medium rounded-md border transition-all ${
-                              currentStatus === ATTENDANCE_STATUS.NO_SHOW
-                                ? 'bg-red-700 text-white border-red-700 shadow-sm'
-                                : 'bg-white text-red-800 border-red-400'
-                            }`}
-                          >
-                            無断欠席
-                          </button>
-                        </div>
-                      ) : (
+                  <div key={user.id} className="p-3">
+                    {isEditMode ? (
+                      // 編集モード：縦レイアウト
+                      <div className="space-y-3">
+                        <div className="text-sm font-semibold text-gray-900">{user.name}</div>
                         <div>
+                          <p className="text-xs font-medium text-gray-600 mb-1">出席状況</p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            <button
+                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.PRESENT
+                                  ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                                  : 'bg-white text-green-700 border-green-300'
+                              }`}
+                            >
+                              出席
+                            </button>
+                            <button
+                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.ABSENT
+                                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                                  : 'bg-white text-red-700 border-red-300'
+                              }`}
+                            >
+                              欠席
+                            </button>
+                            <button
+                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.LATE
+                                  ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
+                                  : 'bg-white text-yellow-700 border-yellow-300'
+                              }`}
+                            >
+                              遅刻
+                            </button>
+                            <button
+                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                currentStatus === ATTENDANCE_STATUS.NO_SHOW
+                                  ? 'bg-red-700 text-white border-red-700 shadow-sm'
+                                  : 'bg-white text-red-800 border-red-400'
+                              }`}
+                            >
+                              無断
+                            </button>
+                          </div>
+                        </div>
+                        {currentStatus === ATTENDANCE_STATUS.LATE && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-600 mb-1">参加可能時間</p>
+                            <div className="flex gap-1 items-center text-xs">
+                              <input
+                                type="time"
+                                value={currentAvailableFrom}
+                                onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs"
+                              />
+                              <span>-</span>
+                              <input
+                                type="time"
+                                value={currentAvailableTo}
+                                onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-medium text-gray-600 mb-1">備考</p>
+                          <input
+                            type="text"
+                            value={currentNotes}
+                            onChange={(e) => handleLocalNotesChange(user.id, e.target.value)}
+                            placeholder="備考を入力"
+                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      // 通常モード：横一列レイアウト
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-gray-900 truncate flex-shrink min-w-0">{user.name}</span>
+                        <div className="flex-shrink-0">
                           {currentStatus === ATTENDANCE_STATUS.PRESENT && (
-                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-green-600 text-white border-green-600 shadow-sm">
                               出席
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.ABSENT && (
-                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-red-600 text-white border-red-600 shadow-sm">
                               欠席
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.LATE && (
-                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
+                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-yellow-500 text-white border-yellow-500 shadow-sm">
                               遅刻
                             </span>
                           )}
                           {currentStatus === ATTENDANCE_STATUS.NO_SHOW && (
-                            <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
-                              無断欠席
+                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-red-700 text-white border-red-700 shadow-sm">
+                              無断
                             </span>
                           )}
                           {!currentStatus && (
-                            <span className="text-xs text-gray-400">未登録</span>
+                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-gray-400 text-white border-gray-400 shadow-sm">
+                              未登録
+                            </span>
                           )}
                         </div>
-                      )}
-                    </div>
-
-                    {/* 参加可能時間 */}
-                    <div className="mb-3">
-                      <div className="text-xs font-medium text-gray-700 mb-1">参加可能時間</div>
-                      {isEditMode && currentStatus === ATTENDANCE_STATUS.LATE ? (
-                        // 編集モード & 遅刻の場合：時間入力フィールド
-                        <div className="flex gap-1 items-center text-xs">
-                          <input
-                            type="time"
-                            value={currentAvailableFrom}
-                            onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)}
-                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs"
-                          />
-                          <span>-</span>
-                          <input
-                            type="time"
-                            value={currentAvailableTo}
-                            onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)}
-                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs"
-                          />
-                        </div>
-                      ) : (
-                        // 閲覧モード or 遅刻以外：表示のみ
-                        <div className="text-xs text-gray-900">
-                          {currentStatus === ATTENDANCE_STATUS.LATE && currentAvailableFrom && currentAvailableTo
-                            ? `${currentAvailableFrom.substring(0, 5)} - ${currentAvailableTo.substring(0, 5)}`
-                            : '-'}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 備考 */}
-                    <div className="mb-3">
-                      <div className="text-xs font-medium text-gray-700 mb-1">備考</div>
-                      {isEditMode ? (
-                        // 編集モード：テキスト入力
-                        <input
-                          type="text"
-                          value={currentNotes}
-                          onChange={(e) => handleLocalNotesChange(user.id, e.target.value)}
-                          placeholder="備考を入力"
-                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        // 閲覧モード：表示のみ
-                        <div className="text-xs text-gray-900 break-words">
-                          {currentNotes || '-'}
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               })

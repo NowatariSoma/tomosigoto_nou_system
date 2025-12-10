@@ -267,52 +267,39 @@ export function MemberManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 border border-blue-100">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">メンバー管理</h2>
-              <p className="text-sm text-gray-600">権限と指導者フラグを効率的に管理します</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {isEditMode ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <X className="h-4 w-4" />
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveChanges}
-                  disabled={pendingChangeCount === 0 || isSaving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleEnterEditMode}
-                disabled={isLoading || members.length === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Edit className="h-4 w-4" />
-                編集モード
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="flex justify-end gap-2">
+        {isEditMode ? (
+          <>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <X className="h-4 w-4" />
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveChanges}
+              disabled={pendingChangeCount === 0 || isSaving}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={handleEnterEditMode}
+            disabled={isLoading || members.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Edit className="h-4 w-4" />
+            編集モード
+          </button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -469,22 +456,13 @@ export function MemberManagementPage() {
               const currentRole = resolveDraftRole(member);
               const currentInstructor = resolveDraftInstructor(member);
               return (
-                <div key={member.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
+                <div key={member.id} className="p-3">
+                  {isEditMode ? (
+                    // 編集モード：縦レイアウト
+                    <div className="space-y-3">
                       <div className="text-sm font-semibold text-gray-900">{member.name}</div>
-                      <div className="text-xs text-gray-500">{member.email}</div>
-                    </div>
-                    {!isEditMode && (
-                      <span className={ROLE_BADGE_STYLES[currentRole]}>
-                        {ROLE_LABELS[currentRole]}
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
-                      {isEditMode ? (
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
                         <div className="grid grid-cols-3 gap-2">
                           {roleOptions.map(option => {
                             const isActive = currentRole === option;
@@ -501,15 +479,9 @@ export function MemberManagementPage() {
                             );
                           })}
                         </div>
-                      ) : (
-                        <span className={ROLE_BADGE_STYLES[currentRole]}>
-                          {ROLE_LABELS[currentRole]}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
-                      {isEditMode ? (
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
                         <div className="grid grid-cols-2 gap-2">
                           {instructorOptions.map(option => {
                             const variant = option.value ? 'instructor' : 'member';
@@ -527,17 +499,25 @@ export function MemberManagementPage() {
                             );
                           })}
                         </div>
-                      ) : (
+                      </div>
+                    </div>
+                  ) : (
+                    // 通常モード：横一列レイアウト
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 truncate flex-shrink min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 truncate">{member.name}</span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={ROLE_BADGE_STYLES[currentRole]}>
+                          {ROLE_LABELS[currentRole]}
+                        </span>
                         <span className={INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}>
                           {currentInstructor ? '指導者' : '一般'}
                         </span>
-                      )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">最終アクティブ</p>
-                      <span className="text-sm text-gray-700">{formatRelativeLastActive(member.last_active_at)}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               );
             })
