@@ -18,8 +18,12 @@ import {
   CalendarDays,
   Theater,
   Building,
+  ReceiptText,
+  Clock,
+  Edit3,
   UserCheck,
-  MessageSquare
+  MessageSquare,
+  Youtube
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -319,6 +323,15 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 </>
               )}
 
+              <NavTitle label="資料庫" />
+
+              <NavItem
+                icon={<Youtube className="w-4 h-4" />}
+                label="youtube"
+                active={pathname === '/materials'}
+                onClick={() => handleNavigateAndClose('/materials')}
+              />
+
               <NavTitle label="その他" />
 
               <NavItem
@@ -473,6 +486,16 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               )}
             </>
           )}
+
+          {!isCollapsed && <NavTitle label="資料庫" />}
+
+          <NavItem
+            icon={<Youtube className="w-4 h-4" />}
+            label={isCollapsed ? "" : "youtube"}
+            active={pathname === '/materials'}
+            href="/materials"
+            className={isCollapsed ? "justify-center px-2" : ""}
+          />
 
           {!isCollapsed && <NavTitle label="その他" />}
 
