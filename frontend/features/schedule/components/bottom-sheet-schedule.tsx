@@ -35,18 +35,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   // YYYY-MM-DD形式をローカルタイムゾーンとして正しく解釈
   const currentDate = useMemo(() => {
     const [year, month, day] = date.split('-').map(Number);
-    const parsedDate = new Date(year, month - 1, day, 12, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
-    console.log('BottomSheetSchedule - Date parsing:', {
-      dateParam: date,
-      year,
-      month,
-      day,
-      parsedDate,
-      parsedDateYear: parsedDate.getFullYear(),
-      parsedDateMonth: parsedDate.getMonth(),
-      parsedDateDay: parsedDate.getDate()
-    });
-    return parsedDate;
+    return new Date(year, month - 1, day, 12, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
   }, [date]);
 
   const y = useMotionValue(0);

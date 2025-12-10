@@ -51,7 +51,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // 日付が変更されたときにAPIからデータを取得
   useEffect(() => {
     const dateString = formatDateToYYYYMMDD(currentDate);
-    console.log('ScheduleTable - 日付変更:', dateString);
 
     if (initialIdealData && initialIdealDate === dateString) {
       setIdealData(initialIdealData);
@@ -62,12 +61,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   }, [currentDate, fetchIdealScheduleByDate, initialIdealData, initialIdealDate, setIdealData]);
 
   const handleCellClick = (time: string, venueId: string, parts: any[]) => {
-    console.log('ScheduleTable - セルクリック:', { time, venueId, parts });
+    // セルクリック時の処理（将来の機能拡張用）
   };
 
   const handlePartClick = (e: React.MouseEvent, part: any) => {
     e.stopPropagation();
-    console.log('パートクリック:', part);
+    // パートクリック時の処理（将来の機能拡張用）
   };
 
   // ローディング状態の表示
@@ -99,21 +98,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   // 時間スロットを取得
   const timeSlots = Object.keys(idealData?.time_schedule || {}).sort();
-  
-  // デバッグ: 会場データを確認
-  console.log('会場データ:', idealData?.venues);
-  console.log('会場の詳細:', idealData?.venues?.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
-  
-  // 重複するvenue.idをチェック
-  const venueIds = idealData?.venues?.map(venue => venue?.id) || [];
-  const uniqueVenueIds = Array.from(new Set(venueIds));
-  if (venueIds.length !== uniqueVenueIds.length) {
-    console.warn('重複するvenue.idが検出されました:', venueIds);
-    console.warn('重複するID:', venueIds.filter((id, index) => venueIds.indexOf(id) !== index));
-  }
 
   // 重複を除去した会場データを取得
-  const uniqueVenues = idealData?.venues?.filter((venue, index, self) => 
+  const uniqueVenues = idealData?.venues?.filter((venue, index, self) =>
     index === self.findIndex(v => v?.id === venue?.id)
   ) || [];
 

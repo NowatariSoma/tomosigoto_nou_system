@@ -40,12 +40,14 @@ export default function MonthView({
   CustomEventComponent,
   CustomEventModal,
   classNames,
+  onDateClick: onDateClickProp,
 }: {
   prevButton?: React.ReactNode;
   nextButton?: React.ReactNode;
   CustomEventComponent?: React.FC<Event>;
   CustomEventModal?: CustomEventModal;
   classNames?: { prev?: string; next?: string; addEvent?: string };
+  onDateClick?: (dateStr: string) => void;
 }) {
   const { getters, weekStartsOn } = useScheduler();
   const { setOpen } = useModal();
@@ -118,7 +120,12 @@ export default function MonthView({
       0
     );
     const dateStr = formatDateToYYYYMMDD(clickedDate); // YYYY-MM-DD形式
-    router.push(`/schedule?date=${dateStr}`);
+    // 親コンポーネントのハンドラがあればそれを使う（即座にボトムシートを表示）
+    if (onDateClickProp) {
+      onDateClickProp(dateStr);
+    } else {
+      router.push(`/schedule?date=${dateStr}`);
+    }
   }
 
   // イベントクリック時に詳細表示に遷移
@@ -126,7 +133,12 @@ export default function MonthView({
     const eventDate = new Date(event.startDate);
     eventDate.setHours(12, 0, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
     const dateStr = formatDateToYYYYMMDD(eventDate); // YYYY-MM-DD形式
-    router.push(`/schedule?date=${dateStr}`);
+    // 親コンポーネントのハンドラがあればそれを使う（即座にボトムシートを表示）
+    if (onDateClickProp) {
+      onDateClickProp(dateStr);
+    } else {
+      router.push(`/schedule?date=${dateStr}`);
+    }
   }
 
   function handleAddEvent(selectedDay: number) {
