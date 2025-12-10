@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -140,6 +141,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname() || '';
   const router = useRouter();
+  const { canEdit, canManage } = useAuth();
 
   // パスに基づいて初期展開状態を決定
   const getInitialExpandedState = () => {
@@ -247,18 +249,21 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleNavigateAndClose('/schedule')}
               />
 
-              <NavTitle label="練習管理（管理者向け）" />
-
-              <NavItem
-                icon={<Calendar className="w-4 h-4" />}
-                label="スケジュール設定"
-                hasChildren={true}
-                isExpanded={expandedSections.scheduleSettings}
-                onToggleExpand={() => toggleSection('scheduleSettings')}
-              />
-
-              {expandedSections.scheduleSettings && (
+              {/* 指導者以上のみ表示 */}
+              {canEdit && (
                 <>
+                  <NavTitle label="練習管理（管理者向け）" />
+
+                  <NavItem
+                    icon={<Calendar className="w-4 h-4" />}
+                    label="スケジュール設定"
+                    hasChildren={true}
+                    isExpanded={expandedSections.scheduleSettings}
+                    onToggleExpand={() => toggleSection('scheduleSettings')}
+                  />
+
+                  {expandedSections.scheduleSettings && (
+                    <>
                   <SubNavItem
                     icon={<Calendar className="w-4 h-4" />}
                     label="練習予定管理"
@@ -272,46 +277,56 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                     active={pathname === '/admin/attendance'}
                     onClick={() => handleNavigateAndClose('/admin/attendance')}
                   />
+                    </>
+                  )}
                 </>
               )}
 
-              <NavItem
-                icon={<Settings className="w-4 h-4" />}
-                label="マスタ設定"
-                hasChildren={true}
-                isExpanded={expandedSections.masterSettings}
-                onToggleExpand={() => toggleSection('masterSettings')}
-              />
-
-              {expandedSections.masterSettings && (
+              {/* 指導者以上のみ表示 */}
+              {canEdit && (
                 <>
-                  <SubNavItem
-                    icon={<Building className="w-4 h-4" />}
-                    label="部屋設定"
-                    active={pathname === '/room-settings'}
-                    onClick={() => handleNavigateAndClose('/room-settings')}
+                  <NavItem
+                    icon={<Settings className="w-4 h-4" />}
+                    label="マスタ設定"
+                    hasChildren={true}
+                    isExpanded={expandedSections.masterSettings}
+                    onToggleExpand={() => toggleSection('masterSettings')}
                   />
 
-                  <SubNavItem
-                    icon={<Theater className="w-4 h-4" />}
-                    label="舞台・パート登録"
-                    active={pathname === '/parts-setting'}
-                    onClick={() => handleNavigateAndClose('/parts-setting')}
-                  />
+                  {expandedSections.masterSettings && (
+                    <>
+                      <SubNavItem
+                        icon={<Building className="w-4 h-4" />}
+                        label="部屋設定"
+                        active={pathname === '/room-settings'}
+                        onClick={() => handleNavigateAndClose('/room-settings')}
+                      />
 
-                  <SubNavItem
-                    icon={<UserCheck className="w-4 h-4" />}
-                    label="メンバー所属設定"
-                    active={pathname === '/member-assignments-setting'}
-                    onClick={() => handleNavigateAndClose('/member-assignments-setting')}
-                  />
+                      <SubNavItem
+                        icon={<Theater className="w-4 h-4" />}
+                        label="舞台・パート登録"
+                        active={pathname === '/parts-setting'}
+                        onClick={() => handleNavigateAndClose('/parts-setting')}
+                      />
 
-                  <SubNavItem
-                    icon={<Users className="w-4 h-4" />}
-                    label="メンバー管理"
-                    active={pathname === '/member-management'}
-                    onClick={() => handleNavigateAndClose('/member-management')}
-                  />
+                      <SubNavItem
+                        icon={<UserCheck className="w-4 h-4" />}
+                        label="メンバー所属設定"
+                        active={pathname === '/member-assignments-setting'}
+                        onClick={() => handleNavigateAndClose('/member-assignments-setting')}
+                      />
+
+                      {/* 管理者のみ表示 */}
+                      {canManage && (
+                        <SubNavItem
+                          icon={<Users className="w-4 h-4" />}
+                          label="メンバー管理"
+                          active={pathname === '/member-management'}
+                          onClick={() => handleNavigateAndClose('/member-management')}
+                        />
+                      )}
+                    </>
+                  )}
                 </>
               )}
 
@@ -390,19 +405,22 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             className={isCollapsed ? "justify-center px-2" : ""}
           />
 
-          {!isCollapsed && <NavTitle label="練習管理（管理者向け）" />}
-
-          <NavItem
-            icon={<Calendar className="w-4 h-4" />}
-            label={isCollapsed ? "" : "スケジュール設定"}
-            hasChildren={!isCollapsed}
-            isExpanded={expandedSections.scheduleSettings}
-            onToggleExpand={() => toggleSection('scheduleSettings')}
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          {!isCollapsed && expandedSections.scheduleSettings && (
+          {/* 指導者以上のみ表示 */}
+          {canEdit && (
             <>
+              {!isCollapsed && <NavTitle label="練習管理（管理者向け）" />}
+
+              <NavItem
+                icon={<Calendar className="w-4 h-4" />}
+                label={isCollapsed ? "" : "スケジュール設定"}
+                hasChildren={!isCollapsed}
+                isExpanded={expandedSections.scheduleSettings}
+                onToggleExpand={() => toggleSection('scheduleSettings')}
+                className={isCollapsed ? "justify-center px-2" : ""}
+              />
+
+              {!isCollapsed && expandedSections.scheduleSettings && (
+                <>
               <SubNavItem
                 icon={<Calendar className="w-4 h-4" />}
                 label="練習予定管理"
@@ -416,47 +434,57 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 active={pathname === '/admin/attendance'}
                 href="/admin/attendance"
               />
+                </>
+              )}
             </>
           )}
 
-          <NavItem
-            icon={<Settings className="w-4 h-4" />}
-            label={isCollapsed ? "" : "マスタ設定"}
-            hasChildren={!isCollapsed}
-            isExpanded={expandedSections.masterSettings}
-            onToggleExpand={() => toggleSection('masterSettings')}
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
-
-          {!isCollapsed && expandedSections.masterSettings && (
+          {/* 指導者以上のみ表示 */}
+          {canEdit && (
             <>
-              <SubNavItem
-                icon={<Building className="w-4 h-4" />}
-                label="部屋設定"
-                active={pathname === '/room-settings'}
-                href="/room-settings"
+              <NavItem
+                icon={<Settings className="w-4 h-4" />}
+                label={isCollapsed ? "" : "マスタ設定"}
+                hasChildren={!isCollapsed}
+                isExpanded={expandedSections.masterSettings}
+                onToggleExpand={() => toggleSection('masterSettings')}
+                className={isCollapsed ? "justify-center px-2" : ""}
               />
 
-              <SubNavItem
-                icon={<Theater className="w-4 h-4" />}
-                label="舞台・パート登録"
-                active={pathname === '/parts-setting'}
-                href="/parts-setting"
-              />
+              {!isCollapsed && expandedSections.masterSettings && (
+                <>
+                  <SubNavItem
+                    icon={<Building className="w-4 h-4" />}
+                    label="部屋設定"
+                    active={pathname === '/room-settings'}
+                    href="/room-settings"
+                  />
 
-              <SubNavItem
-                icon={<UserCheck className="w-4 h-4" />}
-                label="メンバー所属設定"
-                active={pathname === '/member-assignments-setting'}
-                href="/member-assignments-setting"
-              />
+                  <SubNavItem
+                    icon={<Theater className="w-4 h-4" />}
+                    label="舞台・パート登録"
+                    active={pathname === '/parts-setting'}
+                    href="/parts-setting"
+                  />
 
-              <SubNavItem
-                icon={<Users className="w-4 h-4" />}
-                label="メンバー管理"
-                active={pathname === '/member-management'}
-                href="/member-management"
-              />
+                  <SubNavItem
+                    icon={<UserCheck className="w-4 h-4" />}
+                    label="メンバー所属設定"
+                    active={pathname === '/member-assignments-setting'}
+                    href="/member-assignments-setting"
+                  />
+
+                  {/* 管理者のみ表示 */}
+                  {canManage && (
+                    <SubNavItem
+                      icon={<Users className="w-4 h-4" />}
+                      label="メンバー管理"
+                      active={pathname === '/member-management'}
+                      href="/member-management"
+                    />
+                  )}
+                </>
+              )}
             </>
           )}
 
