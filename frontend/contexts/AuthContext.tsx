@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
 interface UserRole {
@@ -49,14 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const fetchUserRole = useCallback(async (currentUser: User | null) => {
+  const fetchUserRole = useCallback(async (currentUser: User | null, session: Session | null) => {
     if (!currentUser) {
       setUserRole(null);
       return;
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         setUserRole(null);
         return;
@@ -80,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [apiBaseUrl]);
 
-  const ensureProfileExists = useCallback(async (currentUser: User | null) => {
+  const ensureProfileExists = useCallback(async (currentUser: User | null, session: Session | null) => {
     if (!currentUser) {
       return;
     }
@@ -90,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
         return;
@@ -123,8 +121,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.access_token) {
           localStorage.setItem('authToken', session.access_token);
         }
-        await fetchUserRole(user);
-        await ensureProfileExists(user);
+        // 並列実行でパフォーマンス改善
+        await Promise.all([
+          fetchUserRole(user, session),
+          ensureProfileExists(user, session)
+        ]);
       } else {
         setUserRole(null);
       }
@@ -219,8 +220,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.access_token) {
             localStorage.setItem('authToken', session.access_token);
           }
-          await fetchUserRole(currentUser);
-          await ensureProfileExists(currentUser);
+          // 並列実行でパフォーマンス改善
+          await Promise.all([
+            fetchUserRole(currentUser, session),
+            ensureProfileExists(currentUser, session)
+          ]);
         } else {
           setUserRole(null);
           // localStorageから認証トークンを削除
@@ -235,7 +239,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 外部から呼び出し可能なラッパー関数
   const refreshUserRole = useCallback(async () => {
-    await fetchUserRole(user);
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetchUserRole(user, session);
   }, [fetchUserRole, user]);
 
   return (

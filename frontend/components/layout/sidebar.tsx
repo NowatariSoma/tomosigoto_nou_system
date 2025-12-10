@@ -76,7 +76,7 @@ function NavItem({ icon, label, active, onClick, href, className, hasChildren, i
   );
 
   const baseClassName = cn(
-    "flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 hover-nav",
+    "flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 hover-nav",
     active 
       ? "active-nav" 
       : "",
@@ -107,7 +107,7 @@ function SubNavItem({ icon, label, active, onClick, href, className }: NavItemPr
   );
 
   const baseClassName = cn(
-    "flex items-center w-full pl-10 pr-3 py-2 text-sm font-medium rounded-md transition-all duration-200 hover-nav",
+    "flex items-center w-full pl-10 pr-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover-nav",
     active 
       ? "active-nav" 
       : "",
@@ -331,6 +331,13 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               )}
 
               <NavTitle label="その他" />
+
+              <NavItem
+                icon={<MessageSquare className="w-4 h-4" />}
+                label="お問い合わせ"
+                active={pathname === '/contact'}
+                onClick={() => handleNavigateAndClose('/contact')}
+              />
 
               <NavItem
                 icon={<Settings className="w-4 h-4" />}
