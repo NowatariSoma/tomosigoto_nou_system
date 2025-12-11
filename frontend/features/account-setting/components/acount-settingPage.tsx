@@ -41,16 +41,12 @@ const AccountSettings: React.FC = () => {
     profile,
     departments,
     validation,
-    userRole,
-    userInfo,
     isLoading,
     isSaving,
     error,
     isEditMode,
     loadProfile,
     loadDepartments,
-    loadUserRole,
-    loadUserInfo,
     saveProfile,
     clearError,
     setEditMode,
@@ -90,12 +86,10 @@ const AccountSettings: React.FC = () => {
 
       loadProfile();
       loadDepartments();
-      loadUserRole();
-      loadUserInfo();
     };
 
     checkAuthAndLoad();
-  }, [loadProfile, loadDepartments, loadUserRole, loadUserInfo]);
+  }, [loadProfile, loadDepartments]);
 
   useEffect(() => {
     if (profile) {
@@ -181,17 +175,6 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  const getRoleLabel = (roleType: string) => {
-    switch (roleType) {
-      case 'admin':
-        return '管理者';
-      case 'general':
-        return '一般ユーザー';
-      default:
-        return roleType;
-    }
-  };
-
   const getDepartmentName = () => {
     if (!formData.department_code) return '';
     const dept = departments.find(d => d.department_code === formData.department_code);
@@ -249,30 +232,6 @@ const AccountSettings: React.FC = () => {
       )}
 
       <div className="space-y-6">
-        {userInfo && (
-          <div className="pb-6 border-b border-blue-200">
-            <h3 className="text-lg font-semibold text-black mb-4">ユーザー情報</h3>
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <label className="w-32 text-black font-medium">ユーザーID</label>
-                <span className="text-black">{userInfo.id}</span>
-              </div>
-              {userRole && (
-                <div className="flex items-center">
-                  <label className="w-32 text-black font-medium">ロール</label>
-                  <span className="text-black">{getRoleLabel(userRole.role_type)}</span>
-                </div>
-              )}
-              {userInfo.last_sign_in_at && (
-                <div className="flex items-center">
-                  <label className="w-32 text-black font-medium">最終ログイン</label>
-                  <span className="text-black">{new Date(userInfo.last_sign_in_at).toLocaleString('ja-JP')}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-between items-center pb-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold">プロフィール情報</h3>
