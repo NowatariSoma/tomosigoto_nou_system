@@ -79,6 +79,20 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
     }
   }, [schedule]);
 
+  // 新規作成時、stagesが読み込まれたら最新のステージをデフォルトで選択
+  useEffect(() => {
+    if (!schedule && stages.length > 0 && !formData.stageId) {
+      // 日付で降順ソートして最新のステージを取得
+      const sortedStages = [...stages].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const latestStage = sortedStages[0];
+      if (latestStage) {
+        setFormData(prev => ({ ...prev, stageId: latestStage.id }));
+      }
+    }
+  }, [schedule, stages, formData.stageId]);
+
   // formDataが変更された時にデバッグ出力
   useEffect(() => {
     console.log('PracticeScheduleForm - formData:', {
