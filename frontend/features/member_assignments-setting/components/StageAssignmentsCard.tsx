@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StageWithPartsAndAssignments } from '../types';
 import { UI_TEXT } from '../constants';
 import { Theater, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
 
 interface StageAssignmentsCardProps {
   stage: StageWithPartsAndAssignments;
@@ -63,9 +64,10 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
               ))}
               
             {hasMoreParts && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={handleExpandClick}
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 transition-colors"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 h-auto p-0"
               >
                 {isExpanded ? (
                   <>
@@ -78,7 +80,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
                     他{parts.length - MAX_VISIBLE_PARTS}件のパートを表示
                   </>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>
