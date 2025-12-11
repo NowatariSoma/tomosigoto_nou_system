@@ -121,6 +121,10 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
       newErrors.title = 'タイトルは必須です';
     }
 
+    if (!formData.stageId) {
+      newErrors.stageId = '舞台は必須です';
+    }
+
     if (formData.description && formData.description.length > VALIDATION.MAX_DESCRIPTION_LENGTH) {
       newErrors.description = `説明は${VALIDATION.MAX_DESCRIPTION_LENGTH}文字以内で入力してください`;
     }
@@ -226,12 +230,14 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
         <div>
           <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
             <Theater className="h-4 w-4" />
-            <span>{UI_TEXT.STAGE}</span>
+            <span>{UI_TEXT.STAGE} <span className="text-red-500">*</span></span>
           </label>
           <select
             value={formData.stageId}
             onChange={(e) => handleInputChange('stageId', e.target.value)}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.stageId ? 'border-red-500' : 'border-gray-300'
+            }`}
           >
             <option value="">{UI_TEXT.SELECT_STAGE}</option>
             {stages.map((stage) => (
@@ -240,7 +246,10 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
               </option>
             ))}
           </select>
-          {stages.length === 0 && (
+          {errors.stageId && (
+            <p className="mt-1 text-sm text-red-600">{errors.stageId}</p>
+          )}
+          {!errors.stageId && stages.length === 0 && (
             <p className="mt-1 text-sm text-gray-500">{UI_TEXT.NO_STAGE_DATA}</p>
           )}
         </div>
