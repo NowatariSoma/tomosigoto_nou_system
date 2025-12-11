@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { PracticeSchedule, User } from '../../types/attendance';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../../constants/attendance';
 import { Check, Clock, X, Save } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface SimpleAttendanceFormProps {
   practiceScheduleId: string;
@@ -151,11 +154,12 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
     return (
       <div className="w-full max-w-7xl mx-auto flex justify-end">
-        <button
+        <Button
+          variant="ghost"
           onClick={handleEditClick}
-          className="bg-white rounded-lg shadow-md overflow-hidden max-w-xs hover:shadow-lg transition-shadow cursor-pointer"
+          className="bg-white rounded-lg shadow-md overflow-hidden max-w-xs hover:shadow-lg transition-shadow cursor-pointer h-auto p-0"
         >
-          <div className="bg-slate-100 px-4 py-3 flex items-center gap-2 border-b border-slate-200">
+          <div className="bg-slate-100 px-4 py-3 flex items-center gap-2 border-b border-slate-200 w-full">
             <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full shadow-sm flex-shrink-0">
               <Check className="h-3 w-3 text-slate-600" strokeWidth={2.5} />
             </div>
@@ -173,7 +177,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
               </div>
             </div>
           </div>
-        </button>
+        </Button>
       </div>
     );
   }
@@ -183,9 +187,9 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
       <form onSubmit={handleSubmit}>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* ヘッダー */}
-          <div className="px-6 py-6 bg-[#2D3748]">
+          <div className="px-6 py-6 bg-blue-400">
             <h2 className="text-lg font-semibold text-white">出席登録</h2>
-            <p className="text-sm text-gray-300 mt-1.5">出欠状況を選択してください</p>
+            <p className="text-sm text-blue-100 mt-1.5">出欠状況を選択してください</p>
           </div>
 
           <div className="px-6 py-8 space-y-7 bg-[#F9FAFB]">
@@ -195,20 +199,20 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                 <label className="block text-sm font-medium text-slate-700 mb-3">
                   ユーザー選択
                 </label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => handleUserChange(e.target.value)}
-                  className={`w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                <Select value={selectedUserId} onValueChange={handleUserChange}>
+                  <SelectTrigger className={`w-full h-11 px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] shadow-sm ${
                     errors.selectedUserId ? 'ring-2 ring-red-500/30 border-red-300' : ''
-                  }`}
-                >
-                  <option value="">選択してください</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
+                  }`}>
+                    <SelectValue placeholder="選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.selectedUserId && (
                   <p className="mt-2 text-xs text-red-600">{errors.selectedUserId}</p>
                 )}
@@ -324,7 +328,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   参加可能時間
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  <input
+                  <Input
                     type="time"
                     value={availableFrom}
                     onChange={(e) => handleAvailableFromChange(e.target.value)}
@@ -333,7 +337,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                       errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
                     }`}
                   />
-                  <input
+                  <Input
                     type="time"
                     value={availableTo}
                     onChange={(e) => handleAvailableToChange(e.target.value)}
@@ -382,10 +386,10 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
           {/* 送信ボタン */}
           <div className="px-6 py-6 bg-[#F9FAFB] border-t border-[#E5E7EB] shadow-[0_-1px_3px_rgba(0,0,0,0.03)]">
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full max-w-sm mx-auto flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-b from-[#60A5FA] to-[#3B82F6] text-white hover:from-[#3B82F6] hover:to-[#2563EB] disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 rounded-xl transition-all duration-200 font-semibold text-base shadow-[0_2px_8px_rgba(96,165,250,0.25)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
+              className="w-full max-w-sm mx-auto flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-b from-blue-300 to-blue-400 text-white hover:from-blue-400 hover:to-blue-500 disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 rounded-xl transition-all duration-200 font-semibold text-base shadow-[0_2px_8px_rgba(131,164,255,0.25)] hover:shadow-[0_4px_12px_rgba(131,164,255,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
             >
               {loading ? (
                 <>
@@ -398,7 +402,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   <span>出席を登録する</span>
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </form>
