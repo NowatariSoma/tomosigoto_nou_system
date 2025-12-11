@@ -31,11 +31,11 @@ export const ScheduleSearchFilter: React.FC<ScheduleSearchFilterProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+    <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 検索 */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center space-x-2 text-sm font-medium text-black mb-2">
             <Search className="h-4 w-4" />
             <span>検索</span>
           </label>
@@ -49,7 +49,7 @@ export const ScheduleSearchFilter: React.FC<ScheduleSearchFilterProps> = ({
 
         {/* 日付フィルター */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center space-x-2 text-sm font-medium text-black mb-2">
             <Calendar className="h-4 w-4" />
             <span>日付で絞り込み</span>
           </label>

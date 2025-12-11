@@ -199,7 +199,7 @@ const AccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-8">
       {error && (
         <div className="mb-6 p-4 panel-error rounded-md flex items-center">
           <AlertCircle className="h-5 w-5 text-gray-600 mr-2" />
@@ -208,7 +208,7 @@ const AccountSettings: React.FC = () => {
             onClick={clearError}
             variant="ghost"
             size="icon"
-            className="ml-auto text-gray-600 hover:text-gray-800"
+            className="ml-auto"
           >
             ×
           </Button>
@@ -217,8 +217,8 @@ const AccountSettings: React.FC = () => {
 
       {saveSuccess && (
         <div className="mb-6 p-4 panel-success rounded-md flex items-center">
-          <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
-          <span className="text-blue-700">{UI_TEXT.SUCCESS_MESSAGE}</span>
+          <CheckCircle className="h-5 w-5 text-black mr-2" />
+          <span className="text-black">{UI_TEXT.SUCCESS_MESSAGE}</span>
         </div>
       )}
 
@@ -238,7 +238,7 @@ const AccountSettings: React.FC = () => {
 
       {!profile && (
         <div className="mb-6 p-4 bg-white border border-blue-200 rounded-md flex items-start space-x-3 shadow-sm">
-          <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-black mt-0.5" />
           <div>
             <p className="text-gray-900 font-semibold">プロフィール設定が必要です</p>
             <p className="text-sm text-gray-800 mt-1">
@@ -250,8 +250,8 @@ const AccountSettings: React.FC = () => {
 
       <div className="space-y-6">
         {userInfo && (
-          <div className="pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">ユーザー情報</h3>
+          <div className="pb-6 border-b border-blue-200">
+            <h3 className="text-lg font-semibold text-black mb-4">ユーザー情報</h3>
             <div className="space-y-3">
               <div className="flex items-center">
                 <label className="w-32 text-gray-700 font-medium">ユーザーID</label>

@@ -24,16 +24,16 @@ const ROLE_BADGE_STYLES: Record<'admin' | 'basic' | 'viewer', string> = {
 
 const ROLE_BUTTON_STYLES: Record<'admin' | 'basic' | 'viewer', { active: string; inactive: string }> = {
   admin: {
-    active: 'border badge-admin shadow-sm',
-    inactive: 'border border-blue-300 text-blue-700 bg-white hover:bg-blue-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-300 text-black bg-white hover:bg-blue-50'
   },
   basic: {
-    active: 'border badge-basic shadow-sm',
-    inactive: 'border border-blue-200 text-blue-600 bg-white hover:bg-blue-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   },
   viewer: {
-    active: 'border badge-viewer shadow-sm',
-    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   }
 };
 
@@ -44,12 +44,12 @@ const INSTRUCTOR_BADGE_STYLES: Record<'instructor' | 'member', string> = {
 
 const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string; inactive: string }> = {
   instructor: {
-    active: 'border badge-instructor shadow-sm',
-    inactive: 'border border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   },
   member: {
-    active: 'border badge-viewer shadow-sm',
-    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   }
 };
 
@@ -311,21 +311,21 @@ export function MemberManagementPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard
-          icon={<Users className="w-6 h-6 text-blue-600" />}
+          icon={<Users className="w-6 h-6 text-black" />}
           title="登録メンバー"
           value={`${totalMembers}名`}
           description="全ての管理対象メンバー"
           accent="bg-blue-50"
         />
         <SummaryCard
-          icon={<Shield className="w-6 h-6 text-blue-600" />}
+          icon={<Shield className="w-6 h-6 text-black" />}
           title="管理者"
           value={`${adminCount}名`}
           description="アプリ設定を操作可能"
           accent="bg-blue-50"
         />
         <SummaryCard
-          icon={<UserCheck className="w-6 h-6 text-blue-500" />}
+          icon={<UserCheck className="w-6 h-6 text-black" />}
           title="指導者 / ビューアー"
           value={`${instructorCount}名 / ${viewerCount}名`}
           description="特別ロールの状況"
@@ -333,14 +333,14 @@ export function MemberManagementPage() {
         />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-          <Filter className="h-4 w-4 text-gray-500" />
+      <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-4 sm:p-6 space-y-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-black">
+          <Filter className="h-4 w-4 text-black" />
           絞り込み
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">ロール</label>
+            <label className="block text-xs font-medium text-black mb-1.5">ロール</label>
             <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as typeof roleFilter)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="すべて" />
@@ -354,7 +354,7 @@ export function MemberManagementPage() {
             </Select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">指導者</label>
+            <label className="block text-xs font-medium text-black mb-1.5">指導者</label>
             <Select value={instructorFilter} onValueChange={(value) => setInstructorFilter(value as typeof instructorFilter)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="すべて" />
@@ -369,7 +369,7 @@ export function MemberManagementPage() {
             </Select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">キーワード</label>
+            <label className="block text-xs font-medium text-black mb-1.5">キーワード</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -398,23 +398,23 @@ export function MemberManagementPage() {
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
         <div className="hidden md:block">
-          <Table className="min-w-full divide-y divide-gray-200">
-            <TableHeader className="bg-gray-50">
+          <Table className="min-w-full divide-y divide-blue-200">
+            <TableHeader className="bg-blue-100">
               <TableRow>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">メンバー</TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">ロール</TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">指導者</TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最終アクティブ</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/3">メンバー</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">ロール</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">指導者</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">最終アクティブ</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="bg-white divide-y divide-gray-200">
+            <TableBody className="bg-white divide-y divide-blue-100">
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="px-6 py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <Loader2 className="h-6 w-6 animate-spin text-black" />
                       <p>読み込み中...</p>
                     </div>
                   </TableCell>
@@ -427,7 +427,7 @@ export function MemberManagementPage() {
                 </TableRow>
               ) : (
                 filteredMembers.map(member => (
-                  <TableRow key={member.id} className="hover:bg-gray-50 transition-colors">
+                  <TableRow key={member.id} className="hover:bg-blue-50 transition-colors">
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-sm font-semibold text-gray-900">{member.name}</span>
@@ -453,7 +453,7 @@ export function MemberManagementPage() {
         <div className="md:hidden divide-y divide-gray-200">
           {isLoading ? (
             <div className="py-10 text-center text-gray-500">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-3" />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-black mb-3" />
               読み込み中...
             </div>
           ) : filteredMembers.length === 0 ? (

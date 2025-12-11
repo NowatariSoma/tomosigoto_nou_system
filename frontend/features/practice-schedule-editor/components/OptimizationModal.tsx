@@ -64,7 +64,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-white">自動最適化</h2>
-              <p className="text-blue-100 text-sm mt-0.5">スケジュールを自動で最適化します</p>
+              <p className="text-black text-sm mt-0.5">スケジュールを自動で最適化します</p>
             </div>
             <Button
               onClick={onClose}
@@ -83,7 +83,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
           {/* Info Section */}
           <div className="bg-white border border-blue-200 rounded-xl p-5">
             <div className="flex items-start space-x-4">
-              <Info className="h-6 w-6 text-blue-600 mt-0.5 flex-shrink-0" />
+              <Info className="h-6 w-6 text-black mt-0.5 flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <p className="text-base font-semibold text-black">最適化の内容</p>
                 <ul className="list-disc list-inside space-y-1.5 text-base text-black">

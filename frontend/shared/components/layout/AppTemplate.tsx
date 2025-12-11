@@ -109,7 +109,7 @@ export function AppTemplate({
                     <h2 className="text-5xl font-black bg-gradient-to-r from-[#83A4FF] via-[#B9D4FF] to-[#FFD07F] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(131,164,255,0.5)] tracking-tight">
                       やっと会えたね（はあと）
                     </h2>
-                    <p className="text-blue-200/80 text-2xl font-light tracking-wide">
+                    <p className="text-black/80 text-2xl font-light tracking-wide">
                       君のこと、ずっと考えていたんだ。
                     </p>
                   </div>

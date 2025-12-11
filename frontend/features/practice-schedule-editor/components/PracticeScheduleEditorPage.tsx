@@ -357,7 +357,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           <Button
             onClick={handleBackToSelection}
             variant="ghost"
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>スケジュール選択に戻る</span>

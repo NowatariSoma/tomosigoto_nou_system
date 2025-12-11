@@ -56,9 +56,9 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">
+      <div className="bg-blue-50 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-blue-100 border-b border-blue-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-black">
             {room ? '会場情報編集' : '新規会場登録'}
           </h2>
           <Button
@@ -67,7 +67,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
             onClick={onClose}
             className="rounded-full"
           >
-            <X className="w-6 h-6 text-gray-600" />
+            <X className="w-6 h-6 text-black" />
           </Button>
         </div>
 

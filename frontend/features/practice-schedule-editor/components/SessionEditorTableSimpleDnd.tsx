@@ -289,17 +289,17 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
         <Table className="w-full table-fixed min-w-[600px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</TableHead>
+              <TableHead className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black border-r border-b border-blue-200 hover:bg-blue-200 transition-colors">時間</TableHead>
               {venues.map((venue, index) => (
                 <TableHead
                   key={`${venue.id}-${index}`}
-                  className="px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-r border-b border-gray-600 hover:bg-gray-800 transition-colors whitespace-nowrap"
+                  className="px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black text-center border-r border-b border-blue-200 hover:bg-blue-200 transition-colors whitespace-nowrap"
                 >
                   {venue.name || `会場${venue.id.slice(-4)}`}
                 </TableHead>
               ))}
               {edit_mode === 'edit' && (
-                <TableHead className="w-24 px-2 sm:px-4 py-2 sm:py-3 bg-gray-900 text-xs sm:text-sm font-semibold text-white text-center border-b border-gray-600">
+                <TableHead className="w-24 px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black text-center border-b border-blue-200">
                   <Button
                     onClick={handleOpenVenueModal}
                     size="sm"
@@ -398,7 +398,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                         onClick={onAddTimeSlot}
                         variant="ghost"
                         size="sm"
-                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700"
+                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium text-black hover:text-black"
                         title="時間スロットを追加"
                       >
                         <Plus className="h-4 w-4" />

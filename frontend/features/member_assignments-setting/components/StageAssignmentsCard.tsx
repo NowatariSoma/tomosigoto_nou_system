@@ -31,14 +31,14 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
 
 
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-4 border border-gray-200">
+    <div className="bg-blue-50 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-4 border border-blue-200">
       <div className="flex items-center gap-3 mb-4">
-        <Theater className="h-6 w-6 text-blue-600" />
-        <h3 className="text-2xl font-bold text-gray-800">{stage.name}</h3>
+        <Theater className="h-6 w-6 text-black" />
+        <h3 className="text-2xl font-bold text-black">{stage.name}</h3>
       </div>
-      
+
       <div className="text-sm">
-        <span className="text-gray-600 font-medium">パート:</span>
+        <span className="text-black font-medium">パート:</span>
         <div className="mt-1">
           <div className="grid grid-cols-1 gap-1">
               {visibleParts.map((part) => (
@@ -48,14 +48,14 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
                     onClick={() => handlePartClick(part.id)}
                   >
                     <div className="flex items-center gap-3">
-                      <h4 className="font-bold text-blue-900 text-lg">{part.name}</h4>
+                      <h4 className="font-bold text-black text-lg">{part.name}</h4>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span>舞: {part.member_assignments.filter(ma => ma.category === 'mai').length}人</span>
                         <span>謡: {part.member_assignments.filter(ma => ma.category === 'utai').length}人</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
+                      <span className="text-sm bg-blue-100 text-black px-3 py-1 rounded-full">
                         メンバー編集
                       </span>
                     </div>
@@ -67,7 +67,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
               <Button
                 variant="ghost"
                 onClick={handleExpandClick}
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 h-auto p-0"
+                className="flex items-center gap-1 text-black hover:text-black text-sm font-medium mt-2 h-auto p-0"
               >
                 {isExpanded ? (
                   <>

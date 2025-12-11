@@ -38,7 +38,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
         {selectedRooms.map((room) => (
           <span
             key={room.id}
-            className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
+            className="inline-flex items-center gap-1 bg-blue-100 text-black text-xs px-2 py-1 rounded-full font-medium"
           >
             <Button
               variant="ghost"
@@ -54,7 +54,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
         <Button
           variant="outline"
           onClick={handleOpenModal}
-          className="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-1 text-sm text-black border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
         >
           <Plus className="h-4 w-4" />
           部屋を追加

@@ -120,7 +120,7 @@ export function MemberRegistrationModal({
             <Button
               variant="outline"
               onClick={handleCancel}
-              className="flex-1 py-3 border-2 border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border-2 border-blue-300 text-black rounded-full hover:bg-blue-50 transition-colors"
             >
               キャンセル
             </Button>

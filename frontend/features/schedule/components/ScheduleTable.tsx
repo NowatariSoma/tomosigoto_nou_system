@@ -58,7 +58,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // ローディング状態の表示
   if (loading) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
+      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
         <div className="text-gray-500">スケジュール詳細を読み込み中...</div>
       </div>
     );
@@ -67,7 +67,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // エラー状態の表示
   if (error) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
+      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
         <div className="text-gray-600">エラー: {error}</div>
       </div>
     );
@@ -76,7 +76,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // データがない場合の表示
   if (!idealData || !idealData.venues || !Array.isArray(idealData.venues)) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
+      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
         <div className="text-gray-500">スケジュールデータがありません</div>
       </div>
     );
@@ -91,13 +91,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   ) || [];
 
   return (
-    <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
+    <div className={cn("bg-blue-50 rounded-lg shadow-lg overflow-hidden border border-blue-200", className)}>
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-blue-50 text-sm font-semibold text-blue-800 border-r border-b border-blue-100">時間</div>
-        <div className="flex-1 bg-blue-50 py-3 px-4 flex border-b border-blue-100">
+        <div className="w-24 px-4 py-3 bg-blue-100 text-sm font-semibold text-black border-r border-b border-blue-200">時間</div>
+        <div className="flex-1 bg-blue-100 py-3 px-4 flex border-b border-blue-200">
           {uniqueVenues.map((venue) => (
-            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-blue-800 text-center">
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-black text-center">
               {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
@@ -110,7 +110,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <TableBody>
             {timeSlots.map((time) => (
               <TableRow key={time} className="border-b border-gray-100">
-                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50 align-top border-r border-blue-100">
+                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-black bg-blue-100 align-top border-r border-blue-200">
                   {time}
                 </TableCell>
                 {uniqueVenues.map((venue) => {
@@ -119,15 +119,15 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                     <TableCell
                       key={`${time}-${venue?.id || 'unknown'}`}
                       className={cn(
-                        "px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top",
-                        "cursor-pointer transition-colors bg-white",
-                        parts.length > 0 ? "hover:bg-blue-50" : "hover:bg-gray-50"
+                        "px-2 py-2 border-r border-blue-200 last:border-r-0 min-h-[80px] align-top",
+                        "cursor-pointer transition-colors bg-blue-50",
+                        parts.length > 0 ? "hover:bg-blue-100" : "hover:bg-blue-100/50"
                       )}
                       onClick={() => handleCellClick(time, venue?.id || '', parts)}
                     >
                       {parts.length > 0 ? (
                         <div
-                          className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
+                          className="p-2 bg-white border border-blue-200 rounded cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
                           {/* パート名 */}

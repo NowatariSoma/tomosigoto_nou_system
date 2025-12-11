@@ -429,7 +429,7 @@ export const PracticeSchedulePage: React.FC = () => {
             <Button
               variant="ghost"
               onClick={handleBackToList}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">一覧に戻る</span>

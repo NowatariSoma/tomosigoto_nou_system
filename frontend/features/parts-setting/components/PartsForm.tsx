@@ -33,7 +33,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
   return (
     <Card className="mb-8 border-2 border-blue-200 shadow-xl">
       <CardHeader className="bg-blue-50">
-        <CardTitle className="text-xl text-blue-800 flex items-center gap-2">
+        <CardTitle className="text-xl text-black flex items-center gap-2">
           <Plus className="h-5 w-5" />
           {isEditing ? '舞台編集' : UI_TEXT.REGISTRATION_TITLE}
         </CardTitle>
@@ -44,7 +44,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
             {/* Date Input */}
             <div className="space-y-2">
               <Label htmlFor="date" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
+                <Calendar className="h-4 w-4 text-black" />
                 {UI_TEXT.DATE_LABEL}
               </Label>
               <Input
@@ -60,7 +60,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
             {/* Stage Name Input */}
             <div className="space-y-2">
               <Label htmlFor="stageName" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Theater className="h-4 w-4 text-blue-600" />
+                <Theater className="h-4 w-4 text-black" />
                 {UI_TEXT.STAGE_NAME_LABEL}
               </Label>
               <Input
@@ -78,7 +78,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
           {/* Status Selection */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Theater className="h-4 w-4 text-blue-600" />
+              <Theater className="h-4 w-4 text-black" />
               ステータス
             </Label>
             <div className="flex gap-4">
@@ -89,7 +89,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   value="active"
                   checked={formData.status === 'active'}
                   onChange={(e) => onInputChange('status', e.target.value)}
-                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-700">アクティブ</span>
               </label>
@@ -100,7 +100,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   value="inactive"
                   checked={formData.status === 'inactive'}
                   onChange={(e) => onInputChange('status', e.target.value)}
-                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-700">非アクティブ</span>
               </label>
@@ -111,7 +111,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <User className="h-4 w-4 text-blue-600" />
+                <User className="h-4 w-4 text-black" />
                 パート数
               </Label>
               <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                     htmlFor={`part${index}`}
                     className="text-sm font-semibold text-gray-700 flex items-center gap-2"
                   >
-                    <User className="h-4 w-4 text-blue-600" />
+                    <User className="h-4 w-4 text-black" />
                     {UI_TEXT.PART_LABEL}{index + 1}
                   </Label>
                   <Input
@@ -178,7 +178,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                     onDelete();
                   }
                 }}
-                className="px-6 py-2 border-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+                className="px-6 py-2 border-2 border-blue-300 text-black hover:bg-blue-50"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 削除する
@@ -191,7 +191,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+                className="px-6 py-2 border-2 border-blue-300 hover:bg-blue-50"
               >
                 {UI_TEXT.CANCEL}
               </Button>

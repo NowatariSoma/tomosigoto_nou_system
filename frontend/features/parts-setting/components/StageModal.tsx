@@ -81,19 +81,19 @@ export const StageModal: React.FC<StageModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-blue-50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100">
+          <h2 className="text-2xl font-bold text-black">
             {UI_TEXT.REGISTRATION_TITLE}
           </h2>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-200 rounded-full transition-colors"
           >
-            <X className="h-6 w-6 text-gray-500" />
+            <X className="h-6 w-6 text-black" />
           </Button>
         </div>
 
@@ -155,7 +155,7 @@ export const StageModal: React.FC<StageModalProps> = ({
                   value="active"
                   checked={formData.status === 'active'}
                   onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-700">アクティブ</span>
               </label>
@@ -166,7 +166,7 @@ export const StageModal: React.FC<StageModalProps> = ({
                   value="inactive"
                   checked={formData.status === 'inactive'}
                   onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="mr-2 text-blue-600 focus:ring-blue-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-700">非アクティブ</span>
               </label>
@@ -189,10 +189,10 @@ export const StageModal: React.FC<StageModalProps> = ({
               </Button>
 
               <div className="flex flex-col items-center">
-                <span className="text-4xl font-bold text-blue-600 mb-1">
+                <span className="text-4xl font-bold text-black mb-1">
                   {formData.partCount}
                 </span>
-                <span className="text-sm font-medium text-blue-500">
+                <span className="text-sm font-medium text-black">
                   パート
                 </span>
               </div>
@@ -215,7 +215,7 @@ export const StageModal: React.FC<StageModalProps> = ({
             <div className="space-y-3">
               {formData.parts.map((part, index) => (
                 <div key={index} className="flex items-center gap-3 p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-400 focus-within:border-blue-500 transition-colors">
-                  <div className="flex items-center justify-center w-10 h-10 bg-white text-blue-600 rounded-full text-sm font-bold border-2 border-blue-200">
+                  <div className="flex items-center justify-center w-10 h-10 bg-white text-black rounded-full text-sm font-bold border-2 border-blue-200">
                     {index + 1}
                   </div>
                   <Input
@@ -227,7 +227,7 @@ export const StageModal: React.FC<StageModalProps> = ({
                       handleInputChange('parts', newParts);
                     }}
                     placeholder={`パート名${index + 1}`}
-                    className="flex-1 px-4 py-3 border-0 bg-transparent focus:ring-0 focus:outline-none text-blue-600 placeholder-gray-400 text-lg"
+                    className="flex-1 px-4 py-3 border-0 bg-transparent focus:ring-0 focus:outline-none text-black placeholder-gray-400 text-lg"
                   />
                 </div>
               ))}
@@ -241,7 +241,7 @@ export const StageModal: React.FC<StageModalProps> = ({
                 variant="outline"
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-semibold"
+                className="px-6 py-3 border-2 border-blue-300 text-black rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors font-semibold"
               >
                 {UI_TEXT.CANCEL}
               </Button>

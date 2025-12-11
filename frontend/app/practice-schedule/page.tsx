@@ -19,7 +19,7 @@ export default function Page() {
     <AppTemplate
       title="練習予定管理"
       description="練習スケジュールの作成・編集・削除"
-      icon={<Calendar className="h-8 w-8 text-blue-600" />}
+      icon={<Calendar className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'beta',
         text: '機能完成、最終テスト中'

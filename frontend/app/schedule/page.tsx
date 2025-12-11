@@ -11,7 +11,7 @@ export default function Home() {
     <AppTemplate
       title="カレンダー"
       description="カレンダーから練習日程に移動できるページ"
-      icon={<Brain className="h-8 w-8 text-blue-600" />}
+      icon={<Brain className="h-8 w-8 text-black" />}
       permissionBadge={{
         level: 'basic',
         text: '基本権限'

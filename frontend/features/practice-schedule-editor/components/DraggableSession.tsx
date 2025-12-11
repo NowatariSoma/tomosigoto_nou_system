@@ -97,7 +97,7 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
               onClick={handleEdit}
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-1 text-gray-600 hover:text-blue-600"
+              className="h-6 w-6 p-1 text-gray-600 hover:text-black"
               title="編集"
             >
               <Edit className="h-3 w-3" />
