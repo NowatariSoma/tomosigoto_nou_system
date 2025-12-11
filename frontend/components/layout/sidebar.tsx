@@ -519,7 +519,7 @@ export function MobileSidebarToggle({ onToggle }: { onToggle: () => void }) {
       onClick={onToggle}
       className="md:hidden w-10 h-10 p-0 hover:bg-gray-100"
     >
-      <FileText className="w-6 h-6 text-blue-600" />
+      <FileText className="w-6 h-6 text-blue-400" />
     </Button>
   );
 } 
