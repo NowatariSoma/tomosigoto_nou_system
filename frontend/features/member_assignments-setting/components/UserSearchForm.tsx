@@ -57,9 +57,9 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
   };
 
   return (
-    <Card className="mb-6 border-2 border-green-200 shadow-lg">
-      <CardHeader className="bg-green-50">
-        <CardTitle className="text-lg text-green-800 flex items-center gap-2">
+    <Card className="mb-6 border-2 border-blue-200 shadow-lg">
+      <CardHeader className="bg-blue-50">
+        <CardTitle className="text-lg text-blue-800 flex items-center gap-2">
           <Search className="h-5 w-5" />
           ユーザー検索
         </CardTitle>
@@ -77,7 +77,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="タナカ"
-                className="border-2 border-gray-200 focus:border-green-500 rounded-lg"
+                className="border-2 border-gray-200 focus:border-blue-400 rounded-lg"
                 disabled={disabled}
               />
             </div>
@@ -91,7 +91,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="タロウ"
-                className="border-2 border-gray-200 focus:border-green-500 rounded-lg"
+                className="border-2 border-gray-200 focus:border-blue-400 rounded-lg"
                 disabled={disabled}
               />
             </div>
@@ -101,7 +101,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
             <Button
               type="submit"
               disabled={loading || disabled || (!firstName.trim() && !lastName.trim())}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300"
+              className="px-6 py-2 btn-primary disabled:bg-gray-300"
             >
               {loading ? '検索中...' : '検索'}
             </Button>
@@ -128,7 +128,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 {searchResults.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-green-50 hover:border-green-300 transition-colors"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-blue-50 hover:border-blue-300 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <UserIcon className="h-4 w-4 text-gray-500" />
@@ -144,7 +144,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                       size="sm"
                       onClick={() => handleUserSelect(user)}
                       disabled={disabled}
-                      className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm"
+                      className="px-3 py-1 btn-primary text-sm"
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       選択
