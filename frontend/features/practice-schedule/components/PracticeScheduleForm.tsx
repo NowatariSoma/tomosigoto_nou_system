@@ -6,6 +6,9 @@ import { Room } from '../../room-settings/types';
 import { UI_TEXT, VALIDATION, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
 import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
 import RoomSelection from './RoomSelection';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface PracticeScheduleFormProps {
   schedule?: PracticeSchedule | null;
@@ -188,12 +191,14 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           <h2 className="text-xl font-semibold text-gray-900">
             {schedule ? UI_TEXT.UPDATE_SCHEDULE : UI_TEXT.CREATE_SCHEDULE}
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onCancel}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -201,18 +206,18 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
         <div>
           <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
             <Calendar className="h-4 w-4" />
-            <span>{UI_TEXT.DATE} <span className="text-red-500">*</span></span>
+            <span>{UI_TEXT.DATE} <span className="text-gray-600">*</span></span>
           </label>
-          <input
+          <Input
             type="date"
             value={formData.date}
             onChange={(e) => handleInputChange('date', e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.date ? 'border-red-500' : 'border-gray-300'
+              errors.date ? 'border-gray-500' : 'border-gray-300'
             }`}
           />
           {errors.date && (
-            <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+            <p className="mt-1 text-sm text-gray-600">{errors.date}</p>
           )}
         </div>
 
@@ -221,48 +226,50 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
               <Clock className="h-4 w-4" />
-              <span>{UI_TEXT.START_TIME} <span className="text-red-500">*</span></span>
+              <span>{UI_TEXT.START_TIME} <span className="text-gray-600">*</span></span>
             </label>
-            <select
+            <Select
               value={formData.startTime}
-              onChange={(e) => handleInputChange('startTime', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.startTime ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onValueChange={(value) => handleInputChange('startTime', value)}
             >
-              <option value="">選択してください</option>
-              {timeOptions.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={`w-full ${errors.startTime ? 'border-gray-500' : ''}`}>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.startTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
+              <p className="mt-1 text-sm text-gray-600">{errors.startTime}</p>
             )}
           </div>
 
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
               <Clock className="h-4 w-4" />
-              <span>{UI_TEXT.END_TIME} <span className="text-red-500">*</span></span>
+              <span>{UI_TEXT.END_TIME} <span className="text-gray-600">*</span></span>
             </label>
-            <select
+            <Select
               value={formData.endTime}
-              onChange={(e) => handleInputChange('endTime', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.endTime ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onValueChange={(value) => handleInputChange('endTime', value)}
             >
-              <option value="">選択してください</option>
-              {timeOptions.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={`w-full ${errors.endTime ? 'border-gray-500' : ''}`}>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.endTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
+              <p className="mt-1 text-sm text-gray-600">{errors.endTime}</p>
             )}
           </div>
         </div>
@@ -290,7 +297,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
             <FileText className="h-4 w-4" />
             <span>{UI_TEXT.TITLE} <span className="text-red-500">*</span></span>
           </label>
-          <input
+          <Input
             type="text"
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
@@ -326,21 +333,22 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
 
         {/* ボタン */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-          <button
+          <Button
+            variant="outline"
             type="button"
             onClick={onCancel}
             className="px-6 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 hover:border-slate-400 rounded-lg transition-all duration-200 font-medium"
           >
             {UI_TEXT.CANCEL}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={loading}
             className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
           >
             <Save className="h-4 w-4" />
             <span>{loading ? '保存中...' : UI_TEXT.SAVE}</span>
-          </button>
+          </Button>
         </div>
       </form>
       </div>
