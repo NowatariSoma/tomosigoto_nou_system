@@ -194,7 +194,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
             </Button>
             <Button
               type="submit"
-              className="flex items-center space-x-2 px-4 py-2 bg-accent-400 text-accent-900 hover:bg-accent-500"
+              className="flex items-center space-x-2 px-4 py-2"
             >
               追加
             </Button>

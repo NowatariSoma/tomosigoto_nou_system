@@ -178,7 +178,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                     "text-xs px-2 py-0.5 rounded-full",
                     candidate.attendance_status === 'present'
                       ? "bg-blue-100 text-blue-700"
-                      : "bg-accent-100 text-accent-700"
+                      : "bg-yellow-100 text-yellow-700"
                   )}>
                     {candidate.attendance_status === 'present' ? '出席' : '遅刻'}
                   </span>

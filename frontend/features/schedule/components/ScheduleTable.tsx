@@ -94,10 +94,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-blue-400 text-sm font-semibold text-white border-r border-b border-blue-300 hover:bg-blue-500 transition-colors">時間</div>
-        <div className="flex-1 bg-blue-400 py-3 px-4 flex border-b border-blue-300">
+        <div className="w-24 px-4 py-3 bg-blue-50 text-sm font-semibold text-blue-800 border-r border-b border-blue-100">時間</div>
+        <div className="flex-1 bg-blue-50 py-3 px-4 flex border-b border-blue-100">
           {uniqueVenues.map((venue) => (
-            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-white text-center hover:bg-blue-500 transition-colors">
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-blue-800 text-center">
               {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
@@ -110,7 +110,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <TableBody>
             {timeSlots.map((time) => (
               <TableRow key={time} className="border-b border-gray-100">
-                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-white bg-blue-400 align-top border-r border-blue-300 hover:bg-blue-500 transition-colors">
+                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50 align-top border-r border-blue-100">
                   {time}
                 </TableCell>
                 {uniqueVenues.map((venue) => {

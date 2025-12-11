@@ -242,7 +242,7 @@
     @apply bg-white text-gray-700 border-gray-500 hover:bg-gray-50;
   }
 
-  /* 権限バッジ（3色のみ使用） */
+  /* 権限バッジ（メイン色ベース） */
   .badge-admin {
     @apply bg-blue-600 text-white border-blue-600;
   }
@@ -250,15 +250,15 @@
     @apply bg-blue-400 text-white border-blue-400;
   }
   .badge-viewer {
-    @apply bg-gray-500 text-white border-gray-500;
+    @apply bg-gray-400 text-white border-gray-400;
   }
   .badge-instructor {
-    @apply bg-yellow-300 text-yellow-900 border-yellow-300;
+    @apply bg-blue-500 text-white border-blue-500;
   }
 
-  /* 開発ステージバッジ（3色のみ使用） */
+  /* 開発ステージバッジ（メイン色ベース） */
   .badge-alpha {
-    @apply bg-yellow-300 text-yellow-900 border-yellow-300;
+    @apply bg-blue-300 text-blue-900 border-blue-300;
   }
   .badge-beta {
     @apply bg-blue-200 text-blue-800 border-blue-200;
@@ -284,12 +284,12 @@
     @apply bg-gray-600 text-white hover:bg-gray-700 rounded-lg transition-colors;
   }
 
-  /* テーブルヘッダー */
+  /* テーブルヘッダー（薄い青背景 + 濃い青テキスト） */
   .table-header {
-    @apply bg-blue-400 text-white;
+    @apply bg-blue-50 text-blue-800;
   }
   .table-header-cell {
-    @apply px-4 py-3 text-sm font-semibold text-white bg-blue-400 border-blue-300;
+    @apply px-4 py-3 text-sm font-semibold text-blue-800 bg-blue-50 border-blue-100;
   }
 
   /* カード・パネル（3色のみ使用） */

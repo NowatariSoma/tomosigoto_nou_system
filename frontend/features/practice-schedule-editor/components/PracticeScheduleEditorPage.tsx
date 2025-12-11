@@ -393,7 +393,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           </Button>
           <Button
             onClick={handleCreateInstructor}
-            className="flex items-center space-x-2 px-4 py-2 bg-accent-400 text-accent-900 hover:bg-accent-500"
+            variant="outline"
+            className="flex items-center space-x-2 px-4 py-2"
           >
             <Plus className="h-4 w-4" />
             <span>監督者を追加</span>
