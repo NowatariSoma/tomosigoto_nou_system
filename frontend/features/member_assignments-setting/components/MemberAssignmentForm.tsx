@@ -71,7 +71,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
   return (
     <Card className="mb-8 border-2 border-blue-200 shadow-xl">
       <CardHeader className="bg-blue-50">
-        <CardTitle className="text-xl text-blue-800 flex items-center gap-2">
+        <CardTitle className="text-xl text-black flex items-center gap-2">
           <Plus className="h-5 w-5" />
           {isEditing ? '所属編集' : UI_TEXT.ASSIGNMENT_TITLE}
         </CardTitle>
@@ -82,7 +82,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
             {/* Stage Selection */}
             <div className="space-y-2">
               <Label htmlFor="stage" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Theater className="h-4 w-4 text-blue-600" />
+                <Theater className="h-4 w-4 text-black" />
                 舞台
               </Label>
               <Select value={selectedStageId} onValueChange={handleStageChange} required>
@@ -102,7 +102,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
             {/* Part Selection */}
             <div className="space-y-2">
               <Label htmlFor="part" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Music className="h-4 w-4 text-blue-600" />
+                <Music className="h-4 w-4 text-black" />
                 {UI_TEXT.PART_LABEL}
               </Label>
               <Select
@@ -132,7 +132,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
             {/* User Selection */}
             <div className="space-y-2">
               <Label htmlFor="userId" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <UserIcon className="h-4 w-4 text-blue-600" />
+                <UserIcon className="h-4 w-4 text-black" />
                 {UI_TEXT.USER_LABEL}
               </Label>
               <Select
@@ -157,7 +157,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
             {/* Category Selection */}
             <div className="space-y-2">
               <Label htmlFor="category" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Music className="h-4 w-4 text-blue-600" />
+                <Music className="h-4 w-4 text-black" />
                 {UI_TEXT.CATEGORY_LABEL}
               </Label>
               <Select
@@ -182,7 +182,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
           {/* Display Order */}
           <div className="space-y-2">
             <Label htmlFor="displayOrder" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Music className="h-4 w-4 text-blue-600" />
+              <Music className="h-4 w-4 text-black" />
               {UI_TEXT.DISPLAY_ORDER_LABEL}
             </Label>
             <Input
@@ -221,7 +221,7 @@ export const MemberAssignmentForm: React.FC<MemberAssignmentFormProps> = ({
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+                className="px-6 py-2 border-2 border-blue-300 hover:bg-blue-50"
               >
                 {UI_TEXT.CANCEL}
               </Button>

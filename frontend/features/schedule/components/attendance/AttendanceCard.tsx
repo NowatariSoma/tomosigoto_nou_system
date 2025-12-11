@@ -44,11 +44,11 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-200">
+    <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-6 hover:shadow-md transition-all duration-200">
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <Calendar className="h-5 w-5 text-blue-600" />
+          <div className="bg-blue-200 p-2 rounded-lg">
+            <Calendar className="h-5 w-5 text-black" />
           </div>
           <h3 className="text-lg font-semibold text-slate-900">
             {practiceSchedule ? formatDate(practiceSchedule.schedule_date) : '練習予定'}
@@ -60,7 +60,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => onEdit(attendance)}
-              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2 text-slate-600 hover:text-black hover:bg-blue-50 rounded-lg transition-colors"
               title="編集"
             >
               <Edit className="h-4 w-4" />
@@ -71,7 +71,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => onDelete(attendance)}
-              className="p-2 text-slate-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-black hover:text-black hover:bg-blue-50 rounded-lg transition-colors"
               title="削除"
             >
               <Trash2 className="h-4 w-4" />
@@ -82,9 +82,9 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
 
       <div className="space-y-4">
         {/* 出席状況 */}
-        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+        <div className="bg-white p-4 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">出席状況</span>
+            <span className="text-sm font-medium text-black">出席状況</span>
             <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(attendance.status)}`}>
               {getStatusLabel(attendance.status)}
             </span>
@@ -106,8 +106,8 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
 
         {/* 練習情報 */}
         {practiceSchedule && (
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3">練習詳細</h4>
+          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
+            <h4 className="text-sm font-semibold text-black mb-3">練習詳細</h4>
             <div className="space-y-2">
               {/* タイトル */}
               {practiceSchedule.title && (
@@ -148,14 +148,14 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
 
         {/* 備考 */}
         {attendance.notes && (
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
             <div className="flex items-center space-x-2 mb-3">
-              <div className="bg-slate-100 p-1.5 rounded-lg">
-                <FileText className="h-4 w-4 text-slate-600" />
+              <div className="bg-blue-100 p-1.5 rounded-lg">
+                <FileText className="h-4 w-4 text-black" />
               </div>
-              <h4 className="text-sm font-semibold text-slate-700">備考</h4>
+              <h4 className="text-sm font-semibold text-black">備考</h4>
             </div>
-            <div className="bg-white p-3 rounded-md border border-slate-200">
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
               <p className="text-sm text-slate-700 leading-relaxed">
                 {attendance.notes}
               </p>
@@ -164,7 +164,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
         )}
 
         {/* 登録日時 */}
-        <div className="text-xs text-slate-400 pt-3 border-t border-slate-200">
+        <div className="text-xs text-black pt-3 border-t border-blue-200">
           登録日時: {formatDate(attendance.created_at)}
         </div>
       </div>

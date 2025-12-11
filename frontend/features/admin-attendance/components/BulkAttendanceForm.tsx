@@ -207,10 +207,10 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
   if (isSubmitted && showCompletionMessage) {
     return (
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
+      <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-8 text-center">
         <div className="flex flex-col items-center space-y-6">
-          <div className="bg-white p-4 rounded-full">
-            <CheckCircle className="h-16 w-16 text-blue-600" />
+          <div className="bg-blue-100 p-4 rounded-full">
+            <CheckCircle className="h-16 w-16 text-black" />
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-gray-900">一括出席登録完了</h2>
@@ -226,12 +226,12 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
   const selectedPractice = practiceSchedules.find(p => p.id === selectedPracticeId);
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+    <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-6">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="bg-blue-100 p-2 rounded-lg">
-          <Users className="h-6 w-6 text-blue-600" />
+        <div className="bg-blue-200 p-2 rounded-lg">
+          <Users className="h-6 w-6 text-black" />
         </div>
-        <h2 className="text-2xl font-semibold text-gray-900">
+        <h2 className="text-2xl font-semibold text-black">
           {UI_TEXT.BULK_ATTENDANCE_REGISTRATION}
         </h2>
       </div>
@@ -239,9 +239,9 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 練習選択 */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center space-x-2 text-sm font-medium text-black mb-2">
             <Calendar className="h-4 w-4" />
-            <span>{UI_TEXT.PRACTICE} <span className="text-gray-600">*</span></span>
+            <span>{UI_TEXT.PRACTICE} <span className="text-black">*</span></span>
           </label>
           <Select
             value={selectedPracticeId}
@@ -277,9 +277,9 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
         {/* 選択された練習の詳細 */}
         {selectedPractice && (
-          <div className="bg-white border border-slate-200 p-4 rounded-lg">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">練習情報</h3>
-            <div className="text-sm text-slate-600 space-y-1">
+          <div className="bg-white border border-blue-200 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold text-black mb-2">練習情報</h3>
+            <div className="text-sm text-black space-y-1">
               <p>日付: {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP')}</p>
               <p>時間: {selectedPractice.start_time} - {selectedPractice.end_time}</p>
               {selectedPractice.title && <p>タイトル: {selectedPractice.title}</p>}
@@ -294,7 +294,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
             id="setUnenteredToPresent"
             checked={setUnenteredToPresent}
             onChange={(e) => setSetUnenteredToPresent(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="w-4 h-4 text-black border-gray-300 rounded focus:ring-blue-500"
           />
           <label htmlFor="setUnenteredToPresent" className="text-sm font-medium text-gray-700">
             {UI_TEXT.SET_UNENTERED_TO_PRESENT}

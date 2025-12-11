@@ -213,7 +213,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3 sm:p-6">
+      <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-3 sm:p-6">
       <div className="flex justify-end mb-4 sm:mb-6">
         <div className="flex items-center gap-2">
           {isEditMode ? (
@@ -249,19 +249,19 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       </div>
 
       {/* フィルタリング */}
-      <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-white rounded-lg border border-gray-200">
+      <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-white rounded-lg border border-blue-200">
         <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-          <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-          <h3 className="text-xs sm:text-sm font-semibold text-gray-900">フィルタ</h3>
+          <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
+          <h3 className="text-xs sm:text-sm font-semibold text-black">フィルタ</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           {/* 練習選択 */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-black mb-1.5 sm:mb-2">
               {UI_TEXT.PRACTICE}
-              <span className="text-gray-600 ml-1">※</span>
-              <span className="text-gray-600 text-xs ml-1">（必須）</span>
+              <span className="text-black ml-1">※</span>
+              <span className="text-black text-xs ml-1">（必須）</span>
             </label>
             <Select value={filterPracticeId} onValueChange={setFilterPracticeId}>
               <SelectTrigger className="w-full">
@@ -320,8 +320,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       {/* 選択された練習の情報 */}
       {selectedPractice && (
         <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-white border border-blue-200 rounded-lg">
-          <h3 className="text-xs sm:text-sm font-semibold text-blue-900 mb-1.5 sm:mb-2">練習情報</h3>
-          <div className="text-xs sm:text-sm text-blue-800 space-y-1">
+          <h3 className="text-xs sm:text-sm font-semibold text-black mb-1.5 sm:mb-2">練習情報</h3>
+          <div className="text-xs sm:text-sm text-black space-y-1">
             <p>日付: {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP', {
               year: 'numeric',
               month: 'long',
@@ -372,7 +372,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                   const currentNotes = getCurrentValue(user.id, 'notes') as string;
 
                   return (
-                    <TableRow key={user.id} className="hover:bg-gray-100/20">
+                    <TableRow key={user.id} className="hover:bg-blue-50">
                       {/* ユーザー名 */}
                       <TableCell style={{ width: '180px', maxWidth: '180px' }} className="px-6 py-4 overflow-hidden">
                         <div className="w-full min-w-0 overflow-hidden">
@@ -385,50 +385,46 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                       <TableCell className="px-6 py-4 whitespace-nowrap" style={isEditMode ? { width: '280px', maxWidth: '280px' } : { width: '150px', maxWidth: '150px' }}>
                         {isEditMode ? (
                           <div className="flex gap-1.5">
-                            <Button
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                              size="sm"
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.PRESENT
-                                  ? 'status-present shadow-sm'
-                                  : 'status-present-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-blue-300 hover:bg-blue-50'
                               }`}
                             >
                               出席
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                              size="sm"
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.ABSENT
-                                  ? 'status-absent shadow-sm'
-                                  : 'status-absent-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-gray-400 hover:bg-gray-50'
                               }`}
                             >
                               欠席
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                              size="sm"
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.LATE
-                                  ? 'status-late shadow-sm'
-                                  : 'status-late-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-yellow-300 hover:bg-yellow-50'
                               }`}
                             >
                               遅刻
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                              size="sm"
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap ${
+                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.NO_SHOW
-                                  ? 'status-no-show shadow-sm'
-                                  : 'status-no-show-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-gray-500 hover:bg-gray-50'
                               }`}
                             >
                               無断欠席
-                            </Button>
+                            </button>
                           </div>
                         ) : (
                           <div>
@@ -540,50 +536,46 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         <div>
                           <p className="text-xs font-medium text-gray-600 mb-1">出席状況</p>
                           <div className="grid grid-cols-4 gap-1.5">
-                            <Button
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                              size="sm"
-                              className={`px-1.5 py-1.5 text-xs font-medium ${
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.PRESENT
-                                  ? 'status-present shadow-sm'
-                                  : 'status-present-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-blue-300 hover:bg-blue-50'
                               }`}
                             >
                               出席
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                              size="sm"
-                              className={`px-1.5 py-1.5 text-xs font-medium ${
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.ABSENT
-                                  ? 'status-absent shadow-sm'
-                                  : 'status-absent-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-gray-400 hover:bg-gray-50'
                               }`}
                             >
                               欠席
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                              size="sm"
-                              className={`px-1.5 py-1.5 text-xs font-medium ${
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.LATE
-                                  ? 'status-late shadow-sm'
-                                  : 'status-late-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-yellow-300 hover:bg-yellow-50'
                               }`}
                             >
                               遅刻
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                              size="sm"
-                              className={`px-1.5 py-1.5 text-xs font-medium ${
+                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
                                 currentStatus === ATTENDANCE_STATUS.NO_SHOW
-                                  ? 'status-no-show shadow-sm'
-                                  : 'status-no-show-outline'
+                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
+                                  : 'bg-white text-black border-gray-500 hover:bg-gray-50'
                               }`}
                             >
                               無断
-                            </Button>
+                            </button>
                           </div>
                         </div>
                         {currentStatus === ATTENDANCE_STATUS.LATE && (

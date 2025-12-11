@@ -11,12 +11,60 @@
 
 @layer base {
   :root {
-    /* 統一カラーパレット */
-    /* メイン: #83A4FF (HSL: 222 100% 76%) */
-    /* サブ: #B9D4FF (HSL: 215 100% 86%) */
-    /* アクセント: #FFD07F (HSL: 38 100% 75%) */
-    /* エラー/削除: #FF9590 (HSL: 2 100% 79%) */
-    /* 背景: white */
+    /* ========================================
+     * カラーパレット定義
+     * ========================================
+     *
+     * ■ メインカラー: #83A4FF (blue-400相当)
+     *   - 用途: プライマリボタン、重要なアクション、アクティブ状態
+     *   - Tailwind: blue-400, blue-500, blue-600
+     *   - 画面占有率: 約25%
+     *
+     * ■ サブカラー: #B9D4FF (blue-100〜blue-200相当)
+     *   - 用途: 背景、カード、パネル、ヘッダー、ホバー状態
+     *   - Tailwind: blue-50, blue-100, blue-200
+     *   - 画面占有率: 約25%
+     *
+     * ■ アクセントカラー: #FFD07F (yellow-300相当)
+     *   - 用途: 遅刻ステータス、警告、注意喚起（5%以下）
+     *   - Tailwind: yellow-300, yellow-400
+     *   - 画面占有率: 約5%
+     *
+     * ■ エラー/削除: #FF9590 (red-400相当)
+     *   - 用途: 削除ボタン、エラー表示のみ
+     *   - Tailwind: red-400, red-500
+     *
+     * ■ 背景: white
+     *   - 用途: ページ背景、入力フィールド内部
+     *   - 画面占有率: 約45%
+     *
+     * ■ 文字色ルール:
+     *   - 基本: text-black（デフォルト黒）
+     *   - プレースホルダー: text-black/50（半透明）
+     *
+     * ■ ボタン文字色ルール:
+     *   - メインカラー背景(blue-400)のボタン: 白文字(text-white)
+     *   - サブカラー背景(blue-50〜blue-200)のボタン/要素: 黒文字(text-black)
+     *   - ヘッダー(blue-400)上のアイコン/テキスト: 白
+     *   - サイドバー(blue-100)上のテキスト: 黒(text-black)
+     *
+     * ■ ホバー状態ルール:
+     *   - 背景: hover:bg-blue-50
+     *   - テキスト: 変更なし（黒のまま）
+     *
+     * ■ レイアウト色:
+     *   - ヘッダー: bg-blue-400 (メインカラー) + 白文字
+     *   - サイドバー: bg-blue-100 (サブカラー) + 黒文字(text-black)
+     *
+     * ■ ボタンvariant:
+     *   - default: 青背景 + 白文字（保存、登録など）
+     *   - accent: 黄色背景 + 黒文字（注目させたい重要なボタン）
+     *   - destructive: 赤背景 + 白文字（削除）
+     *   - outline: 白背景 + 青枠 + 黒文字
+     *   - secondary: 白背景 + 黒文字
+     *   - ghost: 透明 + 黒文字
+     *
+     * ======================================== */
     --background: 0 0% 100%;
     --foreground: 220 13% 13%;
     --card: 0 0% 100%;
@@ -107,18 +155,23 @@
     @apply card-elevated hover:shadow-md transition-shadow duration-200;
   }
   
+  /* ボタンスタイル - Buttonコンポーネントのvariantと統一 */
+  /* プライマリ: 保存、登録、送信など最重要アクション（1画面に1-2個） */
   .btn-primary {
     @apply bg-blue-400 text-white hover:bg-blue-500 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm;
   }
 
+  /* アウトライン: 編集、追加など補助的アクション */
   .btn-secondary {
-    @apply bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm border border-blue-200;
+    @apply border border-blue-300 bg-white text-black hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm;
   }
 
+  /* ゴースト: キャンセル、閉じるなど（ホバーは青系） */
   .btn-tertiary {
-    @apply text-gray-600 hover:text-blue-600 hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm;
+    @apply text-black hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm;
   }
 
+  /* アクセント: 遅刻注意など特別な警告用（めったに使わない） */
   .btn-accent {
     @apply bg-yellow-300 text-yellow-900 hover:bg-yellow-400 focus:ring-2 focus:ring-yellow-200 focus:ring-offset-2 transition-all duration-200 font-medium rounded-md px-4 py-2 text-sm;
   }
@@ -143,58 +196,58 @@
     @apply text-gray-600;
   }
 
-  /* ホバー効果のテーマクラス */
+  /* ホバー効果のテーマクラス（すべて青系に統一） */
   .hover-subtle {
-    @apply transition-colors duration-200 hover:bg-gray-50/30 hover:text-gray-800;
+    @apply transition-colors duration-200 hover:bg-blue-50;
   }
-  
+
   .hover-nav {
-    @apply transition-colors duration-200 text-gray-700 hover:bg-gray-50/30 hover:text-gray-800;
+    @apply transition-colors duration-200 text-black hover:bg-blue-50;
   }
   
   .hover-button {
-    @apply transition-all duration-200 hover:bg-gray-50/30 hover:text-gray-800;
+    @apply transition-all duration-200 hover:bg-blue-50;
   }
-  
+
   .hover-danger {
-    @apply transition-colors duration-200 text-red-600 hover:bg-red-50/20 hover:text-red-700;
+    @apply transition-colors duration-200 text-red-500 hover:bg-red-50 hover:text-red-600;
   }
-  
+
   .hover-success {
-    @apply transition-colors duration-200 text-green-600 hover:bg-green-50/20 hover:text-green-700;
+    @apply transition-colors duration-200 text-black hover:bg-blue-50;
   }
-  
+
   .hover-warning {
-    @apply transition-colors duration-200 text-yellow-600 hover:bg-yellow-50/20 hover:text-yellow-700;
+    @apply transition-colors duration-200 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700;
   }
-  
+
   .hover-info {
-    @apply transition-colors duration-200 text-blue-600 hover:bg-blue-50/20 hover:text-blue-700;
+    @apply transition-colors duration-200 text-black hover:bg-blue-50;
   }
-  
+
   .hover-card {
-    @apply transition-all duration-200 hover:shadow-sm hover:bg-gray-50/20;
+    @apply transition-all duration-200 hover:shadow-sm hover:bg-blue-50;
   }
-  
+
   .hover-border {
-    @apply transition-colors duration-200 hover:border-gray-100;
+    @apply transition-colors duration-200 hover:border-blue-300;
   }
-  
+
   .hover-icon {
-    @apply transition-colors duration-200 hover:bg-gray-50/30 rounded;
+    @apply transition-colors duration-200 hover:bg-blue-50 rounded;
   }
   
   /* アクティブ状態のテーマクラス */
   .active-nav {
-    @apply bg-blue-100 text-blue-700 border-r-2 border-blue-400;
+    @apply bg-yellow-300 text-black border-r-2 border-yellow-400;
   }
 
   .active-tab {
-    @apply border-blue-400 text-blue-600;
+    @apply border-blue-400 text-black;
   }
 
   .active-button {
-    @apply bg-blue-100 text-blue-700;
+    @apply bg-blue-100 text-black;
   }
 
   /* フォーカス状態のテーマクラス */
@@ -208,7 +261,7 @@
 
   /* ホバー効果（統一カラー） */
   .hover-info {
-    @apply transition-colors duration-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700;
+    @apply transition-colors duration-200 text-black hover:bg-blue-50;
   }
 
   /* ========================================
@@ -216,30 +269,37 @@
    * 統一カラー: メイン #83A4FF, サブ #B9D4FF, アクセント #FFD07F
    * ======================================== */
 
-  /* 出席ステータス（3色のみ使用） */
+  /* 出席ステータス表示用バッジ */
   .status-present {
     @apply bg-blue-400 text-white border-blue-400;
-  }
-  .status-present-outline {
-    @apply bg-white text-blue-600 border-blue-300 hover:bg-blue-50;
   }
   .status-absent {
     @apply bg-gray-600 text-white border-gray-600;
   }
-  .status-absent-outline {
-    @apply bg-white text-gray-600 border-gray-400 hover:bg-gray-50;
-  }
   .status-late {
-    @apply bg-yellow-300 text-yellow-900 border-yellow-300;
-  }
-  .status-late-outline {
-    @apply bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50;
+    @apply bg-yellow-400 text-black border-yellow-400;
   }
   .status-no-show {
     @apply bg-gray-700 text-white border-gray-700;
   }
+
+  /* 出席ステータス選択ボタン（未選択） */
+  .status-present-outline {
+    @apply bg-white text-black border-blue-300 hover:bg-blue-50;
+  }
+  .status-absent-outline {
+    @apply bg-white text-black border-gray-400 hover:bg-gray-50;
+  }
+  .status-late-outline {
+    @apply bg-white text-black border-yellow-300 hover:bg-yellow-50;
+  }
   .status-no-show-outline {
-    @apply bg-white text-gray-700 border-gray-500 hover:bg-gray-50;
+    @apply bg-white text-black border-gray-500 hover:bg-gray-50;
+  }
+
+  /* 出席ステータス選択ボタン（選択中）- アクセントカラー */
+  .status-selected {
+    @apply bg-yellow-300 text-black border-yellow-400;
   }
 
   /* 権限バッジ（メイン色ベース） */
@@ -258,10 +318,10 @@
 
   /* 開発ステージバッジ（メイン色ベース） */
   .badge-alpha {
-    @apply bg-blue-300 text-blue-900 border-blue-300;
+    @apply bg-blue-300 text-black border-blue-300;
   }
   .badge-beta {
-    @apply bg-blue-200 text-blue-800 border-blue-200;
+    @apply bg-blue-200 text-black border-blue-200;
   }
   .badge-stable {
     @apply bg-blue-400 text-white border-blue-400;
@@ -286,10 +346,10 @@
 
   /* テーブルヘッダー（薄い青背景 + 濃い青テキスト） */
   .table-header {
-    @apply bg-blue-50 text-blue-800;
+    @apply bg-blue-50 text-black;
   }
   .table-header-cell {
-    @apply px-4 py-3 text-sm font-semibold text-blue-800 bg-blue-50 border-blue-100;
+    @apply px-4 py-3 text-sm font-semibold text-black bg-blue-50 border-blue-100;
   }
 
   /* カード・パネル（3色のみ使用） */
@@ -316,10 +376,10 @@
 
   /* アイコンカラー（3色のみ使用） */
   .icon-primary {
-    @apply text-blue-400;
+    @apply text-black;
   }
   .icon-secondary {
-    @apply text-blue-600;
+    @apply text-black;
   }
   .icon-accent {
     @apply text-yellow-500;

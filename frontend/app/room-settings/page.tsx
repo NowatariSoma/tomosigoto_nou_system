@@ -27,7 +27,7 @@ export default function Page() {
     <AppTemplate
       title="部屋登録ページ"
       description="使用する部屋を登録するページ"
-      icon={<Activity className="h-8 w-8 text-blue-600" />}
+      icon={<Activity className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'beta',
         text: 'バックエンド結合'

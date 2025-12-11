@@ -40,7 +40,7 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
   if (isEditing) {
     return (
       <div className="flex items-center space-x-3 bg-blue-50 px-4 py-2 rounded-md border border-blue-200">
-        <Clock className="h-4 w-4 text-blue-600" />
+        <Clock className="h-4 w-4 text-black" />
         <div className="flex items-center space-x-2">
           <Input
             type="time"
@@ -85,7 +85,7 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
         onClick={() => setIsEditing(true)}
         variant="link"
         size="sm"
-        className="text-blue-600 hover:text-blue-800 text-sm h-auto p-0"
+        className="text-black hover:text-black text-sm h-auto p-0"
       >
         編集
       </Button>

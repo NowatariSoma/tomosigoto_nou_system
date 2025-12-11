@@ -46,17 +46,17 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, sessionInstructor) : undefined}
-      className={`rounded-lg px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 hover:shadow transition-all ${
+      className={`rounded-lg px-4 py-3 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:shadow transition-all ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}
     >
       <div className="flex items-center gap-2">
         {edit_mode === 'edit' && (
-          <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <GripVertical className="h-4 w-4 text-black flex-shrink-0" />
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-base text-gray-800 font-semibold">
+          <div className="text-base text-black font-semibold">
             {(() => {
               console.log('DEBUG InstructorCard: sessionInstructor =', sessionInstructor);
               return sessionInstructor.user_name || 

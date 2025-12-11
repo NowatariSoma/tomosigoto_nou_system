@@ -47,8 +47,8 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white shadow-sm">
-      <div className="w-full px-4 bg-white">
+    <header className="sticky top-0 z-40 w-full border-b border-blue-500 bg-blue-400 shadow-sm">
+      <div className="w-full px-4 bg-blue-400">
         <div className="flex h-16 items-center justify-between">
           {/* Left side - Mobile sidebar toggle only */}
           <div className="flex items-center">
@@ -64,11 +64,11 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-10 w-10 rounded-full hover-icon"
+                    className="relative h-10 w-10 rounded-full hover:bg-blue-500"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt={getUserDisplayName()} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700">
+                      <AvatarFallback className="bg-white text-black">
                         {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>
@@ -82,7 +82,7 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                   <div className="flex items-center justify-start gap-3 p-3 border-b border-gray-200">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src="" alt={getUserDisplayName()} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700">
+                      <AvatarFallback className="bg-blue-100 text-black">
                         {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>

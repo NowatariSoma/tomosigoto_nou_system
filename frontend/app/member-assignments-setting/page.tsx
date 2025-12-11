@@ -25,7 +25,7 @@ export default function Page() {
     <AppTemplate
       title="メンバー所属設定ページ"
       description="メンバーのパート所属を管理するページ"
-      icon={<UserCheck className="h-8 w-8 text-blue-600" />}
+      icon={<UserCheck className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'beta',
         text: 'バックエンド結合'

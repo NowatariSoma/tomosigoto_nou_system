@@ -91,11 +91,11 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
       </div>
 
       {/* 検索・フィルター */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* 検索 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 text-sm font-medium text-black mb-2">
               <Search className="h-4 w-4" />
               <span>検索</span>
             </label>
@@ -110,7 +110,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
 
           {/* 日付フィルター */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 text-sm font-medium text-black mb-2">
               <Calendar className="h-4 w-4" />
               <span>日付で絞り込み</span>
             </label>
@@ -154,37 +154,37 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
               <div
                 key={schedule.id}
                 onClick={() => handleScheduleClick(schedule)}
-                className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer group"
+                className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-6 hover:shadow-lg hover:bg-blue-100/50 transition-all cursor-pointer group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Calendar className="h-5 w-5 text-blue-600" />
-                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
+                      <Calendar className="h-5 w-5 text-black" />
+                      <h3 className="text-lg font-semibold text-black group-hover:text-black">
                         {schedule.title || '無題の練習予定'}
                       </h3>
                     </div>
 
-                    <div className="space-y-2 text-sm text-gray-600">
+                    <div className="space-y-2 text-sm text-black">
                       <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <Calendar className="h-4 w-4 text-black" />
                         <span>{formatDate(schedule.date)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
+                        <Clock className="h-4 w-4 text-black" />
                         <span>{formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <MapPin className="h-4 w-4 text-black" />
                         <span>{schedule.venueName} ({schedule.campus}キャンパス)</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex-shrink-0 ml-4">
-                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                    <ChevronRight className="h-5 w-5 text-black group-hover:text-black transition-colors" />
                   </div>
                 </div>
               </div>

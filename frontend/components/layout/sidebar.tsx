@@ -119,7 +119,7 @@ function SubNavItem({ icon, label, active, onClick, href, className }: NavItemPr
 
 function NavTitle({ label }: { label: string }) {
   return (
-    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+    <div className="px-3 py-2 text-xs font-semibold text-black uppercase tracking-wider">
       {label}
     </div>
   );
@@ -189,36 +189,36 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         />
         
         {/* Mobile sidebar */}
-        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 shadow-lg md:hidden transform transition-transform duration-300 ease-in-out">
+        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-blue-100 border-r border-blue-200 shadow-lg md:hidden transform transition-transform duration-300 ease-in-out">
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center justify-between h-16 px-4 border-b border-blue-200 flex-shrink-0 bg-blue-100">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 flex items-center justify-center">
-                  <Image 
-                    src="/favicon.png" 
-                    alt="トモシゴト" 
-                    width={32} 
+                  <Image
+                    src="/favicon.png"
+                    alt="トモシゴト"
+                    width={32}
                     height={32}
                     className="rounded"
                   />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">トモシゴト</h2>
-                  <p className="text-xs text-gray-500">能楽部練習表</p>
+                  <h2 className="text-sm font-semibold text-black">トモシゴト</h2>
+                  <p className="text-xs text-black">能楽部練習表</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onMobileClose}
-                className="hover-icon"
+                className="hover:bg-blue-200"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-black" />
               </Button>
             </div>
 
-            <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+            <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto bg-blue-100">
               <NavTitle label="練習管理" />
 
               <NavItem
@@ -337,31 +337,31 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       "hidden md:flex flex-col fixed inset-y-0 left-0 transition-all duration-300 z-50",
       isCollapsed ? "w-16" : "w-64"
     )}>
-      <div className="flex flex-col flex-1 min-h-0 bg-white border-r border-gray-200 shadow-sm">
+      <div className="flex flex-col flex-1 min-h-0 bg-blue-100 border-r border-blue-200 shadow-sm">
         {/* Header */}
-        <div className="flex items-center h-16 px-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center h-16 px-4 border-b border-blue-200 flex-shrink-0 bg-blue-100">
           {!isCollapsed ? (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 flex items-center justify-center">
-                <Image 
-                  src="/favicon.png" 
-                  alt="トモシゴト" 
-                  width={32} 
+                <Image
+                  src="/favicon.png"
+                  alt="トモシゴト"
+                  width={32}
                   height={32}
                   className="rounded"
                 />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">トモシゴト</h2>
-                <p className="text-xs text-gray-500">能楽部練習表</p>
+                <h2 className="text-sm font-semibold text-black">トモシゴト</h2>
+                <p className="text-xs text-black">能楽部練習表</p>
               </div>
             </div>
           ) : (
             <div className="w-8 h-8 flex items-center justify-center mx-auto">
-              <Image 
-                src="/favicon.png" 
-                alt="トモシゴト" 
-                width={32} 
+              <Image
+                src="/favicon.png"
+                alt="トモシゴト"
+                width={32}
                 height={32}
                 className="rounded"
               />
@@ -370,7 +370,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+        <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto bg-blue-100">
           {!isCollapsed && <NavTitle label="練習管理" />}
 
           <NavItem
@@ -485,12 +485,12 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         </div>
 
         {/* Collapse toggle */}
-        <div className="flex-shrink-0 border-t border-gray-200 p-2">
+        <div className="flex-shrink-0 border-t border-blue-200 p-2 bg-blue-100">
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleSidebar}
-            className="w-full justify-center hover-icon"
+            className="w-full justify-center hover:bg-blue-200 text-black"
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </Button>
@@ -507,9 +507,9 @@ export function MobileSidebarToggle({ onToggle }: { onToggle: () => void }) {
       variant="ghost"
       size="sm"
       onClick={onToggle}
-      className="md:hidden w-10 h-10 p-0 hover:bg-gray-100"
+      className="md:hidden w-10 h-10 p-0 hover:bg-blue-500"
     >
-      <FileText className="w-6 h-6 text-blue-400" />
+      <FileText className="w-6 h-6 text-white" />
     </Button>
   );
 } 

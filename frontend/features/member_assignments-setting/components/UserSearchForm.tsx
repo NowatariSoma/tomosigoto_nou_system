@@ -59,7 +59,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
   return (
     <Card className="mb-6 border-2 border-blue-200 shadow-lg">
       <CardHeader className="bg-blue-50">
-        <CardTitle className="text-lg text-blue-800 flex items-center gap-2">
+        <CardTitle className="text-lg text-black flex items-center gap-2">
           <Search className="h-5 w-5" />
           ユーザー検索
         </CardTitle>
@@ -110,7 +110,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
               variant="outline"
               onClick={handleClear}
               disabled={disabled}
-              className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+              className="px-6 py-2 border-2 border-blue-300 hover:bg-blue-50"
             >
               クリア
             </Button>

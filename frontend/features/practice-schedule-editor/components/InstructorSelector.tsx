@@ -141,7 +141,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                   ? "bg-blue-50 border-blue-200"
                   : isDisabled
                   ? "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
-                  : "bg-white border-gray-200 hover:bg-gray-50"
+                  : "bg-white border-blue-200 hover:bg-blue-50"
               )}
               onClick={() => !isDisabled && toggleSelection(candidate.attendance_id)}
             >
@@ -177,7 +177,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                   <span className={cn(
                     "text-xs px-2 py-0.5 rounded-full",
                     candidate.attendance_status === 'present'
-                      ? "bg-blue-100 text-blue-700"
+                      ? "bg-blue-100 text-black"
                       : "bg-yellow-100 text-yellow-700"
                   )}>
                     {candidate.attendance_status === 'present' ? '出席' : '遅刻'}

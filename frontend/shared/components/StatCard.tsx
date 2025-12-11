@@ -25,7 +25,7 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
 
   const getTrendIcon = (trend: string) => {
     return trend === 'up' ? (
-      <TrendingUp className="w-4 h-4 text-blue-600" />
+      <TrendingUp className="w-4 h-4 text-black" />
     ) : (
       <TrendingUp className="w-4 h-4 text-gray-600 rotate-180" />
     );
@@ -46,7 +46,7 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
         <div className="flex items-center gap-1 mt-2">
           {getTrendIcon(stat.trend)}
           <span className={`text-sm font-medium ${
-            stat.trend === 'up' ? 'text-blue-600' : 'text-gray-600'
+            stat.trend === 'up' ? 'text-black' : 'text-gray-600'
           }`}>
             {stat.change}
           </span>

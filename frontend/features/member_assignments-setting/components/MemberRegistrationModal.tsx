@@ -189,10 +189,10 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-blue-50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100">
+          <h2 className="text-2xl font-bold text-black">
             メンバー登録
           </h2>
           <Button
@@ -201,17 +201,17 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
             onClick={onClose}
             className="rounded-full"
           >
-            <X className="h-6 w-6 text-gray-500" />
+            <X className="h-6 w-6 text-black" />
           </Button>
         </div>
 
         {/* フォーム */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 舞台・パート情報 */}
-          <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-lg">
+          <div className="bg-white border-2 border-blue-300 rounded-lg p-6 shadow-lg">
             <div>
               <div className="text-2xl font-black text-gray-900 mb-1">{stageName}</div>
-              <div className="text-base font-bold text-blue-600">パート: <span className="text-2xl font-black text-blue-800">{partName}</span></div>
+              <div className="text-base font-bold text-black">パート: <span className="text-2xl font-black text-black">{partName}</span></div>
             </div>
           </div>
 
@@ -303,7 +303,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                           }`}
                         >
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-600 rounded-full text-sm font-bold">
+                          <div className="flex items-center justify-center w-10 h-10 bg-blue-100 text-black rounded-full text-sm font-bold">
                             <UserIcon className="h-5 w-5" />
                           </div>
                           <div>
@@ -344,7 +344,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {selectedUsers.length > 0 && (
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-blue-800">
+                <h4 className="text-lg font-semibold text-black">
                   選択されたユーザー ({selectedUsers.length}名)
                 </h4>
                 <Button
@@ -361,10 +361,10 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   <div key={user.id} className="flex items-center justify-between bg-white rounded-lg p-4 hover:bg-blue-100/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-bold text-blue-800 text-xl">
+                        <div className="font-bold text-black text-xl">
                           {user.last_name_katakana} {user.first_name_katakana}
                         </div>
-                        <div className="text-sm text-blue-600">
+                        <div className="text-sm text-black">
                           {user.last_name_kanji} {user.first_name_kanji}
                         </div>
                       </div>
@@ -416,7 +416,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                 {existingMembers.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div>

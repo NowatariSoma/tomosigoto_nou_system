@@ -46,20 +46,20 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
       className={`rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${
         isToday
           ? 'bg-amber-50 border-2 border-amber-400 ring-2 ring-amber-200'
-          : 'bg-white border border-gray-200'
+          : 'bg-blue-50 border border-blue-200 hover:bg-blue-100/50'
       }`}
       onClick={() => onClick && onClick(schedule)}
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           {schedule.title && (
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-black mb-2">
               {schedule.title}
             </h3>
           )}
           <div className="flex items-center space-x-2">
-            <Calendar className={`h-4 w-4 ${isToday ? 'text-amber-600' : 'text-blue-600'}`} />
-            <h4 className={`text-md font-medium ${isToday ? 'text-amber-700' : 'text-gray-800'}`}>
+            <Calendar className={`h-4 w-4 ${isToday ? 'text-amber-600' : 'text-black'}`} />
+            <h4 className={`text-md font-medium ${isToday ? 'text-amber-700' : 'text-black'}`}>
               {formatDate(schedule.date)}
             </h4>
           </div>
@@ -73,7 +73,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                 e.stopPropagation();
                 onEdit(schedule);
               }}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+              className="p-2 text-gray-600 hover:text-black hover:bg-blue-50 rounded-md transition-colors"
               title="編集"
             >
               <Edit className="h-4 w-4" />
@@ -87,7 +87,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                 e.stopPropagation();
                 onDelete(schedule);
               }}
-              className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-2 text-black hover:text-black hover:bg-blue-50 rounded-md transition-colors"
               title="削除"
             >
               <Trash2 className="h-4 w-4" />
@@ -98,14 +98,14 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
-          <Clock className="h-4 w-4 text-gray-500" />
-          <span className="text-sm text-gray-700">
+          <Clock className="h-4 w-4 text-black" />
+          <span className="text-sm text-black">
             {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
-          <MapPin className="h-4 w-4 text-gray-500" />
+          <MapPin className="h-4 w-4 text-black" />
           <div className="text-sm text-gray-700">
             {schedule.venues && schedule.venues.length > 0 ? (
               <div className="flex flex-wrap gap-1">
@@ -116,14 +116,14 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                   .map((venue, index) => (
                     <span
                       key={`${venue.id}-${index}`}
-                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
+                      className="inline-block bg-blue-100 text-black text-xs px-2 py-1 rounded-full font-medium"
                     >
                       {venue.name}
                     </span>
                   ))}
               </div>
             ) : schedule.venueName ? (
-              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+              <span className="inline-block bg-blue-100 text-black text-xs px-2 py-1 rounded-full font-medium">
                 {schedule.venueName}
               </span>
             ) : (

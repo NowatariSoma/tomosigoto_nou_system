@@ -142,9 +142,9 @@ export default function PracticeDetailModal() {
 
         <TabsContent value="attendance" className="mt-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">出席登録</h3>
-            <p className="text-blue-700 mb-4">
+            <Users className="h-12 w-12 text-black mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-black mb-2">出席登録</h3>
+            <p className="text-black mb-4">
               この練習の出席登録を行います。新しいタブで出席登録ページが開きます。
             </p>
             <Button 
@@ -159,9 +159,9 @@ export default function PracticeDetailModal() {
 
         <TabsContent value="practice-sheet" className="mt-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <FileText className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">練習表</h3>
-            <p className="text-blue-700 mb-4">
+            <FileText className="h-12 w-12 text-black mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-black mb-2">練習表</h3>
+            <p className="text-black mb-4">
               この練習の練習表を表示します。新しいタブで練習表ページが開きます。
             </p>
             <Button 

@@ -9,7 +9,7 @@ export default function Page() {
     <AppTemplate
       title="お問い合わせ"
       description="ご質問やご要望をお気軽にお寄せください"
-      icon={<MessageSquare className="h-8 w-8 text-blue-600" />}
+      icon={<MessageSquare className="h-8 w-8 text-black" />}
       maxWidth="4xl"
     >
       <ContactForm />

@@ -323,10 +323,10 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* テーブルヘッダー */}
         <div className="flex">
-          <div className="w-32 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
-          <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
+          <div className="w-32 px-4 py-3 bg-blue-100 text-sm font-semibold text-black border-r border-b border-blue-200 hover:bg-blue-200 transition-colors">時間</div>
+          <div className="flex-1 bg-blue-100 py-3 px-4 flex border-b border-blue-200">
             {venues.map((venue) => (
-              <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
+              <div key={venue.id} className="flex-1 text-sm font-semibold text-black text-center hover:bg-blue-200 transition-colors">
                 {venue.name || `会場${venue.id.slice(-4)}`}
               </div>
             ))}

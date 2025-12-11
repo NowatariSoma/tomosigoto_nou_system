@@ -95,14 +95,14 @@ export function PartRegistrationModal({
               )}>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-4 h-auto rounded-none hover:bg-gray-50"
+                  className="w-full justify-between p-4 h-auto rounded-none hover:bg-blue-50"
                   onClick={() => toggleGradeExpansion(grade.id)}
                 >
                   <span className="font-medium">{grade.name}</span>
                   {grade.expanded ? (
-                    <ChevronUp className="h-4 w-4 text-blue-600" />
+                    <ChevronUp className="h-4 w-4 text-black" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-blue-600" />
+                    <ChevronDown className="h-4 w-4 text-black" />
                   )}
                 </Button>
                 

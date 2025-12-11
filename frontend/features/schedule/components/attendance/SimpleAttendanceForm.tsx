@@ -189,7 +189,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
           {/* ヘッダー */}
           <div className="px-6 py-6 bg-blue-400">
             <h2 className="text-lg font-semibold text-white">出席登録</h2>
-            <p className="text-sm text-blue-100 mt-1.5">出欠状況を選択してください</p>
+            <p className="text-sm text-black mt-1.5">出欠状況を選択してください</p>
           </div>
 
           <div className="px-6 py-8 space-y-7 bg-[#F9FAFB]">
