@@ -125,7 +125,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* パート選択 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 label-form mb-2">
               <User className="h-4 w-4" />
               <span>{UI_TEXT.PART_NAME} <span className="text-red-500">*</span></span>
             </label>
@@ -153,7 +153,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* 会場選択 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 label-form mb-2">
               <MapPin className="h-4 w-4" />
               <span>{UI_TEXT.VENUE} <span className="text-red-500">*</span></span>
             </label>
@@ -179,7 +179,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* 時間選択 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 label-form mb-2">
               <Clock className="h-4 w-4" />
               <span>{UI_TEXT.TIME} <span className="text-red-500">*</span></span>
             </label>
@@ -205,7 +205,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* 優先度 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 label-form mb-2">
               <Star className="h-4 w-4" />
               <span>{UI_TEXT.PRIORITY}</span>
             </label>
@@ -220,7 +220,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* 備考 */}
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center space-x-2 label-form mb-2">
               <FileText className="h-4 w-4" />
               <span>{UI_TEXT.NOTES}</span>
             </label>

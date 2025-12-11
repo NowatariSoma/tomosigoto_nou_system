@@ -47,7 +47,7 @@ export const ContactForm: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* カテゴリ */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-3">
+          <label className="block text-lg font-medium text-black mb-3">
             {UI_TEXT.CATEGORY_LABEL}
           </label>
           <Select
@@ -55,7 +55,7 @@ export const ContactForm: React.FC = () => {
             onValueChange={handleCategoryChange}
             disabled={loading}
           >
-            <SelectTrigger className="w-full h-12 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 text-lg">
+            <SelectTrigger className="w-full h-12 px-4 py-3 input-field text-lg">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -69,7 +69,7 @@ export const ContactForm: React.FC = () => {
 
         {/* 内容 */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-3">
+          <label className="block text-lg font-medium text-black mb-3">
             {UI_TEXT.CONTENT_LABEL}
           </label>
           <textarea
@@ -77,7 +77,7 @@ export const ContactForm: React.FC = () => {
             value={formData.content}
             onChange={handleInputChange}
             rows={8}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg resize-none"
+            className="w-full px-4 py-3 input-field text-lg resize-none"
             placeholder={UI_TEXT.CONTENT_PLACEHOLDER}
             required
             disabled={loading}
@@ -96,7 +96,7 @@ export const ContactForm: React.FC = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 text-lg font-medium"
           >
             {loading ? UI_TEXT.LOADING_TEXT : UI_TEXT.SUBMIT_BUTTON}
           </Button>

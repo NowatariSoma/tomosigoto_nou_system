@@ -207,7 +207,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
   if (isSubmitted && showCompletionMessage) {
     return (
-      <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-8 text-center">
+      <div className="card-blue p-8 text-center">
         <div className="flex flex-col items-center space-y-6">
           <div className="bg-blue-100 p-4 rounded-full">
             <CheckCircle className="h-16 w-16 text-black" />
@@ -226,7 +226,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
   const selectedPractice = practiceSchedules.find(p => p.id === selectedPracticeId);
 
   return (
-    <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-6">
+    <div className="card-blue p-6">
       <div className="flex items-center space-x-3 mb-6">
         <div className="bg-blue-200 p-2 rounded-lg">
           <Users className="h-6 w-6 text-black" />

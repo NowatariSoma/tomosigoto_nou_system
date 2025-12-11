@@ -10,7 +10,7 @@ interface RoomCardProps {
 export const RoomCard: React.FC<RoomCardProps> = ({ room, onClick }) => {
   return (
     <div
-      className="bg-blue-50 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-blue-200 cursor-pointer hover:scale-[1.02] hover:bg-blue-100/50 active:scale-[0.98]"
+      className="card-blue-hover rounded-2xl p-6 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
       onClick={onClick}
     >
       <h3 className="text-xl font-semibold text-black mb-4">{room.name}</h3>

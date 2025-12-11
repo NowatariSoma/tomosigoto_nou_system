@@ -270,11 +270,11 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <div className="text-gray-500 text-lg mb-2">
+        <Calendar className="h-12 w-12 text-black mx-auto mb-4" />
+        <div className="text-black text-lg mb-2">
           会場情報がありません
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           まず会場を登録してからセッションを作成してください
         </p>
       </div>
@@ -284,22 +284,22 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   return (
     <>
       {/* テーブル全体 */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="card-blue overflow-hidden">
         <div className="overflow-x-auto -mx-4 sm:mx-0">
         <Table className="w-full table-fixed min-w-[600px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black border-r border-b border-blue-200 hover:bg-blue-200 transition-colors">時間</TableHead>
+              <TableHead className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 table-header-cell border-r border-b border-blue-200">時間</TableHead>
               {venues.map((venue, index) => (
                 <TableHead
                   key={`${venue.id}-${index}`}
-                  className="px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black text-center border-r border-b border-blue-200 hover:bg-blue-200 transition-colors whitespace-nowrap"
+                  className="px-2 sm:px-4 py-2 sm:py-3 table-header-cell text-center border-r border-b border-blue-200 whitespace-nowrap"
                 >
                   {venue.name || `会場${venue.id.slice(-4)}`}
                 </TableHead>
               ))}
               {edit_mode === 'edit' && (
-                <TableHead className="w-24 px-2 sm:px-4 py-2 sm:py-3 bg-blue-100 text-xs sm:text-sm font-semibold text-black text-center border-b border-blue-200">
+                <TableHead className="w-24 px-2 sm:px-4 py-2 sm:py-3 table-header-cell text-center border-b border-blue-200">
                   <Button
                     onClick={handleOpenVenueModal}
                     size="sm"
@@ -384,7 +384,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                         onClick={onRemoveTimeSlot}
                         variant="ghost"
                         size="sm"
-                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium text-gray-600"
+                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium"
                         title="時間スロットを削除"
                         disabled={time_slots.length <= 1}
                       >
@@ -398,7 +398,7 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                         onClick={onAddTimeSlot}
                         variant="ghost"
                         size="sm"
-                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium text-black hover:text-black"
+                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium"
                         title="時間スロットを追加"
                       >
                         <Plus className="h-4 w-4" />
@@ -416,14 +416,14 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
       </div>
 
       {/* 統計情報 - 目立たないデザイン */}
-      <div className="px-2 sm:px-4 py-2 bg-white border-t border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0 text-xs text-gray-500">
+      <div className="px-2 sm:px-4 py-2 panel-info border-t border-blue-200">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0 text-xs text-black">
           <div className="flex items-center flex-wrap gap-2 sm:gap-4">
             <span>セッション: {sessions.length}</span>
             <span>会場: {venues.length}</span>
             <span>時間スロット: {time_slots.length}</span>
           </div>
-          <div className="text-gray-400">
+          <div className="text-black">
             稼働率: {venues.length > 0 ? Math.round((sessions.length / (time_slots.length * venues.length)) * 100) : 0}%
           </div>
         </div>
@@ -431,18 +431,18 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
 
       {/* 時間割外セッション */}
       {outOfScheduleSessions.length > 0 && (
-        <div className="px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 border-t border-gray-200">
-          <div className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">
+        <div className="px-2 sm:px-4 py-2 sm:py-3 panel-info border-t border-blue-200">
+          <div className="text-xs sm:text-sm font-semibold text-black mb-2">
             ⚠️ 時間割外のセッション ({outOfScheduleSessions.length}件)
           </div>
           <div className="space-y-1">
             {outOfScheduleSessions.map((session) => (
               <div
                 key={session.id}
-                className="rounded-lg p-2 bg-gray-100 border border-gray-300 text-xs sm:text-sm cursor-pointer hover:bg-gray-200"
+                className="rounded-lg p-2 card-blue cursor-pointer hover-subtle"
                 onClick={() => onEditSession(session.id)}
               >
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-black">
                   slot_order: {session.slot_order} (時間割の範囲外)
                 </div>
               </div>

@@ -68,7 +68,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="lastName" className="label-form-semibold">
                 姓（カタカナ）
               </Label>
               <Input
@@ -82,7 +82,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="firstName" className="label-form-semibold">
                 名（カタカナ）
               </Label>
               <Input
@@ -120,7 +120,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
         {/* 検索結果 */}
         {hasSearched && (
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            <h3 className="label-form-semibold mb-3">
               検索結果 ({searchResults.length}件)
             </h3>
             {searchResults.length > 0 ? (

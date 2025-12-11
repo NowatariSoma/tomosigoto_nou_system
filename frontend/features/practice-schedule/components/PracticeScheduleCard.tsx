@@ -46,7 +46,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
       className={`rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${
         isToday
           ? 'bg-amber-50 border-2 border-amber-400 ring-2 ring-amber-200'
-          : 'bg-blue-50 border border-blue-200 hover:bg-blue-100/50'
+          : 'card-blue hover:bg-blue-100/50'
       }`}
       onClick={() => onClick && onClick(schedule)}
     >
@@ -73,7 +73,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                 e.stopPropagation();
                 onEdit(schedule);
               }}
-              className="p-2 text-gray-600 hover:text-black hover:bg-blue-50 rounded-md transition-colors"
+              className="p-2 hover-subtle rounded-md"
               title="編集"
             >
               <Edit className="h-4 w-4" />
@@ -87,7 +87,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                 e.stopPropagation();
                 onDelete(schedule);
               }}
-              className="p-2 text-black hover:text-black hover:bg-blue-50 rounded-md transition-colors"
+              className="p-2 hover-subtle rounded-md"
               title="削除"
             >
               <Trash2 className="h-4 w-4" />

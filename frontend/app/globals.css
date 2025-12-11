@@ -397,4 +397,48 @@
   .gradient-primary:hover {
     background: linear-gradient(to bottom, #83A4FF, #6B8FE8);
   }
+
+  /* ========================================
+   * フォーム要素用ユーティリティクラス
+   * ======================================== */
+
+  /* フォームラベル */
+  .label-form {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .label-form-semibold {
+    @apply text-sm font-semibold text-gray-700;
+  }
+
+  /* モーダル */
+  .modal-container {
+    @apply bg-blue-50 rounded-2xl shadow-2xl;
+  }
+
+  .modal-header {
+    @apply border-b border-blue-200 bg-blue-100 px-6 py-4;
+  }
+
+  .modal-title {
+    @apply text-2xl font-bold;
+  }
+
+  /* カード */
+  .card-blue {
+    @apply bg-blue-50 border border-blue-200 rounded-lg shadow-sm;
+  }
+
+  .card-blue-hover {
+    @apply card-blue hover:shadow-md hover:bg-blue-100/50 transition-all duration-300;
+  }
+
+  /* セクション見出し */
+  .section-title {
+    @apply text-lg font-semibold;
+  }
+
+  .section-title-xl {
+    @apply text-xl font-semibold;
+  }
 }

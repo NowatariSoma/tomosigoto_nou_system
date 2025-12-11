@@ -213,7 +213,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   return (
     <>
-      <div className="bg-blue-50 rounded-lg shadow-md border border-blue-200 p-3 sm:p-6">
+      <div className="panel-info p-3 sm:p-6">
       <div className="flex justify-end mb-4 sm:mb-6">
         <div className="flex items-center gap-2">
           {isEditMode ? (
@@ -249,7 +249,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       </div>
 
       {/* フィルタリング */}
-      <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-white rounded-lg border border-blue-200">
+      <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 p-3 sm:p-4 card-blue">
         <div className="flex items-center space-x-2 mb-3 sm:mb-4">
           <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
           <h3 className="text-xs sm:text-sm font-semibold text-black">フィルタ</h3>
@@ -258,7 +258,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           {/* 練習選択 */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-black mb-1.5 sm:mb-2">
+            <label className="label-form block mb-1.5 sm:mb-2">
               {UI_TEXT.PRACTICE}
               <span className="text-black ml-1">※</span>
               <span className="text-black text-xs ml-1">（必須）</span>
@@ -279,7 +279,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
           {/* 出席状況フィルタ */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+            <label className="label-form block mb-1.5 sm:mb-2">
               {UI_TEXT.FILTER_BY_STATUS}
             </label>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -300,7 +300,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
           {/* ユーザー名フィルタ */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+            <label className="label-form block mb-1.5 sm:mb-2">
               ユーザー名
             </label>
             <div className="relative">
@@ -319,7 +319,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
       {/* 選択された練習の情報 */}
       {selectedPractice && (
-        <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-white border border-blue-200 rounded-lg">
+        <div className="mb-3 sm:mb-4 p-3 sm:p-4 card-blue">
           <h3 className="text-xs sm:text-sm font-semibold text-black mb-1.5 sm:mb-2">練習情報</h3>
           <div className="text-xs sm:text-sm text-black space-y-1">
             <p>日付: {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP', {
@@ -342,16 +342,16 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             <Table className="min-w-full table-fixed divide-y divide-gray-200">
             <TableHeader className="bg-white">
               <TableRow>
-                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
                   {UI_TEXT.USER_NAME}
                 </TableHead>
-                <TableHead style={isEditMode ? { width: '280px', minWidth: '280px', maxWidth: '280px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <TableHead style={isEditMode ? { width: '280px', minWidth: '280px', maxWidth: '280px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
                   {UI_TEXT.STATUS}
                 </TableHead>
-                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
                   参加可能時間
                 </TableHead>
-                <TableHead style={{ minWidth: '240px' }} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <TableHead style={{ minWidth: '240px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
                   {UI_TEXT.NOTES}
                 </TableHead>
               </TableRow>
@@ -372,12 +372,12 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                   const currentNotes = getCurrentValue(user.id, 'notes') as string;
 
                   return (
-                    <TableRow key={user.id} className="hover:bg-blue-50">
+                    <TableRow key={user.id} className="hover-subtle">
                       {/* ユーザー名 */}
                       <TableCell style={{ width: '180px', maxWidth: '180px' }} className="px-6 py-4 overflow-hidden">
                         <div className="w-full min-w-0 overflow-hidden">
-                          <div className="text-sm font-medium text-gray-900 truncate" title={user.name}>{user.name}</div>
-                          <div className="text-sm text-gray-500 truncate" title={user.email}>{user.email}</div>
+                          <div className="text-sm font-medium text-black truncate" title={user.name}>{user.name}</div>
+                          <div className="text-sm text-black truncate" title={user.email}>{user.email}</div>
                         </div>
                       </TableCell>
 
@@ -449,7 +449,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                               </span>
                             )}
                             {!currentStatus && (
-                              <span className="text-sm text-gray-400">未登録</span>
+                              <span className="text-sm text-black">未登録</span>
                             )}
                           </div>
                         )}
@@ -477,11 +477,11 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         ) : (
                           // 閲覧モード or 遅刻以外：表示のみ
                           currentStatus === ATTENDANCE_STATUS.LATE && currentAvailableFrom && currentAvailableTo ? (
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-black">
                               {currentAvailableFrom.substring(0, 5)} - {currentAvailableTo.substring(0, 5)}
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-400">-</span>
+                            <span className="text-sm text-black">-</span>
                           )
                         )}
                       </TableCell>
@@ -499,7 +499,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           />
                         ) : (
                           // 閲覧モード：表示のみ
-                          <div className="text-sm text-gray-900 max-w-xs truncate" title={currentNotes}>
+                          <div className="text-sm text-black max-w-xs truncate" title={currentNotes}>
                             {currentNotes || '-'}
                           </div>
                         )}
@@ -515,8 +515,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           {/* モバイル用リスト */}
           <div className="md:hidden divide-y divide-gray-200">
             {tableData.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+              <div className="text-center py-8 text-black">
+                <Calendar className="h-10 w-10 mx-auto mb-3 text-black" />
                 <p className="text-sm">{UI_TEXT.NO_ATTENDANCE_DATA}</p>
               </div>
             ) : (
@@ -532,9 +532,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                     {isEditMode ? (
                       // 編集モード：縦レイアウト
                       <div className="space-y-3">
-                        <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-sm font-semibold text-black">{user.name}</div>
                         <div>
-                          <p className="text-xs font-medium text-gray-600 mb-1">出席状況</p>
+                          <p className="text-xs font-medium text-black mb-1">出席状況</p>
                           <div className="grid grid-cols-4 gap-1.5">
                             <button
                               onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
@@ -580,7 +580,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </div>
                         {currentStatus === ATTENDANCE_STATUS.LATE && (
                           <div>
-                            <p className="text-xs font-medium text-gray-600 mb-1">参加可能時間</p>
+                            <p className="text-xs font-medium text-black mb-1">参加可能時間</p>
                             <div className="flex gap-1 items-center text-xs">
                               <Input
                                 type="time"
@@ -599,7 +599,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           </div>
                         )}
                         <div>
-                          <p className="text-xs font-medium text-gray-600 mb-1">備考</p>
+                          <p className="text-xs font-medium text-black mb-1">備考</p>
                           <Input
                             type="text"
                             value={currentNotes}
@@ -612,7 +612,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                     ) : (
                       // 通常モード：横一列レイアウト
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-gray-900 truncate flex-shrink min-w-0">{user.name}</span>
+                        <span className="text-sm font-semibold text-black truncate flex-shrink min-w-0">{user.name}</span>
                         <div className="flex-shrink-0">
                           {currentStatus === ATTENDANCE_STATUS.PRESENT && (
                             <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border status-present shadow-sm">
@@ -649,8 +649,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           </div>
         </>
       ) : (
-        <div className="text-center py-8 sm:py-12 text-gray-500">
-          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-gray-400" />
+        <div className="text-center py-8 sm:py-12 text-black">
+          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-black" />
           <p className="text-sm sm:text-base">{UI_TEXT.SELECT_PRACTICE}</p>
         </div>
       )}

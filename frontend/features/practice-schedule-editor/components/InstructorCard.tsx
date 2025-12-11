@@ -46,7 +46,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, sessionInstructor) : undefined}
-      className={`rounded-lg px-4 py-3 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:shadow transition-all ${
+      className={`rounded-lg px-4 py-3 card-blue-hover ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}
@@ -69,7 +69,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
             onClick={handleDelete}
             variant="ghost"
             size="icon"
-            className="h-6 w-6 p-0.5 text-gray-400 hover:text-gray-700 flex-shrink-0"
+            className="h-6 w-6 p-0.5 text-black hover-subtle flex-shrink-0"
             title="削除"
           >
             <X className="h-4 w-4" />
