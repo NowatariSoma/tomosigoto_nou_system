@@ -127,11 +127,14 @@ class PracticeScheduleRepository:
             schedule_data["start_time"] = str(schedule_data["start_time"])
         if "end_time" in schedule_data:
             schedule_data["end_time"] = str(schedule_data["end_time"])
-        
+        # stage_idをUUIDから文字列に変換
+        if "stage_id" in schedule_data and schedule_data["stage_id"] is not None:
+            schedule_data["stage_id"] = str(schedule_data["stage_id"])
+
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
         schedule_data.pop("updated_by", None)
-        
+
         response = self.client.table(self.table_name).insert(schedule_data).execute()
         return response.data[0]
 
@@ -145,6 +148,9 @@ class PracticeScheduleRepository:
             schedule_data["start_time"] = str(schedule_data["start_time"])
         if "end_time" in schedule_data:
             schedule_data["end_time"] = str(schedule_data["end_time"])
+        # stage_idをUUIDから文字列に変換
+        if "stage_id" in schedule_data and schedule_data["stage_id"] is not None:
+            schedule_data["stage_id"] = str(schedule_data["stage_id"])
 
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         response = (
@@ -153,7 +159,7 @@ class PracticeScheduleRepository:
             .eq("id", schedule_id_str)
             .execute()
         )
-        
+
         return response.data[0]
 
     @handle_supabase_errors("delete")
