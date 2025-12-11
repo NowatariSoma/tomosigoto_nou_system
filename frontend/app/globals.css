@@ -15,6 +15,8 @@
     /* メイン: #83A4FF (HSL: 222 100% 76%) */
     /* サブ: #B9D4FF (HSL: 215 100% 86%) */
     /* アクセント: #FFD07F (HSL: 38 100% 75%) */
+    /* エラー/削除: #FF9590 (HSL: 2 100% 79%) */
+    /* 背景: white */
     --background: 0 0% 100%;
     --foreground: 220 13% 13%;
     --card: 0 0% 100%;
@@ -29,8 +31,8 @@
     --muted-foreground: 220 10% 45%;
     --accent: 38 100% 75%;
     --accent-foreground: 38 60% 20%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 2 100% 79%;
+    --destructive-foreground: 2 60% 20%;
     --border: 215 30% 88%;
     --input: 215 30% 88%;
     --ring: 222 100% 76%;
@@ -38,7 +40,7 @@
     --chart-2: 215 100% 86%;
     --chart-3: 38 100% 75%;
     --chart-4: 142 52% 50%;
-    --chart-5: 0 84% 60%;
+    --chart-5: 2 100% 79%;
     --radius: 0.5rem;
   }
 }
