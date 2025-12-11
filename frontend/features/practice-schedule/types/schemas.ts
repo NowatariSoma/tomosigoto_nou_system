@@ -20,6 +20,15 @@ export const ApiVenueSchema = z.object({
   campus: data.campus || '',
 }));
 
+// ステージ情報のZodスキーマ
+export const ApiStageSchema = z.object({
+  id: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+}).transform((data) => ({
+  id: data.id || '',
+  name: data.name || '',
+}));
+
 // 練習スケジュールAPIレスポンスのZodスキーマ
 export const PracticeScheduleApiResponseSchema = z.object({
   id: z.string(),
@@ -38,12 +47,23 @@ export const PracticeScheduleApiResponseSchema = z.object({
   // 複数部屋選択対応
   venue_ids: z.array(z.string()).nullable().optional(),
   venues: z.array(ApiVenueSchema).nullable().optional(),
+  // ステージ（舞台）選択対応
+  stage_id: z.string().nullable().optional(),
+  stage: ApiStageSchema.nullable().optional(),
 });
 
 export type PracticeScheduleApiResponse = z.infer<typeof PracticeScheduleApiResponseSchema>;
 
 // 練習スケジュールAPIレスポンス配列のスキーマ
 export const PracticeScheduleApiResponseArraySchema = z.array(PracticeScheduleApiResponseSchema);
+
+// ステージスキーマ（フロントエンド用）
+export const StageSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type Stage = z.infer<typeof StageSchema>;
 
 // 練習スケジュール（フロントエンド用）のZodスキーマ
 export const PracticeScheduleSchema = z.object({
@@ -61,6 +81,9 @@ export const PracticeScheduleSchema = z.object({
   // 複数部屋選択対応
   venueIds: z.array(z.string()).optional(),
   venues: z.array(VenueSchema).optional(),
+  // ステージ（舞台）選択対応
+  stageId: z.string().optional(),
+  stage: StageSchema.optional(),
 });
 
 export type PracticeScheduleFromSchema = z.infer<typeof PracticeScheduleSchema>;
@@ -98,6 +121,12 @@ export const transformApiResponseToSchedule = (apiResponse: unknown): PracticeSc
   // メインの会場情報を取得
   const primaryVenue = venues[0];
 
+  // ステージ情報を正規化
+  const stage = data.stage ? {
+    id: data.stage.id || '',
+    name: data.stage.name || '',
+  } : undefined;
+
   return {
     id: data.id || '',
     date: data.schedule_date || '',
@@ -112,6 +141,8 @@ export const transformApiResponseToSchedule = (apiResponse: unknown): PracticeSc
     updatedAt: data.updated_at || '',
     venueIds: data.venue_ids || [],
     venues: venues,
+    stageId: data.stage_id || undefined,
+    stage: stage,
   };
 };
 

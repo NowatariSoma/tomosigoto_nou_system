@@ -22,6 +22,8 @@ export const INITIAL_PRACTICE_SCHEDULE_FORM = {
   // 複数部屋選択対応
   venueIds: [] as string[],
   selectedVenues: [] as any[],
+  // ステージ（舞台）選択対応
+  stageId: '',
 };
 
 // UI表示用テキスト
@@ -41,6 +43,10 @@ export const UI_TEXT = {
   TITLE: 'タイトル',
   DESCRIPTION: '説明',
   REQUIRED_FIELD: '必須項目',
+  STAGE: '舞台',
+  NO_STAGE_DATA: '舞台データがありません',
+  SELECT_STAGE: '舞台を選択してください',
+  NO_STAGE_SELECTED: '舞台未選択',
 } as const;
 
 // バリデーション関連

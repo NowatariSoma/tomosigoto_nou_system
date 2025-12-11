@@ -30,6 +30,8 @@ class PracticeScheduleCreate(PracticeScheduleBase):
     """練習スケジュール作成用スキーマ"""
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
 
 
 class PracticeScheduleUpdate(BaseModel):
@@ -45,6 +47,8 @@ class PracticeScheduleUpdate(BaseModel):
     status: Optional[str] = None
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
 
     @model_validator(mode='after')
     def validate_time_order(self) -> 'PracticeScheduleUpdate':
@@ -66,6 +70,9 @@ class PracticeScheduleResponse(PracticeScheduleBase):
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
     venues: Optional[List[dict]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
+    stage: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True, json_encoders={
         date: lambda v: v.isoformat() if v else None,

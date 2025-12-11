@@ -19,6 +19,8 @@ export interface PracticeScheduleApiRequest {
   status?: string;
   // 複数部屋選択対応
   venue_ids?: string[];
+  // ステージ（舞台）選択対応
+  stage_id?: string;
 }
 
 // バックエンドのPracticeScheduleUpdate型（推測）
@@ -33,4 +35,6 @@ export interface PracticeScheduleApiUpdateRequest {
   status?: string;
   // 複数部屋選択対応
   venue_ids?: string[];
+  // ステージ（舞台）選択対応
+  stage_id?: string;
 }

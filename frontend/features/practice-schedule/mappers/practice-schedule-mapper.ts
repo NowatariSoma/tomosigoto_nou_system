@@ -44,6 +44,8 @@ export const mapCreateRequestToApiRequest = (
     status: request.status || 'active',
     // 複数部屋選択対応
     venue_ids: request.venueIds || (request.venueId ? [request.venueId] : []),
+    // ステージ（舞台）選択対応
+    stage_id: request.stageId || undefined,
   };
 };
 
@@ -52,7 +54,7 @@ export const mapUpdateRequestToApiRequest = (
   request: UpdatePracticeScheduleRequest
 ): PracticeScheduleApiUpdateRequest => {
   const apiRequest: PracticeScheduleApiUpdateRequest = {};
-  
+
   if (request.date !== undefined) apiRequest.schedule_date = request.date;
   if (request.startTime !== undefined) apiRequest.start_time = request.startTime;
   if (request.endTime !== undefined) apiRequest.end_time = request.endTime;
@@ -67,6 +69,8 @@ export const mapUpdateRequestToApiRequest = (
   } else if (request.venueId !== undefined) {
     apiRequest.venue_ids = [request.venueId];
   }
-  
+  // ステージ（舞台）選択対応
+  if (request.stageId !== undefined) apiRequest.stage_id = request.stageId;
+
   return apiRequest;
 };
