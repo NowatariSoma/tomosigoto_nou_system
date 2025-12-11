@@ -5,18 +5,27 @@ import { useContact } from '../hooks';
 import { CreateContactRequest, ContactCategory } from '../types';
 import { CATEGORY, CATEGORY_LABELS, UI_TEXT, INITIAL_CONTACT_FORM } from '../constants';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/forms/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 export const ContactForm: React.FC = () => {
   const { createContact, loading, error } = useContact();
   const [formData, setFormData] = useState<CreateContactRequest>(INITIAL_CONTACT_FORM);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: value as ContactCategory,
     }));
   };
 
@@ -41,19 +50,21 @@ export const ContactForm: React.FC = () => {
           <label className="block text-lg font-medium text-gray-700 mb-3">
             {UI_TEXT.CATEGORY_LABEL}
           </label>
-          <select
-            name="category"
+          <Select
             value={formData.category}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg"
-            required
+            onValueChange={handleCategoryChange}
             disabled={loading}
           >
-            <option value={CATEGORY.BUG}>{CATEGORY_LABELS[CATEGORY.BUG]}</option>
-            <option value={CATEGORY.FEATURE}>{CATEGORY_LABELS[CATEGORY.FEATURE]}</option>
-            <option value={CATEGORY.QUESTION}>{CATEGORY_LABELS[CATEGORY.QUESTION]}</option>
-            <option value={CATEGORY.OTHER}>{CATEGORY_LABELS[CATEGORY.OTHER]}</option>
-          </select>
+            <SelectTrigger className="w-full h-12 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 text-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CATEGORY.BUG}>{CATEGORY_LABELS[CATEGORY.BUG]}</SelectItem>
+              <SelectItem value={CATEGORY.FEATURE}>{CATEGORY_LABELS[CATEGORY.FEATURE]}</SelectItem>
+              <SelectItem value={CATEGORY.QUESTION}>{CATEGORY_LABELS[CATEGORY.QUESTION]}</SelectItem>
+              <SelectItem value={CATEGORY.OTHER}>{CATEGORY_LABELS[CATEGORY.OTHER]}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* 内容 */}
@@ -75,20 +86,20 @@ export const ContactForm: React.FC = () => {
 
         {/* エラーメッセージ */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="panel-error px-4 py-3 rounded">
             エラー: {error}
           </div>
         )}
 
         {/* 送信ボタン */}
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={loading}
             className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? UI_TEXT.LOADING_TEXT : UI_TEXT.SUBMIT_BUTTON}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
