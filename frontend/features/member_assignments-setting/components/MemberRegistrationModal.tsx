@@ -210,21 +210,21 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* 舞台・パート情報 */}
           <div className="bg-white border-2 border-blue-300 rounded-lg p-6 shadow-lg">
             <div>
-              <div className="text-2xl font-black text-gray-900 mb-1">{stageName}</div>
+              <div className="text-2xl font-black text-black mb-1">{stageName}</div>
               <div className="text-base font-bold text-black">パート: <span className="text-2xl font-black text-black">{partName}</span></div>
             </div>
           </div>
 
           {/* ユーザー検索 */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
               <Search className="h-5 w-5" />
               ユーザー検索
             </h3>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     姓（カタカナ）
                   </label>
                   <Input
@@ -236,7 +236,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     名（カタカナ）
                   </label>
                   <Input
@@ -283,7 +283,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* 検索結果 */}
             {hasSearched && (
               <div className="mt-4 bg-white border-2 border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                <h4 className="text-sm font-semibold text-black mb-3">
                   検索結果 ({searchResults.length}件)
                 </h4>
                 {searchResults.length > 0 ? (
@@ -307,10 +307,10 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                             <UserIcon className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-black">
                               {user.last_name_katakana} {user.first_name_katakana}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-black">
                               {user.last_name_kanji} {user.first_name_kanji}
                             </div>
                           </div>
@@ -331,8 +331,8 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    <UserIcon className="h-6 w-6 mx-auto mb-2 text-gray-300" />
+                  <div className="text-center py-4 text-black">
+                    <UserIcon className="h-6 w-6 mx-auto mb-2 text-black" />
                     <p>該当するユーザーが見つかりませんでした</p>
                   </div>
                 )}
@@ -371,7 +371,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 font-medium">区分:</span>
+                        <span className="text-sm text-black font-medium">区分:</span>
                         <Select
                           value={userCategories[user.id] || 'utai'}
                           onValueChange={(value) => setUserCategories(prev => ({
@@ -409,7 +409,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* 既存メンバー */}
           {existingMembers.length > 0 && (
             <div className="p-4">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+              <h4 className="text-lg font-semibold text-black mb-4">
                 既存メンバー ({existingMembers.length}名)
               </h4>
               <div className="space-y-3">
@@ -420,13 +420,13 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                   >
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-bold text-gray-900 text-xl">
+                        <div className="font-bold text-black text-xl">
                           {member.user.name}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-black">
                           {member.user.last_name_kanji} {member.user.first_name_kanji}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-black">
                           区分: {member.category === 'utai' ? '謡' : '舞'}
                         </div>
                       </div>

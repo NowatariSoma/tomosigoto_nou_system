@@ -188,7 +188,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
             variant="ghost"
             size="icon"
             onClick={onCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-black transition-colors"
           >
             <X className="h-5 w-5" />
           </Button>

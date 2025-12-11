@@ -121,7 +121,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
                 min="1"
                 required
               />
-              <span className="text-lg text-gray-700">人</span>
+              <span className="text-lg text-black">人</span>
             </div>
           </div>
 
@@ -141,14 +141,14 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     formData.danceAllowed === true
                       ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-400 bg-white'
+                      : 'border-black bg-white'
                   }`}>
                     {formData.danceAllowed === true && (
                       <div className="w-3 h-3 rounded-full bg-white"></div>
                     )}
                   </div>
                 </div>
-                <span className="text-lg text-gray-700">可能</span>
+                <span className="text-lg text-black">可能</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className="relative">
@@ -162,14 +162,14 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     formData.danceAllowed === false
                       ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-400 bg-white'
+                      : 'border-black bg-white'
                   }`}>
                     {formData.danceAllowed === false && (
                       <div className="w-3 h-3 rounded-full bg-white"></div>
                     )}
                   </div>
                 </div>
-                <span className="text-lg text-gray-700">不可</span>
+                <span className="text-lg text-black">不可</span>
               </label>
             </div>
           </div>
@@ -182,7 +182,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg resize-none"
+              className="w-full px-4 py-3 border-2 border-black rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg resize-none"
               placeholder="会場の詳細情報を入力してください"
             />
           </div>

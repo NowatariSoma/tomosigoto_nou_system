@@ -52,7 +52,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
         <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
       </div>
     );
@@ -69,11 +69,11 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
   if (schedules.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <div className="text-gray-500 text-lg mb-2">
+        <Calendar className="h-12 w-12 text-black mx-auto mb-4" />
+        <div className="text-black text-lg mb-2">
           練習予定がありません
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           まず練習予定を作成してから編集してください
         </p>
       </div>
@@ -84,8 +84,8 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
     <div className="space-y-6">
       {/* ヘッダー */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">練習表編集</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-black">練習表編集</h1>
+        <p className="text-black mt-1">
           編集する練習予定を選択してください
         </p>
       </div>
@@ -104,7 +104,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="タイトル、説明、会場名で検索..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -134,17 +134,17 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
       {/* スケジュール一覧 */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-black">
             練習予定一覧 ({filteredSchedules.length}件)
           </h2>
         </div>
 
         {filteredSchedules.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-500 text-lg mb-2">
+            <div className="text-black text-lg mb-2">
               条件に一致する練習予定がありません
             </div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-black text-sm">
               検索条件を変更してお試しください
             </p>
           </div>
@@ -160,7 +160,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
                       <Calendar className="h-5 w-5 text-black" />
-                      <h3 className="text-lg font-semibold text-black group-hover:text-black">
+                      <h3 className="text-lg font-semibold text-black">
                         {schedule.title || '無題の練習予定'}
                       </h3>
                     </div>
@@ -184,7 +184,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
                   </div>
 
                   <div className="flex-shrink-0 ml-4">
-                    <ChevronRight className="h-5 w-5 text-black group-hover:text-black transition-colors" />
+                    <ChevronRight className="h-5 w-5 text-black transition-colors" />
                   </div>
                 </div>
               </div>

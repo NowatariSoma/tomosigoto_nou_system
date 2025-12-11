@@ -91,7 +91,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   onChange={(e) => onInputChange('status', e.target.value)}
                   className="mr-2 text-black focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-gray-700">アクティブ</span>
+                <span className="text-sm font-medium text-black">アクティブ</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -102,7 +102,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   onChange={(e) => onInputChange('status', e.target.value)}
                   className="mr-2 text-black focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-gray-700">非アクティブ</span>
+                <span className="text-sm font-medium text-black">非アクティブ</span>
               </label>
             </div>
           </div>

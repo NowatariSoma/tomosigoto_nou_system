@@ -15,7 +15,7 @@ export const RoomList: React.FC<RoomListProps> = ({ rooms, onRoomClick }) => {
   if (safeRooms.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-black">
           {UI_TEXT.NO_ROOM_DATA}
         </div>
       </div>

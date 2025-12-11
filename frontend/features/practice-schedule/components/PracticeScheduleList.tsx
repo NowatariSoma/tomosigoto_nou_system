@@ -21,10 +21,10 @@ export const PracticeScheduleList: React.FC<PracticeScheduleListProps> = ({
   if (schedules.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-500 text-lg mb-2">
+        <div className="text-black text-lg mb-2">
           {UI_TEXT.NO_SCHEDULE_DATA}
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           練習予定を作成して表示します
         </p>
       </div>

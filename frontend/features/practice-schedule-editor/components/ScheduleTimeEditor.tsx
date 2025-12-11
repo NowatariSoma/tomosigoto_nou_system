@@ -48,7 +48,7 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
             onChange={(e) => setLocalStartTime(e.target.value)}
             className="px-2 py-1 text-sm h-8"
           />
-          <span className="text-gray-500">〜</span>
+          <span className="text-black">〜</span>
           <Input
             type="time"
             value={localEndTime}
@@ -67,7 +67,7 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
           onClick={handleCancel}
           variant="outline"
           size="sm"
-          className="px-3 py-1 bg-gray-200 text-gray-700 text-sm"
+          className="px-3 py-1 bg-blue-200 text-black text-sm"
         >
           キャンセル
         </Button>
@@ -77,8 +77,8 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
 
   return (
     <div className="flex items-center space-x-2">
-      <Clock className="h-4 w-4 text-gray-500" />
-      <span className="text-gray-700">
+      <Clock className="h-4 w-4 text-black" />
+      <span className="text-black">
         {startTime} 〜 {endTime}
       </span>
       <Button

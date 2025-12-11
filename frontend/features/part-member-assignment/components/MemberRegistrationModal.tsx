@@ -79,7 +79,7 @@ export function MemberRegistrationModal({
         <div className="space-y-4">
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
             <Input
               placeholder="メンバーを検索..."
               value={searchQuery}

@@ -53,7 +53,7 @@ const Information: React.FC<InformationProps> = ({
   if (basicLoading) {
     return (
       <div className={cn("card-blue shadow-lg p-6 mt-6 text-center", className)}>
-        <div className="text-gray-500">練習情報を読み込み中...</div>
+        <div className="text-black">練習情報を読み込み中...</div>
       </div>
     );
   }
@@ -78,7 +78,7 @@ const Information: React.FC<InformationProps> = ({
         正規練習 {formatDate(currentDate)}（{getWeekday(currentDate)}）
       </h2>
 
-      <div className="space-y-3 text-sm text-gray-600 max-w-5xl mx-auto">
+      <div className="space-y-3 text-sm text-black max-w-5xl mx-auto">
         {/* 練習内容（軽量データから先に表示） */}
         <div className="mb-6">
           <PracticeDescription description={description} />

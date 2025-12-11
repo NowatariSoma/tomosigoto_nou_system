@@ -65,7 +65,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
     return (
       <div className={cn("flex items-center justify-center p-4", className)}>
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        <span className="text-sm text-gray-500">監督者候補を読み込み中...</span>
+        <span className="text-sm text-black">監督者候補を読み込み中...</span>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
   if (error) {
     return (
       <div className={cn("p-4 text-center", className)}>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-black">
           エラー: {error}
         </div>
       </div>
@@ -85,11 +85,11 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
   if (candidates.length === 0) {
     return (
       <div className={cn("p-4 text-center", className)}>
-        <Users className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-        <div className="text-sm text-gray-500">
+        <Users className="h-8 w-8 mx-auto text-black mb-2" />
+        <div className="text-sm text-black">
           監督者候補が見つかりません
         </div>
-        <div className="text-xs text-gray-400 mt-1">
+        <div className="text-xs text-black mt-1">
           （学年4かつ出席記録があるユーザー）
         </div>
       </div>
@@ -110,7 +110,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
       </div>
 
       {/* 選択状況表示 */}
-      <div className="flex items-center justify-between text-xs text-gray-600">
+      <div className="flex items-center justify-between text-xs text-black">
         <span>
           選択中: {selectedInstructors.length}/{maxSelections}
         </span>
@@ -140,7 +140,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                 isSelected
                   ? "bg-blue-50 border-blue-200"
                   : isDisabled
-                  ? "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
+                  ? "bg-blue-50 border-blue-200 cursor-not-allowed opacity-50"
                   : "bg-white border-blue-200 hover:bg-blue-50"
               )}
               onClick={() => !isDisabled && toggleSelection(candidate.attendance_id)}
@@ -150,7 +150,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                 "w-4 h-4 border rounded mr-3 flex items-center justify-center",
                 isSelected
                   ? "bg-blue-500 border-blue-500"
-                  : "border-gray-300"
+                  : "border-black"
               )}>
                 {isSelected && (
                   <Check className="h-3 w-3 text-white" />
@@ -163,15 +163,15 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                   <span className="font-medium text-sm">
                     {candidate.last_name_kanji} {candidate.first_name_kanji}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-black">
                     ({candidate.student_id})
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 truncate">
+                <div className="text-xs text-black truncate">
                   {candidate.email}
                 </div>
                 <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-black">
                     学年{candidate.grade}
                   </span>
                   <span className={cn(
@@ -191,7 +191,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
 
       {/* 検索結果が0件の場合 */}
       {filteredCandidates.length === 0 && searchTerm && (
-        <div className="text-center py-4 text-sm text-gray-500">
+        <div className="text-center py-4 text-sm text-black">
           「{searchTerm}」に一致する候補が見つかりません
         </div>
       )}

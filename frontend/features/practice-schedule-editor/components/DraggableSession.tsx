@@ -73,12 +73,12 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            <div className="font-bold text-sm text-black leading-tight mb-1">
               {session.part_name}
             </div>
           )}
           {session.start_time && session.end_time && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-black mt-1">
               {session.start_time} - {session.end_time}
             </div>
           )}
@@ -97,7 +97,7 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
               onClick={handleEdit}
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-1 text-gray-600 hover:text-black"
+              className="h-6 w-6 p-1 text-black"
               title="編集"
             >
               <Edit className="h-3 w-3" />
@@ -106,12 +106,12 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
               onClick={handleDelete}
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-1 text-gray-600 hover:text-gray-700"
+              className="h-6 w-6 p-1 text-black"
               title="削除"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
-            <div className="p-1 text-gray-400 cursor-grab">
+            <div className="p-1 text-black cursor-grab">
               <GripVertical className="h-3 w-3" />
             </div>
           </div>

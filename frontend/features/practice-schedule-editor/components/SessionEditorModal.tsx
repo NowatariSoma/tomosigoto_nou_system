@@ -100,14 +100,14 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-black">
             {is_creating ? UI_TEXT.CREATE_SESSION : UI_TEXT.UPDATE_SESSION}
           </h2>
           <Button
             onClick={onCancel}
             variant="ghost"
             size="icon"
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className="p-2 text-black"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -230,7 +230,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               rows={3}
               placeholder="備考を入力してください（任意）"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.notes ? 'border-red-500' : 'border-gray-300'
+                errors.notes ? 'border-red-500' : 'border-black'
               }`}
             />
             {errors.notes && (

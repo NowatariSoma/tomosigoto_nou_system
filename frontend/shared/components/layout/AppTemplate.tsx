@@ -148,7 +148,7 @@ export function AppTemplate({
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">読み込み中...</p>
+                  <p className="mt-4 text-black">読み込み中...</p>
                 </div>
               </div>
             </div>
@@ -177,7 +177,7 @@ export function AppTemplate({
                     {icon}
                     {title && (
                       <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-3xl font-bold text-black">
                           {title}
                         </h1>
                         {developmentBadge && (
@@ -206,7 +206,7 @@ export function AppTemplate({
                   </div>
                 )}
                 {description && (
-                  <p className="text-gray-600">
+                  <p className="text-black">
                     {description}
                   </p>
                 )}

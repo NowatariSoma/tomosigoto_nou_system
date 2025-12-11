@@ -91,12 +91,12 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">監督者を追加</h2>
+          <h2 className="text-xl font-bold text-black">監督者を追加</h2>
           <Button
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="text-gray-400 hover:text-gray-600"
+            className="text-black"
           >
             <X className="h-6 w-6" />
           </Button>
@@ -108,7 +108,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
             <div>
               <label className="flex items-center space-x-2 label-form mb-2">
                 <MapPin className="h-4 w-4" />
-                <span>会場 <span className="text-gray-600">*</span></span>
+                <span>会場 <span className="text-black">*</span></span>
               </label>
               <Select
                 value={formData.venue_id}
@@ -132,7 +132,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
             <div>
               <label className="flex items-center space-x-2 label-form mb-2">
                 <Clock className="h-4 w-4" />
-                <span>時間帯 <span className="text-gray-600">*</span></span>
+                <span>時間帯 <span className="text-black">*</span></span>
               </label>
               <Select
                 value={formData.time_slot}
@@ -156,10 +156,10 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
             <div>
               <label className="flex items-center space-x-2 label-form mb-2">
                 <Users className="h-4 w-4" />
-                <span>監督者 <span className="text-gray-600">*</span></span>
+                <span>監督者 <span className="text-black">*</span></span>
               </label>
               {loading ? (
-                <div className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <div className="w-full px-3 py-2 border border-black rounded-md">
                   読み込み中...
                 </div>
               ) : (
@@ -188,7 +188,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
               type="button"
               onClick={handleClose}
               variant="outline"
-              className="px-4 py-2 text-gray-700 bg-gray-200"
+              className="px-4 py-2 text-black bg-gray-200"
             >
               キャンセル
             </Button>

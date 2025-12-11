@@ -83,7 +83,7 @@ export const StageCard: React.FC<StageCardProps> = ({ stage, onClick }) => {
                 <Button
                   variant="ghost"
                   onClick={handleExpandClick}
-                  className="flex items-center gap-1 text-black hover:text-black text-sm font-medium mt-2 transition-colors h-auto p-0"
+                  className="flex items-center gap-1 text-black text-sm font-medium mt-2 transition-colors h-auto p-0"
                 >
                   {isExpanded ? (
                     <>

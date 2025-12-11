@@ -106,7 +106,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
 
         <div className="flex items-center space-x-2">
           <MapPin className="h-4 w-4 text-black" />
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-black">
             {schedule.venues && schedule.venues.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {schedule.venues
@@ -127,7 +127,7 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
                 {schedule.venueName}
               </span>
             ) : (
-              <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">
+              <span className="inline-block bg-gray-100 text-black text-xs px-2 py-1 rounded-full font-medium">
                 会場未設定
               </span>
             )}

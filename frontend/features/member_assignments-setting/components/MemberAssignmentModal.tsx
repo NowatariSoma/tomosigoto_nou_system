@@ -217,25 +217,25 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
               <h3 className="label-form mb-2">現在の所属情報</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">ユーザー:</span>
+                  <span className="text-black">ユーザー:</span>
                   <span className="font-medium">{assignment.user.name} ({assignment.user.email})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">パート:</span>
+                  <span className="text-black">パート:</span>
                   <span className="font-medium">{assignment.part.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">舞台:</span>
+                  <span className="text-black">舞台:</span>
                   <span className="font-medium">{assignment.part.stage.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">謡舞区分:</span>
+                  <span className="text-black">謡舞区分:</span>
                   <span className="font-medium">
                     {formData.category === 'utai' ? '謡' : '舞'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">表示順序:</span>
+                  <span className="text-black">表示順序:</span>
                   <span className="font-medium">{assignment.display_order}</span>
                 </div>
               </div>

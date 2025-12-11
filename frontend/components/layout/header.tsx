@@ -87,9 +87,9 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-1">
-                      <p className="font-medium text-gray-900">{getUserDisplayName()}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <p className="text-xs text-gray-400">ID: {user.id}</p>
+                      <p className="font-medium text-black">{getUserDisplayName()}</p>
+                      <p className="text-sm text-black">{user.email}</p>
+                      <p className="text-xs text-black">ID: {user.id}</p>
                     </div>
                   </div>
                   <div className="py-2">
@@ -103,7 +103,7 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer hover-nav text-gray-600"
+                      className="cursor-pointer hover-nav text-black"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       ログアウト

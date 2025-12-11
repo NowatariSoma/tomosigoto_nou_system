@@ -35,7 +35,7 @@ export const InstructorDisplayWithAPI: React.FC<InstructorDisplayWithAPIProps> =
   // ローディング中の表示
   if (loading) {
     return (
-      <div className={`text-xs text-gray-600 ${className}`}>
+      <div className={`text-xs text-black ${className}`}>
         <Users className="h-3 w-3 inline mr-1" />
         読み込み中...
       </div>

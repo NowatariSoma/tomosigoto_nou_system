@@ -335,7 +335,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   if (loading && sessions.length === 0 && !is_modal_open) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
         <span className="ml-2">{UI_TEXT.LOADING_TEXT}</span>
       </div>
     );
@@ -363,8 +363,8 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             <span>スケジュール選択に戻る</span>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">練習表編集</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-black">練習表編集</h1>
+            <p className="text-black mt-1">
               {currentScheduleDate} の練習スケジュールを編集します
             </p>
             <div className="mt-2">

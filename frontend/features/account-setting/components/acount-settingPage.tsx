@@ -202,8 +202,8 @@ const AccountSettings: React.FC = () => {
     <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-8">
       {error && (
         <div className="mb-6 p-4 panel-error rounded-md flex items-center">
-          <AlertCircle className="h-5 w-5 text-gray-600 mr-2" />
-          <span className="text-gray-700">{error}</span>
+          <AlertCircle className="h-5 w-5 text-black mr-2" />
+          <span className="text-black">{error}</span>
           <Button
             onClick={clearError}
             variant="ghost"
@@ -240,8 +240,8 @@ const AccountSettings: React.FC = () => {
         <div className="mb-6 p-4 bg-white border border-blue-200 rounded-md flex items-start space-x-3 shadow-sm">
           <AlertCircle className="h-5 w-5 text-black mt-0.5" />
           <div>
-            <p className="text-gray-900 font-semibold">プロフィール設定が必要です</p>
-            <p className="text-sm text-gray-800 mt-1">
+            <p className="text-black font-semibold">プロフィール設定が必要です</p>
+            <p className="text-sm text-black mt-1">
               サインアップ後の初回ログインでは、ここでプロフィールを登録するまで他のページへは移動できません。
             </p>
           </div>
@@ -254,19 +254,19 @@ const AccountSettings: React.FC = () => {
             <h3 className="text-lg font-semibold text-black mb-4">ユーザー情報</h3>
             <div className="space-y-3">
               <div className="flex items-center">
-                <label className="w-32 text-gray-700 font-medium">ユーザーID</label>
-                <span className="text-gray-900">{userInfo.id}</span>
+                <label className="w-32 text-black font-medium">ユーザーID</label>
+                <span className="text-black">{userInfo.id}</span>
               </div>
               {userRole && (
                 <div className="flex items-center">
-                  <label className="w-32 text-gray-700 font-medium">ロール</label>
-                  <span className="text-gray-900">{getRoleLabel(userRole.role_type)}</span>
+                  <label className="w-32 text-black font-medium">ロール</label>
+                  <span className="text-black">{getRoleLabel(userRole.role_type)}</span>
                 </div>
               )}
               {userInfo.last_sign_in_at && (
                 <div className="flex items-center">
-                  <label className="w-32 text-gray-700 font-medium">最終ログイン</label>
-                  <span className="text-gray-900">{new Date(userInfo.last_sign_in_at).toLocaleString('ja-JP')}</span>
+                  <label className="w-32 text-black font-medium">最終ログイン</label>
+                  <span className="text-black">{new Date(userInfo.last_sign_in_at).toLocaleString('ja-JP')}</span>
                 </div>
               )}
             </div>
@@ -277,7 +277,7 @@ const AccountSettings: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold">プロフィール情報</h3>
             {!profile && !isEditMode && (
-              <p className="text-sm text-gray-500 mt-1">プロフィール情報を登録してください</p>
+              <p className="text-sm text-black mt-1">プロフィール情報を登録してください</p>
             )}
           </div>
           {!isEditMode && (
@@ -293,7 +293,7 @@ const AccountSettings: React.FC = () => {
 
         <div className="space-y-6">
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学籍番号</label>
+            <label className="w-32 text-black font-medium">学籍番号</label>
             {isEditMode ? (
               <div className="flex-1 max-w-xs">
                 <Input
@@ -305,17 +305,17 @@ const AccountSettings: React.FC = () => {
                   }
                 />
                 {fieldErrors.student_id && (
-                  <p className="text-gray-600 text-sm mt-1">{fieldErrors.student_id}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.student_id}</p>
                 )}
               </div>
             ) : (
-              <span className="text-gray-900">{formData.student_id || '-'}</span>
+              <span className="text-black">{formData.student_id || '-'}</span>
             )}
           </div>
 
           <div className="flex items-center space-x-8">
             <div className="flex items-center">
-              <label className="w-32 text-gray-700 font-medium">姓</label>
+              <label className="w-32 text-black font-medium">姓</label>
               {isEditMode ? (
                 <div className="w-40">
                   <Input
@@ -327,15 +327,15 @@ const AccountSettings: React.FC = () => {
                     }
                   />
                   {fieldErrors.last_name_kanji && (
-                    <p className="text-gray-600 text-sm mt-1">{fieldErrors.last_name_kanji}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.last_name_kanji}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.last_name_kanji || '-'}</span>
+                <span className="text-black">{formData.last_name_kanji || '-'}</span>
               )}
             </div>
             <div className="flex items-center space-x-8">
-              <label className="w-16 text-gray-700 font-medium">名</label>
+              <label className="w-16 text-black font-medium">名</label>
               {isEditMode ? (
                 <div className="w-40">
                   <Input
@@ -347,18 +347,18 @@ const AccountSettings: React.FC = () => {
                     }
                   />
                   {fieldErrors.first_name_kanji && (
-                    <p className="text-gray-600 text-sm mt-1">{fieldErrors.first_name_kanji}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.first_name_kanji}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.first_name_kanji || '-'}</span>
+                <span className="text-black">{formData.first_name_kanji || '-'}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-center space-x-8">
             <div className="flex items-center">
-              <label className="w-32 text-gray-700 font-medium">セイ</label>
+              <label className="w-32 text-black font-medium">セイ</label>
               {isEditMode ? (
                 <div className="w-40">
                   <Input
@@ -370,15 +370,15 @@ const AccountSettings: React.FC = () => {
                     }
                   />
                   {fieldErrors.last_name_katakana && (
-                    <p className="text-gray-600 text-sm mt-1">{fieldErrors.last_name_katakana}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.last_name_katakana}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.last_name_katakana || '-'}</span>
+                <span className="text-black">{formData.last_name_katakana || '-'}</span>
               )}
             </div>
             <div className="flex items-center">
-              <label className="w-24 text-gray-700 font-medium">メイ</label>
+              <label className="w-24 text-black font-medium">メイ</label>
               {isEditMode ? (
                 <div className="w-40">
                   <Input
@@ -390,17 +390,17 @@ const AccountSettings: React.FC = () => {
                     }
                   />
                   {fieldErrors.first_name_katakana && (
-                    <p className="text-gray-600 text-sm mt-1">{fieldErrors.first_name_katakana}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.first_name_katakana}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.first_name_katakana || '-'}</span>
+                <span className="text-black">{formData.first_name_katakana || '-'}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学年</label>
+            <label className="w-32 text-black font-medium">学年</label>
             {isEditMode ? (
               <div className="w-20">
                 <Input
@@ -417,16 +417,16 @@ const AccountSettings: React.FC = () => {
                   }
                 />
                 {fieldErrors.year && (
-                  <p className="text-gray-600 text-sm mt-1">{fieldErrors.year}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.year}</p>
                 )}
               </div>
             ) : (
-              <span className="text-gray-900">{formData.year || '-'}年</span>
+              <span className="text-black">{formData.year || '-'}年</span>
             )}
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学部</label>
+            <label className="w-32 text-black font-medium">学部</label>
             {isEditMode ? (
               <Select
                 options={departmentOptions}
@@ -435,12 +435,12 @@ const AccountSettings: React.FC = () => {
                 width="w-40"
               />
             ) : (
-              <span className="text-gray-900">{getDepartmentName() || '-'}</span>
+              <span className="text-black">{getDepartmentName() || '-'}</span>
             )}
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">メールアドレス</label>
+            <label className="w-32 text-black font-medium">メールアドレス</label>
             {isEditMode && !profile ? (
               <div className="flex-1">
                 <Input
@@ -453,14 +453,14 @@ const AccountSettings: React.FC = () => {
                   }`}
                 />
                 {fieldErrors.email && (
-                  <p className="text-gray-600 text-sm mt-1">{fieldErrors.email}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.email}</p>
                 )}
-                <p className="text-sm text-gray-500 mt-1">※大学のメールアドレス</p>
+                <p className="text-sm text-black mt-1">※大学のメールアドレス</p>
               </div>
             ) : (
               <div className="flex-1">
-                <span className="text-gray-900">{formData.email || '-'}</span>
-                <p className="text-sm text-gray-500 mt-1">
+                <span className="text-black">{formData.email || '-'}</span>
+                <p className="text-sm text-black mt-1">
                   ※メールアドレスは{profile ? '変更できません' : '初回登録後は変更できません'}
                 </p>
               </div>
