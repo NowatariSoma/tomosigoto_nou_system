@@ -20,6 +20,10 @@ interface InstructorDisplayProps {
 
 /**
  * 指導者情報を表示するコンポーネント
+ *
+ * パフォーマンス最適化: fallbackInstructorsが提供されている場合、
+ * 追加のAPIコールをスキップしてfallbackデータを直接使用します。
+ * これによりN+1問題を回避し、ボトムシートの表示速度を大幅に改善します。
  */
 export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
   scheduleId,
@@ -29,12 +33,47 @@ export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
   showEmail = false,
   maxDisplay = 3,
 }) => {
-  const { 
-    instructors, 
-    loading, 
-    error, 
-    fetchInstructorsForSlot, 
-    clearInstructors 
+  // fallbackがある場合はAPIコールをスキップ（パフォーマンス最適化）
+  // BundleAPIから既に指導者情報が取得されているため、追加のAPIコールは不要
+  if (fallbackInstructors.length > 0) {
+    return (
+      <InstructorFallbackDisplay
+        instructors={fallbackInstructors}
+        className={className}
+        maxDisplay={maxDisplay}
+      />
+    );
+  }
+
+  // fallbackがない場合のみAPIから取得
+  return (
+    <InstructorDisplayWithFetch
+      scheduleId={scheduleId}
+      slotOrder={slotOrder}
+      className={className}
+      showEmail={showEmail}
+      maxDisplay={maxDisplay}
+    />
+  );
+};
+
+/**
+ * APIから指導者情報を取得して表示するコンポーネント（内部用）
+ * fallbackがない場合にのみ使用
+ */
+const InstructorDisplayWithFetch: React.FC<Omit<InstructorDisplayProps, 'fallbackInstructors'>> = ({
+  scheduleId,
+  slotOrder,
+  className,
+  showEmail = false,
+  maxDisplay = 3,
+}) => {
+  const {
+    instructors,
+    loading,
+    error,
+    fetchInstructorsForSlot,
+    clearInstructors
   } = useSessionInstructors();
 
   // scheduleIdとslotOrderが変更されたときにデータを取得
@@ -55,31 +94,15 @@ export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
     );
   }
 
-  // エラー時はフォールバック表示
+  // エラー時は何も表示しない（fallbackもないため）
   if (error) {
-    console.warn('指導者情報の取得に失敗:', error);
-    // 開発環境でのみ詳細なエラー情報を表示
-    if (process.env.NODE_ENV === 'development') {
-      console.error('InstructorDisplay API Error:', {
-        scheduleId,
-        slotOrder,
-        error,
-        fallbackInstructors
-      });
-    }
-    return (
-      <InstructorFallbackDisplay 
-        instructors={fallbackInstructors} 
-        className={className}
-        maxDisplay={maxDisplay}
-      />
-    );
+    return null;
   }
 
   // APIから取得した指導者情報がある場合
   if (instructors.length > 0) {
     return (
-      <InstructorApiDisplay 
+      <InstructorApiDisplay
         instructors={instructors}
         className={className}
         showEmail={showEmail}
@@ -88,18 +111,7 @@ export const InstructorDisplay: React.FC<InstructorDisplayProps> = ({
     );
   }
 
-  // APIから取得した指導者情報がない場合はフォールバック表示
-  if (fallbackInstructors.length > 0) {
-    return (
-      <InstructorFallbackDisplay 
-        instructors={fallbackInstructors} 
-        className={className}
-        maxDisplay={maxDisplay}
-      />
-    );
-  }
-
-  // 指導者情報が全くない場合は何も表示しない
+  // 指導者情報がない場合は何も表示しない
   return null;
 };
 
