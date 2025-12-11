@@ -3,6 +3,7 @@
 import React from 'react';
 import { PracticeSchedule } from '../types';
 import { Calendar, Clock, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
 
 interface PracticeScheduleCardProps {
   schedule: PracticeSchedule;
@@ -52,7 +53,9 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
         </div>
         <div className="flex space-x-2">
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(schedule);
@@ -61,19 +64,21 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
               title="編集"
             >
               <Edit className="h-4 w-4" />
-            </button>
+            </Button>
           )}
           {onDelete && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(schedule);
               }}
-              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+              className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               title="削除"
             >
               <Trash2 className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

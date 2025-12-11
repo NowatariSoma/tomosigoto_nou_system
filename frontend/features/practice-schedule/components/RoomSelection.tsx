@@ -40,22 +40,25 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
             key={room.id}
             className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium"
           >
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => onRemoveRoom(room.id)}
-              className="hover:text-red-600 transition-colors"
+              className="hover:text-gray-600 transition-colors h-auto w-auto p-0"
             >
               <X className="h-3 w-3" />
-            </button>
+            </Button>
             {room.name}
           </span>
         ))}
-        <button
+        <Button
+          variant="outline"
           onClick={handleOpenModal}
           className="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
           <Plus className="h-4 w-4" />
           部屋を追加
-        </button>
+        </Button>
       </div>
 
       <RoomSelectionModal

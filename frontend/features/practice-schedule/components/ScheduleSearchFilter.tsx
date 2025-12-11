@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Search, Calendar } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface ScheduleSearchFilterProps {
   searchTerm: string;
@@ -52,18 +53,19 @@ export const ScheduleSearchFilter: React.FC<ScheduleSearchFilterProps> = ({
             <Calendar className="h-4 w-4" />
             <span>日付で絞り込み</span>
           </label>
-          <select
-            value={selectedDate}
-            onChange={(e) => onDateChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">すべての日付</option>
-            {availableDates.map(date => (
-              <option key={date} value={date}>
-                {formatDate(date)}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedDate} onValueChange={onDateChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="すべての日付" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">すべての日付</SelectItem>
+              {availableDates.map(date => (
+                <SelectItem key={date} value={date}>
+                  {formatDate(date)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
