@@ -15,7 +15,7 @@ interface ScheduleSelectorProps {
 export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSelect }) => {
   const { schedules, loading, error } = usePracticeSchedules();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState('all');
 
   // フィルタリングされたスケジュール
   const filteredSchedules = schedules.filter(schedule => {
@@ -23,7 +23,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
                          schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesDate = !selectedDate || schedule.date === selectedDate;
+    const matchesDate = selectedDate === 'all' || schedule.date === selectedDate;
     
     return matchesSearch && matchesDate;
   });
@@ -119,7 +119,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
                 <SelectValue placeholder="すべての日付" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">すべての日付</SelectItem>
+                <SelectItem value="all">すべての日付</SelectItem>
                 {availableDates.map(date => (
                   <SelectItem key={date} value={date}>
                     {formatDate(date)}
