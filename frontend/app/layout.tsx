@@ -7,8 +7,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'WorkerVision - Construction Monitoring System',
-  description: 'Real-time construction worker monitoring and helmet detection system',
+  title: 'トモシゴト能システム',
+  description: 'リアルタイム作業員監視システム',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '16x16', type: 'image/x-icon' },
