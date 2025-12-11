@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/forms/button';
 
 interface TimePickerProps {
   value: string;
@@ -107,23 +108,27 @@ export const TimePicker: React.FC<TimePickerProps> = ({
             <div className="flex items-center justify-center space-x-6">
               {/* 時間選択 */}
               <div className="flex flex-col items-center space-y-2">
-                <button
+                <Button
                   onClick={decrementHours}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="p-2 rounded-full"
                   type="button"
                 >
                   <ChevronUp className="h-5 w-5 text-gray-600" />
-                </button>
+                </Button>
                 <div className="text-2xl font-bold text-gray-900 min-w-[60px] text-center">
                   {hours.toString().padStart(2, '0')}
                 </div>
-                <button
+                <Button
                   onClick={incrementHours}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="p-2 rounded-full"
                   type="button"
                 >
                   <ChevronDown className="h-5 w-5 text-gray-600" />
-                </button>
+                </Button>
                 <div className="text-xs text-gray-500">時</div>
               </div>
 
@@ -132,23 +137,27 @@ export const TimePicker: React.FC<TimePickerProps> = ({
 
               {/* 分選択 */}
               <div className="flex flex-col items-center space-y-2">
-                <button
+                <Button
                   onClick={decrementMinutes}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="p-2 rounded-full"
                   type="button"
                 >
                   <ChevronUp className="h-5 w-5 text-gray-600" />
-                </button>
+                </Button>
                 <div className="text-2xl font-bold text-gray-900 min-w-[60px] text-center">
                   {minutes.toString().padStart(2, '0')}
                 </div>
-                <button
+                <Button
                   onClick={incrementMinutes}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="p-2 rounded-full"
                   type="button"
                 >
                   <ChevronDown className="h-5 w-5 text-gray-600" />
-                </button>
+                </Button>
                 <div className="text-xs text-gray-500">分</div>
               </div>
             </div>

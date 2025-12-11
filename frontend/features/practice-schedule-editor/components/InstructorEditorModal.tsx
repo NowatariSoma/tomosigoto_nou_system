@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Clock, Users } from 'lucide-react';
 import { VenueInfo, TimeSlot } from '../types/session-editor';
 import { sessionInstructorService } from '../services';
+import { Button } from '@/components/ui/forms/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface InstructorEditorModalProps {
   isOpen: boolean;
@@ -90,12 +92,14 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">監督者を追加</h2>
-          <button
+          <Button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-gray-600"
           >
             <X className="h-6 w-6" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -104,86 +108,96 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
                 <MapPin className="h-4 w-4" />
-                <span>会場 <span className="text-red-500">*</span></span>
+                <span>会場 <span className="text-gray-600">*</span></span>
               </label>
-              <select
+              <Select
                 value={formData.venue_id}
-                onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                onValueChange={(value) => setFormData({ ...formData, venue_id: value })}
                 required
               >
-                <option value="">会場を選択してください</option>
-                {venues.map((venue) => (
-                  <option key={venue.id} value={venue.id}>
-                    {venue.name || `会場${venue.id.slice(-4)}`}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="会場を選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  {venues.map((venue) => (
+                    <SelectItem key={venue.id} value={venue.id}>
+                      {venue.name || `会場${venue.id.slice(-4)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 時間帯選択 */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
                 <Clock className="h-4 w-4" />
-                <span>時間帯 <span className="text-red-500">*</span></span>
+                <span>時間帯 <span className="text-gray-600">*</span></span>
               </label>
-              <select
+              <Select
                 value={formData.time_slot}
-                onChange={(e) => setFormData({ ...formData, time_slot: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                onValueChange={(value) => setFormData({ ...formData, time_slot: value })}
                 required
               >
-                <option value="">時間帯を選択してください</option>
-                {time_slots.map((slot) => (
-                  <option key={slot.time} value={slot.time}>
-                    {slot.display_time || slot.time}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="時間帯を選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  {time_slots.map((slot) => (
+                    <SelectItem key={slot.time} value={slot.time}>
+                      {slot.display_time || slot.time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 監督者選択 */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
                 <Users className="h-4 w-4" />
-                <span>監督者 <span className="text-red-500">*</span></span>
+                <span>監督者 <span className="text-gray-600">*</span></span>
               </label>
               {loading ? (
                 <div className="w-full px-3 py-2 border border-gray-300 rounded-md">
                   読み込み中...
                 </div>
               ) : (
-                <select
+                <Select
                   value={formData.attendance_id}
-                  onChange={(e) => setFormData({ ...formData, attendance_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  onValueChange={(value) => setFormData({ ...formData, attendance_id: value })}
                   required
                 >
-                  <option value="">監督者を選択してください</option>
-                  {availableInstructors.map((instructor) => (
-                    <option key={instructor.attendance_id} value={instructor.attendance_id}>
-                      {instructor.user_name || instructor.user_email || `指導者${instructor.attendance_id.slice(-4)}`}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="監督者を選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableInstructors.map((instructor) => (
+                      <SelectItem key={instructor.attendance_id} value={instructor.attendance_id}>
+                        {instructor.user_name || instructor.user_email || `指導者${instructor.attendance_id.slice(-4)}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
           </div>
 
           <div className="flex justify-end space-x-3 mt-6">
-            <button
+            <Button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+              variant="outline"
+              className="px-4 py-2 text-gray-700 bg-gray-200"
             >
               キャンセル
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-accent-400 text-accent-900 hover:bg-accent-500"
             >
               追加
-            </button>
+            </Button>
           </div>
         </form>
       </div>

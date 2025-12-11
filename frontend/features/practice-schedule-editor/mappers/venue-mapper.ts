@@ -52,21 +52,22 @@ export const formatVenueDisplay = (venue: VenueInfo): string => {
 
 /**
  * 会場の色を取得（優先度に基づく）
+ * 統一カラーパレット: メイン #83A4FF, サブ #B9D4FF, アクセント #FFD07F
  * @param venue - 会場情報
  * @returns 色コード
  */
 export const getVenueColor = (venue: VenueInfo): string => {
   if (venue.is_preferred) {
-    return '#3B82F6'; // 青
+    return '#83A4FF'; // メインカラー（青）
   }
-  
+
   const colors = [
-    '#10B981', // 緑
-    '#F59E0B', // 黄
-    '#EF4444', // 赤
-    '#8B5CF6', // 紫
-    '#06B6D4', // シアン
+    '#4CAF50', // 緑
+    '#FFD07F', // アクセントカラー（オレンジ）
+    '#B9D4FF', // サブカラー（薄い青）
+    '#6B8FE8', // 青（濃い）
+    '#5578D1', // 青（より濃い）
   ];
-  
+
   return colors[(venue.priority ?? 0) % colors.length];
 };

@@ -12,6 +12,7 @@ import { UI_TEXT } from '../constants';
 import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
 import { sessionInstructorService, practiceScheduleEditorService } from '../services';
 import { VenueInfo } from '../types/session-editor';
+import { Button } from '@/components/ui/forms/button';
 
 interface PracticeScheduleEditorPageProps {
   scheduleId?: string;
@@ -353,13 +354,14 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
       {/* ヘッダー */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <button
+          <Button
             onClick={handleBackToSelection}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            variant="ghost"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>スケジュール選択に戻る</span>
-          </button>
+          </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">練習表編集</h1>
             <p className="text-gray-600 mt-1">
@@ -375,27 +377,27 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <button
+          <Button
             onClick={handleAutoOptimize}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-4 py-2"
           >
             <Sparkles className="h-4 w-4" />
             <span>自動最適化</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleCreateSession}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-4 py-2"
           >
             <Plus className="h-4 w-4" />
             <span>{UI_TEXT.ADD_SESSION}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleCreateInstructor}
-            className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-accent-400 text-accent-900 hover:bg-accent-500"
           >
             <Plus className="h-4 w-4" />
             <span>監督者を追加</span>
-          </button>
+          </Button>
         </div>
       </div>
 
