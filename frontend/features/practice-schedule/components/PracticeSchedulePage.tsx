@@ -29,7 +29,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [editingSchedule, setEditingSchedule] = useState<PracticeSchedule | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState('all');
   const [stages, setStages] = useState<StageData[]>([]);
 
   // 編集モードのstate（currentScheduleIdから派生）
@@ -383,7 +383,7 @@ export const PracticeSchedulePage: React.FC = () => {
       schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesDate = !selectedDate || schedule.date === selectedDate;
+    const matchesDate = selectedDate === 'all' || schedule.date === selectedDate;
 
     return matchesSearch && matchesDate;
   });
