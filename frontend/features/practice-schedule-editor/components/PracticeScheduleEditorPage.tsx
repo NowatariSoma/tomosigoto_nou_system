@@ -284,19 +284,20 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     try {
       const { practiceScheduleEditorService } = await import('../services');
       
-      // 現在のdivision_countとstart_time/end_timeをAPIから取得
-      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(currentScheduleId);
-      const currentDivisionCount = basicSchedule?.division_count || time_slots.length || 6;
-      const newDivisionCount = currentDivisionCount - 1;
+      // 実際の時間スロット数を使用（division_countと一致しない可能性があるため）
+      const currentSlotCount = time_slots.length;
       
-      // 実際のスケジュールの時間を使用
-      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
-      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
-      
-      if (newDivisionCount < 1) {
+      if (currentSlotCount <= 1) {
         alert('時間スロットは最低1個必要です');
         return;
       }
+      
+      const newDivisionCount = currentSlotCount - 1;
+      
+      // 現在のstart_time/end_timeをAPIから取得
+      const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(currentScheduleId);
+      const actualStartTime = basicSchedule?.start_time || `${scheduleStartTime}:00`;
+      const actualEndTime = basicSchedule?.end_time || `${scheduleEndTime}:00`;
       
       // division_countを更新（時間は既存の値を使用）
       await practiceScheduleEditorService.updateScheduleTime(
