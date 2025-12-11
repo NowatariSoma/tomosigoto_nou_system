@@ -69,12 +69,22 @@ class PracticeScheduleService:
                     continue
 
                 venue_ids.append(venue_id)
-                venue_info = venue.get("venues") or {}
+
+                # find_all_with_relationsの場合はvenuesオブジェクトを参照
+                # find_by_schedule（フォールバック）の場合は平坦化されたname, campusを参照
+                venue_name = venue.get("name")
+                venue_campus = venue.get("campus")
+
+                if not venue_name:
+                    venue_info = venue.get("venues") or {}
+                    venue_name = venue_info.get("name")
+                    venue_campus = venue_info.get("campus")
+
                 venue_details.append(
                     {
                         "id": venue_id,
-                        "name": venue_info.get("name", "不明な会場"),
-                        "campus": venue_info.get("campus", "不明なキャンパス"),
+                        "name": venue_name or "不明な会場",
+                        "campus": venue_campus or "不明なキャンパス",
                     }
                 )
 
@@ -96,24 +106,25 @@ class PracticeScheduleService:
         venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
         schedule["venue_ids"] = [v["venue_id"] for v in venues]
         
-        # 会場詳細情報を取得（find_by_scheduleで既にJOIN済み）
+        # 会場詳細情報を取得（find_by_scheduleで既に平坦化済み）
         venue_details = []
         for venue in venues:
-            # find_by_scheduleで既にvenues(*)をJOINしているので、個別取得不要
-            venue_info = venue.get("venues")
-            if venue_info and isinstance(venue_info, dict):
-                venue_details.append({
-                    "id": venue["venue_id"],
-                    "name": venue_info.get("name", "不明な会場"),
-                    "campus": venue_info.get("campus", "不明なキャンパス")
-                })
-            else:
-                # JOINデータがない場合のフォールバック
-                venue_details.append({
-                    "id": venue["venue_id"],
-                    "name": "不明な会場",
-                    "campus": "不明なキャンパス"
-                })
+            # find_by_scheduleで既にname, campusが平坦化されている
+            venue_name = venue.get("name")
+            venue_campus = venue.get("campus")
+
+            # 平坦化されたデータがない場合はvenuesオブジェクトもチェック（後方互換性）
+            if not venue_name:
+                venue_info = venue.get("venues")
+                if venue_info and isinstance(venue_info, dict):
+                    venue_name = venue_info.get("name")
+                    venue_campus = venue_info.get("campus")
+
+            venue_details.append({
+                "id": venue["venue_id"],
+                "name": venue_name or "不明な会場",
+                "campus": venue_campus or "不明なキャンパス"
+            })
         
         schedule["venues"] = venue_details
         print(f"DEBUG get_practice_schedule: 最終的なschedule={schedule}")
@@ -234,10 +245,14 @@ class PracticeScheduleService:
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
         schedule_data.pop("updated_by", None)
-        
+
         # 複数部屋選択対応: venue_idsを抽出
         venue_ids = schedule_data.pop("venue_ids", None)
-        
+
+        # stage_idが空文字列の場合はNoneに変換（UUIDカラムに空文字列は挿入不可）
+        if "stage_id" in schedule_data and schedule_data["stage_id"] == "":
+            schedule_data["stage_id"] = None
+
         # 練習スケジュールを作成
         created_schedule = await self.practice_schedule_repository.create(schedule_data)
         
@@ -275,10 +290,14 @@ class PracticeScheduleService:
             # created_byとupdated_byを除外（データベースで自動設定される）
             schedule_data.pop("created_by", None)
             schedule_data.pop("updated_by", None)
-            
+
             # 複数部屋選択対応: venue_idsを抽出
             venue_ids = schedule_data.pop("venue_ids", None)
             print(f"DEBUG update_practice_schedule: venue_ids={venue_ids}")
+
+            # stage_idが空文字列の場合はNoneに変換（UUIDカラムに空文字列は挿入不可）
+            if "stage_id" in schedule_data and schedule_data["stage_id"] == "":
+                schedule_data["stage_id"] = None
             
             # 時間スロットの再生成が必要かチェック
             time_slot_needs_regeneration = False
@@ -399,24 +418,25 @@ class PracticeScheduleService:
                 updated_schedule["venue_ids"] = [v["venue_id"] for v in venues_for_details]
                 print(f"DEBUG update_practice_schedule: 既存会場情報を保持")
             
-            # 会場詳細情報を取得（JOIN済みデータを使用してN+1問題を回避）
+            # 会場詳細情報を取得（find_by_scheduleで既に平坦化済み）
             venue_details = []
             for venue in venues_for_details:
-                # find_by_scheduleで既にvenues(*)をJOINしているので、個別取得不要
-                venue_info = venue.get("venues")
-                if venue_info and isinstance(venue_info, dict):
-                    venue_details.append({
-                        "id": venue["venue_id"],
-                        "name": venue_info.get("name", "不明な会場"),
-                        "campus": venue_info.get("campus", "不明なキャンパス")
-                    })
-                else:
-                    # JOINデータがない場合のフォールバック
-                    venue_details.append({
-                        "id": venue["venue_id"],
-                        "name": "不明な会場",
-                        "campus": "不明なキャンパス"
-                    })
+                # find_by_scheduleで既にname, campusが平坦化されている
+                venue_name = venue.get("name")
+                venue_campus = venue.get("campus")
+
+                # 平坦化されたデータがない場合はvenuesオブジェクトもチェック（後方互換性）
+                if not venue_name:
+                    venue_info = venue.get("venues")
+                    if venue_info and isinstance(venue_info, dict):
+                        venue_name = venue_info.get("name")
+                        venue_campus = venue_info.get("campus")
+
+                venue_details.append({
+                    "id": venue["venue_id"],
+                    "name": venue_name or "不明な会場",
+                    "campus": venue_campus or "不明なキャンパス"
+                })
             
             updated_schedule["venues"] = venue_details
             print(f"DEBUG update_practice_schedule: 最終的なupdated_schedule={updated_schedule}")

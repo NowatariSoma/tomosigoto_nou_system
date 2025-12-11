@@ -328,24 +328,34 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   参加可能時間
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    type="time"
-                    value={availableFrom}
-                    onChange={(e) => handleAvailableFromChange(e.target.value)}
-                    placeholder="何時から"
-                    className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
-                      errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
-                    }`}
-                  />
-                  <Input
-                    type="time"
-                    value={availableTo}
-                    onChange={(e) => handleAvailableToChange(e.target.value)}
-                    placeholder="何時まで"
-                    className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
-                      errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''
-                    }`}
-                  />
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      何時から
+                    </label>
+                    <Input
+                      type="time"
+                      value={availableFrom}
+                      onChange={(e) => handleAvailableFromChange(e.target.value)}
+                      placeholder="何時から"
+                      className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                        errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      何時まで
+                    </label>
+                    <Input
+                      type="time"
+                      value={availableTo}
+                      onChange={(e) => handleAvailableToChange(e.target.value)}
+                      placeholder="何時まで"
+                      className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                        errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                      }`}
+                    />
+                  </div>
                 </div>
                 {errors.availableFrom && (
                   <p className="mt-2 text-xs text-red-600">{errors.availableFrom}</p>

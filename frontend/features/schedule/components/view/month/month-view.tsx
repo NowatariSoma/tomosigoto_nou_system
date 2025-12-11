@@ -40,12 +40,14 @@ export default function MonthView({
   CustomEventComponent,
   CustomEventModal,
   classNames,
+  onDateClick: onDateClickProp,
 }: {
   prevButton?: React.ReactNode;
   nextButton?: React.ReactNode;
   CustomEventComponent?: React.FC<Event>;
   CustomEventModal?: CustomEventModal;
   classNames?: { prev?: string; next?: string; addEvent?: string };
+  onDateClick?: (dateStr: string) => void;
 }) {
   const { getters, weekStartsOn } = useScheduler();
   const { setOpen } = useModal();
@@ -118,7 +120,12 @@ export default function MonthView({
       0
     );
     const dateStr = formatDateToYYYYMMDD(clickedDate); // YYYY-MM-DD形式
-    router.push(`/schedule?date=${dateStr}`);
+    // 親コンポーネントのハンドラがあればそれを使う（即座にボトムシートを表示）
+    if (onDateClickProp) {
+      onDateClickProp(dateStr);
+    } else {
+      router.push(`/schedule?date=${dateStr}`);
+    }
   }
 
   // イベントクリック時に詳細表示に遷移
@@ -126,7 +133,12 @@ export default function MonthView({
     const eventDate = new Date(event.startDate);
     eventDate.setHours(12, 0, 0, 0); // 正午に設定してタイムゾーンの影響を避ける
     const dateStr = formatDateToYYYYMMDD(eventDate); // YYYY-MM-DD形式
-    router.push(`/schedule?date=${dateStr}`);
+    // 親コンポーネントのハンドラがあればそれを使う（即座にボトムシートを表示）
+    if (onDateClickProp) {
+      onDateClickProp(dateStr);
+    } else {
+      router.push(`/schedule?date=${dateStr}`);
+    }
   }
 
   function handleAddEvent(selectedDay: number) {
@@ -372,24 +384,26 @@ export default function MonthView({
                   onClick={() => handleDateClick(dayObj.day)}
                   data-day={String(dayObj.day)}
                 >
-                  <div
-                    className={clsx(
-                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 pt-1 sm:pt-2 text-center",
-                      today &&
-                        today.getDate() === dayObj.day &&
-                        today.getMonth() === currentDate.getMonth() &&
-                        today.getFullYear() === currentDate.getFullYear()
-                        ? "text-secondary-500"
-                        : isSunday
-                        ? "text-red-600"
-                        : isSaturday
-                        ? "text-blue-600"
-                        : dayEvents.length > 0
-                        ? "text-primary-600"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {dayObj.day}
+                  <div className="flex justify-center pt-1 sm:pt-2 mb-1">
+                    <span
+                      className={clsx(
+                        "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl flex items-center justify-center",
+                        today &&
+                          today.getDate() === dayObj.day &&
+                          today.getMonth() === currentDate.getMonth() &&
+                          today.getFullYear() === currentDate.getFullYear()
+                          ? "text-white bg-amber-500 rounded-full w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14"
+                          : isSunday
+                          ? "text-red-600"
+                          : isSaturday
+                          ? "text-blue-600"
+                          : dayEvents.length > 0
+                          ? "text-primary-600"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {dayObj.day}
+                    </span>
                   </div>
                   <div className="flex-grow flex flex-col gap-1 w-full relative z-10 px-1 sm:px-2">
                     <AnimatePresence mode="wait">

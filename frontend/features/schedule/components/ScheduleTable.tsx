@@ -1,27 +1,24 @@
 import * as React from 'react';
-import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useIdealSchedule } from '../hooks/use-practice-schedule-data';
 import { IdealScheduleData } from '../types/practice-schedule-types';
 import { InstructorDisplay } from './InstructorDisplay';
-import { formatDateToYYYYMMDD } from '@/shared/utils/format';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
+import { Table, TableBody, TableRow, TableCell } from '@/components/ui/data-display/table';
 
 interface ScheduleTableProps {
   className?: string;
   currentDate: Date;
-  initialIdealData?: IdealScheduleData | null;
-  initialIdealDate?: string | null;
+  idealData?: IdealScheduleData | null;
+  loading?: boolean;
+  error?: string | null;
 }
 
-const ScheduleTable: React.FC<ScheduleTableProps> = ({ 
+const ScheduleTable: React.FC<ScheduleTableProps> = ({
   className,
   currentDate,
-  initialIdealData,
-  initialIdealDate
+  idealData = null,
+  loading = false,
+  error = null
 }) => {
-  // 理想的な形式のスケジュール管理フック
-  const { idealData, loading, error, fetchIdealScheduleByDate, setIdealData } = useIdealSchedule(initialIdealData ?? undefined);
 
   /**
    * 時間文字列からslot_orderを計算する
@@ -49,26 +46,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
   };
 
-  // 日付が変更されたときにAPIからデータを取得
-  useEffect(() => {
-    const dateString = formatDateToYYYYMMDD(currentDate);
-    console.log('ScheduleTable - 日付変更:', dateString);
-
-    if (initialIdealData && initialIdealDate === dateString) {
-      setIdealData(initialIdealData);
-      return;
-    }
-
-    fetchIdealScheduleByDate(dateString);
-  }, [currentDate, fetchIdealScheduleByDate, initialIdealData, initialIdealDate, setIdealData]);
-
   const handleCellClick = (time: string, venueId: string, parts: any[]) => {
-    console.log('ScheduleTable - セルクリック:', { time, venueId, parts });
+    // セルクリック時の処理（将来の機能拡張用）
   };
 
   const handlePartClick = (e: React.MouseEvent, part: any) => {
     e.stopPropagation();
-    console.log('パートクリック:', part);
+    // パートクリック時の処理（将来の機能拡張用）
   };
 
   // ローディング状態の表示
@@ -100,21 +84,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   // 時間スロットを取得
   const timeSlots = Object.keys(idealData?.time_schedule || {}).sort();
-  
-  // デバッグ: 会場データを確認
-  console.log('会場データ:', idealData?.venues);
-  console.log('会場の詳細:', idealData?.venues?.map(venue => ({ id: venue.id, name: venue.name, priority: venue.priority, color: venue.color })));
-  
-  // 重複するvenue.idをチェック
-  const venueIds = idealData?.venues?.map(venue => venue?.id) || [];
-  const uniqueVenueIds = Array.from(new Set(venueIds));
-  if (venueIds.length !== uniqueVenueIds.length) {
-    console.warn('重複するvenue.idが検出されました:', venueIds);
-    console.warn('重複するID:', venueIds.filter((id, index) => venueIds.indexOf(id) !== index));
-  }
 
   // 重複を除去した会場データを取得
-  const uniqueVenues = idealData?.venues?.filter((venue, index, self) => 
+  const uniqueVenues = idealData?.venues?.filter((venue, index, self) =>
     index === self.findIndex(v => v?.id === venue?.id)
   ) || [];
 

@@ -1,7 +1,7 @@
 # ================================
 # 依存関係ステージ
 # ================================
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 
 # libc6-compat は一部のnpmパッケージで必要
 RUN apk add --no-cache libc6-compat
@@ -17,7 +17,7 @@ RUN npm ci
 # ================================
 # ビルドステージ
 # ================================
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -55,7 +55,7 @@ RUN echo "=== Build Environment ===" && \
 # ================================
 # 開発ステージ
 # ================================
-FROM node:18-alpine AS development
+FROM node:20-alpine AS development
 
 WORKDIR /app
 
@@ -74,7 +74,7 @@ CMD ["npm", "run", "dev"]
 # ================================
 # 本番ステージ
 # ================================
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 

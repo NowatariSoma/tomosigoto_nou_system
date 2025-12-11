@@ -20,9 +20,11 @@ const animationConfig = {
 export default function SchedulerViewFilteration({
   CustomComponents,
   classNames,
+  onDateClick,
 }: {
   CustomComponents?: CustomComponents;
   classNames?: ClassNames;
+  onDateClick?: (dateStr: string) => void;
 }) {
   const { setOpen } = useModal();
 
@@ -94,6 +96,7 @@ export default function SchedulerViewFilteration({
                   CustomComponents?.CustomEventComponent
                 }
                 CustomEventModal={CustomComponents?.CustomEventModal}
+                onDateClick={onDateClick}
               />
             </motion.div>
           </AnimatePresence>

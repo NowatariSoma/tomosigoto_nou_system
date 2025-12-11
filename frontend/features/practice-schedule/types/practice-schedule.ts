@@ -19,6 +19,12 @@ export interface PracticeSchedule {
     name: string;
     campus: string;
   }[];
+  // ステージ（舞台）選択対応
+  stageId?: string;
+  stage?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface CreatePracticeScheduleRequest {
@@ -33,6 +39,8 @@ export interface CreatePracticeScheduleRequest {
   venueIds?: string[];
   scheduleType?: string;
   status?: string;
+  // ステージ（舞台）選択対応
+  stageId?: string;
 }
 
 export interface UpdatePracticeScheduleRequest {
@@ -47,6 +55,8 @@ export interface UpdatePracticeScheduleRequest {
   venueIds?: string[];
   scheduleType?: string;
   status?: string;
+  // ステージ（舞台）選択対応
+  stageId?: string;
 }
 
 export interface PracticeScheduleListResponse {
@@ -64,4 +74,6 @@ export interface PracticeScheduleFormData {
   // 複数部屋選択対応
   venueIds: string[];
   selectedVenues: Room[];
+  // ステージ（舞台）選択対応
+  stageId: string;
 }

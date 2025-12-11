@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { Room } from '../../room-settings/types';
-import { UI_TEXT, VALIDATION, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
-import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
+import { StageData } from '../../parts-setting/types';
+import { UI_TEXT, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
+import { validatePracticeScheduleForm, ValidationErrors } from '../types/schemas';
+import { Calendar, Clock, MapPin, FileText, Save, X, Theater } from 'lucide-react';
 import RoomSelection from './RoomSelection';
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/inputs/input';
@@ -13,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 interface PracticeScheduleFormProps {
   schedule?: PracticeSchedule | null;
   venues: Room[];
+  stages: StageData[];
   onSubmit: (data: PracticeScheduleFormData) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -21,6 +24,7 @@ interface PracticeScheduleFormProps {
 export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   schedule,
   venues,
+  stages,
   onSubmit,
   onCancel,
   loading = false,
@@ -41,10 +45,11 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           capacity: 0,
           danceAllowed: false,
         }] : []),
+      stageId: schedule.stageId || '',
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
 
-  const [errors, setErrors] = useState<Partial<PracticeScheduleFormData>>({});
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   // scheduleが変更された時にformDataを更新
   useEffect(() => {
@@ -53,7 +58,8 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
         id: schedule.id,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
-        date: schedule.date
+        date: schedule.date,
+        stageId: schedule.stageId
       });
       setFormData({
         date: schedule.date,
@@ -70,11 +76,26 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           capacity: 0,
           danceAllowed: false,
         }] : []),
+        stageId: schedule.stageId || '',
       });
     } else {
       setFormData(INITIAL_PRACTICE_SCHEDULE_FORM);
     }
   }, [schedule]);
+
+  // 新規作成時、stagesが読み込まれたら最新のステージをデフォルトで選択
+  useEffect(() => {
+    if (!schedule && stages.length > 0 && !formData.stageId) {
+      // 日付で降順ソートして最新のステージを取得
+      const sortedStages = [...stages].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const latestStage = sortedStages[0];
+      if (latestStage) {
+        setFormData(prev => ({ ...prev, stageId: latestStage.id }));
+      }
+    }
+  }, [schedule, stages, formData.stageId]);
 
   // formDataが変更された時にデバッグ出力
   useEffect(() => {
@@ -85,45 +106,17 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
     });
   }, [formData]);
 
+  // Zodスキーマを使用したバリデーション
   const validateForm = (): boolean => {
-    const newErrors: Partial<PracticeScheduleFormData> = {};
+    const result = validatePracticeScheduleForm(formData);
 
-    if (!formData.date) {
-      newErrors.date = '日付は必須です';
-    } else if (!VALIDATION.DATE_FORMAT.test(formData.date)) {
-      newErrors.date = '正しい日付形式で入力してください';
+    if (result.success) {
+      setErrors({});
+      return true;
     }
 
-    if (!formData.startTime) {
-      newErrors.startTime = '開始時間は必須です';
-    } else if (!VALIDATION.TIME_FORMAT.test(formData.startTime)) {
-      newErrors.startTime = '正しい時間形式で入力してください';
-    }
-
-    if (!formData.endTime) {
-      newErrors.endTime = '終了時間は必須です';
-    } else if (!VALIDATION.TIME_FORMAT.test(formData.endTime)) {
-      newErrors.endTime = '正しい時間形式で入力してください';
-    }
-
-    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-      newErrors.endTime = '終了時間は開始時間より後である必要があります';
-    }
-
-    if (!formData.venueId && formData.venueIds.length === 0) {
-      newErrors.venueId = '会場は必須です';
-    }
-
-    if (!formData.title) {
-      newErrors.title = 'タイトルは必須です';
-    }
-
-    if (formData.description && formData.description.length > VALIDATION.MAX_DESCRIPTION_LENGTH) {
-      newErrors.description = `説明は${VALIDATION.MAX_DESCRIPTION_LENGTH}文字以内で入力してください`;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(result.errors);
+    return false;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +129,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   const handleInputChange = (field: keyof PracticeScheduleFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // エラーをクリア
-    if (errors[field]) {
+    if (errors[field as string]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
@@ -218,6 +211,34 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           />
           {errors.date && (
             <p className="mt-1 text-sm text-gray-600">{errors.date}</p>
+          )}
+        </div>
+
+        {/* 舞台選択 */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <Theater className="h-4 w-4" />
+            <span>{UI_TEXT.STAGE} <span className="text-red-500">*</span></span>
+          </label>
+          <select
+            value={formData.stageId}
+            onChange={(e) => handleInputChange('stageId', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.stageId ? 'border-red-500' : 'border-gray-300'
+            }`}
+          >
+            <option value="">{UI_TEXT.SELECT_STAGE}</option>
+            {stages.map((stage) => (
+              <option key={stage.id} value={stage.id}>
+                {stage.stageName}
+              </option>
+            ))}
+          </select>
+          {errors.stageId && (
+            <p className="mt-1 text-sm text-red-600">{errors.stageId}</p>
+          )}
+          {!errors.stageId && stages.length === 0 && (
+            <p className="mt-1 text-sm text-gray-500">{UI_TEXT.NO_STAGE_DATA}</p>
           )}
         </div>
 
