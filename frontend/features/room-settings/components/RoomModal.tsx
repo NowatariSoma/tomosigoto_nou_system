@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Room } from '../types';
 import { INITIAL_ROOM_FORM } from '../constants';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface RoomModalProps {
   room: Room | null;
@@ -59,24 +61,26 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
           <h2 className="text-2xl font-bold text-gray-800">
             {room ? '会場情報編集' : '新規会場登録'}
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="rounded-full"
           >
             <X className="w-6 h-6 text-gray-600" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 会場名 */}
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-3">会場名</label>
-            <input
+            <Input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg"
+              className="h-12 text-lg"
               required
             />
           </div>
@@ -85,28 +89,22 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-3">キャンパス</label>
             <div className="flex gap-4">
-              <button
+              <Button
                 type="button"
                 onClick={() => handleCampusChange('今出川')}
-                className={`px-6 py-3 rounded-full border-2 transition-all text-lg font-medium ${
-                  formData.campus === '今出川'
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'bg-white border-gray-400 text-gray-800 hover:bg-gray-50'
-                }`}
+                variant={formData.campus === '今出川' ? 'default' : 'outline'}
+                className="px-6 py-3 rounded-full text-lg font-medium"
               >
                 今出川
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => handleCampusChange('京田辺')}
-                className={`px-6 py-3 rounded-full border-2 transition-all text-lg font-medium ${
-                  formData.campus === '京田辺'
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'bg-white border-gray-400 text-gray-800 hover:bg-gray-50'
-                }`}
+                variant={formData.campus === '京田辺' ? 'default' : 'outline'}
+                className="px-6 py-3 rounded-full text-lg font-medium"
               >
                 京田辺
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -114,12 +112,12 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-3">収容可能人数</label>
             <div className="flex items-center gap-3">
-              <input
+              <Input
                 type="number"
                 name="capacity"
                 value={formData.capacity}
                 onChange={handleInputChange}
-                className="w-32 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg text-center"
+                className="w-32 h-12 text-lg text-center"
                 min="1"
                 required
               />
@@ -192,29 +190,31 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
           {/* ボタン */}
           <div className="flex justify-between pt-4">
             <div className="flex gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={onClose}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-lg font-medium"
+                className="px-6 py-3 text-lg font-medium"
               >
                 キャンセル
-              </button>
+              </Button>
               {onDelete && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
                   onClick={onDelete}
-                  className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-lg font-medium"
+                  className="px-6 py-3 text-lg font-medium"
                 >
                   削除
-                </button>
+                </Button>
               )}
             </div>
-            <button
+            <Button
               type="submit"
-              className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-lg font-medium"
+              className="px-6 py-3 text-lg font-medium"
             >
               保存
-            </button>
+            </Button>
           </div>
         </form>
       </div>

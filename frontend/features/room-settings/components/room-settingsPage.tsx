@@ -78,7 +78,7 @@ export const RoomSettingsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="panel-error px-4 py-3 rounded">
         エラー: {error}
       </div>
     );
@@ -90,7 +90,7 @@ export const RoomSettingsPage: React.FC = () => {
       <div className="text-center">
         <Button
           onClick={handleAddClick}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          className="btn-add px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           size="lg"
         >
           <Plus className="h-5 w-5 mr-2" />
