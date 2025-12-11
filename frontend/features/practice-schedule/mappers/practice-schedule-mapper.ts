@@ -1,44 +1,32 @@
 import { PracticeSchedule, CreatePracticeScheduleRequest, UpdatePracticeScheduleRequest } from '../types';
-import { PracticeScheduleApiResponse, PracticeScheduleApiRequest, PracticeScheduleApiUpdateRequest } from '../types/api';
+import { PracticeScheduleApiRequest, PracticeScheduleApiUpdateRequest } from '../types/api';
+import { transformApiResponseToSchedule } from '../types/schemas';
 
 // バックエンドのPracticeScheduleResponse型をフロントエンドのPracticeSchedule型にマッピング
+// Zodスキーマを使用して検証・変換を行う
 export const mapApiResponseToPracticeSchedule = (
-  apiResponse: PracticeScheduleApiResponse | null | undefined,
+  apiResponse: unknown,
   venueName?: string,
   campus?: string
 ): PracticeSchedule => {
-  if (!apiResponse) {
-    return {
-      id: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      venueId: '',
-      venueName: '',
-      campus: '',
-      title: '',
-      description: '',
-      createdAt: '',
-      updatedAt: '',
-    };
+  // Zodスキーマを使用してAPIレスポンスを検証・変換
+  const schedule = transformApiResponseToSchedule(apiResponse);
+
+  // 引数で渡された会場名・キャンパスがあれば上書き（後方互換性）
+  if (venueName) {
+    schedule.venueName = venueName;
   }
-  
-  return {
-    id: apiResponse.id || '',
-    date: apiResponse.schedule_date || '',
-    startTime: apiResponse.start_time || '',
-    endTime: apiResponse.end_time || '',
-    venueId: apiResponse.venue_ids?.[0] || '', // 最初の部屋をメインのvenueIdとして設定
-    venueName: venueName || '',
-    campus: campus || '',
-    title: apiResponse.title || '',
-    description: apiResponse.description || '',
-    createdAt: apiResponse.created_at || '',
-    updatedAt: apiResponse.updated_at || '',
-    // 複数部屋選択対応
-    venueIds: apiResponse.venue_ids || [],
-    venues: apiResponse.venues || [],
-  };
+  if (campus) {
+    schedule.campus = campus;
+  }
+
+  // 会場情報が空の場合、venuesから補完
+  if (!schedule.venueName && schedule.venues && schedule.venues.length > 0) {
+    schedule.venueName = schedule.venues[0].name;
+    schedule.campus = schedule.venues[0].campus;
+  }
+
+  return schedule;
 };
 
 // フロントエンドのCreatePracticeScheduleRequest型をバックエンドのPracticeScheduleApiRequest型にマッピング
