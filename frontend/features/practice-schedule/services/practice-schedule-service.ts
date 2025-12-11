@@ -1,5 +1,4 @@
-import { PracticeSchedule, CreatePracticeScheduleRequest, UpdatePracticeScheduleRequest } from '../types';
-import { PracticeScheduleApiResponse } from '../types/api';
+import { PracticeSchedule, CreatePracticeScheduleRequest, UpdatePracticeScheduleRequest, PracticeScheduleApiResponse } from '../types';
 import { mapApiResponseToPracticeSchedule, mapCreateRequestToApiRequest, mapUpdateRequestToApiRequest } from '../mappers';
 import { API_ENDPOINTS } from '../constants';
 import { fetchApi } from '../../../lib/api';
