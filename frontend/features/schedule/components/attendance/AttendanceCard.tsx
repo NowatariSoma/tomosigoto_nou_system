@@ -4,6 +4,7 @@ import React from 'react';
 import { Attendance, PracticeSchedule } from '../../types/attendance';
 import { ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS } from '../../constants/attendance';
 import { Calendar, Clock, MapPin, Edit, Trash2, User, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
 
 interface AttendanceCardProps {
   attendance: Attendance;
@@ -55,22 +56,26 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
         </div>
         <div className="flex space-x-2">
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => onEdit(attendance)}
               className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="編集"
             >
               <Edit className="h-4 w-4" />
-            </button>
+            </Button>
           )}
           {onDelete && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => onDelete(attendance)}
-              className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-slate-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               title="削除"
             >
               <Trash2 className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -88,9 +93,9 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
           {attendance.status === 'late' && (attendance.available_from || attendance.available_to) && (
             <div className="mt-3 pt-3 border-t border-slate-200">
               <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-yellow-600" />
+                <Clock className="h-4 w-4 text-accent-600" />
                 <span className="text-sm text-slate-700">
-                  参加可能時間: <span className="font-semibold text-yellow-700">
+                  参加可能時間: <span className="font-semibold text-accent-700">
                     {attendance.available_from || '開始'} - {attendance.available_to || '終了'}
                   </span>
                 </span>
