@@ -323,6 +323,7 @@ class PracticeScheduleService:
             if time_slot_needs_regeneration:
                 try:
                     from datetime import time as time_type, datetime, timedelta
+                    from uuid import UUID
                     
                     # 時間スロットリポジトリを直接使用
                     time_slot_repo = self.schedule_time_slot_repository
@@ -350,38 +351,6 @@ class PracticeScheduleService:
                     existing_time_slots = await time_slot_repo.find_by_schedule(schedule_id)
                     existing_time_slots.sort(key=lambda x: x.get("slot_order", 0))
                     
-                    # 時間文字列を正規化して比較する関数
-                    def normalize_time_str(time_str):
-                        """時間文字列を正規化（HH:MM:SS形式に統一）"""
-                        if not time_str:
-                            return None
-                        if isinstance(time_str, str):
-                            parts = time_str.split(':')
-                            if len(parts) >= 2:
-                                hour = int(parts[0])
-                                minute = int(parts[1])
-                                second = int(parts[2]) if len(parts) > 2 else 0
-                                return f"{hour:02d}:{minute:02d}:{second:02d}"
-                        return str(time_str)
-                    
-                    normalized_old_start = normalize_time_str(old_start_time)
-                    normalized_old_end = normalize_time_str(old_end_time)
-                    normalized_new_start = normalize_time_str(new_start_time)
-                    normalized_new_end = normalize_time_str(new_end_time)
-                    
-                    # division_countのみが変更された場合（時間スロットの追加・削除）
-                    # 開始時間と終了時間が変更されていない場合のみ既存スロットを保持
-                    start_time_changed = (
-                        normalized_new_start is not None and
-                        normalized_old_start is not None and
-                        normalized_new_start != normalized_old_start
-                    )
-                    end_time_changed = (
-                        normalized_new_end is not None and
-                        normalized_old_end is not None and
-                        normalized_new_end != normalized_old_end
-                    )
-                    
                     # division_countのみが変更された場合（時間スロットの追加・削除）
                     # 追加時は時間が変更されていない場合のみ既存スロットを保持
                     # 削除時は常に既存スロットを保持して最後のスロットを削除
@@ -390,30 +359,71 @@ class PracticeScheduleService:
                         new_division_count != old_division_count
                     )
                     
-                    # 追加時のみ時間の変更をチェック
-                    can_preserve_slots_on_add = (
-                        division_count_changed and
-                        new_division_count > old_division_count and
-                        not start_time_changed and
-                        not end_time_changed and
-                        len(existing_time_slots) > 0  # 既存のスロットが存在する場合のみ
-                    )
-                    
-                    # 削除時は常に既存スロットを保持（時間の変更チェックは無視）
+                    # 削除時は時間の変更チェックを無視して、常に既存スロットを保持
                     can_preserve_slots_on_remove = (
                         division_count_changed and
                         new_division_count < old_division_count and
                         len(existing_time_slots) > 0  # 既存のスロットが存在する場合のみ
                     )
                     
+                    # 追加時のみ時間の変更をチェック
+                    if not can_preserve_slots_on_remove:
+                        # 時間文字列を正規化して比較する関数
+                        def normalize_time_str(time_str):
+                            """時間文字列を正規化（HH:MM:SS形式に統一）"""
+                            if not time_str:
+                                return None
+                            if isinstance(time_str, str):
+                                parts = time_str.split(':')
+                                if len(parts) >= 2:
+                                    hour = int(parts[0])
+                                    minute = int(parts[1])
+                                    second = int(parts[2]) if len(parts) > 2 else 0
+                                    return f"{hour:02d}:{minute:02d}:{second:02d}"
+                            return str(time_str)
+                        
+                        normalized_old_start = normalize_time_str(old_start_time)
+                        normalized_old_end = normalize_time_str(old_end_time)
+                        normalized_new_start = normalize_time_str(new_start_time)
+                        normalized_new_end = normalize_time_str(new_end_time)
+                        
+                        # 開始時間と終了時間が変更されていない場合のみ既存スロットを保持
+                        start_time_changed = (
+                            normalized_new_start is not None and
+                            normalized_old_start is not None and
+                            normalized_new_start != normalized_old_start
+                        )
+                        end_time_changed = (
+                            normalized_new_end is not None and
+                            normalized_old_end is not None and
+                            normalized_new_end != normalized_old_end
+                        )
+                        
+                        # 追加時のみ時間の変更をチェック
+                        can_preserve_slots_on_add = (
+                            division_count_changed and
+                            new_division_count > old_division_count and
+                            not start_time_changed and
+                            not end_time_changed and
+                            len(existing_time_slots) > 0  # 既存のスロットが存在する場合のみ
+                        )
+                    else:
+                        # 削除時は時間の変更チェックをスキップ
+                        can_preserve_slots_on_add = False
+                        start_time_changed = False
+                        end_time_changed = False
+                    
                     print(f"DEBUG update_practice_schedule: division_count_changed={division_count_changed}")
                     print(f"DEBUG update_practice_schedule: new_division_count={new_division_count}, old_division_count={old_division_count}")
                     print(f"DEBUG update_practice_schedule: existing_time_slots count={len(existing_time_slots)}")
-                    print(f"DEBUG update_practice_schedule: start_time_changed={start_time_changed}, end_time_changed={end_time_changed}")
                     print(f"DEBUG update_practice_schedule: can_preserve_slots_on_add={can_preserve_slots_on_add}")
                     print(f"DEBUG update_practice_schedule: can_preserve_slots_on_remove={can_preserve_slots_on_remove}")
-                    print(f"DEBUG update_practice_schedule: normalized_new_start={normalized_new_start}, normalized_old_start={normalized_old_start}")
-                    print(f"DEBUG update_practice_schedule: normalized_new_end={normalized_new_end}, normalized_old_end={normalized_old_end}")
+                    if not can_preserve_slots_on_remove:
+                        print(f"DEBUG update_practice_schedule: start_time_changed={start_time_changed}, end_time_changed={end_time_changed}")
+                        print(f"DEBUG update_practice_schedule: normalized_new_start={normalized_new_start}, normalized_old_start={normalized_old_start}")
+                        print(f"DEBUG update_practice_schedule: normalized_new_end={normalized_new_end}, normalized_old_end={normalized_old_end}")
+                    else:
+                        print(f"DEBUG update_practice_schedule: 削除処理のため時間の変更チェックをスキップ")
                     
                     if can_preserve_slots_on_add:
                         # 時間スロットを追加：最後のスロットの終了時刻から練習終了時刻まで
