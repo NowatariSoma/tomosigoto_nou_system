@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, PanInfo, useMotionValue, useTransform, useDragControls } from 'framer-motion';
+import { motion, PanInfo, useMotionValue, useTransform, useDragControls, animate } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
@@ -212,11 +212,16 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   // ドラッグ終了時の処理
   const handleDragEnd = (event: any, info: PanInfo) => {
     setIsDragging(false);
-    const threshold = 150; // 閉じるためのしきい値
 
-    if (info.offset.y > threshold) {
-      // 下にスワイプ → 閉じる
+    // 速度または移動量で方向を判断
+    const isMovingDown = info.velocity.y > 0 || info.offset.y > 50;
+
+    if (isMovingDown) {
+      // 下方向 → 閉じる
       onClose();
+    } else {
+      // 上方向 → 元の位置に即座に戻す
+      animate(y, 0, { duration: 0.2, ease: 'easeOut' });
     }
   };
 
