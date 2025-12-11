@@ -49,7 +49,7 @@ const Information: React.FC<InformationProps> = ({
   if (error) {
     return (
       <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6 text-center", className)}>
-        <div className="text-red-500">エラー: {error}</div>
+        <div className="text-gray-600">エラー: {error}</div>
       </div>
     );
   }

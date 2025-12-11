@@ -320,7 +320,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
               <span className="ml-2">読み込み中...</span>
             </div>
           ) : bundleError ? (
-            <div className="flex items-center justify-center p-8 text-red-600">
+            <div className="flex items-center justify-center p-8 text-gray-600">
               練習予定の取得に失敗しました: {bundleError}
             </div>
           ) : practiceSchedule ? (
