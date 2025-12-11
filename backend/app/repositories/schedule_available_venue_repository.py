@@ -160,12 +160,43 @@ class ScheduleAvailableVenueRepository:
             .order("created_at")
             .execute()
         )
-        
+
+        # JOINに失敗したvenue_idを収集
+        missing_venue_ids = []
+        for item in response.data:
+            if not item.get("venues") and item.get("venue_id"):
+                missing_venue_ids.append(item["venue_id"])
+
+        # JOINに失敗した会場情報を直接取得
+        venue_lookup = {}
+        if missing_venue_ids:
+            print(f"DEBUG find_by_schedule: JOINに失敗したvenue_ids={missing_venue_ids}")
+            try:
+                venues_response = (
+                    self.client.table("venues")
+                    .select("id, name, campus, address")
+                    .in_("id", missing_venue_ids)
+                    .execute()
+                )
+                for venue in venues_response.data:
+                    venue_lookup[venue["id"]] = venue
+                print(f"DEBUG find_by_schedule: 直接取得した会場情報={venue_lookup}")
+            except Exception as e:
+                print(f"WARNING find_by_schedule: 会場情報の直接取得に失敗: {e}")
+
         # 会場名を含むようにデータを整形
         formatted_data = []
         for item in response.data:
             formatted_item = dict(item)
-            venue_info = item.get("venues") or {}
+            venue_info = item.get("venues")
+
+            # JOINデータがない場合は直接取得したデータを使用
+            if not venue_info and item.get("venue_id"):
+                venue_info = venue_lookup.get(item["venue_id"])
+                if venue_info:
+                    print(f"DEBUG find_by_schedule: venue_id={item['venue_id']}の会場情報を直接取得から補完")
+
+            venue_info = venue_info or {}
 
             # venuesテーブルの情報を平坦化して格納
             formatted_item["name"] = venue_info.get("name")
@@ -173,7 +204,7 @@ class ScheduleAvailableVenueRepository:
             formatted_item["address"] = venue_info.get("address")
 
             formatted_data.append(formatted_item)
-        
+
         return formatted_data
 
     @handle_supabase_errors("find_by_venue")
