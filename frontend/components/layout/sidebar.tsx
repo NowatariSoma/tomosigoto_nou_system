@@ -43,10 +43,11 @@ interface NavItemProps {
 }
 
 function NavItem({ icon, label, active, onClick, href, className, hasChildren, isExpanded, onToggleExpand }: NavItemProps) {
-  const handleChevronClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onToggleExpand) {
+  const handleClick = () => {
+    if (hasChildren && onToggleExpand) {
       onToggleExpand();
+    } else if (onClick) {
+      onClick();
     }
   };
 
@@ -55,18 +56,7 @@ function NavItem({ icon, label, active, onClick, href, className, hasChildren, i
       <span className="flex-shrink-0">{icon}</span>
       <span className="ml-3 truncate flex-1 text-left">{label}</span>
       {hasChildren && (
-        <div
-          onClick={handleChevronClick}
-          className="flex-shrink-0 ml-2 p-1 hover-icon transition-colors cursor-pointer"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleChevronClick(e as any);
-            }
-          }}
-        >
+        <div className="flex-shrink-0 ml-2 p-1 transition-colors">
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       )}
@@ -74,14 +64,14 @@ function NavItem({ icon, label, active, onClick, href, className, hasChildren, i
   );
 
   const baseClassName = cn(
-    "flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 hover-nav",
-    active 
-      ? "active-nav" 
+    "flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 hover-nav cursor-pointer",
+    active
+      ? "active-nav"
       : "",
     className
   );
 
-  if (href) {
+  if (href && !hasChildren) {
     return (
       <Link href={href} className={baseClassName}>
         {content}
@@ -90,7 +80,7 @@ function NavItem({ icon, label, active, onClick, href, className, hasChildren, i
   }
 
   return (
-    <button onClick={onClick} className={baseClassName}>
+    <button onClick={handleClick} className={baseClassName}>
       {content}
     </button>
   );

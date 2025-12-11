@@ -7,6 +7,8 @@ import { PracticeScheduleForm } from './PracticeScheduleForm';
 import { ScheduleSearchFilter } from './ScheduleSearchFilter';
 import { usePracticeSchedules, useVenues, usePracticeScheduleRouting } from '../hooks';
 import { UI_TEXT } from '../constants';
+import { StageData } from '../../parts-setting/types';
+import { stageService } from '../../parts-setting/services/stage-service';
 import { Plus, Calendar, ArrowLeft, Sparkles, Edit2, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { SessionEditorTableSimpleDnd } from '../../practice-schedule-editor/components/SessionEditorTableSimpleDnd';
@@ -28,6 +30,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [stages, setStages] = useState<StageData[]>([]);
 
   // 編集モードのstate（currentScheduleIdから派生）
   const editingScheduleId = currentScheduleId ?? '';
@@ -125,6 +128,23 @@ export const PracticeSchedulePage: React.FC = () => {
     };
 
     fetchAvailableRooms();
+  }, []);
+
+  // ステージ（舞台）一覧を取得
+  useEffect(() => {
+    const fetchStages = async () => {
+      try {
+        console.log('舞台データを取得開始...');
+        const stageData = await stageService.getStages();
+        console.log('取得した舞台データ:', stageData);
+        setStages(stageData);
+      } catch (error) {
+        console.error('舞台データの取得に失敗しました:', error);
+        setStages([]);
+      }
+    };
+
+    fetchStages();
   }, []);
 
   // 編集モード関連のハンドラー（ルーティングフックを使用）
@@ -597,6 +617,7 @@ export const PracticeSchedulePage: React.FC = () => {
         <PracticeScheduleForm
           schedule={editingSchedule}
           venues={venues}
+          stages={stages}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}

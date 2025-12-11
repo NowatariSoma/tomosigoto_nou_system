@@ -2,7 +2,7 @@ from datetime import datetime, date, time
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class PracticeScheduleBase(BaseModel):
@@ -17,11 +17,21 @@ class PracticeScheduleBase(BaseModel):
     schedule_type: Optional[str] = None
     status: Optional[str] = "active"
 
+    @model_validator(mode='after')
+    def validate_time_order(self) -> 'PracticeScheduleBase':
+        """終了時間が開始時間より後であることを検証"""
+        if self.start_time and self.end_time:
+            if self.start_time >= self.end_time:
+                raise ValueError('終了時間は開始時間より後である必要があります')
+        return self
+
 
 class PracticeScheduleCreate(PracticeScheduleBase):
     """練習スケジュール作成用スキーマ"""
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
 
 
 class PracticeScheduleUpdate(BaseModel):
@@ -37,6 +47,16 @@ class PracticeScheduleUpdate(BaseModel):
     status: Optional[str] = None
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
+
+    @model_validator(mode='after')
+    def validate_time_order(self) -> 'PracticeScheduleUpdate':
+        """終了時間が開始時間より後であることを検証（両方指定された場合のみ）"""
+        if self.start_time is not None and self.end_time is not None:
+            if self.start_time >= self.end_time:
+                raise ValueError('終了時間は開始時間より後である必要があります')
+        return self
 
 
 class PracticeScheduleResponse(PracticeScheduleBase):
@@ -50,6 +70,9 @@ class PracticeScheduleResponse(PracticeScheduleBase):
     # 複数部屋選択対応
     venue_ids: Optional[List[UUID]] = None
     venues: Optional[List[dict]] = None
+    # ステージID（この練習で扱う舞台）
+    stage_id: Optional[UUID] = None
+    stage: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True, json_encoders={
         date: lambda v: v.isoformat() if v else None,
