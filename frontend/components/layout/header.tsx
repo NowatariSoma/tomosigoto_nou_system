@@ -103,7 +103,7 @@ export function Header({ onMobileSidebarToggle }: HeaderProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer hover-nav text-red-600"
+                      className="cursor-pointer hover-nav text-gray-600"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       ログアウト
