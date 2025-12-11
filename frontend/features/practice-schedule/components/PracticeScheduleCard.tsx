@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PracticeSchedule } from '../types';
 import { Calendar, Clock, MapPin, Edit, Trash2 } from 'lucide-react';
 
@@ -17,6 +17,15 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   onDelete,
   onClick,
 }) => {
+  const [isToday, setIsToday] = useState(false);
+
+  // クライアントサイドでのみ「今日」をチェック（ハイドレーションミスマッチを防ぐ）
+  useEffect(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    setIsToday(schedule.date === todayStr);
+  }, [schedule.date]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
@@ -32,8 +41,12 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
   };
 
   return (
-    <div 
-      className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+    <div
+      className={`rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${
+        isToday
+          ? 'bg-amber-50 border-2 border-amber-400 ring-2 ring-amber-200'
+          : 'bg-white border border-gray-200'
+      }`}
       onClick={() => onClick && onClick(schedule)}
     >
       <div className="flex justify-between items-start mb-4">
@@ -44,10 +57,15 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
             </h3>
           )}
           <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-blue-600" />
-            <h4 className="text-md font-medium text-gray-800">
+            <Calendar className={`h-4 w-4 ${isToday ? 'text-amber-600' : 'text-blue-600'}`} />
+            <h4 className={`text-md font-medium ${isToday ? 'text-amber-700' : 'text-gray-800'}`}>
               {formatDate(schedule.date)}
             </h4>
+            {isToday && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
+                今日
+              </span>
+            )}
           </div>
         </div>
         <div className="flex space-x-2">
