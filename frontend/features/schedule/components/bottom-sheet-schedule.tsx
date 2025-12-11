@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
+import { motion, PanInfo, useMotionValue, useTransform, useDragControls, animate } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
@@ -48,6 +48,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
   const [screenHeight, setScreenHeight] = useState(1000); // デフォルト値
+  const dragControls = useDragControls();
 
   // 画面の高さを取得
   useEffect(() => {
@@ -211,11 +212,16 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   // ドラッグ終了時の処理
   const handleDragEnd = (event: any, info: PanInfo) => {
     setIsDragging(false);
-    const threshold = 150; // 閉じるためのしきい値
 
-    if (info.offset.y > threshold) {
-      // 下にスワイプ → 閉じる
+    // 速度または移動量で方向を判断
+    const isMovingDown = info.velocity.y > 0 || info.offset.y > 50;
+
+    if (isMovingDown) {
+      // 下方向 → 閉じる
       onClose();
+    } else {
+      // 上方向 → 元の位置に即座に戻す
+      animate(y, 0, { duration: 0.2, ease: 'easeOut' });
     }
   };
 
@@ -286,6 +292,8 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           ease: 'easeOut'
         }}
         drag="y"
+        dragControls={dragControls}
+        dragListener={false}
         dragConstraints={{ top: 0, bottom: screenHeight }}
         dragElastic={0}
         onDragStart={() => setIsDragging(true)}
@@ -293,34 +301,40 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
         style={{ y }}
         className="fixed inset-0 bg-background rounded-t-3xl shadow-2xl z-50 flex flex-col overflow-hidden"
       >
-        {/* ハンドル */}
-        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
-          <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
-        </div>
+        {/* ドラッグ可能エリア（ハンドル + ヘッダー） */}
+        <div
+          className="cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          {/* ハンドル */}
+          <div className="flex justify-center py-3">
+            <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+          </div>
 
-        {/* ヘッダー */}
-        <div className="px-4 pb-3 border-b shrink-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">
-              {formatDate(currentDate)}
-            </h2>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToPrevDay}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToNextDay}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
+          {/* ヘッダー */}
+          <div className="px-4 pb-3 border-b shrink-0">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">
+                {formatDate(currentDate)}
+              </h2>
+              <div className="flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPrevDay}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextDay}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
