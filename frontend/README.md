@@ -1,4 +1,4 @@
-# WorkerVision Frontend
+# トモシゴト能システム Frontend
 
 Next.jsベースのフロントエンドアプリケーションで、複数カメラからのリアルタイム作業員監視を提供します。
 
