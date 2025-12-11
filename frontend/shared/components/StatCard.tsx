@@ -11,13 +11,13 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
   const getIcon = (iconType: string) => {
     switch (iconType) {
       case 'target':
-        return <Target className="w-5 h-5 text-green-600" />;
+        return <Target className="w-5 h-5 icon-primary" />;
       case 'clock':
-        return <Clock className="w-5 h-5 text-blue-600" />;
+        return <Clock className="w-5 h-5 icon-secondary" />;
       case 'dollar':
-        return <DollarSign className="w-5 h-5 text-purple-600" />;
+        return <DollarSign className="w-5 h-5 icon-secondary" />;
       case 'users':
-        return <Users className="w-5 h-5 text-orange-600" />;
+        return <Users className="w-5 h-5 icon-accent" />;
       default:
         return null;
     }
@@ -25,9 +25,9 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
 
   const getTrendIcon = (trend: string) => {
     return trend === 'up' ? (
-      <TrendingUp className="w-4 h-4 text-green-600" />
+      <TrendingUp className="w-4 h-4 text-blue-600" />
     ) : (
-      <TrendingUp className="w-4 h-4 text-red-600 rotate-180" />
+      <TrendingUp className="w-4 h-4 text-gray-600 rotate-180" />
     );
   };
 
@@ -46,7 +46,7 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
         <div className="flex items-center gap-1 mt-2">
           {getTrendIcon(stat.trend)}
           <span className={`text-sm font-medium ${
-            stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+            stat.trend === 'up' ? 'text-blue-600' : 'text-gray-600'
           }`}>
             {stat.change}
           </span>
