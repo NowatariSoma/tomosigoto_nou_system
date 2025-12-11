@@ -231,11 +231,13 @@ class PracticeScheduleRepository:
         # 会場データを整形
         available_venues = []
         for venue_data in venues_response.data:
-            venue_info = venue_data.get("venues", {})
+            venue_info = venue_data.get("venues") or {}
+            venue_id = venue_info.get("id") if venue_info else venue_data.get("venue_id")
+            venue_name = venue_info.get("name") if venue_info else None
             available_venues.append({
                 "id": venue_data["id"],
-                "venue_id": venue_info.get("id"),
-                "name": venue_info.get("name", "不明な会場"),
+                "venue_id": venue_id,
+                "name": venue_name or "不明な会場",
                 "is_preferred": venue_data.get("is_preferred", False),
                 "priority": venue_data.get("priority", 0),
                 "notes": venue_data.get("notes")
