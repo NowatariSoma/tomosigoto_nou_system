@@ -380,7 +380,14 @@ export default function MonthView({
                 exit="exit"
               >
                 <Card
-                  className="cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none"
+                  className={clsx(
+                    "cursor-pointer overflow-hidden relative flex flex-col h-full border-t border-l-0 border-r-0 border-b-0 border-border/50 rounded-none shadow-none",
+                    today &&
+                      today.getDate() === dayObj.day &&
+                      today.getMonth() === currentDate.getMonth() &&
+                      today.getFullYear() === currentDate.getFullYear() &&
+                      "bg-amber-50"
+                  )}
                   onClick={() => handleDateClick(dayObj.day)}
                   data-day={String(dayObj.day)}
                 >
@@ -391,7 +398,7 @@ export default function MonthView({
                         today.getDate() === dayObj.day &&
                         today.getMonth() === currentDate.getMonth() &&
                         today.getFullYear() === currentDate.getFullYear()
-                        ? "text-secondary-500"
+                        ? "text-amber-600"
                         : isSunday
                         ? "text-red-600"
                         : isSaturday
