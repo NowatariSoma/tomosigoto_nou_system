@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginBackground } from './components/login-background';
 import { LoginCard } from './components/login-card';
 import { LoginLogo } from './components/login-logo';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -46,7 +48,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
           {/* Email field */}
           <div className="relative mx-4">
-            <input
+            <Input
               id="email"
               type="email"
               placeholder="Email"
@@ -61,7 +63,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
           {/* Password field */}
           <div className="relative mx-4">
-            <input
+            <Input
               id="password"
               type="password"
               placeholder="Password"
@@ -76,7 +78,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
           {/* Sign in button */}
           <div className="mx-4">
-            <button
+            <Button
               type="submit"
               className="w-full h-[39px] text-white text-[18px] rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
@@ -93,7 +95,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             ) : (
               'Sign in'
             )}
-            </button>
+            </Button>
           </div>
 
           {/* Sign up link */}
