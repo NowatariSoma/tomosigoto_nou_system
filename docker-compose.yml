@@ -11,6 +11,8 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - default
     labels:
       - "project=tomosigoto-supabase"
       - "description=Nginx reverse proxy"
@@ -34,6 +36,8 @@ services:
       - ./backend:/app
       - ./.env:/.env
     restart: unless-stopped
+    networks:
+      - default
     labels:
       - "project=tomosigoto-supabase"
       - "description=FastAPI Backend with Supabase integration"
@@ -71,6 +75,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    networks:
+      - default
     labels:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
