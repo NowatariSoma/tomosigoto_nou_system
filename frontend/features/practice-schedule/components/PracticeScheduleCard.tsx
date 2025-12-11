@@ -61,11 +61,6 @@ export const PracticeScheduleCard: React.FC<PracticeScheduleCardProps> = ({
             <h4 className={`text-md font-medium ${isToday ? 'text-amber-700' : 'text-gray-800'}`}>
               {formatDate(schedule.date)}
             </h4>
-            {isToday && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
-                今日
-              </span>
-            )}
           </div>
         </div>
         <div className="flex space-x-2">
