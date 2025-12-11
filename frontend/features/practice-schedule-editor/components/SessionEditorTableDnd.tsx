@@ -25,6 +25,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { EditableTimeSlot } from './EditableTimeSlot';
 import { TimeSlotEditorModal } from './TimeSlotEditorModal';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
 
 interface SessionEditorTableDndProps {
   sessions: Session[];
@@ -119,7 +120,7 @@ const DroppableCell: React.FC<{
   });
 
   return (
-    <td
+    <TableCell
       ref={setNodeRef}
       className={`px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top cursor-pointer transition-colors bg-white ${
         isOver ? 'bg-blue-50' : ''
@@ -152,7 +153,7 @@ const DroppableCell: React.FC<{
           </div>
         )}
       </div>
-    </td>
+    </TableCell>
   );
 };
 
@@ -334,10 +335,10 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
 
         {/* テーブルボディ */}
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed">
-            <tbody>
+          <Table className="w-full table-fixed">
+            <TableBody>
               {time_slots.map((timeSlot) => (
-                <tr key={timeSlot.time} className="border-b border-gray-100">
+                <TableRow key={timeSlot.time} className="border-b border-gray-100">
                   <EditableTimeSlot
                     timeSlot={timeSlot}
                     onEdit={handleTimeSlotEdit}
@@ -356,10 +357,10 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
                       />
                     );
                   })}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* 統計情報 - 目立たないデザイン */}

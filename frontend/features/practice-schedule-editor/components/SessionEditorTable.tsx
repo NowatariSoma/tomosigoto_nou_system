@@ -5,6 +5,7 @@ import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor'
 import { UI_TEXT } from '../constants';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
 import { Calendar } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
 
 interface SessionEditorTableProps {
   sessions: Session[];
@@ -112,17 +113,17 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
 
       {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
-          <tbody>
+        <Table className="w-full table-fixed">
+          <TableBody>
             {time_slots.map((timeSlot) => (
-              <tr key={timeSlot.time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
+              <TableRow key={timeSlot.time} className="border-b border-gray-100">
+                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
                   {timeSlot.display_time}
-                </td>
+                </TableCell>
                 {venues.map((venue) => {
                   const venueSessions = groupedSessions[venue.id]?.[timeSlot.time] || [];
                   return (
-                    <td
+                    <TableCell
                       key={`${venue.id}-${timeSlot.time}`}
                       className="px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top cursor-pointer transition-colors bg-white"
                       onClick={() => {
@@ -165,13 +166,13 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
                           {edit_mode === 'edit' ? 'クリックしてセッションを追加' : '空き'}
                         </div>
                       )}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       
       {/* 統計情報 - 目立たないデザイン */}

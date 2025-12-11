@@ -6,6 +6,7 @@ import { usePracticeSchedules } from '../../practice-schedule/hooks/use-practice
 import { UI_TEXT } from '../constants';
 import { Calendar, Search, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface ScheduleSelectorProps {
   onScheduleSelect: (scheduleId: string, scheduleDate: string) => void;
@@ -113,18 +114,19 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ onScheduleSe
               <Calendar className="h-4 w-4" />
               <span>日付で絞り込み</span>
             </label>
-            <select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">すべての日付</option>
-              {availableDates.map(date => (
-                <option key={date} value={date}>
-                  {formatDate(date)}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedDate} onValueChange={setSelectedDate}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="すべての日付" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">すべての日付</SelectItem>
+                {availableDates.map(date => (
+                  <SelectItem key={date} value={date}>
+                    {formatDate(date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

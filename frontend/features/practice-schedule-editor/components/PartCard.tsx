@@ -4,6 +4,7 @@ import React from 'react';
 import { Session } from '../types/session-editor';
 import { GripVertical, Edit2, X } from 'lucide-react';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
+import { Button } from '@/components/ui/forms/button';
 
 type DragData = Session | { type: 'instructor'; instructor: SessionInstructorWithDetails };
 
@@ -65,13 +66,15 @@ export const PartCard: React.FC<PartCardProps> = ({
             <Edit2 className="h-4 w-4 text-gray-400 flex-shrink-0" />
           )}
           {edit_mode === 'edit' && onDelete && (
-            <button
+            <Button
               onClick={handleDelete}
-              className="p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0.5 text-gray-400 hover:text-gray-700 flex-shrink-0"
               title="削除"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

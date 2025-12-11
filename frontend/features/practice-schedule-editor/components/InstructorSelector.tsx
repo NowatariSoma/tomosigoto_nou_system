@@ -8,6 +8,8 @@ import { Check, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInstructorCandidates } from '../hooks';
 import { InstructorCandidate } from '../services/session-instructor-service';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface InstructorSelectorProps {
   practiceScheduleId: string;
@@ -72,7 +74,7 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
   if (error) {
     return (
       <div className={cn("p-4 text-center", className)}>
-        <div className="text-sm text-red-500">
+        <div className="text-sm text-gray-600">
           エラー: {error}
         </div>
       </div>
@@ -98,12 +100,12 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
     <div className={cn("space-y-3", className)}>
       {/* 検索バー */}
       <div className="relative">
-        <input
+        <Input
           type="text"
           placeholder="名前、学籍番号、メールで検索..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="text-sm"
         />
       </div>
 
@@ -113,12 +115,14 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
           選択中: {selectedInstructors.length}/{maxSelections}
         </span>
         {selectedInstructors.length > 0 && (
-          <button
+          <Button
             onClick={() => onSelectionChange([])}
-            className="text-blue-600 hover:text-blue-800 underline"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-xs"
           >
             すべて解除
-          </button>
+          </Button>
         )}
       </div>
 
@@ -173,8 +177,8 @@ export const InstructorSelector: React.FC<InstructorSelectorProps> = ({
                   <span className={cn(
                     "text-xs px-2 py-0.5 rounded-full",
                     candidate.attendance_status === 'present'
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-accent-100 text-accent-700"
                   )}>
                     {candidate.attendance_status === 'present' ? '出席' : '遅刻'}
                   </span>

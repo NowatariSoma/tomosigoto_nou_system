@@ -7,6 +7,9 @@ import { useSessionValidation } from '../hooks/use-session-validation';
 import { Save, X, User, MapPin, Clock, Star, FileText } from 'lucide-react';
 import { Part } from '../services/part-service';
 import { attendanceService } from '../services';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface SessionEditorModalProps {
   session?: Session | null;
@@ -100,12 +103,14 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
           <h2 className="text-xl font-semibold text-gray-900">
             {is_creating ? UI_TEXT.CREATE_SESSION : UI_TEXT.UPDATE_SESSION}
           </h2>
-          <button
+          <Button
             onClick={onCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            variant="ghost"
+            size="icon"
+            className="p-2 text-gray-400 hover:text-gray-600"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -124,22 +129,23 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               <User className="h-4 w-4" />
               <span>{UI_TEXT.PART_NAME} <span className="text-red-500">*</span></span>
             </label>
-            <select
+            <Select
               value={formData.part_id}
-              onChange={(e) => handleInputChange('part_id', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.part_id ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onValueChange={(value) => handleInputChange('part_id', value)}
             >
-              <option value="">選択してください</option>
-              {parts
-                .filter((part) => part.status === 'active')
-                .map((part) => (
-                  <option key={part.id} value={part.id}>
-                    {part.name}
-                  </option>
-                ))}
-            </select>
+              <SelectTrigger className={`w-full ${errors.part_id ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {parts
+                  .filter((part) => part.status === 'active')
+                  .map((part) => (
+                    <SelectItem key={part.id} value={part.id}>
+                      {part.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
             {errors.part_id && (
               <p className="mt-1 text-sm text-red-600">{errors.part_id}</p>
             )}
@@ -151,20 +157,21 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               <MapPin className="h-4 w-4" />
               <span>{UI_TEXT.VENUE} <span className="text-red-500">*</span></span>
             </label>
-            <select
+            <Select
               value={formData.venue_id}
-              onChange={(e) => handleInputChange('venue_id', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.venue_id ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onValueChange={(value) => handleInputChange('venue_id', value)}
             >
-              <option value="">選択してください</option>
-              {venues.map((venue) => (
-                <option key={venue.id} value={venue.id}>
-                  {venue.name} {venue.is_preferred && '⭐'}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={`w-full ${errors.venue_id ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {venues.map((venue) => (
+                  <SelectItem key={venue.id} value={venue.id}>
+                    {venue.name} {venue.is_preferred && '⭐'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.venue_id && (
               <p className="mt-1 text-sm text-red-600">{errors.venue_id}</p>
             )}
@@ -176,20 +183,21 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               <Clock className="h-4 w-4" />
               <span>{UI_TEXT.TIME} <span className="text-red-500">*</span></span>
             </label>
-            <select
+            <Select
               value={formData.time_slot}
-              onChange={(e) => handleInputChange('time_slot', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.time_slot ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onValueChange={(value) => handleInputChange('time_slot', value)}
             >
-              <option value="">選択してください</option>
-              {time_slots.map((slot) => (
-                <option key={slot.time} value={slot.time}>
-                  {slot.display_time}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={`w-full ${errors.time_slot ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {time_slots.map((slot) => (
+                  <SelectItem key={slot.time} value={slot.time}>
+                    {slot.display_time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.time_slot && (
               <p className="mt-1 text-sm text-red-600">{errors.time_slot}</p>
             )}
@@ -201,13 +209,12 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
               <Star className="h-4 w-4" />
               <span>{UI_TEXT.PRIORITY}</span>
             </label>
-            <input
+            <Input
               type="number"
               min="0"
               max="10"
               value={formData.priority}
               onChange={(e) => handleInputChange('priority', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -233,21 +240,22 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
           {/* ボタン */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <button
+            <Button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 hover:border-slate-400 rounded-lg transition-all duration-200 font-medium"
+              variant="outline"
+              className="px-6 py-2 text-slate-600 bg-slate-100 border-slate-300 hover:border-slate-400 font-medium"
             >
               {UI_TEXT.CANCEL}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+              className="flex items-center space-x-2 px-6 py-2 font-medium shadow-sm hover:shadow-md"
             >
               <Save className="h-4 w-4" />
               <span>{loading ? '保存中...' : UI_TEXT.SAVE}</span>
-            </button>
+            </Button>
           </div>
         </form>
       </div>
