@@ -296,37 +296,40 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
         style={{ y }}
         className="fixed inset-0 bg-background rounded-t-3xl shadow-2xl z-50 flex flex-col overflow-hidden"
       >
-        {/* ハンドル - この部分のみでドラッグ可能 */}
+        {/* ドラッグ可能エリア（ハンドル + ヘッダー） */}
         <div
-          className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+          className="cursor-grab active:cursor-grabbing touch-none"
           onPointerDown={(e) => dragControls.start(e)}
         >
-          <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
-        </div>
+          {/* ハンドル */}
+          <div className="flex justify-center py-3">
+            <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+          </div>
 
-        {/* ヘッダー */}
-        <div className="px-4 pb-3 border-b shrink-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">
-              {formatDate(currentDate)}
-            </h2>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToPrevDay}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToNextDay}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
+          {/* ヘッダー */}
+          <div className="px-4 pb-3 border-b shrink-0">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">
+                {formatDate(currentDate)}
+              </h2>
+              <div className="flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPrevDay}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextDay}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
