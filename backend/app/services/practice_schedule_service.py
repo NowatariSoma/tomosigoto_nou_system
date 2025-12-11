@@ -245,10 +245,14 @@ class PracticeScheduleService:
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
         schedule_data.pop("updated_by", None)
-        
+
         # 複数部屋選択対応: venue_idsを抽出
         venue_ids = schedule_data.pop("venue_ids", None)
-        
+
+        # stage_idが空文字列の場合はNoneに変換（UUIDカラムに空文字列は挿入不可）
+        if "stage_id" in schedule_data and schedule_data["stage_id"] == "":
+            schedule_data["stage_id"] = None
+
         # 練習スケジュールを作成
         created_schedule = await self.practice_schedule_repository.create(schedule_data)
         
@@ -286,10 +290,14 @@ class PracticeScheduleService:
             # created_byとupdated_byを除外（データベースで自動設定される）
             schedule_data.pop("created_by", None)
             schedule_data.pop("updated_by", None)
-            
+
             # 複数部屋選択対応: venue_idsを抽出
             venue_ids = schedule_data.pop("venue_ids", None)
             print(f"DEBUG update_practice_schedule: venue_ids={venue_ids}")
+
+            # stage_idが空文字列の場合はNoneに変換（UUIDカラムに空文字列は挿入不可）
+            if "stage_id" in schedule_data and schedule_data["stage_id"] == "":
+                schedule_data["stage_id"] = None
             
             # 時間スロットの再生成が必要かチェック
             time_slot_needs_regeneration = False
