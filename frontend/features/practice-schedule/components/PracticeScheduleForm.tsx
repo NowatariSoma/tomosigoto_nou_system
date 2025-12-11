@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { Room } from '../../room-settings/types';
 import { StageData } from '../../parts-setting/types';
-import { UI_TEXT, VALIDATION, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
+import { UI_TEXT, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
+import { validatePracticeScheduleForm, ValidationErrors } from '../types/schemas';
 import { Calendar, Clock, MapPin, FileText, Save, X, Theater } from 'lucide-react';
 import RoomSelection from './RoomSelection';
 
@@ -45,7 +46,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
 
-  const [errors, setErrors] = useState<Partial<PracticeScheduleFormData>>({});
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   // scheduleが変更された時にformDataを更新
   useEffect(() => {
@@ -102,49 +103,17 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
     });
   }, [formData]);
 
+  // Zodスキーマを使用したバリデーション
   const validateForm = (): boolean => {
-    const newErrors: Partial<PracticeScheduleFormData> = {};
+    const result = validatePracticeScheduleForm(formData);
 
-    if (!formData.date) {
-      newErrors.date = '日付は必須です';
-    } else if (!VALIDATION.DATE_FORMAT.test(formData.date)) {
-      newErrors.date = '正しい日付形式で入力してください';
+    if (result.success) {
+      setErrors({});
+      return true;
     }
 
-    if (!formData.startTime) {
-      newErrors.startTime = '開始時間は必須です';
-    } else if (!VALIDATION.TIME_FORMAT.test(formData.startTime)) {
-      newErrors.startTime = '正しい時間形式で入力してください';
-    }
-
-    if (!formData.endTime) {
-      newErrors.endTime = '終了時間は必須です';
-    } else if (!VALIDATION.TIME_FORMAT.test(formData.endTime)) {
-      newErrors.endTime = '正しい時間形式で入力してください';
-    }
-
-    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-      newErrors.endTime = '終了時間は開始時間より後である必要があります';
-    }
-
-    if (!formData.venueId && formData.venueIds.length === 0) {
-      newErrors.venueId = '会場は必須です';
-    }
-
-    if (!formData.title) {
-      newErrors.title = 'タイトルは必須です';
-    }
-
-    if (!formData.stageId) {
-      newErrors.stageId = '舞台は必須です';
-    }
-
-    if (formData.description && formData.description.length > VALIDATION.MAX_DESCRIPTION_LENGTH) {
-      newErrors.description = `説明は${VALIDATION.MAX_DESCRIPTION_LENGTH}文字以内で入力してください`;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(result.errors);
+    return false;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,7 +126,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   const handleInputChange = (field: keyof PracticeScheduleFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // エラーをクリア
-    if (errors[field]) {
+    if (errors[field as string]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
