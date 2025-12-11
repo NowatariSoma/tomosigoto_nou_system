@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { PracticeSchedule, PracticeScheduleFormData } from '../types';
 import { Room } from '../../room-settings/types';
+import { StageData } from '../../parts-setting/types';
 import { UI_TEXT, VALIDATION, INITIAL_PRACTICE_SCHEDULE_FORM } from '../constants';
-import { Calendar, Clock, MapPin, FileText, Save, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, FileText, Save, X, Theater } from 'lucide-react';
 import RoomSelection from './RoomSelection';
 
 interface PracticeScheduleFormProps {
   schedule?: PracticeSchedule | null;
   venues: Room[];
+  stages: StageData[];
   onSubmit: (data: PracticeScheduleFormData) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -18,6 +20,7 @@ interface PracticeScheduleFormProps {
 export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
   schedule,
   venues,
+  stages,
   onSubmit,
   onCancel,
   loading = false,
@@ -38,6 +41,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           capacity: 0,
           danceAllowed: false,
         }] : []),
+      stageId: schedule.stageId || '',
     } : INITIAL_PRACTICE_SCHEDULE_FORM
   );
 
@@ -50,7 +54,8 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
         id: schedule.id,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
-        date: schedule.date
+        date: schedule.date,
+        stageId: schedule.stageId
       });
       setFormData({
         date: schedule.date,
@@ -67,6 +72,7 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           capacity: 0,
           danceAllowed: false,
         }] : []),
+        stageId: schedule.stageId || '',
       });
     } else {
       setFormData(INITIAL_PRACTICE_SCHEDULE_FORM);
@@ -213,6 +219,29 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
           />
           {errors.date && (
             <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+          )}
+        </div>
+
+        {/* 舞台選択 */}
+        <div>
+          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <Theater className="h-4 w-4" />
+            <span>{UI_TEXT.STAGE}</span>
+          </label>
+          <select
+            value={formData.stageId}
+            onChange={(e) => handleInputChange('stageId', e.target.value)}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
+          >
+            <option value="">{UI_TEXT.SELECT_STAGE}</option>
+            {stages.map((stage) => (
+              <option key={stage.id} value={stage.id}>
+                {stage.stageName}
+              </option>
+            ))}
+          </select>
+          {stages.length === 0 && (
+            <p className="mt-1 text-sm text-gray-500">{UI_TEXT.NO_STAGE_DATA}</p>
           )}
         </div>
 
