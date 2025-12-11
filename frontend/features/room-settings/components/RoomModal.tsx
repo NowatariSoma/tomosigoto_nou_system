@@ -56,9 +56,9 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-blue-50 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-blue-100 border-b border-blue-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-black">
+      <div className="modal-container max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="modal-header sticky top-0 rounded-t-2xl flex items-center justify-between">
+          <h2 className="modal-title">
             {room ? '会場情報編集' : '新規会場登録'}
           </h2>
           <Button
@@ -74,7 +74,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 会場名 */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">会場名</label>
+            <label className="label-form block text-lg mb-3">会場名</label>
             <Input
               type="text"
               name="name"
@@ -87,7 +87,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
           {/* キャンパス */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">キャンパス</label>
+            <label className="label-form block text-lg mb-3">キャンパス</label>
             <div className="flex gap-4">
               <Button
                 type="button"
@@ -110,7 +110,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
           {/* 収容可能人数 */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">収容可能人数</label>
+            <label className="label-form block text-lg mb-3">収容可能人数</label>
             <div className="flex items-center gap-3">
               <Input
                 type="number"
@@ -127,7 +127,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
           {/* 舞の可否 */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">舞の可否</label>
+            <label className="label-form block text-lg mb-3">舞の可否</label>
             <div className="space-y-3">
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className="relative">
@@ -176,7 +176,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({ room, isOpen, onClose, onS
 
           {/* 説明 */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-3">説明</label>
+            <label className="label-form block text-lg mb-3">説明</label>
             <textarea
               name="description"
               value={formData.description}

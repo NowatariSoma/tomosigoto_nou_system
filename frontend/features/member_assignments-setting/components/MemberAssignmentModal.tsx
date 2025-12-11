@@ -114,10 +114,10 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-blue-50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="modal-container w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100">
-          <h2 className="text-2xl font-bold text-black">
+        <div className="modal-header flex items-center justify-between">
+          <h2 className="modal-title">
             {UI_TEXT.ASSIGNMENT_TITLE}
           </h2>
           <Button
@@ -134,7 +134,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 舞台選択 */}
           <div>
-            <label className="block text-sm font-medium text-black mb-2">
+            <label className="label-form block mb-2">
               舞台
             </label>
             <Select value={selectedStageId} onValueChange={handleStageChange} required>
@@ -153,7 +153,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
           {/* パート選択 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.PART_LABEL}
             </label>
             <Select
@@ -177,7 +177,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
           {/* 謡舞区分 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.CATEGORY_LABEL}
             </label>
             <div className="flex gap-4">
@@ -189,9 +189,9 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
                     value={option.value}
                     checked={formData.category === option.value}
                     onChange={(e) => handleInputChange('category', e.target.value as 'utai' | 'mai')}
-                    className="mr-2 text-black focus:ring-blue-500"
+                    className="mr-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                  <span className="label-form">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -199,7 +199,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
           {/* 表示順序 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.DISPLAY_ORDER_LABEL}
             </label>
             <Input
@@ -214,7 +214,7 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
           {/* 現在の所属情報表示 */}
           {assignment && (
             <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">現在の所属情報</h3>
+              <h3 className="label-form mb-2">現在の所属情報</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">ユーザー:</span>

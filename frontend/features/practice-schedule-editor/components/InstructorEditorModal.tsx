@@ -106,7 +106,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
           <div className="space-y-4">
             {/* 会場選択 */}
             <div>
-              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center space-x-2 label-form mb-2">
                 <MapPin className="h-4 w-4" />
                 <span>会場 <span className="text-gray-600">*</span></span>
               </label>
@@ -130,7 +130,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
 
             {/* 時間帯選択 */}
             <div>
-              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center space-x-2 label-form mb-2">
                 <Clock className="h-4 w-4" />
                 <span>時間帯 <span className="text-gray-600">*</span></span>
               </label>
@@ -154,7 +154,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
 
             {/* 監督者選択 */}
             <div>
-              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center space-x-2 label-form mb-2">
                 <Users className="h-4 w-4" />
                 <span>監督者 <span className="text-gray-600">*</span></span>
               </label>

@@ -28,7 +28,7 @@ export const StageCard: React.FC<StageCardProps> = ({ stage, onClick }) => {
 
   return (
     <div
-      className="bg-blue-50 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-blue-200 cursor-pointer hover:scale-[1.02] hover:bg-blue-100/50 active:scale-[0.98]"
+      className="card-blue-hover rounded-2xl p-6 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
       onClick={handleCardClick}
     >
       <div className="flex items-center gap-3 mb-4">

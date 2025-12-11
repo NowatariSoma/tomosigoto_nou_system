@@ -31,7 +31,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
 
 
   return (
-    <div className="bg-blue-50 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-4 border border-blue-200">
+    <div className="card-blue-hover p-4">
       <div className="flex items-center gap-3 mb-4">
         <Theater className="h-6 w-6 text-black" />
         <h3 className="text-2xl font-bold text-black">{stage.name}</h3>
@@ -44,7 +44,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
               {visibleParts.map((part) => (
                 <div key={part.id} className="bg-white rounded p-2 border border-blue-200">
                   <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-blue-50/30 rounded p-3 -m-1 transition-colors"
+                    className="flex items-center justify-between cursor-pointer hover-subtle rounded p-3 -m-1"
                     onClick={() => handlePartClick(part.id)}
                   >
                     <div className="flex items-center gap-3">

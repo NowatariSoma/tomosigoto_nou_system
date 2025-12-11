@@ -179,9 +179,9 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="modal-container p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="section-title-xl">
             {schedule ? UI_TEXT.UPDATE_SCHEDULE : UI_TEXT.CREATE_SCHEDULE}
           </h2>
           <Button
@@ -197,35 +197,31 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 日付選択 */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="label-form flex items-center space-x-2 mb-2">
             <Calendar className="h-4 w-4" />
-            <span>{UI_TEXT.DATE} <span className="text-gray-600">*</span></span>
+            <span>{UI_TEXT.DATE} <span className="text-black">*</span></span>
           </label>
           <Input
             type="date"
             value={formData.date}
             onChange={(e) => handleInputChange('date', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.date ? 'border-gray-500' : 'border-gray-300'
-            }`}
+            className="input-field"
           />
           {errors.date && (
-            <p className="mt-1 text-sm text-gray-600">{errors.date}</p>
+            <p className="mt-1 text-sm text-black">{errors.date}</p>
           )}
         </div>
 
         {/* 舞台選択 */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="label-form flex items-center space-x-2 mb-2">
             <Theater className="h-4 w-4" />
-            <span>{UI_TEXT.STAGE} <span className="text-red-500">*</span></span>
+            <span>{UI_TEXT.STAGE} <span className="text-black">*</span></span>
           </label>
           <select
             value={formData.stageId}
             onChange={(e) => handleInputChange('stageId', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.stageId ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className="input-field"
           >
             <option value="">{UI_TEXT.SELECT_STAGE}</option>
             {stages.map((stage) => (
@@ -235,25 +231,25 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
             ))}
           </select>
           {errors.stageId && (
-            <p className="mt-1 text-sm text-red-600">{errors.stageId}</p>
+            <p className="mt-1 text-sm text-black">{errors.stageId}</p>
           )}
           {!errors.stageId && stages.length === 0 && (
-            <p className="mt-1 text-sm text-gray-500">{UI_TEXT.NO_STAGE_DATA}</p>
+            <p className="mt-1 text-sm text-black">{UI_TEXT.NO_STAGE_DATA}</p>
           )}
         </div>
 
         {/* 時間選択 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form flex items-center space-x-2 mb-2">
               <Clock className="h-4 w-4" />
-              <span>{UI_TEXT.START_TIME} <span className="text-gray-600">*</span></span>
+              <span>{UI_TEXT.START_TIME} <span className="text-black">*</span></span>
             </label>
             <Select
               value={formData.startTime}
               onValueChange={(value) => handleInputChange('startTime', value)}
             >
-              <SelectTrigger className={`w-full ${errors.startTime ? 'border-gray-500' : ''}`}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="選択してください" />
               </SelectTrigger>
               <SelectContent>
@@ -265,20 +261,20 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
               </SelectContent>
             </Select>
             {errors.startTime && (
-              <p className="mt-1 text-sm text-gray-600">{errors.startTime}</p>
+              <p className="mt-1 text-sm text-black">{errors.startTime}</p>
             )}
           </div>
 
           <div>
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form flex items-center space-x-2 mb-2">
               <Clock className="h-4 w-4" />
-              <span>{UI_TEXT.END_TIME} <span className="text-gray-600">*</span></span>
+              <span>{UI_TEXT.END_TIME} <span className="text-black">*</span></span>
             </label>
             <Select
               value={formData.endTime}
               onValueChange={(value) => handleInputChange('endTime', value)}
             >
-              <SelectTrigger className={`w-full ${errors.endTime ? 'border-gray-500' : ''}`}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="選択してください" />
               </SelectTrigger>
               <SelectContent>
@@ -290,16 +286,16 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
               </SelectContent>
             </Select>
             {errors.endTime && (
-              <p className="mt-1 text-sm text-gray-600">{errors.endTime}</p>
+              <p className="mt-1 text-sm text-black">{errors.endTime}</p>
             )}
           </div>
         </div>
 
         {/* 会場選択（複数選択対応） */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="label-form flex items-center space-x-2 mb-2">
             <MapPin className="h-4 w-4" />
-            <span>{UI_TEXT.VENUE} <span className="text-red-500">*</span></span>
+            <span>{UI_TEXT.VENUE} <span className="text-black">*</span></span>
           </label>
           <RoomSelection
             selectedRooms={formData.selectedVenues}
@@ -308,33 +304,31 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
             availableRooms={venues}
           />
           {errors.venueId && (
-            <p className="mt-1 text-sm text-red-600">{errors.venueId}</p>
+            <p className="mt-1 text-sm text-black">{errors.venueId}</p>
           )}
         </div>
 
         {/* タイトル */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="label-form flex items-center space-x-2 mb-2">
             <FileText className="h-4 w-4" />
-            <span>{UI_TEXT.TITLE} <span className="text-red-500">*</span></span>
+            <span>{UI_TEXT.TITLE} <span className="text-black">*</span></span>
           </label>
           <Input
             type="text"
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
             placeholder="練習のタイトルを入力してください"
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.title ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className="input-field"
           />
           {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+            <p className="mt-1 text-sm text-black">{errors.title}</p>
           )}
         </div>
 
         {/* 説明 */}
         <div>
-          <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="label-form flex items-center space-x-2 mb-2">
             <FileText className="h-4 w-4" />
             <span>{UI_TEXT.DESCRIPTION}</span>
           </label>
@@ -343,29 +337,27 @@ export const PracticeScheduleForm: React.FC<PracticeScheduleFormProps> = ({
             onChange={(e) => handleInputChange('description', e.target.value)}
             rows={3}
             placeholder="練習内容や注意事項を入力してください（任意）"
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.description ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className="input-field"
           />
           {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+            <p className="mt-1 text-sm text-black">{errors.description}</p>
           )}
         </div>
 
         {/* ボタン */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-blue-200">
           <Button
             variant="outline"
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 hover:border-slate-400 rounded-lg transition-all duration-200 font-medium"
+            className="px-6 py-2"
           >
             {UI_TEXT.CANCEL}
           </Button>
           <Button
             type="submit"
             disabled={loading}
-            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            className="flex items-center space-x-2 px-6 py-2"
           >
             <Save className="h-4 w-4" />
             <span>{loading ? '保存中...' : UI_TEXT.SAVE}</span>

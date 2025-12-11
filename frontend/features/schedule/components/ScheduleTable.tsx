@@ -58,8 +58,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // ローディング状態の表示
   if (loading) {
     return (
-      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
-        <div className="text-gray-500">スケジュール詳細を読み込み中...</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">スケジュール詳細を読み込み中...</div>
       </div>
     );
   }
@@ -67,8 +67,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // エラー状態の表示
   if (error) {
     return (
-      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
-        <div className="text-gray-600">エラー: {error}</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">エラー: {error}</div>
       </div>
     );
   }
@@ -76,8 +76,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // データがない場合の表示
   if (!idealData || !idealData.venues || !Array.isArray(idealData.venues)) {
     return (
-      <div className={cn("bg-blue-50 rounded-lg shadow-lg p-8 text-center border border-blue-100", className)}>
-        <div className="text-gray-500">スケジュールデータがありません</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">スケジュールデータがありません</div>
       </div>
     );
   }
@@ -91,13 +91,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   ) || [];
 
   return (
-    <div className={cn("bg-blue-50 rounded-lg shadow-lg overflow-hidden border border-blue-200", className)}>
+    <div className={cn("card-blue shadow-lg overflow-hidden", className)}>
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-blue-100 text-sm font-semibold text-black border-r border-b border-blue-200">時間</div>
-        <div className="flex-1 bg-blue-100 py-3 px-4 flex border-b border-blue-200">
+        <div className="w-24 table-header-cell border-r border-b border-blue-200">時間</div>
+        <div className="flex-1 table-header py-3 px-4 flex border-b border-blue-200">
           {uniqueVenues.map((venue) => (
-            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-black text-center">
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-center">
               {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
@@ -110,7 +110,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <TableBody>
             {timeSlots.map((time) => (
               <TableRow key={time} className="border-b border-gray-100">
-                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-black bg-blue-100 align-top border-r border-blue-200">
+                <TableCell className="w-24 table-header-cell align-top border-r border-blue-200">
                   {time}
                 </TableCell>
                 {uniqueVenues.map((venue) => {
@@ -131,7 +131,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
                           {/* パート名 */}
-                          <div className="text-sm font-medium text-gray-900 mb-1">
+                          <div className="text-sm font-medium text-black mb-1">
                             {parts[0].part_name}
                           </div>
                           <InstructorDisplay
@@ -142,7 +142,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                           />
                         </div>
                       ) : (
-                        <div className="text-center text-gray-400 py-6">
+                        <div className="text-center text-black py-6">
                           空き
                         </div>
                       )}
