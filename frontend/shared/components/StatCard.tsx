@@ -27,7 +27,7 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
     return trend === 'up' ? (
       <TrendingUp className="w-4 h-4 text-black" />
     ) : (
-      <TrendingUp className="w-4 h-4 text-gray-600 rotate-180" />
+      <TrendingUp className="w-4 h-4 text-black rotate-180" />
     );
   };
 
@@ -36,8 +36,8 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-sm font-medium text-black">{stat.title}</p>
+            <p className="text-2xl font-bold text-black">{stat.value}</p>
           </div>
           <div className="flex items-center gap-2">
             {getIcon(stat.iconType)}
@@ -46,11 +46,11 @@ export const StatCard: React.FC<StatCardProps> = ({ stat }) => {
         <div className="flex items-center gap-1 mt-2">
           {getTrendIcon(stat.trend)}
           <span className={`text-sm font-medium ${
-            stat.trend === 'up' ? 'text-black' : 'text-gray-600'
+            stat.trend === 'up' ? 'text-black' : 'text-black'
           }`}>
             {stat.change}
           </span>
-          <span className="text-sm text-gray-500">前期比</span>
+          <span className="text-sm text-black">前期比</span>
         </div>
       </CardContent>
     </Card>

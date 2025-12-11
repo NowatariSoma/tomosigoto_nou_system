@@ -36,7 +36,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
   };
 
   const getStatusColor = (status: string) => {
-    return ATTENDANCE_STATUS_COLORS[status as keyof typeof ATTENDANCE_STATUS_COLORS] || 'text-gray-600 bg-gray-50';
+    return ATTENDANCE_STATUS_COLORS[status as keyof typeof ATTENDANCE_STATUS_COLORS] || 'text-black bg-gray-50';
   };
 
   const getStatusLabel = (status: string) => {

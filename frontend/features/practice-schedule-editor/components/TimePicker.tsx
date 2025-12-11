@@ -81,29 +81,29 @@ export const TimePicker: React.FC<TimePickerProps> = ({
 
   return (
     <div className={cn("relative", className)} ref={containerRef}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-black mb-2">
         {label} <span className="text-red-500">*</span>
       </label>
       
       <div
         className={cn(
           "relative w-full px-3 py-2 border rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500",
-          error ? 'border-red-500' : 'border-gray-300',
+          error ? 'border-red-500' : 'border-black',
           isOpen ? 'ring-2 ring-blue-500' : ''
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center justify-between">
-          <span className="text-gray-900 font-medium">{displayValue}</span>
+          <span className="text-black font-medium">{displayValue}</span>
           <div className="flex flex-col">
-            <ChevronUp className="h-4 w-4 text-gray-400" />
-            <ChevronDown className="h-4 w-4 text-gray-400 -mt-1" />
+            <ChevronUp className="h-4 w-4 text-black" />
+            <ChevronDown className="h-4 w-4 text-black -mt-1" />
           </div>
         </div>
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-black rounded-md shadow-lg">
           <div className="p-4">
             <div className="flex items-center justify-center space-x-6">
               {/* 時間選択 */}
@@ -115,9 +115,9 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   className="p-2 rounded-full"
                   type="button"
                 >
-                  <ChevronUp className="h-5 w-5 text-gray-600" />
+                  <ChevronUp className="h-5 w-5 text-black" />
                 </Button>
-                <div className="text-2xl font-bold text-gray-900 min-w-[60px] text-center">
+                <div className="text-2xl font-bold text-black min-w-[60px] text-center">
                   {hours.toString().padStart(2, '0')}
                 </div>
                 <Button
@@ -127,13 +127,13 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   className="p-2 rounded-full"
                   type="button"
                 >
-                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                  <ChevronDown className="h-5 w-5 text-black" />
                 </Button>
-                <div className="text-xs text-gray-500">時</div>
+                <div className="text-xs text-black">時</div>
               </div>
 
               {/* 区切り文字 */}
-              <div className="text-2xl font-bold text-gray-400">:</div>
+              <div className="text-2xl font-bold text-black">:</div>
 
               {/* 分選択 */}
               <div className="flex flex-col items-center space-y-2">
@@ -144,9 +144,9 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   className="p-2 rounded-full"
                   type="button"
                 >
-                  <ChevronUp className="h-5 w-5 text-gray-600" />
+                  <ChevronUp className="h-5 w-5 text-black" />
                 </Button>
-                <div className="text-2xl font-bold text-gray-900 min-w-[60px] text-center">
+                <div className="text-2xl font-bold text-black min-w-[60px] text-center">
                   {minutes.toString().padStart(2, '0')}
                 </div>
                 <Button
@@ -156,9 +156,9 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   className="p-2 rounded-full"
                   type="button"
                 >
-                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                  <ChevronDown className="h-5 w-5 text-black" />
                 </Button>
-                <div className="text-xs text-gray-500">分</div>
+                <div className="text-xs text-black">分</div>
               </div>
             </div>
 

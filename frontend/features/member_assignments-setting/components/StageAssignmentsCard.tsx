@@ -49,7 +49,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <h4 className="font-bold text-black text-lg">{part.name}</h4>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-black">
                         <span>舞: {part.member_assignments.filter(ma => ma.category === 'mai').length}人</span>
                         <span>謡: {part.member_assignments.filter(ma => ma.category === 'utai').length}人</span>
                       </div>
@@ -67,7 +67,7 @@ export const StageAssignmentsCard: React.FC<StageAssignmentsCardProps> = ({
               <Button
                 variant="ghost"
                 onClick={handleExpandClick}
-                className="flex items-center gap-1 text-black hover:text-black text-sm font-medium mt-2 h-auto p-0"
+                className="flex items-center gap-1 text-black text-sm font-medium mt-2 h-auto p-0"
               >
                 {isExpanded ? (
                   <>

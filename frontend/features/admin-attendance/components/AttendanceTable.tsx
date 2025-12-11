@@ -304,7 +304,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               ユーザー名
             </label>
             <div className="relative">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-black" />
               <Input
                 type="text"
                 value={filterUserName}
@@ -359,7 +359,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             <TableBody className="bg-white divide-y divide-gray-200">
               {tableData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                  <TableCell colSpan={4} className="px-6 py-8 text-center text-black">
                     {UI_TEXT.NO_ATTENDANCE_DATA}
                   </TableCell>
                 </TableRow>

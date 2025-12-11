@@ -96,7 +96,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
 
           {/* Error Section */}
           {errorMessage && (
-            <div className="panel-error rounded-xl p-4 text-gray-900 text-sm font-semibold">
+            <div className="panel-error rounded-xl p-4 text-black text-sm font-semibold">
               {errorMessage}
             </div>
           )}

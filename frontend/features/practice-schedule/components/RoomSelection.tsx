@@ -44,7 +44,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => onRemoveRoom(room.id)}
-              className="hover:text-gray-600 transition-colors h-auto w-auto p-0"
+              className="hover:text-black transition-colors h-auto w-auto p-0"
             >
               <X className="h-3 w-3" />
             </Button>

@@ -86,11 +86,11 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <div className="text-gray-500 text-lg mb-2">
+        <Calendar className="h-12 w-12 text-black mx-auto mb-4" />
+        <div className="text-black text-lg mb-2">
           会場情報がありません
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           まず会場を登録してからセッションを作成してください
         </p>
       </div>
@@ -102,9 +102,9 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
       {/* テーブルヘッダー */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <div className="flex">
-          <div className="w-24 text-sm font-medium text-gray-800">時間</div>
+          <div className="w-24 text-sm font-medium text-black">時間</div>
           {venues.map((venue) => (
-            <div key={venue.id} className="flex-1 text-sm font-medium text-gray-800 text-center">
+            <div key={venue.id} className="flex-1 text-sm font-medium text-black text-center">
               {venue.name || `会場${venue.id.slice(-4)}`}
             </div>
           ))}
@@ -117,7 +117,7 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
           <TableBody>
             {time_slots.map((timeSlot) => (
               <TableRow key={timeSlot.time} className="border-b border-gray-100">
-                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-gray-800 bg-white align-top">
+                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-black bg-white align-top">
                   {timeSlot.display_time}
                 </TableCell>
                 {venues.map((venue) => {
@@ -144,17 +144,17 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
                               }}
                             >
                               {session.part_name && (
-                                <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+                                <div className="font-bold text-sm text-black leading-tight mb-1">
                                   {session.part_name}
                                 </div>
                               )}
                               {session.start_time && session.end_time && (
-                                <div className="text-xs text-gray-500 mt-1">
+                                <div className="text-xs text-black mt-1">
                                   {session.start_time} - {session.end_time}
                                 </div>
                               )}
                               {session.part_id && (
-                                <div className="text-xs text-gray-500 mt-1">
+                                <div className="text-xs text-black mt-1">
                                   パートID: {session.part_id}
                                 </div>
                               )}
@@ -162,7 +162,7 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center text-gray-400 py-6">
+                        <div className="text-center text-black py-6">
                           {edit_mode === 'edit' ? 'クリックしてセッションを追加' : '空き'}
                         </div>
                       )}
@@ -177,13 +177,13 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
       
       {/* 統計情報 - 目立たないデザイン */}
       <div className="px-4 py-2 bg-white border-t border-gray-100">
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-black">
           <div className="flex items-center space-x-4">
             <span>セッション: {sessions.length}</span>
             <span>会場: {venues.length}</span>
             <span>時間スロット: {time_slots.length}</span>
           </div>
-          <div className="text-gray-400">
+          <div className="text-black">
             稼働率: {venues.length > 0 ? Math.round((sessions.length / (time_slots.length * venues.length)) * 100) : 0}%
           </div>
         </div>

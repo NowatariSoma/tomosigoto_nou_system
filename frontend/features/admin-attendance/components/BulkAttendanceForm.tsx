@@ -213,8 +213,8 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
             <CheckCircle className="h-16 w-16 text-black" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">一括出席登録完了</h2>
-            <p className="text-gray-600 leading-relaxed">
+            <h2 className="text-2xl font-bold text-black">一括出席登録完了</h2>
+            <p className="text-black leading-relaxed">
               出席状況の一括登録が完了しました。
             </p>
           </div>
@@ -271,7 +271,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
             </SelectContent>
           </Select>
           {errors.practice && (
-            <p className="mt-1 text-sm text-gray-600">{errors.practice}</p>
+            <p className="mt-1 text-sm text-black">{errors.practice}</p>
           )}
         </div>
 
@@ -296,7 +296,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
             onChange={(e) => setSetUnenteredToPresent(e.target.checked)}
             className="w-4 h-4 text-black border-gray-300 rounded focus:ring-blue-500"
           />
-          <label htmlFor="setUnenteredToPresent" className="text-sm font-medium text-gray-700">
+          <label htmlFor="setUnenteredToPresent" className="text-sm font-medium text-black">
             {UI_TEXT.SET_UNENTERED_TO_PRESENT}
           </label>
         </div>
@@ -305,7 +305,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
         {selectedPracticeId && users.length > 0 && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <div className="bg-white px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-black">
                 ユーザー一覧 ({users.length}名)
               </h3>
             </div>
@@ -323,13 +323,13 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                   <div key={user.id} className="border-b border-gray-200 p-4 last:border-b-0">
                     <div className="flex items-start space-x-4">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        <p className="text-sm font-medium text-black truncate">{user.name}</p>
+                        <p className="text-xs text-black truncate">{user.email}</p>
                       </div>
                       
                       {/* 出席状況 */}
                       <div className="flex-shrink-0">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <label className="block text-xs font-medium text-black mb-1">
                           出席状況
                         </label>
                         <Select
@@ -353,7 +353,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                       {data.status === ATTENDANCE_STATUS.LATE && (
                         <div className="flex-shrink-0 space-x-2">
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-xs font-medium text-black mb-1">
                               何時から
                             </label>
                             <Input
@@ -364,7 +364,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-xs font-medium text-black mb-1">
                               何時まで
                             </label>
                             <Input
@@ -379,7 +379,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
                       {/* 備考 */}
                       <div className="flex-1 min-w-0">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <label className="block text-xs font-medium text-black mb-1">
                           備考
                         </label>
                         <textarea
@@ -394,7 +394,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                       </div>
                     </div>
                     {userError && (
-                      <p className="mt-1 text-xs text-gray-600">{userError}</p>
+                      <p className="mt-1 text-xs text-black">{userError}</p>
                     )}
                   </div>
                 );

@@ -66,8 +66,8 @@ export const VenueEditor: React.FC<VenueEditorProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 h-full">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-gray-600" />
+        <h3 className="text-lg font-semibold text-black flex items-center gap-2">
+          <MapPin className="h-5 w-5 text-black" />
           会場設定
         </h3>
         {isEditMode && (

@@ -19,7 +19,7 @@ export const AdminAttendancePage: React.FC = () => {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-black mx-auto mb-4" />
-          <p className="text-gray-600">データを読み込み中...</p>
+          <p className="text-black">データを読み込み中...</p>
         </div>
       </div>
     );
@@ -29,9 +29,9 @@ export const AdminAttendancePage: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">エラーが発生しました</h2>
-          <p className="text-gray-600">{error}</p>
+          <AlertCircle className="h-12 w-12 text-black mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-black mb-2">エラーが発生しました</h2>
+          <p className="text-black">{error}</p>
         </div>
       </div>
     );

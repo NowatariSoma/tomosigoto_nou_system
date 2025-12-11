@@ -15,16 +15,16 @@ export function PerformanceCard({ performance, onClick }: PerformanceCardProps) 
       onClick={onClick}
     >
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+        <h3 className="text-lg font-semibold text-black mb-3">
           {performance.name}
         </h3>
         <div className="space-y-1">
           {performance.parts.map((part, index) => (
-            <div key={index} className="text-gray-600 text-sm">
+            <div key={index} className="text-black text-sm">
               {part}
             </div>
           ))}
-          <div className="text-gray-400 text-sm mt-2">
+          <div className="text-black text-sm mt-2">
             ・・・
           </div>
         </div>

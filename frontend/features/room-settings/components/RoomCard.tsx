@@ -32,7 +32,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onClick }) => {
           <span className="text-black font-medium min-w-[120px]">舞の可否</span>
           <span className="text-black">：</span>
           <span className={`ml-2 font-medium ${
-            room.danceAllowed ? 'text-black' : 'text-gray-600'
+            room.danceAllowed ? 'text-black' : 'text-black'
           }`}>
             {room.danceAllowed ? UI_TEXT.DANCE_ALLOWED : UI_TEXT.DANCE_NOT_ALLOWED}
           </span>

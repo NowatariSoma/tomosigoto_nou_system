@@ -367,10 +367,6 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                     </TableCell>
                   );
                 })}
-                {/* 会場編集列の空セル */}
-                {edit_mode === 'edit' && (
-                  <TableCell className="border-gray-200 min-h-[60px] sm:min-h-[80px] align-top bg-gray-50 p-0.5 sm:p-1"></TableCell>
-                )}
               </TableRow>
             ))}
 

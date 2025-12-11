@@ -131,12 +131,12 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-blue-50 hover:border-blue-300 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <UserIcon className="h-4 w-4 text-gray-500" />
+                      <UserIcon className="h-4 w-4 text-black" />
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-black">
                           {user.last_name_katakana} {user.first_name_katakana}
                         </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-black">{user.email}</div>
                       </div>
                     </div>
                     <Button
@@ -153,8 +153,8 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <UserIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-black">
+                <UserIcon className="h-8 w-8 mx-auto mb-2 text-black" />
                 <p>該当するユーザーが見つかりませんでした</p>
               </div>
             )}
