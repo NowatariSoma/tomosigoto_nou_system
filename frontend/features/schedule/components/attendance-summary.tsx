@@ -121,7 +121,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
   if (error) {
     return (
       <div>
-        <div className="flex items-center text-red-600">
+        <div className="flex items-center text-gray-600">
           <AlertCircle className="h-5 w-5 mr-2" />
           <span>{error}</span>
         </div>
@@ -143,7 +143,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
               {Object.keys(groupedAttendances.absent).length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className="h-4 w-4 text-gray-600" />
                     <h5 className="font-semibold text-slate-900">
                       欠席 ({Object.values(groupedAttendances.absent).flat().length}名)
                     </h5>
@@ -158,7 +158,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
                           {attendances.map((attendance) => (
                             <div
                               key={attendance.id}
-                              className="bg-white px-3 py-1.5 rounded border-2 border-red-400 text-sm"
+                              className="bg-white px-3 py-1.5 rounded border-2 border-gray-400 text-sm"
                             >
                               <span className="text-slate-900">
                                 {attendance.user_name || `User ${attendance.user_id.slice(0, 8)}`}
@@ -175,7 +175,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
               {Object.keys(groupedAttendances.late).length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Clock className="h-4 w-4 text-yellow-500" />
+                    <Clock className="h-4 w-4 text-accent-600" />
                     <h5 className="font-semibold text-slate-900">
                       遅刻 ({Object.values(groupedAttendances.late).flat().length}名)
                     </h5>
@@ -190,7 +190,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({ currentDat
                           {attendances.map((attendance) => (
                             <div
                               key={attendance.id}
-                              className="bg-white px-3 py-2 rounded border-2 border-yellow-400 text-sm w-fit"
+                              className="bg-white px-3 py-2 rounded border-2 border-accent-400 text-sm w-fit"
                             >
                               <div className="flex items-center flex-nowrap gap-2">
                                 <span className="text-slate-900 font-medium whitespace-nowrap">

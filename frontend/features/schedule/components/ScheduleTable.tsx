@@ -5,6 +5,7 @@ import { useIdealSchedule } from '../hooks/use-practice-schedule-data';
 import { IdealScheduleData } from '../types/practice-schedule-types';
 import { InstructorDisplay } from './InstructorDisplay';
 import { formatDateToYYYYMMDD } from '@/shared/utils/format';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
 
 interface ScheduleTableProps {
   className?: string;
@@ -83,7 +84,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   if (error) {
     return (
       <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-red-500">エラー: {error}</div>
+        <div className="text-gray-600">エラー: {error}</div>
       </div>
     );
   }
@@ -121,10 +122,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-[#2D3748] text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-[#1a202c] transition-colors">時間</div>
-        <div className="flex-1 bg-[#2D3748] py-3 px-4 flex border-b border-gray-600">
+        <div className="w-24 px-4 py-3 bg-blue-400 text-sm font-semibold text-white border-r border-b border-blue-300 hover:bg-blue-500 transition-colors">時間</div>
+        <div className="flex-1 bg-blue-400 py-3 px-4 flex border-b border-blue-300">
           {uniqueVenues.map((venue) => (
-            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-white text-center hover:bg-[#1a202c] transition-colors">
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-white text-center hover:bg-blue-500 transition-colors">
               {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
@@ -133,17 +134,17 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
       {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
-          <tbody>
+        <Table className="w-full table-fixed">
+          <TableBody>
             {timeSlots.map((time) => (
-              <tr key={time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-[#2D3748] align-top border-r border-gray-600 hover:bg-[#1a202c] transition-colors">
+              <TableRow key={time} className="border-b border-gray-100">
+                <TableCell className="w-24 px-4 py-3 text-sm font-medium text-white bg-blue-400 align-top border-r border-blue-300 hover:bg-blue-500 transition-colors">
                   {time}
-                </td>
+                </TableCell>
                 {uniqueVenues.map((venue) => {
                   const parts = idealData.time_schedule?.[time]?.[venue?.id] || [];
                   return (
-                    <td
+                    <TableCell
                       key={`${time}-${venue?.id || 'unknown'}`}
                       className={cn(
                         "px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top",
@@ -173,13 +174,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                           空き
                         </div>
                       )}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
