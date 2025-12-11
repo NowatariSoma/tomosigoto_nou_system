@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
+import { motion, PanInfo, useMotionValue, useTransform, useDragControls } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduleTable } from './ScheduleTable';
@@ -48,6 +48,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
   const [screenHeight, setScreenHeight] = useState(1000); // デフォルト値
+  const dragControls = useDragControls();
 
   // 画面の高さを取得
   useEffect(() => {
@@ -286,6 +287,8 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           ease: 'easeOut'
         }}
         drag="y"
+        dragControls={dragControls}
+        dragListener={false}
         dragConstraints={{ top: 0, bottom: screenHeight }}
         dragElastic={0}
         onDragStart={() => setIsDragging(true)}
@@ -293,8 +296,11 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
         style={{ y }}
         className="fixed inset-0 bg-background rounded-t-3xl shadow-2xl z-50 flex flex-col overflow-hidden"
       >
-        {/* ハンドル */}
-        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+        {/* ハンドル - この部分のみでドラッグ可能 */}
+        <div
+          className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
           <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
         </div>
 
