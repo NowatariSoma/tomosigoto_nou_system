@@ -174,13 +174,15 @@ export const transformApiResponsesToSchedules = (apiResponses: unknown[]): Pract
 };
 
 // Room型のZodスキーマ（フォームデータ用）
+// 実際のRoom型に合わせて柔軟に対応
 export const RoomSchema = z.object({
   id: z.string(),
   name: z.string(),
-  campus: z.enum(['今出川', '京田辺']),
+  campus: z.string(), // enumではなくstringで柔軟に対応
   capacity: z.number(),
   danceAllowed: z.boolean(),
-});
+  description: z.string().optional(),
+}).passthrough(); // 追加フィールドを許容
 
 export type RoomFromSchema = z.infer<typeof RoomSchema>;
 
