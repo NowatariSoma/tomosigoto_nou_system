@@ -93,9 +93,9 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
           {attendance.status === 'late' && (attendance.available_from || attendance.available_to) && (
             <div className="mt-3 pt-3 border-t border-slate-200">
               <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-accent-600" />
+                <Clock className="h-4 w-4 text-yellow-600" />
                 <span className="text-sm text-slate-700">
-                  参加可能時間: <span className="font-semibold text-accent-700">
+                  参加可能時間: <span className="font-semibold text-yellow-700">
                     {attendance.available_from || '開始'} - {attendance.available_to || '終了'}
                   </span>
                 </span>

@@ -46,7 +46,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, sessionInstructor) : undefined}
-      className={`rounded-lg px-4 py-3 bg-accent-50 border border-accent-300 hover:bg-accent-100 hover:shadow transition-all ${
+      className={`rounded-lg px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 hover:shadow transition-all ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}

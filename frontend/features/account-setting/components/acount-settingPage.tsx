@@ -225,10 +225,10 @@ const AccountSettings: React.FC = () => {
       {validation && !validation.is_valid && (
         <div className="mb-6 p-4 panel-warning rounded-md">
           <div className="flex items-center mb-2">
-            <AlertCircle className="h-5 w-5 text-accent-600 mr-2" />
-            <span className="text-accent-900 font-medium">{UI_TEXT.VALIDATION_ERROR}</span>
+            <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+            <span className="text-yellow-900 font-medium">{UI_TEXT.VALIDATION_ERROR}</span>
           </div>
-          <ul className="list-disc list-inside text-accent-800 text-sm">
+          <ul className="list-disc list-inside text-yellow-800 text-sm">
             {validation.errors.map((error, index) => (
               <li key={index}>{error.message}</li>
             ))}

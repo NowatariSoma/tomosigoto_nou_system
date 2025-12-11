@@ -45,7 +45,7 @@ const INSTRUCTOR_BADGE_STYLES: Record<'instructor' | 'member', string> = {
 const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string; inactive: string }> = {
   instructor: {
     active: 'border badge-instructor shadow-sm',
-    inactive: 'border border-accent-200 text-accent-700 bg-white hover:bg-accent-50'
+    inactive: 'border border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
   },
   member: {
     active: 'border badge-viewer shadow-sm',
@@ -325,11 +325,11 @@ export function MemberManagementPage() {
           accent="bg-blue-50"
         />
         <SummaryCard
-          icon={<UserCheck className="w-6 h-6 text-accent-500" />}
+          icon={<UserCheck className="w-6 h-6 text-blue-500" />}
           title="指導者 / ビューアー"
           value={`${instructorCount}名 / ${viewerCount}名`}
           description="特別ロールの状況"
-          accent="bg-accent-50"
+          accent="bg-blue-50"
         />
       </div>
 
