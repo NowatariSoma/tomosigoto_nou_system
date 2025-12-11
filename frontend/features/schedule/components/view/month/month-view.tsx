@@ -384,24 +384,26 @@ export default function MonthView({
                   onClick={() => handleDateClick(dayObj.day)}
                   data-day={String(dayObj.day)}
                 >
-                  <div
-                    className={clsx(
-                      "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 pt-1 sm:pt-2 text-center",
-                      today &&
-                        today.getDate() === dayObj.day &&
-                        today.getMonth() === currentDate.getMonth() &&
-                        today.getFullYear() === currentDate.getFullYear()
-                        ? "text-amber-600"
-                        : isSunday
-                        ? "text-red-600"
-                        : isSaturday
-                        ? "text-blue-600"
-                        : dayEvents.length > 0
-                        ? "text-primary-600"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {dayObj.day}
+                  <div className="flex justify-center pt-1 sm:pt-2 mb-1">
+                    <span
+                      className={clsx(
+                        "font-semibold relative z-10 text-sm sm:text-xl md:text-2xl lg:text-3xl flex items-center justify-center",
+                        today &&
+                          today.getDate() === dayObj.day &&
+                          today.getMonth() === currentDate.getMonth() &&
+                          today.getFullYear() === currentDate.getFullYear()
+                          ? "text-white bg-amber-500 rounded-full w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14"
+                          : isSunday
+                          ? "text-red-600"
+                          : isSaturday
+                          ? "text-blue-600"
+                          : dayEvents.length > 0
+                          ? "text-primary-600"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {dayObj.day}
+                    </span>
                   </div>
                   <div className="flex-grow flex flex-col gap-1 w-full relative z-10 px-1 sm:px-2">
                     <AnimatePresence mode="wait">
