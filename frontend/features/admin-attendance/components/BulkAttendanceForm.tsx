@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { User, PracticeSchedule, AttendanceCreate } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT, VALIDATION } from '../constants';
 import { Save, Calendar, Users, Clock, FileText, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface BulkAttendanceFormProps {
   practiceSchedules: PracticeSchedule[];
@@ -207,7 +210,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
         <div className="flex flex-col items-center space-y-6">
           <div className="bg-white p-4 rounded-full">
-            <CheckCircle className="h-16 w-16 text-green-600" />
+            <CheckCircle className="h-16 w-16 text-blue-600" />
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-gray-900">一括出席登録完了</h2>
@@ -238,36 +241,37 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
         <div>
           <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
             <Calendar className="h-4 w-4" />
-            <span>{UI_TEXT.PRACTICE} <span className="text-red-500">*</span></span>
+            <span>{UI_TEXT.PRACTICE} <span className="text-gray-600">*</span></span>
           </label>
-          <select
+          <Select
             value={selectedPracticeId}
-            onChange={(e) => {
-              setSelectedPracticeId(e.target.value);
+            onValueChange={(value) => {
+              setSelectedPracticeId(value);
               setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors.practice;
                 return newErrors;
               });
             }}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base ${
-              errors.practice ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
           >
-            <option value="">{UI_TEXT.SELECT_PRACTICE}</option>
-            {practiceSchedules.map((schedule) => (
-              <option key={schedule.id} value={schedule.id}>
-                {schedule.title || '練習'} - {new Date(schedule.schedule_date).toLocaleDateString('ja-JP', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  weekday: 'long',
-                })} {schedule.start_time} - {schedule.end_time}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className={`w-full ${errors.practice ? 'border-gray-500 bg-gray-50' : ''}`}>
+              <SelectValue placeholder={UI_TEXT.SELECT_PRACTICE} />
+            </SelectTrigger>
+            <SelectContent>
+              {practiceSchedules.map((schedule) => (
+                <SelectItem key={schedule.id} value={schedule.id}>
+                  {schedule.title || '練習'} - {new Date(schedule.schedule_date).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long',
+                  })} {schedule.start_time} - {schedule.end_time}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {errors.practice && (
-            <p className="mt-1 text-sm text-red-600">{errors.practice}</p>
+            <p className="mt-1 text-sm text-gray-600">{errors.practice}</p>
           )}
         </div>
 
@@ -328,20 +332,21 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           出席状況
                         </label>
-                        <select
+                        <Select
                           value={data.status}
-                          onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                          className={`text-sm px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            userError ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          onValueChange={(value) => handleStatusChange(user.id, value)}
                         >
-                          <option value="">選択</option>
-                          {Object.entries(ATTENDANCE_STATUS_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className={`text-sm ${userError ? 'border-gray-500' : ''}`}>
+                            <SelectValue placeholder="選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(ATTENDANCE_STATUS_LABELS).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* 参加可能時間（遅刻の場合のみ） */}
@@ -351,22 +356,22 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                               開始
                             </label>
-                            <input
+                            <Input
                               type="time"
                               value={data.availableFrom}
                               onChange={(e) => handleTimeChange(user.id, 'availableFrom', e.target.value)}
-                              className="text-sm px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="text-sm px-2 py-2"
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                               終了
                             </label>
-                            <input
+                            <Input
                               type="time"
                               value={data.availableTo}
                               onChange={(e) => handleTimeChange(user.id, 'availableTo', e.target.value)}
-                              className="text-sm px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="text-sm px-2 py-2"
                             />
                           </div>
                         </div>
@@ -383,13 +388,13 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                           rows={2}
                           placeholder={data.status === ATTENDANCE_STATUS.ABSENT ? '欠席理由を入力（30文字以上）' : '備考（任意）'}
                           className={`w-full text-sm px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-                            userError ? 'border-red-500' : 'border-gray-300'
+                            userError ? 'border-gray-500' : 'border-gray-300'
                           }`}
                         />
                       </div>
                     </div>
                     {userError && (
-                      <p className="mt-1 text-xs text-red-600">{userError}</p>
+                      <p className="mt-1 text-xs text-gray-600">{userError}</p>
                     )}
                   </div>
                 );
@@ -400,14 +405,14 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
 
         {/* 送信ボタン */}
         <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-          <button
+          <Button
             type="submit"
             disabled={loading || !selectedPracticeId}
-            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 rounded-lg transition-all duration-200 font-semibold shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 px-6 py-3 font-semibold"
           >
             <Save className="h-5 w-5" />
             <span>{loading ? '保存中...' : UI_TEXT.BULK_SAVE}</span>
-          </button>
+          </Button>
         </div>
       </form>
     </div>
