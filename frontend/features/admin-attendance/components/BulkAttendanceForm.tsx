@@ -349,7 +349,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                         <div className="flex-shrink-0 space-x-2">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                              開始
+                              開始時間
                             </label>
                             <input
                               type="time"
@@ -360,7 +360,7 @@ export const BulkAttendanceForm: React.FC<BulkAttendanceFormProps> = ({
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                              終了
+                              終了時間
                             </label>
                             <input
                               type="time"
