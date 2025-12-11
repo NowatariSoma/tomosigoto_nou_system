@@ -326,7 +326,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">
-                      開始時間
+                      何時から
                     </label>
                     <input
                       type="time"
@@ -340,7 +340,7 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">
-                      終了時間
+                      何時まで
                     </label>
                     <input
                       type="time"
