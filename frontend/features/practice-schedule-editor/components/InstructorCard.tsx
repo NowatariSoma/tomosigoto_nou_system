@@ -67,8 +67,9 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
       onTouchEnd={onTouchEnd}
       onTouchCancel={onTouchCancel}
       className={`rounded-lg px-4 py-3 bg-amber-50 border border-amber-300 hover:bg-amber-100 hover:shadow transition-all ${
-        edit_mode === 'edit' ? 'cursor-move touch-none' : 'cursor-pointer'
+        edit_mode === 'edit' ? 'cursor-move touch-none select-none' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
+      style={edit_mode === 'edit' ? { WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } : undefined}
       onClick={handleClick}
     >
       <div className="flex items-center gap-2">
