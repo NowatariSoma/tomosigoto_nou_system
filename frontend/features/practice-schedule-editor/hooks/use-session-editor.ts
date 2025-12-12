@@ -2,7 +2,7 @@
  * セッション編集用のカスタムフック
  */
 
-import { useState, useCallback, useEffect, useReducer } from 'react';
+import { useState, useCallback, useEffect, useReducer, useRef } from 'react';
 import {
   Session,
   VenueInfo,
@@ -12,6 +12,21 @@ import {
   SessionEditorAction,
   EditMode
 } from '../types/session-editor';
+
+/**
+ * 未保存の移動変更を追跡するための型
+ */
+interface PendingSessionMove {
+  sessionId: string;
+  venueId: string;
+  slotOrder: number;
+}
+
+interface PendingInstructorMove {
+  instructorId: string;
+  venueId: string;
+  slotOrder: number;
+}
 import {
   IdealFormatApiResponse,
   IdealVenueInfo,
@@ -123,6 +138,15 @@ export const useSessionEditor = (scheduleId: string) => {
   });
 
   const [parts, setParts] = useState<Part[]>([]);
+
+  // 未保存の変更を追跡
+  const [pendingSessionMoves, setPendingSessionMoves] = useState<PendingSessionMove[]>([]);
+  const [pendingInstructorMoves, setPendingInstructorMoves] = useState<PendingInstructorMove[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 初期状態を保持（リセット用）
+  const originalSessionsRef = useRef<Session[]>([]);
+  const originalInstructorsRef = useRef<any[]>([]);
 
   /**
    * スケジュール詳細を取得
@@ -262,10 +286,20 @@ export const useSessionEditor = (scheduleId: string) => {
       try {
         const instructors = await sessionInstructorService.getSessionInstructors(scheduleId);
         dispatch({ type: 'SET_INSTRUCTORS', payload: instructors });
+        // 初期状態を保存（リセット用）
+        originalInstructorsRef.current = JSON.parse(JSON.stringify(instructors));
       } catch (instructorError) {
         console.error('インストラクター情報の取得に失敗しました:', instructorError);
         dispatch({ type: 'SET_INSTRUCTORS', payload: [] });
+        originalInstructorsRef.current = [];
       }
+
+      // セッションの初期状態を保存（リセット用）
+      originalSessionsRef.current = JSON.parse(JSON.stringify(sessions));
+
+      // 未保存の変更をクリア
+      setPendingSessionMoves([]);
+      setPendingInstructorMoves([]);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'スケジュール詳細の取得に失敗しました';
@@ -449,97 +483,72 @@ export const useSessionEditor = (scheduleId: string) => {
 
   /**
    * セッションを移動（ドラッグ&ドロップ用）
-   * 楽観的UI更新: 即座にUIを更新し、API失敗時のみロールバック
+   * ローカルのみで状態を更新し、APIは呼び出さない（保存ボタンで一括保存）
    */
-  const moveSession = useCallback(async (
+  const moveSession = useCallback((
     sessionId: string,
     venueId: string,
     timeSlot: string,
     slotOrder: number
   ) => {
-    // 現在のセッション状態を保存（ロールバック用）
+    // 現在のセッション状態を取得
     const originalSession = state.sessions.find(s => s.id === sessionId);
     if (!originalSession) {
       console.error('移動対象のセッションが見つかりません:', sessionId);
       return;
     }
 
-    dispatch({ type: 'SET_ERROR', payload: null });
+    console.log('DEBUG moveSession (local): sessionId =', sessionId, 'venueId =', venueId, 'slotOrder =', slotOrder);
 
-    // API呼び出し
-    try {
-      const updatedSession = await sessionService.moveSession(sessionId, venueId, slotOrder);
-      console.log('DEBUG moveSession: updatedSession =', updatedSession);
-      
-      // part_nameが失われている場合は元のセッションから復元
-      const sessionWithPartName = {
-        ...updatedSession,
-        part_name: updatedSession.part_name || originalSession.part_name,
-      };
-      
-      // API成功: サーバーの最新データで更新
-      dispatch({ type: 'UPDATE_SESSION', payload: sessionWithPartName });
-    } catch (error) {
-      // API失敗: エラーメッセージを表示
-      console.error('セッション移動API失敗:', error);
+    // ローカルで状態を更新
+    const updatedSession: Session = {
+      ...originalSession,
+      schedule_available_venue_id: venueId,
+      slot_order: slotOrder,
+      start_time: timeSlot,
+    };
 
-      const errorMessage = error instanceof Error ? error.message : 'セッションの移動に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+    dispatch({ type: 'UPDATE_SESSION', payload: updatedSession });
 
-      // エラー通知（アラート）
-      alert(`❌ セッションの移動に失敗しました\n\n${errorMessage}`);
-    }
-  }, [state.sessions, state.time_slots]);
+    // 未保存の変更を記録（同じセッションの既存の変更は上書き）
+    setPendingSessionMoves(prev => {
+      const filtered = prev.filter(m => m.sessionId !== sessionId);
+      return [...filtered, { sessionId, venueId, slotOrder }];
+    });
+  }, [state.sessions]);
 
   /**
    * インストラクターを移動（ドラッグ&ドロップ用）
+   * ローカルのみで状態を更新し、APIは呼び出さない（保存ボタンで一括保存）
    */
-  const moveInstructor = useCallback(async (
+  const moveInstructor = useCallback((
     instructorId: string,
     venueId: string,
     slotOrder: number
   ) => {
-    // 現在のインストラクター状態を保存（ロールバック用）
+    // 現在のインストラクター状態を取得
     const originalInstructor = state.instructors.find(i => i.id === instructorId);
     if (!originalInstructor) {
       console.error('移動対象のインストラクターが見つかりません:', instructorId);
       return;
     }
 
-    dispatch({ type: 'SET_ERROR', payload: null });
+    console.log('DEBUG moveInstructor (local): instructorId =', instructorId, 'venueId =', venueId, 'slotOrder =', slotOrder);
 
-    try {
-      console.log('DEBUG moveInstructor: 移動前のインストラクター情報', originalInstructor);
-      
-      const updatedInstructor = await sessionInstructorService.moveSessionInstructor(
-        instructorId,
-        venueId,
-        slotOrder
-      );
-      
-      console.log('DEBUG moveInstructor: APIレスポンス', updatedInstructor);
-      
-      // APIレスポンスにuser_nameやuser_emailが含まれていない場合は元の情報をマージ
-      const mergedInstructor = {
-        ...updatedInstructor,
-        user_name: (updatedInstructor as any).user_name || (originalInstructor as any).user_name,
-        user_email: (updatedInstructor as any).user_email || (originalInstructor as any).user_email,
-      };
-      
-      console.log('DEBUG moveInstructor: マージ後のインストラクター情報', mergedInstructor);
-      
-      // API成功: サーバーの最新データで更新
-      dispatch({ type: 'UPDATE_INSTRUCTOR', payload: mergedInstructor });
-    } catch (error) {
-      // API失敗: エラーメッセージを表示
-      console.error('インストラクター移動API失敗:', error);
+    // ローカルで状態を更新
+    const updatedInstructor = {
+      ...originalInstructor,
+      schedule_available_venue_id: venueId,
+      slot_order: slotOrder,
+    };
 
-      const errorMessage = error instanceof Error ? error.message : 'インストラクターの移動に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+    dispatch({ type: 'UPDATE_INSTRUCTOR', payload: updatedInstructor });
 
-      // エラー通知（アラート）
-      alert(`❌ インストラクターの移動に失敗しました\n\n${errorMessage}`);
-    }
+    // 未保存の変更を記録（同じインストラクターの既存の変更は上書き）
+    setPendingInstructorMoves(prev => {
+      const filtered = prev.filter(m => m.instructorId !== instructorId);
+      return [...filtered, { instructorId, venueId, slotOrder }];
+    });
   }, [state.instructors]);
 
   /**
@@ -692,6 +701,97 @@ export const useSessionEditor = (scheduleId: string) => {
     dispatch({ type: 'UPDATE_VENUE', payload: venue });
   }, []);
 
+  /**
+   * 未保存の変更があるかどうか
+   */
+  const hasUnsavedChanges = pendingSessionMoves.length > 0 || pendingInstructorMoves.length > 0;
+
+  /**
+   * すべての変更を一括保存
+   */
+  const saveAllChanges = useCallback(async () => {
+    if (!hasUnsavedChanges) {
+      console.log('保存する変更がありません');
+      return { success: true, errors: [] };
+    }
+
+    setIsSaving(true);
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    const errors: string[] = [];
+
+    try {
+      // セッションの移動を保存
+      for (const move of pendingSessionMoves) {
+        try {
+          await sessionService.moveSession(move.sessionId, move.venueId, move.slotOrder);
+          console.log('セッション移動を保存:', move);
+        } catch (error) {
+          const errorMessage = `セッション(${move.sessionId})の移動に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
+      // インストラクターの移動を保存
+      for (const move of pendingInstructorMoves) {
+        try {
+          await sessionInstructorService.moveSessionInstructor(move.instructorId, move.venueId, move.slotOrder);
+          console.log('インストラクター移動を保存:', move);
+        } catch (error) {
+          const errorMessage = `インストラクター(${move.instructorId})の移動に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
+      if (errors.length === 0) {
+        // すべて成功した場合は未保存の変更をクリア
+        setPendingSessionMoves([]);
+        setPendingInstructorMoves([]);
+
+        // 最新の状態を取得して初期状態を更新
+        await fetchScheduleDetails();
+
+        return { success: true, errors: [] };
+      } else {
+        // 一部失敗した場合
+        dispatch({ type: 'SET_ERROR', payload: `一部の変更の保存に失敗しました: ${errors.join(', ')}` });
+        return { success: false, errors };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '変更の保存に失敗しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      return { success: false, errors: [errorMessage] };
+    } finally {
+      setIsSaving(false);
+    }
+  }, [hasUnsavedChanges, pendingSessionMoves, pendingInstructorMoves, fetchScheduleDetails]);
+
+  /**
+   * 変更を破棄して元に戻す
+   */
+  const discardChanges = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      console.log('破棄する変更がありません');
+      return;
+    }
+
+    // 初期状態に戻す
+    if (originalSessionsRef.current.length > 0) {
+      dispatch({ type: 'SET_SESSIONS', payload: originalSessionsRef.current });
+    }
+    if (originalInstructorsRef.current.length > 0) {
+      dispatch({ type: 'SET_INSTRUCTORS', payload: originalInstructorsRef.current });
+    }
+
+    // 未保存の変更をクリア
+    setPendingSessionMoves([]);
+    setPendingInstructorMoves([]);
+
+    console.log('変更を破棄しました');
+  }, [hasUnsavedChanges]);
+
   // 初期化
   useEffect(() => {
     console.log(`useSessionEditor初期化: scheduleId="${scheduleId}", length=${scheduleId?.length}, trim="${scheduleId?.trim()}"`);
@@ -724,5 +824,11 @@ export const useSessionEditor = (scheduleId: string) => {
     addVenues,
     removeVenue,
     updateVenue,
+    // 一括保存関連
+    hasUnsavedChanges,
+    isSaving,
+    saveAllChanges,
+    discardChanges,
+    pendingChangesCount: pendingSessionMoves.length + pendingInstructorMoves.length,
   };
 };
