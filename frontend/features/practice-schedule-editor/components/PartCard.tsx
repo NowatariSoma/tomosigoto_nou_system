@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Session } from '../types/session-editor';
 import { GripVertical, Edit2, X } from 'lucide-react';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
@@ -12,6 +12,10 @@ interface PartCardProps {
   edit_mode: 'edit' | 'view';
   is_dragging?: boolean;
   onDragStart?: (e: React.DragEvent, session: Session) => void;
+  onTouchStart?: (e: React.TouchEvent, item: { type: 'session'; data: Session }, element: HTMLElement) => void;
+  onTouchMove?: (e: React.TouchEvent) => void;
+  onTouchEnd?: (e: React.TouchEvent) => void;
+  onTouchCancel?: () => void;
   onEdit: (sessionId: string) => void;
   onDelete?: (sessionId: string) => void;
 }
@@ -25,9 +29,15 @@ export const PartCard: React.FC<PartCardProps> = ({
   edit_mode,
   is_dragging = false,
   onDragStart,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
   onEdit,
   onDelete,
 }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit(session.id);
@@ -40,12 +50,23 @@ export const PartCard: React.FC<PartCardProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (edit_mode === 'edit' && onTouchStart && cardRef.current) {
+      onTouchStart(e, { type: 'session', data: session }, cardRef.current);
+    }
+  };
+
   return (
     <div
+      ref={cardRef}
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, session) : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
       className={`rounded-lg px-4 py-3 bg-blue-100 border border-blue-300 hover:bg-blue-200 hover:shadow transition-all ${
-        edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
+        edit_mode === 'edit' ? 'cursor-move touch-none' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}
     >

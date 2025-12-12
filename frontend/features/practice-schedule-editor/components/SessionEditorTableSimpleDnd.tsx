@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Session, VenueInfo, TimeSlot, EditMode } from '../types/session-editor';
 import { timeToMinutes } from '../mappers/time-slot-mapper';
 import { Calendar, Plus, Minus, Edit2 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { EditableTimeSlot } from './EditableTimeSlot';
 import { TimeSlotEditorModal } from './TimeSlotEditorModal';
 import { SelectionModal } from '@/components/ui/interactive/selection-modal';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
+import { useTouchDrag, DragItem } from '../hooks/use-touch-drag';
 interface SessionEditorTableSimpleDndProps {
   sessions: Session[];
   instructors: any[]; // SessionInstructorWithDetails[]
@@ -60,6 +61,20 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
   const [editingTimeSlot, setEditingTimeSlot] = useState<TimeSlot | null>(null);
   const [isVenueModalOpen, setIsVenueModalOpen] = useState(false);
   const [selectedVenues, setSelectedVenues] = useState<VenueInfo[]>([]);
+
+  // タッチドラッグ対応
+  const {
+    isDragging: isTouchDragging,
+    dragItem: touchDragItem,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
+  } = useTouchDrag({
+    onMoveSession: onMoveSession,
+    onMoveInstructor: onMoveInstructor,
+    timeSlots: time_slots,
+  });
 
   // セッションを会場と時間でグループ化
   const groupedSessions = React.useMemo(() => {
@@ -324,6 +339,8 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                   return (
                     <td
                       key={`${venue.id}-${timeSlot.time}`}
+                      data-venue-id={venue.id}
+                      data-time-slot={timeSlot.time}
                       className="border-r border-gray-200 last:border-r-0 min-h-[60px] sm:min-h-[80px] align-top bg-white p-0.5 sm:p-1"
                       onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
                       onDragLeave={handleDragLeave}
@@ -340,8 +357,15 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 key={session.id}
                                 session={session}
                                 edit_mode={edit_mode}
-                                is_dragging={draggedItem?.type === 'session' && (draggedItem.data as Session).id === session.id}
+                                is_dragging={
+                                  (draggedItem?.type === 'session' && (draggedItem.data as Session).id === session.id) ||
+                                  (isTouchDragging && touchDragItem?.type === 'session' && (touchDragItem.data as Session).id === session.id)
+                                }
                                 onDragStart={handleSessionDragStart}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                onTouchCancel={handleTouchCancel}
                                 onEdit={onEditSession}
                                 onDelete={onDeleteSession}
                               />
@@ -353,8 +377,15 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                                 sessionInstructor={instructor}
                                 scheduleId={scheduleId}
                                 edit_mode={edit_mode}
-                                is_dragging={draggedItem?.type === 'instructor' && (draggedItem.data as SessionInstructorWithDetails).id === instructor.id}
+                                is_dragging={
+                                  (draggedItem?.type === 'instructor' && (draggedItem.data as SessionInstructorWithDetails).id === instructor.id) ||
+                                  (isTouchDragging && touchDragItem?.type === 'instructor' && (touchDragItem.data as SessionInstructorWithDetails).id === instructor.id)
+                                }
                                 onDragStart={handleInstructorDragStart}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                onTouchCancel={handleTouchCancel}
                                 onDelete={onDeleteInstructor}
                               />
                             ))}
