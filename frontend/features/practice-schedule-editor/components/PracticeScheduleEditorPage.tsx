@@ -417,6 +417,18 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             <Plus className="h-4 w-4" />
             <span>監督者を追加</span>
           </button>
+          <button
+            onClick={handleSaveChanges}
+            disabled={isSaving || !hasUnsavedChanges}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+              hasUnsavedChanges
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-gray-400 text-white cursor-not-allowed'
+            } disabled:opacity-50`}
+          >
+            <Save className="h-4 w-4" />
+            <span>{isSaving ? '保存中...' : hasUnsavedChanges ? `保存 (${pendingChangesCount})` : '保存済み'}</span>
+          </button>
         </div>
       </div>
 
