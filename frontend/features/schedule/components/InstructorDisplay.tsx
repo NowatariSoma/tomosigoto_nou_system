@@ -88,7 +88,7 @@ const InstructorDisplayWithFetch: React.FC<Omit<InstructorDisplayProps, 'fallbac
   // ローディング中の表示
   if (loading) {
     return (
-      <div className={cn("text-xs text-gray-500", className)}>
+      <div className={cn("text-xs text-black", className)}>
         🎭 読み込み中...
       </div>
     );
@@ -133,7 +133,7 @@ const InstructorApiDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={cn("text-xs text-gray-600", className)}>
+    <div className={cn("text-xs text-black", className)}>
       <span className="mr-1">🎭</span>
       {displayInstructors.map((instructor, index) => (
         <span key={instructor.id}>
@@ -142,7 +142,7 @@ const InstructorApiDisplay: React.FC<{
              (instructor.user_email ? instructor.user_email.split('@')[0] : `指導者${instructor.id.slice(-4)}`)}
           </span>
           {showEmail && instructor.user_email && !instructor.user_name && (
-            <span className="text-gray-500 ml-1">
+            <span className="text-black ml-1">
               ({instructor.user_email})
             </span>
           )}
@@ -150,7 +150,7 @@ const InstructorApiDisplay: React.FC<{
         </span>
       ))}
       {remainingCount > 0 && (
-        <span className="text-gray-500 ml-1">
+        <span className="text-black ml-1">
           他{remainingCount}名
         </span>
       )}
@@ -175,11 +175,11 @@ const InstructorFallbackDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={cn("text-xs text-gray-600", className)}>
+    <div className={cn("text-xs text-black", className)}>
       <span className="mr-1">🎭</span>
       {displayInstructors.join(', ')}
       {remainingCount > 0 && (
-        <span className="text-gray-500 ml-1">
+        <span className="text-black ml-1">
           他{remainingCount}名
         </span>
       )}

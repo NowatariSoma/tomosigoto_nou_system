@@ -57,9 +57,9 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
   };
 
   return (
-    <Card className="mb-6 border-2 border-green-200 shadow-lg">
-      <CardHeader className="bg-green-50">
-        <CardTitle className="text-lg text-green-800 flex items-center gap-2">
+    <Card className="mb-6 border-2 border-blue-200 shadow-lg">
+      <CardHeader className="bg-blue-50">
+        <CardTitle className="text-lg text-black flex items-center gap-2">
           <Search className="h-5 w-5" />
           ユーザー検索
         </CardTitle>
@@ -68,7 +68,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="lastName" className="label-form-semibold">
                 姓（カタカナ）
               </Label>
               <Input
@@ -77,12 +77,12 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="タナカ"
-                className="border-2 border-gray-200 focus:border-green-500 rounded-lg"
+                className="border-2 border-gray-200 focus:border-blue-400 rounded-lg"
                 disabled={disabled}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="firstName" className="label-form-semibold">
                 名（カタカナ）
               </Label>
               <Input
@@ -91,7 +91,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="タロウ"
-                className="border-2 border-gray-200 focus:border-green-500 rounded-lg"
+                className="border-2 border-gray-200 focus:border-blue-400 rounded-lg"
                 disabled={disabled}
               />
             </div>
@@ -101,7 +101,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
             <Button
               type="submit"
               disabled={loading || disabled || (!firstName.trim() && !lastName.trim())}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300"
+              className="px-6 py-2 btn-primary disabled:bg-gray-300"
             >
               {loading ? '検索中...' : '検索'}
             </Button>
@@ -110,7 +110,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
               variant="outline"
               onClick={handleClear}
               disabled={disabled}
-              className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+              className="px-6 py-2 border-2 border-blue-300 hover:bg-blue-50"
             >
               クリア
             </Button>
@@ -120,7 +120,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
         {/* 検索結果 */}
         {hasSearched && (
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            <h3 className="label-form-semibold mb-3">
               検索結果 ({searchResults.length}件)
             </h3>
             {searchResults.length > 0 ? (
@@ -128,15 +128,15 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 {searchResults.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-green-50 hover:border-green-300 transition-colors"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-blue-50 hover:border-blue-300 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <UserIcon className="h-4 w-4 text-gray-500" />
+                      <UserIcon className="h-4 w-4 text-black" />
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-black">
                           {user.last_name_katakana} {user.first_name_katakana}
                         </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-black">{user.email}</div>
                       </div>
                     </div>
                     <Button
@@ -144,7 +144,7 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                       size="sm"
                       onClick={() => handleUserSelect(user)}
                       disabled={disabled}
-                      className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm"
+                      className="px-3 py-1 btn-primary text-sm"
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       選択
@@ -153,8 +153,8 @@ export const UserSearchForm: React.FC<UserSearchFormProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <UserIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-black">
+                <UserIcon className="h-8 w-8 mx-auto mb-2 text-black" />
                 <p>該当するユーザーが見つかりませんでした</p>
               </div>
             )}

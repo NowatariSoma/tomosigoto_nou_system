@@ -74,8 +74,8 @@ export default function PracticeDetailModal() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <Calendar className="h-12 w-12 text-red-500 mb-4" />
-        <p className="text-lg font-medium text-red-600 mb-2">エラーが発生しました</p>
+        <Calendar className="h-12 w-12 text-black mb-4" />
+        <p className="text-lg font-medium text-black mb-2">エラーが発生しました</p>
         <p className="text-sm text-muted-foreground">{error}</p>
       </div>
     );
@@ -84,8 +84,8 @@ export default function PracticeDetailModal() {
   if (!practiceSchedule) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-lg font-medium text-gray-600 mb-2">練習スケジュールが見つかりません</p>
+        <Calendar className="h-12 w-12 text-black mb-4" />
+        <p className="text-lg font-medium text-black mb-2">練習スケジュールが見つかりません</p>
         <p className="text-sm text-muted-foreground">指定された練習スケジュールは存在しないか、削除された可能性があります。</p>
       </div>
     );
@@ -141,10 +141,10 @@ export default function PracticeDetailModal() {
         </TabsContent>
 
         <TabsContent value="attendance" className="mt-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">出席登録</h3>
-            <p className="text-blue-700 mb-4">
+          <div className="card-blue p-6 text-center">
+            <Users className="h-12 w-12 text-black mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-black mb-2">出席登録</h3>
+            <p className="text-black mb-4">
               この練習の出席登録を行います。新しいタブで出席登録ページが開きます。
             </p>
             <Button 
@@ -158,10 +158,10 @@ export default function PracticeDetailModal() {
         </TabsContent>
 
         <TabsContent value="practice-sheet" className="mt-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-            <FileText className="h-12 w-12 text-green-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-green-900 mb-2">練習表</h3>
-            <p className="text-green-700 mb-4">
+          <div className="card-blue p-6 text-center">
+            <FileText className="h-12 w-12 text-black mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-black mb-2">練習表</h3>
+            <p className="text-black mb-4">
               この練習の練習表を表示します。新しいタブで練習表ページが開きます。
             </p>
             <Button 

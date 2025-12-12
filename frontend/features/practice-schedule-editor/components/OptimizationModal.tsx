@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sparkles, X, Zap, Info } from 'lucide-react';
 import { schedulingOptimizationService } from '../services/scheduling-optimization-service';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/forms/button';
 
 interface OptimizationModalProps {
   scheduleId: string;
@@ -63,15 +64,17 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-white">自動最適化</h2>
-              <p className="text-blue-100 text-sm mt-0.5">スケジュールを自動で最適化します</p>
+              <p className="text-black text-sm mt-0.5">スケジュールを自動で最適化します</p>
             </div>
-            <button
+            <Button
               onClick={onClose}
               disabled={loading}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+              variant="ghost"
+              size="icon"
+              className="p-2 hover:bg-white/20 text-white disabled:opacity-50"
             >
-              <X className="h-5 w-5 text-white" />
-            </button>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </div>
 
@@ -80,7 +83,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
           {/* Info Section */}
           <div className="bg-white border border-blue-200 rounded-xl p-5">
             <div className="flex items-start space-x-4">
-              <Info className="h-6 w-6 text-blue-600 mt-0.5 flex-shrink-0" />
+              <Info className="h-6 w-6 text-black mt-0.5 flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <p className="text-base font-semibold text-black">最適化の内容</p>
                 <ul className="list-disc list-inside space-y-1.5 text-base text-black">
@@ -93,26 +96,27 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
 
           {/* Error Section */}
           {errorMessage && (
-            <div className="bg-red-100 border border-red-500 rounded-xl p-4 text-red-900 text-sm font-semibold">
+            <div className="panel-error rounded-xl p-4 text-black text-sm font-semibold">
               {errorMessage}
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-3 pt-2">
-            <button
+            <Button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-6 py-3 text-black bg-white border border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              variant="outline"
+              className="px-6 py-3 text-black bg-white border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl font-medium shadow-sm hover:shadow-md"
             >
               キャンセル
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleOptimize}
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium shadow-lg hover:shadow-xl disabled:hover:shadow-lg"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 rounded-xl flex items-center space-x-2 font-medium shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <>
@@ -125,7 +129,7 @@ export const OptimizationModal: React.FC<OptimizationModalProps> = ({
                   <span>最適化を実行</span>
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

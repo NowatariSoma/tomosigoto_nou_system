@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { IdealScheduleData } from '../types/practice-schedule-types';
 import { InstructorDisplay } from './InstructorDisplay';
+import { Table, TableBody, TableRow, TableCell } from '@/components/ui/data-display/table';
 
 interface ScheduleTableProps {
   className?: string;
@@ -57,8 +58,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // ローディング状態の表示
   if (loading) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-gray-500">スケジュール詳細を読み込み中...</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">スケジュール詳細を読み込み中...</div>
       </div>
     );
   }
@@ -66,8 +67,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // エラー状態の表示
   if (error) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-red-500">エラー: {error}</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">エラー: {error}</div>
       </div>
     );
   }
@@ -75,8 +76,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // データがない場合の表示
   if (!idealData || !idealData.venues || !Array.isArray(idealData.venues)) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-8 text-center", className)}>
-        <div className="text-gray-500">スケジュールデータがありません</div>
+      <div className={cn("card-blue p-8 text-center", className)}>
+        <div className="text-black">スケジュールデータがありません</div>
       </div>
     );
   }
@@ -90,13 +91,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   ) || [];
 
   return (
-    <div className={cn("bg-white rounded-lg shadow-lg overflow-hidden", className)}>
+    <div className={cn("card-blue shadow-lg overflow-hidden", className)}>
       {/* テーブルヘッダー */}
       <div className="flex">
-        <div className="w-24 px-4 py-3 bg-[#2D3748] text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-[#1a202c] transition-colors">時間</div>
-        <div className="flex-1 bg-[#2D3748] py-3 px-4 flex border-b border-gray-600">
+        <div className="w-24 table-header-cell border-r border-b border-blue-200">時間</div>
+        <div className="flex-1 table-header py-3 px-4 flex border-b border-blue-200">
           {uniqueVenues.map((venue) => (
-            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-white text-center hover:bg-[#1a202c] transition-colors">
+            <div key={venue?.id || 'unknown'} className="flex-1 text-sm font-semibold text-center">
               {venue?.name || `会場${venue?.id?.slice(-4) || 'unknown'}`}
             </div>
           ))}
@@ -105,32 +106,32 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
       {/* テーブルボディ */}
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
-          <tbody>
+        <Table className="w-full table-fixed">
+          <TableBody>
             {timeSlots.map((time) => (
-              <tr key={time} className="border-b border-gray-100">
-                <td className="w-24 px-4 py-3 text-sm font-medium text-white bg-[#2D3748] align-top border-r border-gray-600 hover:bg-[#1a202c] transition-colors">
+              <TableRow key={time} className="border-b border-gray-100">
+                <TableCell className="w-24 table-header-cell align-top border-r border-blue-200">
                   {time}
-                </td>
+                </TableCell>
                 {uniqueVenues.map((venue) => {
                   const parts = idealData.time_schedule?.[time]?.[venue?.id] || [];
                   return (
-                    <td
+                    <TableCell
                       key={`${time}-${venue?.id || 'unknown'}`}
                       className={cn(
-                        "px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top",
-                        "cursor-pointer transition-colors bg-white",
-                        parts.length > 0 ? "hover:bg-blue-50" : "hover:bg-gray-50"
+                        "px-2 py-2 border-r border-blue-200 last:border-r-0 min-h-[80px] align-top",
+                        "cursor-pointer transition-colors bg-blue-50",
+                        parts.length > 0 ? "hover:bg-blue-100" : "hover:bg-blue-100/50"
                       )}
                       onClick={() => handleCellClick(time, venue?.id || '', parts)}
                     >
                       {parts.length > 0 ? (
                         <div
-                          className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all"
+                          className="p-2 bg-white border border-blue-200 rounded cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
                           onClick={(e) => handlePartClick(e, parts[0])}
                         >
                           {/* パート名 */}
-                          <div className="text-sm font-medium text-gray-900 mb-1">
+                          <div className="text-sm font-medium text-black mb-1">
                             {parts[0].part_name}
                           </div>
                           <InstructorDisplay
@@ -141,17 +142,17 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                           />
                         </div>
                       ) : (
-                        <div className="text-center text-gray-400 py-6">
+                        <div className="text-center text-black py-6">
                           空き
                         </div>
                       )}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

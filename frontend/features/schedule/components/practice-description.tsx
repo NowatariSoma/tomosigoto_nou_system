@@ -21,7 +21,7 @@ export const PracticeDescription: React.FC<PracticeDescriptionProps> = ({
       <h2 className="text-lg font-semibold text-slate-900 mb-4">
         練習内容
       </h2>
-      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+      <p className="text-sm text-black whitespace-pre-wrap">
         {description || '練習内容が登録されていません'}
       </p>
     </div>

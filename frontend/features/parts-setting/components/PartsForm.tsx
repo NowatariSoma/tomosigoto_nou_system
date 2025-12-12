@@ -31,9 +31,9 @@ export const PartsForm: React.FC<PartsFormProps> = ({
   isEditing = false,
 }) => {
   return (
-    <Card className="mb-8 border-2 border-emerald-200 shadow-xl">
-      <CardHeader className="bg-emerald-50">
-        <CardTitle className="text-xl text-emerald-800 flex items-center gap-2">
+    <Card className="mb-8 card-blue shadow-xl">
+      <CardHeader className="panel-info">
+        <CardTitle className="text-xl text-black flex items-center gap-2">
           <Plus className="h-5 w-5" />
           {isEditing ? '舞台編集' : UI_TEXT.REGISTRATION_TITLE}
         </CardTitle>
@@ -43,8 +43,8 @@ export const PartsForm: React.FC<PartsFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Date Input */}
             <div className="space-y-2">
-              <Label htmlFor="date" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-emerald-600" />
+              <Label htmlFor="date" className="label-form-semibold flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 {UI_TEXT.DATE_LABEL}
               </Label>
               <Input
@@ -52,15 +52,15 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                 type="date"
                 value={formData.date}
                 onChange={(e) => onInputChange('date', e.target.value)}
-                className="border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
+                className="input-field"
                 required
               />
             </div>
 
             {/* Stage Name Input */}
             <div className="space-y-2">
-              <Label htmlFor="stageName" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Theater className="h-4 w-4 text-emerald-600" />
+              <Label htmlFor="stageName" className="label-form-semibold flex items-center gap-2">
+                <Theater className="h-4 w-4" />
                 {UI_TEXT.STAGE_NAME_LABEL}
               </Label>
               <Input
@@ -69,7 +69,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                 placeholder={UI_TEXT.STAGE_NAME_PLACEHOLDER}
                 value={formData.stageName}
                 onChange={(e) => onInputChange('stageName', e.target.value)}
-                className="border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
+                className="input-field"
                 required
               />
             </div>
@@ -77,8 +77,8 @@ export const PartsForm: React.FC<PartsFormProps> = ({
 
           {/* Status Selection */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Theater className="h-4 w-4 text-emerald-600" />
+            <Label className="label-form-semibold flex items-center gap-2">
+              <Theater className="h-4 w-4" />
               ステータス
             </Label>
             <div className="flex gap-4">
@@ -89,9 +89,9 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   value="active"
                   checked={formData.status === 'active'}
                   onChange={(e) => onInputChange('status', e.target.value)}
-                  className="mr-2 text-emerald-600 focus:ring-emerald-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-gray-700">アクティブ</span>
+                <span className="text-sm font-medium text-black">アクティブ</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -100,9 +100,9 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                   value="inactive"
                   checked={formData.status === 'inactive'}
                   onChange={(e) => onInputChange('status', e.target.value)}
-                  className="mr-2 text-emerald-600 focus:ring-emerald-500"
+                  className="mr-2 text-black focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-gray-700">非アクティブ</span>
+                <span className="text-sm font-medium text-black">非アクティブ</span>
               </label>
             </div>
           </div>
@@ -110,8 +110,8 @@ export const PartsForm: React.FC<PartsFormProps> = ({
           {/* Part Count Control */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <User className="h-4 w-4 text-emerald-600" />
+              <Label className="label-form-semibold flex items-center gap-2">
+                <User className="h-4 w-4" />
                 パート数
               </Label>
               <div className="flex items-center gap-2">
@@ -142,11 +142,11 @@ export const PartsForm: React.FC<PartsFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: formData.partCount }, (_, index) => (
                 <div key={index} className="space-y-2">
-                  <Label 
-                    htmlFor={`part${index}`} 
-                    className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+                  <Label
+                    htmlFor={`part${index}`}
+                    className="label-form-semibold flex items-center gap-2"
                   >
-                    <User className="h-4 w-4 text-emerald-600" />
+                    <User className="h-4 w-4" />
                     {UI_TEXT.PART_LABEL}{index + 1}
                   </Label>
                   <Input
@@ -159,7 +159,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                       newParts[index] = e.target.value;
                       onInputChange('parts', newParts);
                     }}
-                    className="border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
+                    className="input-field"
                   />
                 </div>
               ))}
@@ -178,7 +178,7 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                     onDelete();
                   }
                 }}
-                className="px-6 py-2 border-2 border-red-300 text-red-600 hover:bg-red-50"
+                className="px-6 py-2"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 削除する
@@ -191,14 +191,14 @@ export const PartsForm: React.FC<PartsFormProps> = ({
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+                className="px-6 py-2"
               >
                 {UI_TEXT.CANCEL}
               </Button>
               <Button
                 type="submit"
                 disabled={!isValid}
-                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-gray-300"
+                className="px-6 py-2"
               >
                 {isEditing ? '更新する' : UI_TEXT.REGISTER}
               </Button>

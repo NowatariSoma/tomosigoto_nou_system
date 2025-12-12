@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/overlays/alert-dialog";
+import { Button } from "@/components/ui/forms/button";
 import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -141,9 +142,9 @@ export default function CustomModal({
                 onKeyDown={handleKeyDown}
                 ref={contentRef}
                 tabIndex={-1}>
-                <button className="absolute top-2 right-2 p-1 rounded-full transition-colors" onClick={() => handleOpenChange(false)}>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 p-1 rounded-full transition-colors" onClick={() => handleOpenChange(false)}>
                   <X className="h-4 w-4" />
-                </button>
+                </Button>
                 {title && <h2 className="text-2xl tracking-tighter font-semibold mb-4">{title}</h2>}
                 {subheading && <p className="text-muted-foreground mb-4">{subheading}</p>}
                 <div className="pt-[0.5em] flex flex-col flex-grow">{children}</div>

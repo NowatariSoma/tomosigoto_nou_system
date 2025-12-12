@@ -9,7 +9,7 @@ export default function MemberManagement() {
     <AppTemplate
       title="メンバー管理"
       description="管理者権限とアカウントを管理します"
-      icon={<Shield className="h-8 w-8 text-blue-600" />}
+      icon={<Shield className="h-8 w-8 text-black" />}
       permissionBadge={{
         level: 'basic',
         text: '管理権限'
