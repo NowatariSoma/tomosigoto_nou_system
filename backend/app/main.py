@@ -8,11 +8,16 @@ from app.core.config import settings
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+# 本番環境ではdocsを無効にする
+is_production = settings.ENVIRONMENT == "production"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Supabase integration API with FastAPI best practices",
     version="1.0.0",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url=None if is_production else f"{settings.API_V1_STR}/openapi.json",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
     redirect_slashes=False,
 )
 
