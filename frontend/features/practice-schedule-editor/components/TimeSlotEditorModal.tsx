@@ -122,8 +122,8 @@ export const TimeSlotEditorModal: React.FC<TimeSlotEditorModalProps> = ({
         {/* ヘッダー */}
         <div className="flex items-center justify-center p-4 border-b border-gray-200">
           <div className="flex items-center space-x-2">
-            <Clock className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">時間スロット編集</h2>
+            <Clock className="h-5 w-5 text-black" />
+            <h2 className="text-lg font-semibold text-black">時間スロット編集</h2>
           </div>
         </div>
 

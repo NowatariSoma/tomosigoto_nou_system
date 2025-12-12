@@ -5,19 +5,24 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline:
-          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+        // プライマリ: 保存、登録、送信など最重要アクション（1画面に1-2個）
+        default: 'bg-blue-400 text-white hover:bg-blue-500',
+        // デストラクティブ: 削除のみ
+        destructive: 'bg-red-400 text-white hover:bg-red-500',
+        // アクセント: 注目させたい重要なボタン（黄色）
+        accent: 'bg-yellow-300 text-black hover:bg-yellow-400',
+        // アウトライン: 編集、追加など補助的アクション
+        outline: 'border border-blue-300 bg-white text-black hover:bg-blue-50 hover:border-blue-400',
+        // セカンダリ: サブアクション（青背景上で使用）
+        secondary: 'bg-white text-black hover:bg-blue-50 border border-blue-200',
+        // ゴースト: キャンセル、閉じるなど（ホバーは青系）
+        ghost: 'text-black hover:bg-blue-50',
+        // リンク
+        link: 'text-black underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-10 px-4 py-2',

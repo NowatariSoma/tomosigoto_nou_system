@@ -29,7 +29,7 @@ export const PracticeSchedulePage: React.FC = () => {
   const [editingSchedule, setEditingSchedule] = useState<PracticeSchedule | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState('all');
   const [stages, setStages] = useState<StageData[]>([]);
 
   // 編集モードのstate（currentScheduleIdから派生）
@@ -383,7 +383,7 @@ export const PracticeSchedulePage: React.FC = () => {
       schedule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       schedule.venueName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesDate = !selectedDate || schedule.date === selectedDate;
+    const matchesDate = selectedDate === 'all' || schedule.date === selectedDate;
 
     return matchesSearch && matchesDate;
   });
@@ -415,7 +415,7 @@ export const PracticeSchedulePage: React.FC = () => {
 
     if (editorError && sessions.length === 0 && !is_modal_open && !loading) {
       return (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="panel-error px-4 py-3 rounded">
           エラー: {editorError}
         </div>
       );
@@ -426,13 +426,14 @@ export const PracticeSchedulePage: React.FC = () => {
         {/* ヘッダー */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex items-center space-x-4">
-            <button
+            <Button
+              variant="ghost"
               onClick={handleBackToList}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">一覧に戻る</span>
-            </button>
+            </Button>
             <div>
               <ScheduleTimeEditor
                 startTime={scheduleStartTime}
@@ -442,30 +443,31 @@ export const PracticeSchedulePage: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
+            <Button
               onClick={handleAutoOptimize}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors text-sm sm:text-base"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 text-sm sm:text-base"
             >
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">自動最適化</span>
               <span className="sm:hidden">最適化</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleCreateSession}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors text-sm sm:text-base"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 btn-add text-sm sm:text-base"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">パート追加</span>
               <span className="sm:hidden">パート</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleCreateInstructor}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-md transition-colors text-sm sm:text-base"
+              variant="outline"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 text-sm sm:text-base"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">監督者を追加</span>
               <span className="sm:hidden">監督者</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -493,17 +495,17 @@ export const PracticeSchedulePage: React.FC = () => {
         />
 
         {/* 練習内容編集セクション */}
-        <div className="mt-6 bg-white rounded-lg shadow-md border border-gray-200 p-6">
+        <div className="mt-6 card-blue p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">練習内容</h3>
+            <h3 className="section-title">練習内容</h3>
             {!isEditingDescription && (
-              <button
+              <Button
                 onClick={handleEditDescription}
-                className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 text-sm"
               >
                 <Edit2 className="h-4 w-4" />
                 <span>編集</span>
-              </button>
+              </Button>
             )}
           </div>
           {isEditingDescription ? (
@@ -511,28 +513,29 @@ export const PracticeSchedulePage: React.FC = () => {
               <textarea
                 value={descriptionValue}
                 onChange={(e) => setDescriptionValue(e.target.value)}
-                className="w-full min-h-[200px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                className="w-full min-h-[200px] p-4 input-field resize-y"
                 placeholder="練習内容を入力してください..."
               />
               <div className="flex justify-end space-x-2">
-                <button
+                <Button
+                  variant="outline"
                   onClick={handleCancelEditDescription}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 text-sm"
                 >
                   <X className="h-4 w-4" />
                   <span>キャンセル</span>
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleSaveDescription}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 text-sm btn-save"
                 >
                   <Save className="h-4 w-4" />
                   <span>保存</span>
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
-            <div className="text-sm text-slate-700 bg-slate-50 p-4 rounded-lg border-l-4 border-blue-500 leading-relaxed whitespace-pre-wrap min-h-[100px]">
+            <div className="text-sm panel-info p-4 border-l-4 border-blue-400 leading-relaxed whitespace-pre-wrap min-h-[100px]">
               {descriptionValue || '練習内容が設定されていません'}
             </div>
           )}
@@ -588,7 +591,7 @@ export const PracticeSchedulePage: React.FC = () => {
 
   if (error || venuesError) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="panel-error px-4 py-3 rounded">
         エラー: {error || venuesError}
       </div>
     );
@@ -597,11 +600,11 @@ export const PracticeSchedulePage: React.FC = () => {
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <div className="text-gray-500 text-lg mb-2">
+        <Calendar className="h-12 w-12 text-black mx-auto mb-4" />
+        <div className="text-black text-lg mb-2">
           {UI_TEXT.NO_VENUE_DATA}
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           まず会場を登録してから練習予定を作成してください
         </p>
       </div>
@@ -640,12 +643,12 @@ export const PracticeSchedulePage: React.FC = () => {
           );
           return (
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="section-title">
                 練習予定一覧 ({uniqueSchedules.length}件)
               </h2>
               <Button
                 onClick={handleCreateClick}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition-colors"
+                className="btn-add px-4 py-2"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 新規登録

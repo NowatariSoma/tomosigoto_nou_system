@@ -5,6 +5,10 @@ import { Users, Shield, UserCheck, Filter, Search, Loader2, AlertCircle, Edit, S
 import { useMemberManagement } from '../hooks/useMemberManagement';
 import { MemberSummary } from '../types';
 import { formatRelativeLastActive } from '@/shared/utils/format';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
 
 const ROLE_LABELS: Record<'admin' | 'basic' | 'viewer', string> = {
   admin: '管理者',
@@ -13,39 +17,39 @@ const ROLE_LABELS: Record<'admin' | 'basic' | 'viewer', string> = {
 };
 
 const ROLE_BADGE_STYLES: Record<'admin' | 'basic' | 'viewer', string> = {
-  admin: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-purple-600 text-white border-purple-600 shadow-sm',
-  basic: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-blue-600 text-white border-blue-600 shadow-sm',
-  viewer: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-gray-600 text-white border-gray-600 shadow-sm'
+  admin: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border badge-admin shadow-sm',
+  basic: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border badge-basic shadow-sm',
+  viewer: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border badge-viewer shadow-sm'
 };
 
 const ROLE_BUTTON_STYLES: Record<'admin' | 'basic' | 'viewer', { active: string; inactive: string }> = {
   admin: {
-    active: 'border border-purple-600 bg-purple-600 text-white shadow-sm',
-    inactive: 'border border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-300 text-black bg-white hover:bg-blue-50'
   },
   basic: {
-    active: 'border border-blue-600 bg-blue-600 text-white shadow-sm',
-    inactive: 'border border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   },
   viewer: {
-    active: 'border border-gray-600 bg-gray-600 text-white shadow-sm',
-    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   }
 };
 
 const INSTRUCTOR_BADGE_STYLES: Record<'instructor' | 'member', string> = {
-  instructor: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-amber-600 text-white border-amber-600 shadow-sm',
-  member: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border bg-gray-500 text-white border-gray-500 shadow-sm'
+  instructor: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border badge-instructor shadow-sm',
+  member: 'inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border badge-viewer shadow-sm'
 };
 
 const INSTRUCTOR_BUTTON_STYLES: Record<'instructor' | 'member', { active: string; inactive: string }> = {
   instructor: {
-    active: 'border border-amber-600 bg-amber-600 text-white shadow-sm',
-    inactive: 'border border-amber-200 text-amber-700 bg-white hover:bg-amber-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   },
   member: {
-    active: 'border border-gray-500 bg-gray-500 text-white shadow-sm',
-    inactive: 'border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+    active: 'border border-yellow-400 bg-yellow-300 text-black shadow-sm',
+    inactive: 'border border-blue-200 text-black bg-white hover:bg-blue-50'
   }
 };
 
@@ -218,14 +222,15 @@ export function MemberManagementPage() {
           const isActive = currentRole === option;
           const styles = isActive ? ROLE_BUTTON_STYLES[option].active : ROLE_BUTTON_STYLES[option].inactive;
           return (
-            <button
+            <Button
               key={option}
               type="button"
+              variant="outline"
               onClick={() => updateDraft(member.id, { role: option })}
-              className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+              className={`flex-1 px-2 py-1.5 text-xs font-medium transition-colors ${styles}`}
             >
               {ROLE_LABELS[option]}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -251,14 +256,15 @@ export function MemberManagementPage() {
           const isActive = currentInstructor === option.value;
           const styles = isActive ? INSTRUCTOR_BUTTON_STYLES[variant].active : INSTRUCTOR_BUTTON_STYLES[variant].inactive;
           return (
-            <button
+            <Button
               key={option.label}
               type="button"
+              variant="outline"
               onClick={() => updateDraft(member.id, { is_instructor: option.value })}
-              className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+              className={`flex-1 px-2 py-1.5 text-xs font-medium transition-colors ${styles}`}
             >
               {option.label}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -270,105 +276,108 @@ export function MemberManagementPage() {
       <div className="flex justify-end gap-2">
         {isEditMode ? (
           <>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={handleCancelEdit}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="gap-2"
             >
               <X className="h-4 w-4" />
               キャンセル
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleSaveChanges}
               disabled={pendingChangeCount === 0 || isSaving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="gap-2"
             >
               <Save className="h-4 w-4" />
               {isSaving ? '保存中...' : `変更を保存${pendingChangeCount ? ` (${pendingChangeCount})` : ''}`}
-            </button>
+            </Button>
           </>
         ) : (
-          <button
+          <Button
             type="button"
             onClick={handleEnterEditMode}
             disabled={isLoading || members.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="gap-2 btn-add"
           >
             <Edit className="h-4 w-4" />
             編集モード
-          </button>
+          </Button>
         )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard
-          icon={<Users className="w-6 h-6 text-blue-600" />}
+          icon={<Users className="w-6 h-6 text-black" />}
           title="登録メンバー"
           value={`${totalMembers}名`}
           description="全ての管理対象メンバー"
           accent="bg-blue-50"
         />
         <SummaryCard
-          icon={<Shield className="w-6 h-6 text-purple-600" />}
+          icon={<Shield className="w-6 h-6 text-black" />}
           title="管理者"
           value={`${adminCount}名`}
           description="アプリ設定を操作可能"
-          accent="bg-purple-50"
+          accent="bg-blue-50"
         />
         <SummaryCard
-          icon={<UserCheck className="w-6 h-6 text-green-600" />}
+          icon={<UserCheck className="w-6 h-6 text-black" />}
           title="指導者 / ビューアー"
           value={`${instructorCount}名 / ${viewerCount}名`}
           description="特別ロールの状況"
-          accent="bg-green-50"
+          accent="bg-blue-50"
         />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-          <Filter className="h-4 w-4 text-gray-500" />
+      <div className="card-blue p-4 sm:p-6 space-y-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-black">
+          <Filter className="h-4 w-4 text-black" />
           絞り込み
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">ロール</label>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">すべて</option>
-              <option value="admin">管理者</option>
-              <option value="basic">基本権限</option>
-              <option value="viewer">閲覧のみ</option>
-            </select>
+            <label className="block text-xs font-medium text-black mb-1.5">ロール</label>
+            <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as typeof roleFilter)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="すべて" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                <SelectItem value="admin">管理者</SelectItem>
+                <SelectItem value="basic">基本権限</SelectItem>
+                <SelectItem value="viewer">閲覧のみ</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">指導者</label>
-            <select
-              value={instructorFilter}
-              onChange={(e) => setInstructorFilter(e.target.value as typeof instructorFilter)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {instructorFilterOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <label className="block text-xs font-medium text-black mb-1.5">指導者</label>
+            <Select value={instructorFilter} onValueChange={(value) => setInstructorFilter(value as typeof instructorFilter)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="すべて" />
+              </SelectTrigger>
+              <SelectContent>
+                {instructorFilterOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">キーワード</label>
+            <label className="block text-xs font-medium text-black mb-1.5">キーワード</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black" />
+              <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="氏名・メールで検索"
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="pl-9"
               />
             </div>
           </div>
@@ -389,66 +398,66 @@ export function MemberManagementPage() {
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div className="card-blue">
         <div className="hidden md:block">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">メンバー</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">ロール</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">指導者</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最終アクティブ</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+          <Table className="min-w-full divide-y divide-blue-200">
+            <TableHeader className="bg-blue-100">
+              <TableRow>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/3">メンバー</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">ロール</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">指導者</TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">最終アクティブ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="bg-white divide-y divide-blue-100">
               {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-16 text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={4} className="px-6 py-16 text-center text-black">
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <Loader2 className="h-6 w-6 animate-spin text-black" />
                       <p>読み込み中...</p>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : filteredMembers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-16 text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={4} className="px-6 py-16 text-center text-black">
                     条件に一致するメンバーがいません
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredMembers.map(member => (
-                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
+                  <TableRow key={member.id} className="hover:bg-blue-50 transition-colors">
+                    <TableCell className="px-6 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-semibold text-gray-900">{member.name}</span>
-                        <span className="text-xs text-gray-500">{member.email}</span>
+                        <span className="text-sm font-semibold text-black">{member.name}</span>
+                        <span className="text-xs text-black">{member.email}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 align-top">
+                    </TableCell>
+                    <TableCell className="px-6 py-4 align-top">
                       {renderRoleCell(member)}
-                    </td>
-                    <td className="px-6 py-4 align-top">
+                    </TableCell>
+                    <TableCell className="px-6 py-4 align-top">
                       {renderInstructorCell(member)}
-                    </td>
-                    <td className="px-6 py-4 align-top">
-                      <span className="text-sm text-gray-700">{formatRelativeLastActive(member.last_active_at)}</span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 align-top">
+                      <span className="text-sm text-black">{formatRelativeLastActive(member.last_active_at)}</span>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
-        <div className="md:hidden divide-y divide-gray-200">
+        <div className="md:hidden divide-y divide-blue-200">
           {isLoading ? (
-            <div className="py-10 text-center text-gray-500">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-3" />
+            <div className="py-10 text-center text-black">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-black mb-3" />
               読み込み中...
             </div>
           ) : filteredMembers.length === 0 ? (
-            <div className="py-10 text-center text-gray-500">
+            <div className="py-10 text-center text-black">
               該当するメンバーがいません
             </div>
           ) : (
@@ -460,42 +469,44 @@ export function MemberManagementPage() {
                   {isEditMode ? (
                     // 編集モード：縦レイアウト
                     <div className="space-y-3">
-                      <div className="text-sm font-semibold text-gray-900">{member.name}</div>
+                      <div className="text-sm font-semibold text-black">{member.name}</div>
                       <div>
-                        <p className="text-xs font-medium text-gray-600 mb-1">ロール</p>
+                        <p className="text-xs font-medium text-black mb-1">ロール</p>
                         <div className="grid grid-cols-3 gap-2">
                           {roleOptions.map(option => {
                             const isActive = currentRole === option;
                             const styles = isActive ? ROLE_BUTTON_STYLES[option].active : ROLE_BUTTON_STYLES[option].inactive;
                             return (
-                              <button
+                              <Button
                                 key={option}
                                 type="button"
+                                variant="outline"
                                 onClick={() => updateDraft(member.id, { role: option })}
-                                className={`px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+                                className={`px-2 py-1.5 text-xs font-medium transition-colors ${styles}`}
                               >
                                 {ROLE_LABELS[option]}
-                              </button>
+                              </Button>
                             );
                           })}
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-gray-600 mb-1">指導者</p>
+                        <p className="text-xs font-medium text-black mb-1">指導者</p>
                         <div className="grid grid-cols-2 gap-2">
                           {instructorOptions.map(option => {
                             const variant = option.value ? 'instructor' : 'member';
                             const isActive = currentInstructor === option.value;
                             const styles = isActive ? INSTRUCTOR_BUTTON_STYLES[variant].active : INSTRUCTOR_BUTTON_STYLES[variant].inactive;
                             return (
-                              <button
+                              <Button
                                 key={option.label}
                                 type="button"
+                                variant="outline"
                                 onClick={() => updateDraft(member.id, { is_instructor: option.value })}
-                                className={`px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${styles}`}
+                                className={`px-2 py-1.5 text-xs font-medium transition-colors ${styles}`}
                               >
                                 {option.label}
-                              </button>
+                              </Button>
                             );
                           })}
                         </div>
@@ -505,8 +516,8 @@ export function MemberManagementPage() {
                     // 通常モード：横一列レイアウト
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 truncate flex-shrink min-w-0">
-                        <span className="text-sm font-semibold text-gray-900 truncate">{member.name}</span>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
+                        <span className="text-sm font-semibold text-black truncate">{member.name}</span>
+                        <span className="text-xs text-black whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <span className={ROLE_BADGE_STYLES[currentRole]}>
@@ -536,14 +547,14 @@ type SummaryCardProps = {
   accent?: string;
 };
 
-function SummaryCard({ icon, title, value, description, accent = 'bg-gray-50' }: SummaryCardProps) {
+function SummaryCard({ icon, title, value, description, accent = 'bg-blue-50' }: SummaryCardProps) {
   return (
-    <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+    <div className="flex items-center gap-4 p-4 border border-blue-200 rounded-lg bg-white shadow-sm">
       <div className={`p-3 rounded-full ${accent}`}>{icon}</div>
       <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
+        <p className="text-sm text-black">{title}</p>
+        <p className="text-2xl font-semibold text-black">{value}</p>
+        <p className="text-xs text-black mt-1">{description}</p>
       </div>
     </div>
   );

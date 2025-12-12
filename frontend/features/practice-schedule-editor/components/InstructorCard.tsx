@@ -3,6 +3,7 @@
 import React from 'react';
 import { GripVertical, X } from 'lucide-react';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
+import { Button } from '@/components/ui/forms/button';
 
 interface InstructorCardProps {
   sessionInstructor: SessionInstructorWithDetails;
@@ -45,17 +46,17 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, sessionInstructor) : undefined}
-      className={`rounded-lg px-4 py-3 bg-amber-50 border border-amber-300 hover:bg-amber-100 hover:shadow transition-all ${
+      className={`rounded-lg px-4 py-3 card-blue-hover ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}
     >
       <div className="flex items-center gap-2">
         {edit_mode === 'edit' && (
-          <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <GripVertical className="h-4 w-4 text-black flex-shrink-0" />
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-base text-gray-800 font-semibold">
+          <div className="text-base text-black font-semibold">
             {(() => {
               console.log('DEBUG InstructorCard: sessionInstructor =', sessionInstructor);
               return sessionInstructor.user_name || 
@@ -64,13 +65,15 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
           </div>
         </div>
         {edit_mode === 'edit' && onDelete && (
-          <button
+          <Button
             onClick={handleDelete}
-            className="p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 p-0.5 text-black hover-subtle flex-shrink-0"
             title="削除"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </div>
     </div>

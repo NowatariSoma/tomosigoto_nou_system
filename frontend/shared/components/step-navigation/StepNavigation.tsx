@@ -90,12 +90,12 @@ export function StepNavigation<T extends string>({
                   disabled={!canNavigate}
                   className={`
                     flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200
-                    ${status === 'completed' 
-                      ? 'bg-green-600 border-green-600 text-white hover:bg-green-700' 
+                    ${status === 'completed'
+                      ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
                       : status === 'current'
-                        ? 'bg-blue-600 border-blue-600 text-white'
+                        ? 'bg-blue-400 border-blue-400 text-white'
                         : canNavigate
-                          ? 'border-blue-300 text-blue-500 bg-white hover:border-blue-500 hover:bg-blue-50'
+                          ? 'border-blue-300 text-black bg-white hover:border-blue-500 hover:bg-blue-50'
                           : 'border-gray-300 text-gray-400 bg-white'
                     }
                     ${canNavigate ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'}
@@ -120,17 +120,17 @@ export function StepNavigation<T extends string>({
                   title={getNavigationMessage(step.key)}
                 >
                   <div className={`text-sm font-medium ${
-                    status === 'current' ? 'text-blue-600' : 
-                    status === 'completed' ? 'text-green-600' : 
-                    canNavigate ? 'text-gray-700 hover:text-blue-600' :
+                    status === 'current' ? 'text-black' :
+                    status === 'completed' ? 'text-black' :
+                    canNavigate ? 'text-gray-700 hover:text-black' :
                     'text-gray-500'
                   }`}>
                     {step.label}
                   </div>
                   <div className={`text-xs mt-1 ${
-                    status === 'current' ? 'text-blue-500' :
-                    status === 'completed' ? 'text-green-500' :
-                    canNavigate ? 'text-gray-600 hover:text-blue-500' :
+                    status === 'current' ? 'text-black' :
+                    status === 'completed' ? 'text-black' :
+                    canNavigate ? 'text-gray-600 hover:text-black' :
                     'text-gray-500'
                   }`}>
                     {step.description}
@@ -167,12 +167,12 @@ export function StepNavigation<T extends string>({
                   disabled={!canNavigate}
                   className={`
                     flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200 mb-2
-                    ${status === 'completed' 
-                      ? 'bg-green-600 border-green-600 text-white' 
+                    ${status === 'completed'
+                      ? 'bg-blue-600 border-blue-600 text-white'
                       : status === 'current'
-                        ? 'bg-blue-600 border-blue-600 text-white'
+                        ? 'bg-blue-400 border-blue-400 text-white'
                         : canNavigate
-                          ? 'border-blue-300 text-blue-500 bg-white'
+                          ? 'border-blue-300 text-black bg-white'
                           : 'border-gray-300 text-gray-400 bg-white'
                     }
                     ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed'}
@@ -187,8 +187,8 @@ export function StepNavigation<T extends string>({
                 </button>
                 
                 <div className={`text-xs text-center font-medium ${
-                  status === 'current' ? 'text-blue-600' : 
-                  status === 'completed' ? 'text-green-600' : 
+                  status === 'current' ? 'text-black' :
+                  status === 'completed' ? 'text-black' :
                   canNavigate ? 'text-gray-700' :
                   'text-gray-500'
                 }`}>
@@ -220,8 +220,8 @@ export function StepNavigation<T extends string>({
       {showCurrentStepInfo && (
         <div className="mt-4 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-blue-50 rounded-lg">
-            <Info className="h-4 w-4 text-blue-600 mr-2" />
-            <div className="text-sm text-blue-700">
+            <Info className="h-4 w-4 text-black mr-2" />
+            <div className="text-sm text-black">
               現在のステップ: <span className="font-medium">{getCurrentStepInfo()?.label}</span>
             </div>
           </div>

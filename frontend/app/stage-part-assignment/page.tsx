@@ -25,7 +25,7 @@ export default function Home() {
     <AppTemplate
       title="パート割り当て"
       description="公演に対してパートを割り当てるページ"
-      icon={<Brain className="h-8 w-8 text-blue-600" />}
+      icon={<Brain className="h-8 w-8 text-black" />}
       permissionBadge={{
         level: 'instructor',
         text: '指導者以上'

@@ -25,6 +25,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { EditableTimeSlot } from './EditableTimeSlot';
 import { TimeSlotEditorModal } from './TimeSlotEditorModal';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data-display/table';
 
 interface SessionEditorTableDndProps {
   sessions: Session[];
@@ -76,21 +77,21 @@ const DraggableSession: React.FC<{
           {...listeners}
           className="mt-1 cursor-grab hover:cursor-grabbing"
         >
-          <GripVertical className="h-4 w-4 text-gray-400" />
+          <GripVertical className="h-4 w-4 text-black" />
         </div>
         <div className="flex-1">
           {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            <div className="font-bold text-sm text-black leading-tight mb-1">
               {session.part_name}
             </div>
           )}
           {session.start_time && session.end_time && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-black mt-1">
               {session.start_time} - {session.end_time}
             </div>
           )}
           {session.part_id && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-black mt-1">
               パートID: {session.part_id}
             </div>
           )}
@@ -119,7 +120,7 @@ const DroppableCell: React.FC<{
   });
 
   return (
-    <td
+    <TableCell
       ref={setNodeRef}
       className={`px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top cursor-pointer transition-colors bg-white ${
         isOver ? 'bg-blue-50' : ''
@@ -147,12 +148,12 @@ const DroppableCell: React.FC<{
             </div>
           </SortableContext>
         ) : (
-          <div className="text-center text-gray-400 py-6">
+          <div className="text-center text-black py-6">
             {editMode === 'edit' ? 'ドロップして移動' : '空き'}
           </div>
         )}
       </div>
-    </td>
+    </TableCell>
   );
 };
 
@@ -298,11 +299,11 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
   if (venues.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <div className="text-gray-500 text-lg mb-2">
+        <Calendar className="h-12 w-12 text-black mx-auto mb-4" />
+        <div className="text-black text-lg mb-2">
           会場情報がありません
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-black text-sm">
           まず会場を登録してからセッションを作成してください
         </p>
       </div>
@@ -322,10 +323,10 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* テーブルヘッダー */}
         <div className="flex">
-          <div className="w-32 px-4 py-3 bg-gray-900 text-sm font-semibold text-white border-r border-b border-gray-600 hover:bg-gray-800 transition-colors">時間</div>
-          <div className="flex-1 bg-gray-900 py-3 px-4 flex border-b border-gray-600">
+          <div className="w-32 px-4 py-3 bg-blue-100 text-sm font-semibold text-black border-r border-b border-blue-200 hover:bg-blue-200 transition-colors">時間</div>
+          <div className="flex-1 bg-blue-100 py-3 px-4 flex border-b border-blue-200">
             {venues.map((venue) => (
-              <div key={venue.id} className="flex-1 text-sm font-semibold text-white text-center hover:bg-gray-800 transition-colors">
+              <div key={venue.id} className="flex-1 text-sm font-semibold text-black text-center hover:bg-blue-200 transition-colors">
                 {venue.name || `会場${venue.id.slice(-4)}`}
               </div>
             ))}
@@ -334,10 +335,10 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
 
         {/* テーブルボディ */}
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed">
-            <tbody>
+          <Table className="w-full table-fixed">
+            <TableBody>
               {time_slots.map((timeSlot) => (
-                <tr key={timeSlot.time} className="border-b border-gray-100">
+                <TableRow key={timeSlot.time} className="border-b border-gray-100">
                   <EditableTimeSlot
                     timeSlot={timeSlot}
                     onEdit={handleTimeSlotEdit}
@@ -356,21 +357,21 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
                       />
                     );
                   })}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* 統計情報 - 目立たないデザイン */}
         <div className="px-4 py-2 bg-white border-t border-gray-100">
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-black">
             <div className="flex items-center space-x-4">
               <span>セッション: {sessions.length}</span>
               <span>会場: {venues.length}</span>
               <span>時間スロット: {time_slots.length}</span>
             </div>
-            <div className="text-gray-400">
+            <div className="text-black">
               稼働率: {venues.length > 0 ? Math.round((sessions.length / (time_slots.length * venues.length)) * 100) : 0}%
             </div>
           </div>
@@ -381,7 +382,7 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
         {activeId && activeSession ? (
           <div className="rounded-lg p-3 bg-blue-50 border-2 border-blue-400 shadow-xl cursor-grabbing">
             {activeSession.part_name && (
-              <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+              <div className="font-bold text-sm text-black leading-tight mb-1">
                 {activeSession.part_name}
               </div>
             )}

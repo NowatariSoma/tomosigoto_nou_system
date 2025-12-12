@@ -8,9 +8,9 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
   const getBadgeStyles = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
+        return 'bg-blue-600 text-white';
       case 'user':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-black';
       case 'viewer':
         return 'bg-gray-100 text-gray-800';
       default:

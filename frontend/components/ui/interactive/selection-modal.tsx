@@ -123,8 +123,8 @@ export function SelectionModal<T extends SelectionModalItem>({
                     "relative px-4 py-6 rounded-xl border-2 transition-all duration-200",
                     "text-center font-medium text-sm",
                     isSelected
-                      ? "bg-blue-100 border-blue-400 text-blue-700 shadow-md"
-                      : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50"
+                      ? "bg-blue-100 border-blue-400 text-black shadow-md"
+                      : "bg-white border-gray-200 text-black hover:border-blue-300 hover:bg-blue-50"
                   )}
                 >
                   {renderItem ? renderItem(item, isSelected) : defaultRenderItem(item, isSelected)}

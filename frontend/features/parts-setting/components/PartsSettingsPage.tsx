@@ -143,7 +143,7 @@ export const PartsSettingsPage: React.FC = () => {
       <div className="text-center mb-8">
         <Button
           onClick={() => setShowForm(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          className="btn-add px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           size="lg"
         >
           <Plus className="h-5 w-5 mr-2" />

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { VenueInfo } from '../types/session-editor';
 import { SelectionModal } from '@/components/ui/interactive/selection-modal';
 import { Plus, X, MapPin, Edit2 } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
 interface VenueEditorProps {
   venues: VenueInfo[];
   availableRooms: VenueInfo[];
@@ -65,18 +66,19 @@ export const VenueEditor: React.FC<VenueEditorProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 h-full">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-gray-600" />
+        <h3 className="text-lg font-semibold text-black flex items-center gap-2">
+          <MapPin className="h-5 w-5 text-black" />
           会場設定
         </h3>
         {isEditMode && (
-          <button
+          <Button
             onClick={handleOpenModal}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            size="sm"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm"
           >
             <Edit2 className="h-4 w-4" />
             編集
-          </button>
+          </Button>
         )}
       </div>
 

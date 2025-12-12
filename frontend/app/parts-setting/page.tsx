@@ -25,7 +25,7 @@ export default function Page() {
     <AppTemplate
       title="舞台・パート登録ページ"
       description="舞台・パートを登録するページ"
-      icon={<Theater className="h-8 w-8 text-blue-600" />}
+      icon={<Theater className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'beta',
         text: 'バックエンド結合'

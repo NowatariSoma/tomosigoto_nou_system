@@ -4,6 +4,7 @@ import React from 'react';
 import { Session } from '../types/session-editor';
 import { GripVertical, Edit2, X } from 'lucide-react';
 import { SessionInstructorWithDetails } from '../services/session-instructor-service';
+import { Button } from '@/components/ui/forms/button';
 
 type DragData = Session | { type: 'instructor'; instructor: SessionInstructorWithDetails };
 
@@ -44,34 +45,36 @@ export const PartCard: React.FC<PartCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, session) : undefined}
-      className={`rounded-lg px-4 py-3 bg-blue-100 border border-blue-300 hover:bg-blue-200 hover:shadow transition-all ${
+      className={`rounded-lg px-4 py-3 card-blue-hover ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50 scale-95' : ''}`}
       onClick={handleClick}
     >
       <div className="flex items-center gap-2">
         {edit_mode === 'edit' && (
-          <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <GripVertical className="h-4 w-4 text-black flex-shrink-0" />
         )}
         <div className="flex-1 min-w-0">
           {session.part_name && (
-            <div className="font-bold text-base text-gray-800 leading-tight truncate">
+            <div className="font-bold text-base text-black leading-tight truncate">
               {session.part_name}
             </div>
           )}
         </div>
         <div className="flex items-center gap-1">
           {edit_mode === 'view' && (
-            <Edit2 className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <Edit2 className="h-4 w-4 text-black flex-shrink-0" />
           )}
           {edit_mode === 'edit' && onDelete && (
-            <button
+            <Button
               onClick={handleDelete}
-              className="p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0.5 text-black hover-subtle flex-shrink-0"
               title="削除"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

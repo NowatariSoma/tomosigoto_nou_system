@@ -9,7 +9,7 @@ interface TimeSlotHeaderProps {
 
 export const TimeSlotHeader: React.FC<TimeSlotHeaderProps> = ({ timeSlot }) => {
   return (
-    <td className="px-4 py-4 font-bold text-gray-700 bg-gray-100 border-r border-gray-300 text-center">
+    <td className="px-4 py-4 font-bold text-black bg-gray-100 border-r border-gray-300 text-center">
       <div className="text-sm">{timeSlot.display_time}</div>
     </td>
   );

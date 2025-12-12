@@ -7,6 +7,8 @@ import { useAccountSetting } from '../hooks/useAccountSetting';
 import { AccountSettingProfile, Department } from '../types';
 import { INITIAL_ACCOUNT_FORM, UI_TEXT, VALIDATION } from '../constants';
 import { mapDepartmentsToOptions } from '../mappers';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface FormData {
   student_id: string;
@@ -180,34 +182,36 @@ const AccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-8">
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center">
-          <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-700">{error}</span>
-          <button
+        <div className="mb-6 p-4 panel-error rounded-md flex items-center">
+          <AlertCircle className="h-5 w-5 text-black mr-2" />
+          <span className="text-black">{error}</span>
+          <Button
             onClick={clearError}
-            className="ml-auto text-red-500 hover:text-red-700"
+            variant="ghost"
+            size="icon"
+            className="ml-auto"
           >
             ×
-          </button>
+          </Button>
         </div>
       )}
 
       {saveSuccess && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
-          <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-          <span className="text-green-700">{UI_TEXT.SUCCESS_MESSAGE}</span>
+        <div className="mb-6 p-4 panel-success rounded-md flex items-center">
+          <CheckCircle className="h-5 w-5 text-black mr-2" />
+          <span className="text-black">{UI_TEXT.SUCCESS_MESSAGE}</span>
         </div>
       )}
 
       {validation && !validation.is_valid && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <div className="mb-6 p-4 panel-warning rounded-md">
           <div className="flex items-center mb-2">
-            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-            <span className="text-yellow-700 font-medium">{UI_TEXT.VALIDATION_ERROR}</span>
+            <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+            <span className="text-yellow-900 font-medium">{UI_TEXT.VALIDATION_ERROR}</span>
           </div>
-          <ul className="list-disc list-inside text-yellow-700 text-sm">
+          <ul className="list-disc list-inside text-yellow-800 text-sm">
             {validation.errors.map((error, index) => (
               <li key={index}>{error.message}</li>
             ))}
@@ -217,10 +221,10 @@ const AccountSettings: React.FC = () => {
 
       {!profile && (
         <div className="mb-6 p-4 bg-white border border-blue-200 rounded-md flex items-start space-x-3 shadow-sm">
-          <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-black mt-0.5" />
           <div>
-            <p className="text-gray-900 font-semibold">プロフィール設定が必要です</p>
-            <p className="text-sm text-gray-800 mt-1">
+            <p className="text-black font-semibold">プロフィール設定が必要です</p>
+            <p className="text-sm text-black mt-1">
               サインアップ後の初回ログインでは、ここでプロフィールを登録するまで他のページへは移動できません。
             </p>
           </div>
@@ -232,133 +236,133 @@ const AccountSettings: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold">プロフィール情報</h3>
             {!profile && !isEditMode && (
-              <p className="text-sm text-gray-500 mt-1">プロフィール情報を登録してください</p>
+              <p className="text-sm text-black mt-1">プロフィール情報を登録してください</p>
             )}
           </div>
           {!isEditMode && (
-            <button
+            <Button
               onClick={handleEdit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center"
+              className="flex items-center"
             >
               <Edit className="h-4 w-4 mr-2" />
               {profile ? '編集' : '登録'}
-            </button>
+            </Button>
           )}
         </div>
 
         <div className="space-y-6">
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学籍番号</label>
+            <label className="w-32 text-black font-medium">学籍番号</label>
             {isEditMode ? (
               <div className="flex-1 max-w-xs">
-                <input
+                <Input
                   type="text"
                   value={formData.student_id}
                   onChange={(e) => handleInputChange('student_id', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    fieldErrors.student_id ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={
+                    fieldErrors.student_id ? 'border-gray-500' : ''
+                  }
                 />
                 {fieldErrors.student_id && (
-                  <p className="text-red-500 text-sm mt-1">{fieldErrors.student_id}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.student_id}</p>
                 )}
               </div>
             ) : (
-              <span className="text-gray-900">{formData.student_id || '-'}</span>
+              <span className="text-black">{formData.student_id || '-'}</span>
             )}
           </div>
 
           <div className="flex items-center space-x-8">
             <div className="flex items-center">
-              <label className="w-32 text-gray-700 font-medium">姓</label>
+              <label className="w-32 text-black font-medium">姓</label>
               {isEditMode ? (
                 <div className="w-40">
-                  <input
+                  <Input
                     type="text"
                     value={formData.last_name_kanji}
                     onChange={(e) => handleInputChange('last_name_kanji', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      fieldErrors.last_name_kanji ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={
+                      fieldErrors.last_name_kanji ? 'border-gray-500' : ''
+                    }
                   />
                   {fieldErrors.last_name_kanji && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.last_name_kanji}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.last_name_kanji}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.last_name_kanji || '-'}</span>
+                <span className="text-black">{formData.last_name_kanji || '-'}</span>
               )}
             </div>
             <div className="flex items-center space-x-8">
-              <label className="w-16 text-gray-700 font-medium">名</label>
+              <label className="w-16 text-black font-medium">名</label>
               {isEditMode ? (
                 <div className="w-40">
-                  <input
+                  <Input
                     type="text"
                     value={formData.first_name_kanji}
                     onChange={(e) => handleInputChange('first_name_kanji', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      fieldErrors.first_name_kanji ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={
+                      fieldErrors.first_name_kanji ? 'border-gray-500' : ''
+                    }
                   />
                   {fieldErrors.first_name_kanji && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.first_name_kanji}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.first_name_kanji}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.first_name_kanji || '-'}</span>
+                <span className="text-black">{formData.first_name_kanji || '-'}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-center space-x-8">
             <div className="flex items-center">
-              <label className="w-32 text-gray-700 font-medium">セイ</label>
+              <label className="w-32 text-black font-medium">セイ</label>
               {isEditMode ? (
                 <div className="w-40">
-                  <input
+                  <Input
                     type="text"
                     value={formData.last_name_katakana}
                     onChange={(e) => handleInputChange('last_name_katakana', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      fieldErrors.last_name_katakana ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={
+                      fieldErrors.last_name_katakana ? 'border-gray-500' : ''
+                    }
                   />
                   {fieldErrors.last_name_katakana && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.last_name_katakana}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.last_name_katakana}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.last_name_katakana || '-'}</span>
+                <span className="text-black">{formData.last_name_katakana || '-'}</span>
               )}
             </div>
             <div className="flex items-center">
-              <label className="w-24 text-gray-700 font-medium">メイ</label>
+              <label className="w-24 text-black font-medium">メイ</label>
               {isEditMode ? (
                 <div className="w-40">
-                  <input
+                  <Input
                     type="text"
                     value={formData.first_name_katakana}
                     onChange={(e) => handleInputChange('first_name_katakana', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      fieldErrors.first_name_katakana ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={
+                      fieldErrors.first_name_katakana ? 'border-gray-500' : ''
+                    }
                   />
                   {fieldErrors.first_name_katakana && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.first_name_katakana}</p>
+                    <p className="text-black text-sm mt-1">{fieldErrors.first_name_katakana}</p>
                   )}
                 </div>
               ) : (
-                <span className="text-gray-900">{formData.first_name_katakana || '-'}</span>
+                <span className="text-black">{formData.first_name_katakana || '-'}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学年</label>
+            <label className="w-32 text-black font-medium">学年</label>
             {isEditMode ? (
               <div className="w-20">
-                <input
+                <Input
                   type="number"
                   value={formData.year}
                   onChange={(e) => {
@@ -367,21 +371,21 @@ const AccountSettings: React.FC = () => {
                   }}
                   min="1"
                   max="6"
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    fieldErrors.year ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={
+                    fieldErrors.year ? 'border-gray-500' : ''
+                  }
                 />
                 {fieldErrors.year && (
-                  <p className="text-red-500 text-sm mt-1">{fieldErrors.year}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.year}</p>
                 )}
               </div>
             ) : (
-              <span className="text-gray-900">{formData.year || '-'}年</span>
+              <span className="text-black">{formData.year || '-'}年</span>
             )}
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">学部</label>
+            <label className="w-32 text-black font-medium">学部</label>
             {isEditMode ? (
               <Select
                 options={departmentOptions}
@@ -390,32 +394,32 @@ const AccountSettings: React.FC = () => {
                 width="w-40"
               />
             ) : (
-              <span className="text-gray-900">{getDepartmentName() || '-'}</span>
+              <span className="text-black">{getDepartmentName() || '-'}</span>
             )}
           </div>
 
           <div className="flex items-center">
-            <label className="w-32 text-gray-700 font-medium">メールアドレス</label>
+            <label className="w-32 text-black font-medium">メールアドレス</label>
             {isEditMode && !profile ? (
               <div className="flex-1">
-                <input
+                <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="example@mail.doshisha.ac.jp"
-                  className={`w-full max-w-md px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    fieldErrors.email ? 'border-red-500' : 'border-gray-300'
+                  className={`max-w-md ${
+                    fieldErrors.email ? 'border-gray-500' : ''
                   }`}
                 />
                 {fieldErrors.email && (
-                  <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                  <p className="text-black text-sm mt-1">{fieldErrors.email}</p>
                 )}
-                <p className="text-sm text-gray-500 mt-1">※大学のメールアドレス</p>
+                <p className="text-sm text-black mt-1">※大学のメールアドレス</p>
               </div>
             ) : (
               <div className="flex-1">
-                <span className="text-gray-900">{formData.email || '-'}</span>
-                <p className="text-sm text-gray-500 mt-1">
+                <span className="text-black">{formData.email || '-'}</span>
+                <p className="text-sm text-black mt-1">
                   ※メールアドレスは{profile ? '変更できません' : '初回登録後は変更できません'}
                 </p>
               </div>
@@ -424,19 +428,20 @@ const AccountSettings: React.FC = () => {
 
           {isEditMode && (
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-              <button
+              <Button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center"
+                variant="outline"
+                className="px-6 flex items-center bg-gray-500 text-white hover:bg-gray-600 hover:text-white"
               >
                 <X className="h-4 w-4 mr-2" />
                 キャンセル
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-6 font-medium flex items-center"
               >
                 {isSaving ? (
                   <>
@@ -446,7 +451,7 @@ const AccountSettings: React.FC = () => {
                 ) : (
                   UI_TEXT.SAVE_BUTTON
                 )}
-              </button>
+              </Button>
             </div>
           )}
         </div>
