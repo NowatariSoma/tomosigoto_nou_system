@@ -47,7 +47,10 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
     item: DragItem,
     element: HTMLElement
   ) => {
-    // 長押しで開始するようにするため、少し待つ
+    // テキスト選択を防ぐ
+    e.preventDefault();
+    e.stopPropagation();
+
     const touch = e.touches[0];
     const startPos = { x: touch.clientX, y: touch.clientY };
 
