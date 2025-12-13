@@ -323,13 +323,10 @@ class PracticeScheduleService:
             if time_slot_needs_regeneration:
                 try:
                     from datetime import time as time_type, datetime, timedelta
+                    from uuid import UUID
                     
                     # 時間スロットリポジトリを直接使用
                     time_slot_repo = self.schedule_time_slot_repository
-                    
-                    # 既存の時間スロットを削除
-                    await time_slot_repo.delete_by_schedule(schedule_id)
-                    print(f"DEBUG update_practice_schedule: 既存の時間スロットを削除しました")
                     
                     # 新しい時間スロットを生成
                     final_start_time = new_start_time or old_start_time
@@ -350,36 +347,196 @@ class PracticeScheduleService:
                     else:
                         end_time_obj = final_end_time
                     
-                    # division_countに基づいて時間スロットを生成
-                    time_slots_to_create = []
-                    start_datetime = datetime.combine(datetime.today(), start_time_obj)
-                    end_datetime = datetime.combine(datetime.today(), end_time_obj)
-                    total_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
-                    slot_duration = total_minutes / final_division_count
+                    # 既存の時間スロットを取得（division_countが増えた場合に既存スロットを保持するため）
+                    existing_time_slots = await time_slot_repo.find_by_schedule(schedule_id)
+                    existing_time_slots.sort(key=lambda x: x.get("slot_order", 0))
                     
-                    for i in range(final_division_count):
-                        slot_start_minutes = int(i * slot_duration)
-                        slot_end_minutes = int((i + 1) * slot_duration)
-                        
-                        slot_start_datetime = start_datetime + timedelta(minutes=slot_start_minutes)
-                        slot_end_datetime = start_datetime + timedelta(minutes=slot_end_minutes)
-                        
-                        # 最後のスロットは終了時刻に合わせる
-                        if i == final_division_count - 1:
-                            slot_end_datetime = end_datetime
-                        
-                        time_slots_to_create.append({
-                            "schedule_id": schedule_id,
-                            "slot_order": i + 1,
-                            "start_time": slot_start_datetime.time(),
-                            "end_time": slot_end_datetime.time()
-                        })
+                    # division_countのみが変更された場合（時間スロットの追加・削除）
+                    # 追加時は時間が変更されていない場合のみ既存スロットを保持
+                    # 削除時は常に既存スロットを保持して最後のスロットを削除
+                    division_count_changed = (
+                        new_division_count is not None and
+                        new_division_count != old_division_count
+                    )
                     
-                    # 時間スロットを一括作成
-                    if time_slots_to_create:
-                        for time_slot_data in time_slots_to_create:
-                            await time_slot_repo.create(time_slot_data)
-                        print(f"DEBUG update_practice_schedule: {len(time_slots_to_create)}個の時間スロットを作成しました")
+                    # 削除時は時間の変更チェックを無視して、常に既存スロットを保持
+                    can_preserve_slots_on_remove = (
+                        division_count_changed and
+                        new_division_count < old_division_count and
+                        len(existing_time_slots) > 0  # 既存のスロットが存在する場合のみ
+                    )
+                    
+                    # 追加時のみ時間の変更をチェック
+                    if not can_preserve_slots_on_remove:
+                        # 時間文字列を正規化して比較する関数
+                        def normalize_time_str(time_str):
+                            """時間文字列を正規化（HH:MM:SS形式に統一）"""
+                            if not time_str:
+                                return None
+                            if isinstance(time_str, str):
+                                parts = time_str.split(':')
+                                if len(parts) >= 2:
+                                    hour = int(parts[0])
+                                    minute = int(parts[1])
+                                    second = int(parts[2]) if len(parts) > 2 else 0
+                                    return f"{hour:02d}:{minute:02d}:{second:02d}"
+                            return str(time_str)
+                        
+                        normalized_old_start = normalize_time_str(old_start_time)
+                        normalized_old_end = normalize_time_str(old_end_time)
+                        normalized_new_start = normalize_time_str(new_start_time)
+                        normalized_new_end = normalize_time_str(new_end_time)
+                        
+                        # 開始時間と終了時間が変更されていない場合のみ既存スロットを保持
+                        start_time_changed = (
+                            normalized_new_start is not None and
+                            normalized_old_start is not None and
+                            normalized_new_start != normalized_old_start
+                        )
+                        end_time_changed = (
+                            normalized_new_end is not None and
+                            normalized_old_end is not None and
+                            normalized_new_end != normalized_old_end
+                        )
+                        
+                        # 追加時のみ時間の変更をチェック
+                        can_preserve_slots_on_add = (
+                            division_count_changed and
+                            new_division_count > old_division_count and
+                            not start_time_changed and
+                            not end_time_changed and
+                            len(existing_time_slots) > 0  # 既存のスロットが存在する場合のみ
+                        )
+                    else:
+                        # 削除時は時間の変更チェックをスキップ
+                        can_preserve_slots_on_add = False
+                        start_time_changed = False
+                        end_time_changed = False
+                    
+                    print(f"DEBUG update_practice_schedule: division_count_changed={division_count_changed}")
+                    print(f"DEBUG update_practice_schedule: new_division_count={new_division_count}, old_division_count={old_division_count}")
+                    print(f"DEBUG update_practice_schedule: existing_time_slots count={len(existing_time_slots)}")
+                    print(f"DEBUG update_practice_schedule: can_preserve_slots_on_add={can_preserve_slots_on_add}")
+                    print(f"DEBUG update_practice_schedule: can_preserve_slots_on_remove={can_preserve_slots_on_remove}")
+                    if not can_preserve_slots_on_remove:
+                        print(f"DEBUG update_practice_schedule: start_time_changed={start_time_changed}, end_time_changed={end_time_changed}")
+                        print(f"DEBUG update_practice_schedule: normalized_new_start={normalized_new_start}, normalized_old_start={normalized_old_start}")
+                        print(f"DEBUG update_practice_schedule: normalized_new_end={normalized_new_end}, normalized_old_end={normalized_old_end}")
+                    else:
+                        print(f"DEBUG update_practice_schedule: 削除処理のため時間の変更チェックをスキップ")
+                    
+                    if can_preserve_slots_on_add:
+                        # 時間スロットを追加：最後のスロットの終了時刻から練習終了時刻まで
+                            # 時間スロットを追加：最後のスロットの終了時刻から練習終了時刻まで
+                            if existing_time_slots:
+                                last_slot = existing_time_slots[-1]
+                                last_slot_end_time_str = last_slot.get("end_time")
+                                
+                                # 最後のスロットの終了時刻を取得
+                                if isinstance(last_slot_end_time_str, str):
+                                    last_end_parts = last_slot_end_time_str.split(':')
+                                    last_end_time_obj = time_type(
+                                        int(last_end_parts[0]),
+                                        int(last_end_parts[1]),
+                                        int(last_end_parts[2]) if len(last_end_parts) > 2 else 0
+                                    )
+                                else:
+                                    last_end_time_obj = last_slot_end_time_str
+                                
+                                # 追加するスロット数を計算
+                                slots_to_add = new_division_count - old_division_count
+                                
+                                # 新しいスロットを作成（最後のスロットの終了時刻から練習終了時刻まで）
+                                new_slot_order = len(existing_time_slots) + 1
+                                new_slot_data = {
+                                    "schedule_id": schedule_id,
+                                    "slot_order": new_slot_order,
+                                    "start_time": last_end_time_obj,
+                                    "end_time": end_time_obj
+                                }
+                                await time_slot_repo.create(new_slot_data)
+                                print(f"DEBUG update_practice_schedule: 時間スロットを追加しました（slot_order={new_slot_order}）")
+                            else:
+                                # 既存のスロットがない場合は均等分割で生成
+                                await time_slot_repo.delete_by_schedule(schedule_id)
+                                start_datetime = datetime.combine(datetime.today(), start_time_obj)
+                                end_datetime = datetime.combine(datetime.today(), end_time_obj)
+                                total_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+                                slot_duration = total_minutes / final_division_count
+                                
+                                for i in range(final_division_count):
+                                    slot_start_minutes = int(i * slot_duration)
+                                    slot_end_minutes = int((i + 1) * slot_duration)
+                                    
+                                    slot_start_datetime = start_datetime + timedelta(minutes=slot_start_minutes)
+                                    slot_end_datetime = start_datetime + timedelta(minutes=slot_end_minutes)
+                                    
+                                    if i == final_division_count - 1:
+                                        slot_end_datetime = end_datetime
+                                    
+                                    time_slot_data = {
+                                        "schedule_id": schedule_id,
+                                        "slot_order": i + 1,
+                                        "start_time": slot_start_datetime.time(),
+                                        "end_time": slot_end_datetime.time()
+                                    }
+                                    await time_slot_repo.create(time_slot_data)
+                                print(f"DEBUG update_practice_schedule: {final_division_count}個の時間スロットを作成しました")
+                    elif can_preserve_slots_on_remove:
+                        # 時間スロットを削除：最後のスロットを削除（他のスロットの時間は変更しない）
+                        print(f"DEBUG update_practice_schedule: 削除処理を実行します（既存スロット数={len(existing_time_slots)}）")
+                        if existing_time_slots:
+                            # slot_orderが最大のスロットを削除
+                            last_slot = existing_time_slots[-1]
+                            last_slot_id = last_slot.get("id")
+                            last_slot_order = last_slot.get("slot_order")
+                            print(f"DEBUG update_practice_schedule: 削除対象スロット: id={last_slot_id}, slot_order={last_slot_order}")
+                            if last_slot_id:
+                                await time_slot_repo.delete(UUID(last_slot_id))
+                                print(f"DEBUG update_practice_schedule: 最後の時間スロットを削除しました（slot_order={last_slot_order}）。他のスロットの時間は変更していません。")
+                                
+                                # 削除後の確認
+                                remaining_slots = await time_slot_repo.find_by_schedule(schedule_id)
+                                print(f"DEBUG update_practice_schedule: 削除後のスロット数={len(remaining_slots)}")
+                            else:
+                                print(f"DEBUG update_practice_schedule: 警告: 最後のスロットのIDが見つかりませんでした")
+                        else:
+                            print(f"DEBUG update_practice_schedule: 警告: 既存の時間スロットが見つかりませんでした")
+                    else:
+                        # 開始時間または終了時間が変更された場合は、既存のスロットを削除して均等分割で再生成
+                        await time_slot_repo.delete_by_schedule(schedule_id)
+                        print(f"DEBUG update_practice_schedule: 既存の時間スロットを削除しました")
+                        
+                        # division_countに基づいて時間スロットを生成
+                        time_slots_to_create = []
+                        start_datetime = datetime.combine(datetime.today(), start_time_obj)
+                        end_datetime = datetime.combine(datetime.today(), end_time_obj)
+                        total_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+                        slot_duration = total_minutes / final_division_count
+                        
+                        for i in range(final_division_count):
+                            slot_start_minutes = int(i * slot_duration)
+                            slot_end_minutes = int((i + 1) * slot_duration)
+                            
+                            slot_start_datetime = start_datetime + timedelta(minutes=slot_start_minutes)
+                            slot_end_datetime = start_datetime + timedelta(minutes=slot_end_minutes)
+                            
+                            # 最後のスロットは終了時刻に合わせる
+                            if i == final_division_count - 1:
+                                slot_end_datetime = end_datetime
+                            
+                            time_slots_to_create.append({
+                                "schedule_id": schedule_id,
+                                "slot_order": i + 1,
+                                "start_time": slot_start_datetime.time(),
+                                "end_time": slot_end_datetime.time()
+                            })
+                        
+                        # 時間スロットを一括作成
+                        if time_slots_to_create:
+                            for time_slot_data in time_slots_to_create:
+                                await time_slot_repo.create(time_slot_data)
+                            print(f"DEBUG update_practice_schedule: {len(time_slots_to_create)}個の時間スロットを作成しました")
                 except Exception as e:
                     print(f"DEBUG update_practice_schedule: 時間スロット再生成エラー: {e}")
                     import traceback
