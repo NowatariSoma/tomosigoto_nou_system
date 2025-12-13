@@ -45,11 +45,20 @@ interface PendingVenueRemove {
 type PendingVenueChange = PendingVenueAdd | PendingVenueRemove;
 
 /**
- * 未保存のタイムスロット変更を追跡するための型
+ * 未保存のタイムスロット変更を追跡するための型（追加・削除用）
  */
 interface PendingTimeSlotChange {
   originalCount: number; // 変更前の数
   newCount: number;      // 変更後の数
+}
+
+/**
+ * 未保存のタイムスロット時刻編集を追跡するための型
+ */
+interface PendingTimeSlotTimeEdit {
+  timeSlotId: string;
+  startTime: string;
+  endTime: string;
 }
 import {
   IdealFormatApiResponse,
@@ -168,6 +177,7 @@ export const useSessionEditor = (scheduleId: string) => {
   const [pendingInstructorMoves, setPendingInstructorMoves] = useState<PendingInstructorMove[]>([]);
   const [pendingVenueChanges, setPendingVenueChanges] = useState<PendingVenueChange[]>([]);
   const [pendingTimeSlotChange, setPendingTimeSlotChange] = useState<PendingTimeSlotChange | null>(null);
+  const [pendingTimeSlotTimeEdits, setPendingTimeSlotTimeEdits] = useState<PendingTimeSlotTimeEdit[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // 初期状態を保持（リセット用）
@@ -617,28 +627,31 @@ export const useSessionEditor = (scheduleId: string) => {
   }, [state.edit_mode]);
 
   /**
-   * 時間スロットを更新
+   * 時間スロットを更新（ローカルのみ）
+   * APIは保存ボタンで一括呼び出し
    */
   const updateTimeSlot = useCallback((updatedTimeSlot: TimeSlot) => {
     dispatch({ type: 'UPDATE_TIME_SLOT', payload: updatedTimeSlot });
 
     if (!updatedTimeSlot.id) {
-      console.warn('時間スロットIDが存在しないため、API更新をスキップします');
+      console.warn('updateTimeSlot (local): 時間スロットIDが存在しないため、変更を記録しません');
       return;
     }
 
+    console.log('updateTimeSlot (local): 時間スロット時刻編集（未保存）', updatedTimeSlot);
+
     const normalizeTime = (value: string) => (value && value.length === 5 ? `${value}:00` : value);
 
-    scheduleTimeSlotService
-      .updateTimeSlot(updatedTimeSlot.id, {
-        start_time: normalizeTime(updatedTimeSlot.start_time),
-        end_time: normalizeTime(updatedTimeSlot.end_time),
-      })
-      .then(() => fetchScheduleDetails())
-      .catch((error) => {
-        console.error('時間スロットの更新に失敗しました:', error);
-      });
-  }, [fetchScheduleDetails]);
+    // 未保存の変更を記録（同じスロットの既存の変更は上書き）
+    setPendingTimeSlotTimeEdits(prev => {
+      const filtered = prev.filter(edit => edit.timeSlotId !== updatedTimeSlot.id);
+      return [...filtered, {
+        timeSlotId: updatedTimeSlot.id!,
+        startTime: normalizeTime(updatedTimeSlot.start_time),
+        endTime: normalizeTime(updatedTimeSlot.end_time),
+      }];
+    });
+  }, []);
 
   /**
    * 会場を追加（ローカルのみ）
@@ -818,7 +831,8 @@ export const useSessionEditor = (scheduleId: string) => {
     pendingSessionMoves.length > 0 ||
     pendingInstructorMoves.length > 0 ||
     pendingVenueChanges.length > 0 ||
-    pendingTimeSlotChange !== null;
+    pendingTimeSlotChange !== null ||
+    pendingTimeSlotTimeEdits.length > 0;
 
   /**
    * すべての変更を一括保存
@@ -918,12 +932,28 @@ export const useSessionEditor = (scheduleId: string) => {
         }
       }
 
+      // 5. タイムスロットの時刻編集を保存
+      for (const edit of pendingTimeSlotTimeEdits) {
+        try {
+          await scheduleTimeSlotService.updateTimeSlot(edit.timeSlotId, {
+            start_time: edit.startTime,
+            end_time: edit.endTime,
+          });
+          console.log('タイムスロット時刻編集を保存:', edit);
+        } catch (error) {
+          const errorMessage = `タイムスロット(${edit.timeSlotId})の時刻編集に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
       if (errors.length === 0) {
         // すべて成功した場合は未保存の変更をクリア
         setPendingSessionMoves([]);
         setPendingInstructorMoves([]);
         setPendingVenueChanges([]);
         setPendingTimeSlotChange(null);
+        setPendingTimeSlotTimeEdits([]);
 
         // 最新の状態を取得して初期状態を更新
         await fetchScheduleDetails();
@@ -941,7 +971,7 @@ export const useSessionEditor = (scheduleId: string) => {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, pendingSessionMoves, pendingInstructorMoves, pendingVenueChanges, pendingTimeSlotChange, scheduleId, fetchScheduleDetails]);
+  }, [hasUnsavedChanges, pendingSessionMoves, pendingInstructorMoves, pendingVenueChanges, pendingTimeSlotChange, pendingTimeSlotTimeEdits, scheduleId, fetchScheduleDetails]);
 
   /**
    * 変更を破棄して元に戻す
@@ -971,6 +1001,7 @@ export const useSessionEditor = (scheduleId: string) => {
     setPendingInstructorMoves([]);
     setPendingVenueChanges([]);
     setPendingTimeSlotChange(null);
+    setPendingTimeSlotTimeEdits([]);
 
     console.log('変更を破棄しました');
   }, [hasUnsavedChanges]);
@@ -995,7 +1026,8 @@ export const useSessionEditor = (scheduleId: string) => {
     pendingSessionMoves.length +
     pendingInstructorMoves.length +
     pendingVenueChanges.length +
-    (pendingTimeSlotChange ? 1 : 0);
+    (pendingTimeSlotChange ? 1 : 0) +
+    pendingTimeSlotTimeEdits.length;
 
   return {
     ...state,
