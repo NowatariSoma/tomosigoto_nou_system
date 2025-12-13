@@ -21,6 +21,8 @@ interface TouchDragState {
   touchStartPos: { x: number; y: number } | null;
   currentPos: { x: number; y: number } | null;
   dragElement: HTMLElement | null;
+  // タッチ位置と要素左上からの相対オフセット
+  touchOffset: { x: number; y: number } | null;
 }
 
 interface UseTouchDragProps {
@@ -36,6 +38,7 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
     touchStartPos: null,
     currentPos: null,
     dragElement: null,
+    touchOffset: null,
   });
 
   const dragCloneRef = useRef<HTMLElement | null>(null);
@@ -54,12 +57,20 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
     const touch = e.touches[0];
     const startPos = { x: touch.clientX, y: touch.clientY };
 
+    // タッチ位置と要素左上からの相対オフセットを計算
+    const rect = element.getBoundingClientRect();
+    const touchOffset = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    };
+
     setState({
       isDragging: false,
       dragItem: item,
       touchStartPos: startPos,
       currentPos: startPos,
       dragElement: element,
+      touchOffset,
     });
   }, []);
 
@@ -79,11 +90,12 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       // ドラッグ開始 - クローン要素を作成
       e.preventDefault();
 
-      if (state.dragElement) {
+      if (state.dragElement && state.touchOffset) {
         const clone = state.dragElement.cloneNode(true) as HTMLElement;
         clone.style.position = 'fixed';
-        clone.style.left = `${currentPos.x - 50}px`;
-        clone.style.top = `${currentPos.y - 25}px`;
+        // タッチ位置から実際のオフセットを引いて、タッチした場所がそのまま追従するように
+        clone.style.left = `${currentPos.x - state.touchOffset.x}px`;
+        clone.style.top = `${currentPos.y - state.touchOffset.y}px`;
         clone.style.width = `${state.dragElement.offsetWidth}px`;
         clone.style.zIndex = '9999';
         clone.style.opacity = '0.9';
@@ -102,10 +114,10 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
     } else if (state.isDragging) {
       e.preventDefault();
 
-      // クローン要素を移動
-      if (dragCloneRef.current) {
-        dragCloneRef.current.style.left = `${currentPos.x - 50}px`;
-        dragCloneRef.current.style.top = `${currentPos.y - 25}px`;
+      // クローン要素を移動（実際のオフセットを使用）
+      if (dragCloneRef.current && state.touchOffset) {
+        dragCloneRef.current.style.left = `${currentPos.x - state.touchOffset.x}px`;
+        dragCloneRef.current.style.top = `${currentPos.y - state.touchOffset.y}px`;
       }
 
       setState(prev => ({
@@ -137,6 +149,7 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
         touchStartPos: null,
         currentPos: null,
         dragElement: null,
+        touchOffset: null,
       });
       return;
     }
@@ -182,6 +195,7 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       touchStartPos: null,
       currentPos: null,
       dragElement: null,
+      touchOffset: null,
     });
   }, [state, timeSlots, onMoveSession, onMoveInstructor]);
 
@@ -198,6 +212,7 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       touchStartPos: null,
       currentPos: null,
       dragElement: null,
+      touchOffset: null,
     });
   }, []);
 
