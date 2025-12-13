@@ -19,7 +19,6 @@ interface TouchDragState {
   isDragging: boolean;
   dragItem: DragItem | null;
   touchStartPos: { x: number; y: number } | null;
-  currentPos: { x: number; y: number } | null;
   dragElement: HTMLElement | null;
   // タッチ位置と要素左上からの相対オフセット
   touchOffset: { x: number; y: number } | null;
@@ -36,13 +35,17 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
     isDragging: false,
     dragItem: null,
     touchStartPos: null,
-    currentPos: null,
     dragElement: null,
     touchOffset: null,
   });
 
   const dragCloneRef = useRef<HTMLElement | null>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // パフォーマンス最適化: 現在位置はrefで管理し、再レンダリングを防ぐ
+  const currentPosRef = useRef<{ x: number; y: number } | null>(null);
+  // refでstate値をキャッシュし、コールバック内で最新値にアクセス
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   // ドラッグ開始
   const handleTouchStart = useCallback((
@@ -64,39 +67,45 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       y: touch.clientY - rect.top,
     };
 
+    // 現在位置をrefに保存
+    currentPosRef.current = startPos;
+
     setState({
       isDragging: false,
       dragItem: item,
       touchStartPos: startPos,
-      currentPos: startPos,
       dragElement: element,
       touchOffset,
     });
   }, []);
 
-  // ドラッグ中
+  // ドラッグ中 - パフォーマンス最適化: setStateを呼ばずDOM操作のみ
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!state.dragItem || !state.touchStartPos) return;
+    const currentState = stateRef.current;
+    if (!currentState.dragItem || !currentState.touchStartPos) return;
 
     const touch = e.touches[0];
     const currentPos = { x: touch.clientX, y: touch.clientY };
 
+    // 現在位置をrefに保存（再レンダリングなし）
+    currentPosRef.current = currentPos;
+
     // 移動距離が一定以上になったらドラッグ開始
-    const dx = currentPos.x - state.touchStartPos.x;
-    const dy = currentPos.y - state.touchStartPos.y;
+    const dx = currentPos.x - currentState.touchStartPos.x;
+    const dy = currentPos.y - currentState.touchStartPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance > 10 && !state.isDragging) {
+    if (distance > 10 && !currentState.isDragging) {
       // ドラッグ開始 - クローン要素を作成
       e.preventDefault();
 
-      if (state.dragElement && state.touchOffset) {
-        const clone = state.dragElement.cloneNode(true) as HTMLElement;
+      if (currentState.dragElement && currentState.touchOffset) {
+        const clone = currentState.dragElement.cloneNode(true) as HTMLElement;
         clone.style.position = 'fixed';
         // タッチ位置から実際のオフセットを引いて、タッチした場所がそのまま追従するように
-        clone.style.left = `${currentPos.x - state.touchOffset.x}px`;
-        clone.style.top = `${currentPos.y - state.touchOffset.y}px`;
-        clone.style.width = `${state.dragElement.offsetWidth}px`;
+        clone.style.left = `${currentPos.x - currentState.touchOffset.x}px`;
+        clone.style.top = `${currentPos.y - currentState.touchOffset.y}px`;
+        clone.style.width = `${currentState.dragElement.offsetWidth}px`;
         clone.style.zIndex = '9999';
         clone.style.opacity = '0.9';
         clone.style.pointerEvents = 'none';
@@ -106,24 +115,19 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
         dragCloneRef.current = clone;
       }
 
+      // ドラッグ開始フラグのみ状態更新（1回だけ）
       setState(prev => ({
         ...prev,
         isDragging: true,
-        currentPos,
       }));
-    } else if (state.isDragging) {
+    } else if (currentState.isDragging) {
       e.preventDefault();
 
-      // クローン要素を移動（実際のオフセットを使用）
-      if (dragCloneRef.current && state.touchOffset) {
-        dragCloneRef.current.style.left = `${currentPos.x - state.touchOffset.x}px`;
-        dragCloneRef.current.style.top = `${currentPos.y - state.touchOffset.y}px`;
+      // クローン要素を直接移動（setStateなし = 再レンダリングなし）
+      if (dragCloneRef.current && currentState.touchOffset) {
+        dragCloneRef.current.style.left = `${currentPos.x - currentState.touchOffset.x}px`;
+        dragCloneRef.current.style.top = `${currentPos.y - currentState.touchOffset.y}px`;
       }
-
-      setState(prev => ({
-        ...prev,
-        currentPos,
-      }));
 
       // 画面端でスクロール
       const scrollContainer = document.querySelector('.overflow-x-auto');
@@ -138,19 +142,22 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
         }
       }
     }
-  }, [state]);
+  }, []);
 
   // ドラッグ終了
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!state.isDragging || !state.dragItem || !state.currentPos) {
+  const handleTouchEnd = useCallback(() => {
+    const currentState = stateRef.current;
+    const currentPos = currentPosRef.current;
+
+    if (!currentState.isDragging || !currentState.dragItem || !currentPos) {
       setState({
         isDragging: false,
         dragItem: null,
         touchStartPos: null,
-        currentPos: null,
         dragElement: null,
         touchOffset: null,
       });
+      currentPosRef.current = null;
       return;
     }
 
@@ -162,13 +169,13 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
 
     // ドロップ先のセルを検出
     const dropTarget = document.elementFromPoint(
-      state.currentPos.x,
-      state.currentPos.y
+      currentPos.x,
+      currentPos.y
     );
 
     if (dropTarget) {
       // 親要素を辿ってtd要素を探す
-      let cell = dropTarget.closest('td');
+      const cell = dropTarget.closest('td');
       if (cell) {
         // data属性からvenueIdとtimeSlotを取得
         const venueId = cell.getAttribute('data-venue-id');
@@ -178,11 +185,11 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
           const slotIndex = timeSlots.findIndex(slot => slot.time === timeSlot);
           const slotOrder = slotIndex + 1;
 
-          if (state.dragItem.type === 'session') {
-            const session = state.dragItem.data as Session;
+          if (currentState.dragItem.type === 'session') {
+            const session = currentState.dragItem.data as Session;
             onMoveSession(session.id, venueId, timeSlot, slotOrder);
-          } else if (state.dragItem.type === 'instructor') {
-            const instructor = state.dragItem.data as SessionInstructorWithDetails;
+          } else if (currentState.dragItem.type === 'instructor') {
+            const instructor = currentState.dragItem.data as SessionInstructorWithDetails;
             onMoveInstructor(instructor.id, venueId, slotOrder);
           }
         }
@@ -193,11 +200,11 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       isDragging: false,
       dragItem: null,
       touchStartPos: null,
-      currentPos: null,
       dragElement: null,
       touchOffset: null,
     });
-  }, [state, timeSlots, onMoveSession, onMoveInstructor]);
+    currentPosRef.current = null;
+  }, [timeSlots, onMoveSession, onMoveInstructor]);
 
   // ドラッグキャンセル
   const handleTouchCancel = useCallback(() => {
@@ -210,10 +217,10 @@ export const useTouchDrag = ({ onMoveSession, onMoveInstructor, timeSlots }: Use
       isDragging: false,
       dragItem: null,
       touchStartPos: null,
-      currentPos: null,
       dragElement: null,
       touchOffset: null,
     });
+    currentPosRef.current = null;
   }, []);
 
   // クリーンアップ
