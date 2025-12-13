@@ -9,7 +9,7 @@ import { ScheduleTimeEditor } from './ScheduleTimeEditor';
 import { OptimizationModal } from './OptimizationModal';
 import { useSessionEditor } from '../hooks/use-session-editor';
 import { UI_TEXT } from '../constants';
-import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles } from 'lucide-react';
+import { Edit, Eye, Plus, Calendar, ArrowLeft, Sparkles, Save, RotateCcw } from 'lucide-react';
 import { sessionInstructorService, practiceScheduleEditorService } from '../services';
 import { VenueInfo } from '../types/session-editor';
 import { Button } from '@/components/ui/forms/button';
@@ -64,6 +64,12 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     addVenues,
     removeVenue,
     updateVenue,
+    // 一括保存関連
+    hasUnsavedChanges,
+    isSaving,
+    saveAllChanges,
+    discardChanges,
+    pendingChangesCount,
   } = useSessionEditor(currentScheduleId);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -320,6 +326,21 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
     setIsOptimizationModalOpen(true);
   };
 
+  const handleSaveChanges = async () => {
+    const result = await saveAllChanges();
+    if (result.success) {
+      alert('変更を保存しました');
+    } else {
+      alert(`保存に失敗しました:\n${result.errors.join('\n')}`);
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    if (confirm('変更を破棄しますか？すべての未保存の変更が失われます。')) {
+      discardChanges();
+    }
+  };
+
   const handleOptimizationComplete = async () => {
     setIsOptimizationModalOpen(false);
     await fetchScheduleDetails();
@@ -400,8 +421,49 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
             <Plus className="h-4 w-4" />
             <span>監督者を追加</span>
           </Button>
+          <Button
+            onClick={handleSaveChanges}
+            disabled={isSaving || !hasUnsavedChanges}
+            variant={hasUnsavedChanges ? "default" : "outline"}
+            className={`flex items-center space-x-2 px-4 py-2 ${
+              hasUnsavedChanges ? 'bg-red-600 hover:bg-red-700' : ''
+            }`}
+          >
+            <Save className="h-4 w-4" />
+            <span>{isSaving ? '保存中...' : hasUnsavedChanges ? `保存 (${pendingChangesCount})` : '保存済み'}</span>
+          </Button>
         </div>
       </div>
+
+      {/* 未保存の変更がある場合の警告バーと保存ボタン */}
+      {hasUnsavedChanges && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-amber-700">
+            <span className="text-lg">⚠️</span>
+            <span className="font-medium">
+              {pendingChangesCount}件の未保存の変更があります
+            </span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleDiscardChanges}
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>変更を破棄</span>
+            </button>
+            <button
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              <span>{isSaving ? '保存中...' : '変更を保存'}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 編集テーブル */}
       <SessionEditorTableSimpleDnd
