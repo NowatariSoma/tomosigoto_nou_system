@@ -297,25 +297,172 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
     );
   }
 
-  return (
-    <>
-      {/* テーブル全体 */}
-      <div className="card-blue overflow-hidden">
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
+  // モバイル向けカード型レイアウト（sm未満）
+  const renderMobileLayout = () => (
+    <div className="sm:hidden space-y-4">
+      {/* 会場編集ボタン（編集モード時） */}
+      {edit_mode === 'edit' && (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleOpenVenueModal}
+            size="sm"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm"
+          >
+            <Edit2 className="h-4 w-4" />
+            会場編集
+          </Button>
+        </div>
+      )}
+
+      {/* 時間スロットごとにカードを表示 */}
+      {time_slots.map((timeSlot, slotIndex) => (
+        <div key={timeSlot.time} className="card-blue overflow-hidden">
+          {/* 時間スロットヘッダー */}
+          <div
+            className="px-4 py-2 bg-blue-50 border-b border-blue-200 flex items-center justify-between"
+            onClick={() => edit_mode === 'edit' && handleTimeSlotEdit(timeSlot)}
+          >
+            <span className="font-semibold text-black">
+              {timeSlot.time} - {timeSlot.end_time}
+            </span>
+            {edit_mode === 'edit' && (
+              <Edit2 className="h-4 w-4 text-black" />
+            )}
+          </div>
+
+          {/* 会場ごとのセクション */}
+          <div className="divide-y divide-gray-100">
+            {venues.map((venue) => {
+              const venueSessions = groupedSessions[venue.id]?.[timeSlot.time] || [];
+              const venueInstructors = groupedInstructors[venue.id]?.[timeSlot.time] || [];
+              const isOver = dragOverCell?.venueId === venue.id && dragOverCell?.timeSlot === timeSlot.time;
+
+              return (
+                <div
+                  key={`mobile-${venue.id}-${timeSlot.time}`}
+                  data-venue-id={venue.id}
+                  data-time-slot={timeSlot.time}
+                  className="p-3 bg-white"
+                  onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, venue.id, timeSlot.time)}
+                >
+                  {/* 会場名 */}
+                  <div className="text-xs text-gray-500 font-medium mb-2">
+                    📍 {venue.name || `会場${venue.id.slice(-4)}`}
+                  </div>
+
+                  {/* ドロップエリア */}
+                  <div className={`min-h-[40px] ${
+                    isOver && venueSessions.length === 0 && venueInstructors.length === 0
+                      ? 'border-2 border-dashed border-blue-400 rounded-lg'
+                      : ''
+                  }`}>
+                    {(venueSessions.length > 0 || venueInstructors.length > 0) ? (
+                      <div className="space-y-2">
+                        {/* セッション（パート）カード */}
+                        {venueSessions.map((session) => (
+                          <PartCard
+                            key={session.id}
+                            session={session}
+                            edit_mode={edit_mode}
+                            is_dragging={
+                              (draggedItem?.type === 'session' && (draggedItem.data as Session).id === session.id) ||
+                              (isTouchDragging && touchDragItem?.type === 'session' && (touchDragItem.data as Session).id === session.id)
+                            }
+                            onDragStart={handleSessionDragStart}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchCancel}
+                            onEdit={onEditSession}
+                            onDelete={onDeleteSession}
+                          />
+                        ))}
+                        {/* 監督者カード */}
+                        {venueInstructors.map((instructor) => (
+                          <InstructorCard
+                            key={instructor.id}
+                            sessionInstructor={instructor}
+                            scheduleId={scheduleId}
+                            edit_mode={edit_mode}
+                            is_dragging={
+                              (draggedItem?.type === 'instructor' && (draggedItem.data as SessionInstructorWithDetails).id === instructor.id) ||
+                              (isTouchDragging && touchDragItem?.type === 'instructor' && (touchDragItem.data as SessionInstructorWithDetails).id === instructor.id)
+                            }
+                            onDragStart={handleInstructorDragStart}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchCancel}
+                            onDelete={onDeleteInstructor}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 text-center py-2">
+                        空きスロット
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* 時間追加・削除ボタン（編集モード時） */}
+      {edit_mode === 'edit' && (onAddTimeSlot || onRemoveTimeSlot) && (
+        <div className="card-blue p-3">
+          <div className="flex items-center justify-center gap-4">
+            {onRemoveTimeSlot && (
+              <Button
+                onClick={onRemoveTimeSlot}
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1 text-sm"
+                disabled={time_slots.length <= 1}
+              >
+                <Minus className="h-4 w-4" />
+                時間削除
+              </Button>
+            )}
+            {onAddTimeSlot && (
+              <Button
+                onClick={onAddTimeSlot}
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1 text-sm"
+              >
+                <Plus className="h-4 w-4" />
+                時間追加
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // デスクトップ向けテーブルレイアウト（sm以上）
+  const renderDesktopLayout = () => (
+    <div className="hidden sm:block card-blue overflow-hidden">
+      <div className="overflow-x-auto">
         <Table className="w-full table-fixed min-w-[600px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20 sm:w-32 px-2 sm:px-4 py-2 sm:py-3 table-header-cell border-r border-b border-blue-200">時間</TableHead>
+              <TableHead className="w-32 px-4 py-3 table-header-cell border-r border-b border-blue-200">時間</TableHead>
               {venues.map((venue, index) => (
                 <TableHead
                   key={`${venue.id}-${index}`}
-                  className="px-2 sm:px-4 py-2 sm:py-3 table-header-cell text-center border-r border-b border-blue-200 whitespace-nowrap"
+                  className="px-4 py-3 table-header-cell text-center border-r border-b border-blue-200 whitespace-nowrap"
                 >
                   {venue.name || `会場${venue.id.slice(-4)}`}
                 </TableHead>
               ))}
               {edit_mode === 'edit' && (
-                <TableHead className="w-24 px-2 sm:px-4 py-2 sm:py-3 table-header-cell text-center border-b border-blue-200">
+                <TableHead className="w-24 px-4 py-3 table-header-cell text-center border-b border-blue-200">
                   <Button
                     onClick={handleOpenVenueModal}
                     size="sm"
@@ -345,12 +492,12 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                       key={`${venue.id}-${timeSlot.time}`}
                       data-venue-id={venue.id}
                       data-time-slot={timeSlot.time}
-                      className="border-r border-gray-200 last:border-r-0 min-h-[60px] sm:min-h-[80px] align-top bg-white p-0.5 sm:p-1"
+                      className="border-r border-gray-200 last:border-r-0 min-h-[80px] align-top bg-white p-1"
                       onDragOver={(e) => handleDragOver(e, venue.id, timeSlot.time)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, venue.id, timeSlot.time)}
                     >
-                      <div className={`min-h-[60px] sm:min-h-[80px] ${
+                      <div className={`min-h-[80px] ${
                         isOver && venueSessions.length === 0 ? 'border-2 border-dashed border-blue-400 rounded-lg' : ''
                       }`}>
                         {(venueSessions.length > 0 || venueInstructors.length > 0) && (
@@ -405,20 +552,19 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
             {/* 時間追加・削除ボタン行 */}
             {edit_mode === 'edit' && (onAddTimeSlot || onRemoveTimeSlot) && (
               <TableRow className="border-t-2 border-gray-200">
-                <TableCell colSpan={venues.length + 2} className="px-2 sm:px-4 py-2 sm:py-3 bg-white">
-                  <div className="flex items-center justify-center flex-wrap gap-2">
+                <TableCell colSpan={venues.length + 2} className="px-4 py-3 bg-white">
+                  <div className="flex items-center justify-center gap-2">
                     {onRemoveTimeSlot && (
                       <Button
                         onClick={onRemoveTimeSlot}
                         variant="ghost"
                         size="sm"
-                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium"
+                        className="flex items-center justify-center space-x-1 text-sm font-medium"
                         title="時間スロットを削除"
                         disabled={time_slots.length <= 1}
                       >
                         <Minus className="h-4 w-4" />
-                        <span className="hidden sm:inline">時間スロットを削除</span>
-                        <span className="sm:hidden">削除</span>
+                        <span>時間スロットを削除</span>
                       </Button>
                     )}
                     {onAddTimeSlot && (
@@ -426,12 +572,11 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
                         onClick={onAddTimeSlot}
                         variant="ghost"
                         size="sm"
-                        className="flex items-center justify-center space-x-1 text-xs sm:text-sm font-medium"
+                        className="flex items-center justify-center space-x-1 text-sm font-medium"
                         title="時間スロットを追加"
                       >
                         <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">時間スロットを追加</span>
-                        <span className="sm:hidden">追加</span>
+                        <span>時間スロットを追加</span>
                       </Button>
                     )}
                   </div>
@@ -440,8 +585,17 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
             )}
           </TableBody>
         </Table>
-        </div>
       </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* モバイルレイアウト */}
+      {renderMobileLayout()}
+
+      {/* デスクトップレイアウト */}
+      {renderDesktopLayout()}
 
       {/* 統計情報 - 目立たないデザイン */}
       <div className="px-2 sm:px-4 py-2 panel-info border-t border-blue-200">
