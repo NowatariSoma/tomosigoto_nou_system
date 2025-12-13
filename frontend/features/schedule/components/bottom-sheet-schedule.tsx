@@ -351,7 +351,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
           {/* 1. 出席登録フォーム（最初にロード） */}
           {authLoading || basicLoading ? (
             <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
               <span className="ml-2">読み込み中...</span>
             </div>
           ) : basicError ? (
@@ -369,7 +369,7 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
               existingAttendance={myAttendance}
             />
           ) : (
-            <div className="flex items-center justify-center p-8 text-gray-500">
+            <div className="flex items-center justify-center p-8 text-black">
               この日付の練習予定は見つかりませんでした
             </div>
           )}

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface ScheduleTimeEditorProps {
   startTime: string;
@@ -38,50 +40,55 @@ export const ScheduleTimeEditor: React.FC<ScheduleTimeEditorProps> = ({
   if (isEditing) {
     return (
       <div className="flex items-center space-x-3 bg-blue-50 px-4 py-2 rounded-md border border-blue-200">
-        <Clock className="h-4 w-4 text-blue-600" />
+        <Clock className="h-4 w-4 text-black" />
         <div className="flex items-center space-x-2">
-          <input
+          <Input
             type="time"
             value={localStartTime}
             onChange={(e) => setLocalStartTime(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
+            className="px-2 py-1 text-sm h-8"
           />
-          <span className="text-gray-500">〜</span>
-          <input
+          <span className="text-black">〜</span>
+          <Input
             type="time"
             value={localEndTime}
             onChange={(e) => setLocalEndTime(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
+            className="px-2 py-1 text-sm h-8"
           />
         </div>
-        <button
+        <Button
           onClick={handleSave}
-          className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+          size="sm"
+          className="px-3 py-1 text-sm"
         >
           保存
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleCancel}
-          className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+          variant="outline"
+          size="sm"
+          className="px-3 py-1 bg-blue-200 text-black text-sm"
         >
           キャンセル
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex items-center space-x-2">
-      <Clock className="h-4 w-4 text-gray-500" />
-      <span className="text-gray-700">
+      <Clock className="h-4 w-4 text-black" />
+      <span className="text-black">
         {startTime} 〜 {endTime}
       </span>
-      <button
+      <Button
         onClick={() => setIsEditing(true)}
-        className="text-blue-600 hover:text-blue-800 text-sm underline"
+        variant="link"
+        size="sm"
+        className="text-black hover:text-black text-sm h-auto p-0"
       >
         編集
-      </button>
+      </Button>
     </div>
   );
 };

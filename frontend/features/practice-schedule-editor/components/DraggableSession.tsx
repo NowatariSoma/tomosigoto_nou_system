@@ -5,6 +5,7 @@ import { Session, EditMode } from '../types/session-editor';
 import { Edit, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InstructorDisplay } from './InstructorDisplay';
+import { Button } from '@/components/ui/forms/button';
 
 interface DraggableSessionProps {
   session: Session;
@@ -64,20 +65,20 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
         isDragging && "opacity-50 scale-95",
         edit_mode === 'edit' && "hover:bg-blue-200"
       )}
-      style={{ 
-        backgroundColor: '#DBEAFE',
-        borderColor: '#93C5FD'
+      style={{
+        backgroundColor: '#E0EAFF',
+        borderColor: '#B9D4FF'
       }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            <div className="font-bold text-sm text-black leading-tight mb-1">
               {session.part_name}
             </div>
           )}
           {session.start_time && session.end_time && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-black mt-1">
               {session.start_time} - {session.end_time}
             </div>
           )}
@@ -92,21 +93,25 @@ export const DraggableSession: React.FC<DraggableSessionProps> = ({
         
         {edit_mode === 'edit' && (
           <div className="flex items-center space-x-1 ml-2">
-            <button
+            <Button
               onClick={handleEdit}
-              className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-1 text-black"
               title="編集"
             >
               <Edit className="h-3 w-3" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleDelete}
-              className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-1 text-black"
               title="削除"
             >
               <Trash2 className="h-3 w-3" />
-            </button>
-            <div className="p-1 text-gray-400 cursor-grab">
+            </Button>
+            <div className="p-1 text-black cursor-grab">
               <GripVertical className="h-3 w-3" />
             </div>
           </div>

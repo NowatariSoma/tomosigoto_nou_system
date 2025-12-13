@@ -18,10 +18,10 @@ export function PartCard({ part, onClick }: PartCardProps) {
       onClick={() => onClick(part)}
     >
       <CardContent className="p-8 text-center">
-        <h3 className="text-lg font-medium text-gray-800 mb-2">
+        <h3 className="text-lg font-medium text-black mb-2">
           {part.name}
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-black">
           {selectedCount}/{totalCount} 名選択中
         </p>
       </CardContent>

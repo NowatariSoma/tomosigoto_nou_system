@@ -66,7 +66,7 @@ export const SessionCell: React.FC<SessionCellProps> = ({
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-400 py-6">
+        <div className="text-center text-black py-6">
           {edit_mode === 'edit' ? 'クリックしてセッションを追加' : '空き'}
         </div>
       )}
