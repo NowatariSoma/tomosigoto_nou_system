@@ -27,6 +27,30 @@ interface PendingInstructorMove {
   venueId: string;
   slotOrder: number;
 }
+
+/**
+ * 未保存の会場変更を追跡するための型
+ */
+interface PendingVenueAdd {
+  type: 'add';
+  venue: VenueInfo;
+  tempId: string; // ローカルで生成した一時ID
+}
+
+interface PendingVenueRemove {
+  type: 'remove';
+  venueId: string; // schedule_available_venue.id
+}
+
+type PendingVenueChange = PendingVenueAdd | PendingVenueRemove;
+
+/**
+ * 未保存のタイムスロット変更を追跡するための型
+ */
+interface PendingTimeSlotChange {
+  originalCount: number; // 変更前の数
+  newCount: number;      // 変更後の数
+}
 import {
   IdealFormatApiResponse,
   IdealVenueInfo,
@@ -142,11 +166,16 @@ export const useSessionEditor = (scheduleId: string) => {
   // 未保存の変更を追跡
   const [pendingSessionMoves, setPendingSessionMoves] = useState<PendingSessionMove[]>([]);
   const [pendingInstructorMoves, setPendingInstructorMoves] = useState<PendingInstructorMove[]>([]);
+  const [pendingVenueChanges, setPendingVenueChanges] = useState<PendingVenueChange[]>([]);
+  const [pendingTimeSlotChange, setPendingTimeSlotChange] = useState<PendingTimeSlotChange | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // 初期状態を保持（リセット用）
   const originalSessionsRef = useRef<Session[]>([]);
   const originalInstructorsRef = useRef<any[]>([]);
+  const originalVenuesRef = useRef<VenueInfo[]>([]);
+  const originalTimeSlotsRef = useRef<TimeSlot[]>([]);
+  const originalTimeSlotCountRef = useRef<number>(0);
 
   /**
    * スケジュール詳細を取得
@@ -296,10 +325,17 @@ export const useSessionEditor = (scheduleId: string) => {
 
       // セッションの初期状態を保存（リセット用）
       originalSessionsRef.current = JSON.parse(JSON.stringify(sessions));
+      // 会場の初期状態を保存
+      originalVenuesRef.current = JSON.parse(JSON.stringify(venues));
+      // タイムスロットの初期状態を保存
+      originalTimeSlotsRef.current = JSON.parse(JSON.stringify(timeSlots));
+      originalTimeSlotCountRef.current = timeSlots.length;
 
       // 未保存の変更をクリア
       setPendingSessionMoves([]);
       setPendingInstructorMoves([]);
+      setPendingVenueChanges([]);
+      setPendingTimeSlotChange(null);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'スケジュール詳細の取得に失敗しました';
@@ -605,92 +641,76 @@ export const useSessionEditor = (scheduleId: string) => {
   }, [fetchScheduleDetails]);
 
   /**
-   * 会場を追加
-   * APIを呼び出してデータベースに保存し、成功したら状態を更新
+   * 会場を追加（ローカルのみ）
+   * APIは保存ボタンで一括呼び出し
    */
-  const addVenues = useCallback(async (venues: VenueInfo[]) => {
+  const addVenues = useCallback((venues: VenueInfo[]) => {
     if (!scheduleId || scheduleId.trim() === '') {
       console.error('addVenues: スケジュールIDが空です');
       return;
     }
 
-    dispatch({ type: 'SET_ERROR', payload: null });
+    console.log('addVenues (local): 会場追加開始', venues);
 
-    try {
-      // 一括作成APIを呼び出し
-      const bulkData = {
-        schedule_id: scheduleId,
-        venues: venues.map(venue => ({
-          venue_id: venue.id,
-          is_preferred: venue.is_preferred || false,
-          priority: venue.priority || 0,
-          notes: venue.notes || '',
-        })),
+    // 各会場に一時IDを生成してローカル状態に追加
+    const newVenues: VenueInfo[] = venues.map(venue => {
+      const tempId = `temp_venue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      return {
+        id: tempId, // 一時的なschedule_available_venue.id
+        venue_id: venue.id, // 元の会場マスターID
+        name: venue.name,
+        campus: venue.campus,
+        is_preferred: venue.is_preferred || false,
+        priority: venue.priority || 0,
+        notes: venue.notes || '',
       };
+    });
 
-      console.log('addVenues: 会場追加開始', bulkData);
+    dispatch({ type: 'ADD_VENUES', payload: newVenues });
 
-      const result = await scheduleAvailableVenueService.createBulk(bulkData);
+    // 未保存の変更を記録
+    setPendingVenueChanges(prev => [
+      ...prev,
+      ...newVenues.map(venue => ({
+        type: 'add' as const,
+        venue,
+        tempId: venue.id,
+      })),
+    ]);
 
-      console.log('addVenues: 会場追加成功', result);
-
-      // 作成されたアイテムを状態に追加
-      // APIレスポンスから新しいIDを取得して会場情報を更新
-      const newVenues: VenueInfo[] = result.created_items.map(item => ({
-        id: item.id, // schedule_available_venue.id を使用
-        venue_id: item.venue_id, // 元の会場マスターIDを保持
-        name: venues.find(v => v.id === item.venue_id)?.name || '',
-        campus: venues.find(v => v.id === item.venue_id)?.campus,
-        is_preferred: item.is_preferred,
-        priority: item.priority,
-        notes: item.notes || '',
-      }));
-
-      dispatch({ type: 'ADD_VENUES', payload: newVenues });
-
-      if (result.errors.length > 0) {
-        console.warn('addVenues: 一部の会場追加に失敗', result.errors);
-      }
-    } catch (error) {
-      console.error('addVenues: エラー', error);
-      const errorMessage = error instanceof Error ? error.message : '会場の追加に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      alert(`❌ 会場の追加に失敗しました\n\n${errorMessage}`);
-    }
+    console.log('addVenues (local): 会場追加完了（未保存）', newVenues);
   }, [scheduleId]);
 
   /**
-   * 会場を削除
-   * APIを呼び出してデータベースから削除し、成功したら状態を更新
+   * 会場を削除（ローカルのみ）
+   * APIは保存ボタンで一括呼び出し
    */
-  const removeVenue = useCallback(async (venueId: string) => {
-    // 現在の会場情報を保存（ロールバック用）
-    const originalVenue = state.venues.find(v => v.id === venueId);
-    if (!originalVenue) {
+  const removeVenue = useCallback((venueId: string) => {
+    // 現在の会場情報を確認
+    const venueToRemove = state.venues.find(v => v.id === venueId);
+    if (!venueToRemove) {
       console.error('removeVenue: 削除対象の会場が見つかりません:', venueId);
       return;
     }
 
-    dispatch({ type: 'SET_ERROR', payload: null });
+    console.log('removeVenue (local): 会場削除開始', venueId);
 
-    // 楽観的UI更新: 即座にUIから削除
+    // ローカル状態から削除
     dispatch({ type: 'REMOVE_VENUE', payload: venueId });
 
-    try {
-      // venueIdはschedule_available_venue.idなので、そのまま削除APIを呼び出す
-      console.log('removeVenue: 会場削除開始', venueId);
-
-      await scheduleAvailableVenueService.delete(venueId);
-
-      console.log('removeVenue: 会場削除成功', venueId);
-    } catch (error) {
-      // API失敗: 会場を復元
-      console.error('removeVenue: エラー', error);
-      dispatch({ type: 'ADD_VENUES', payload: [originalVenue] });
-
-      const errorMessage = error instanceof Error ? error.message : '会場の削除に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      alert(`❌ 会場の削除に失敗しました\n\n${errorMessage}\n\n会場を復元しました。`);
+    // 一時IDの場合（新規追加した会場の削除）は、pendingVenueChangesから追加記録を削除
+    if (venueId.startsWith('temp_venue_')) {
+      setPendingVenueChanges(prev => prev.filter(
+        change => !(change.type === 'add' && change.tempId === venueId)
+      ));
+      console.log('removeVenue (local): 新規追加の会場を削除（未保存リストからも削除）');
+    } else {
+      // 既存の会場の削除は、削除記録を追加
+      setPendingVenueChanges(prev => [
+        ...prev,
+        { type: 'remove' as const, venueId },
+      ]);
+      console.log('removeVenue (local): 既存会場の削除を記録（未保存）');
     }
   }, [state.venues]);
 
@@ -702,9 +722,103 @@ export const useSessionEditor = (scheduleId: string) => {
   }, []);
 
   /**
+   * タイムスロットを追加（ローカルのみ）
+   * APIは保存ボタンで一括呼び出し
+   */
+  const addTimeSlot = useCallback(() => {
+    const currentSlotCount = state.time_slots.length;
+
+    if (currentSlotCount >= 24) {
+      alert('時間スロットは最大24個までです');
+      return;
+    }
+
+    console.log('addTimeSlot (local): タイムスロット追加開始', { currentSlotCount });
+
+    // 新しい数でタイムスロットを再生成
+    const newCount = currentSlotCount + 1;
+
+    // 現在の最初と最後のタイムスロットから時間範囲を取得
+    let startTime = '09:00';
+    let endTime = '17:00';
+    if (state.time_slots.length > 0) {
+      startTime = state.time_slots[0].time;
+      // 最後のスロットのend_timeを使用
+      const lastSlot = state.time_slots[state.time_slots.length - 1];
+      endTime = lastSlot.end_time || '17:00';
+    }
+
+    // 新しいタイムスロットを生成
+    const newTimeSlots = practiceScheduleEditorService.generateTimeSlots(
+      startTime.includes(':') && startTime.length === 5 ? `${startTime}:00` : startTime,
+      endTime.includes(':') && endTime.length === 5 ? `${endTime}:00` : endTime,
+      newCount
+    );
+
+    dispatch({ type: 'SET_TIME_SLOTS', payload: newTimeSlots });
+
+    // 未保存の変更を記録
+    setPendingTimeSlotChange({
+      originalCount: originalTimeSlotCountRef.current,
+      newCount,
+    });
+
+    console.log('addTimeSlot (local): タイムスロット追加完了（未保存）', { newCount, newTimeSlots });
+  }, [state.time_slots]);
+
+  /**
+   * タイムスロットを削除（ローカルのみ）
+   * APIは保存ボタンで一括呼び出し
+   */
+  const removeTimeSlot = useCallback(() => {
+    const currentSlotCount = state.time_slots.length;
+
+    if (currentSlotCount <= 1) {
+      alert('時間スロットは最低1個必要です');
+      return;
+    }
+
+    console.log('removeTimeSlot (local): タイムスロット削除開始', { currentSlotCount });
+
+    // 新しい数でタイムスロットを再生成
+    const newCount = currentSlotCount - 1;
+
+    // 現在の最初と最後のタイムスロットから時間範囲を取得
+    let startTime = '09:00';
+    let endTime = '17:00';
+    if (state.time_slots.length > 0) {
+      startTime = state.time_slots[0].time;
+      // 最後のスロットのend_timeを使用
+      const lastSlot = state.time_slots[state.time_slots.length - 1];
+      endTime = lastSlot.end_time || '17:00';
+    }
+
+    // 新しいタイムスロットを生成
+    const newTimeSlots = practiceScheduleEditorService.generateTimeSlots(
+      startTime.includes(':') && startTime.length === 5 ? `${startTime}:00` : startTime,
+      endTime.includes(':') && endTime.length === 5 ? `${endTime}:00` : endTime,
+      newCount
+    );
+
+    dispatch({ type: 'SET_TIME_SLOTS', payload: newTimeSlots });
+
+    // 未保存の変更を記録
+    setPendingTimeSlotChange({
+      originalCount: originalTimeSlotCountRef.current,
+      newCount,
+    });
+
+    console.log('removeTimeSlot (local): タイムスロット削除完了（未保存）', { newCount, newTimeSlots });
+  }, [state.time_slots]);
+
+  /**
    * 未保存の変更があるかどうか
    */
-  const hasUnsavedChanges = pendingSessionMoves.length > 0 || pendingInstructorMoves.length > 0;
+  const hasUnsavedChanges =
+    pendingSessionMoves.length > 0 ||
+    pendingInstructorMoves.length > 0 ||
+    pendingVenueChanges.length > 0 ||
+    pendingTimeSlotChange !== null;
 
   /**
    * すべての変更を一括保存
@@ -721,7 +835,66 @@ export const useSessionEditor = (scheduleId: string) => {
     const errors: string[] = [];
 
     try {
-      // セッションの移動を保存
+      // 1. タイムスロットの変更を保存（会場やセッションより先に保存）
+      if (pendingTimeSlotChange) {
+        try {
+          // 現在のスケジュール時間を取得
+          const basicSchedule = await practiceScheduleEditorService.getBasicSchedule(scheduleId);
+          const actualStartTime = basicSchedule?.start_time || '09:00:00';
+          const actualEndTime = basicSchedule?.end_time || '17:00:00';
+
+          // タイムスロット数を更新
+          await practiceScheduleEditorService.updateScheduleTime(
+            scheduleId,
+            actualStartTime,
+            actualEndTime,
+            pendingTimeSlotChange.newCount
+          );
+          console.log('タイムスロット変更を保存:', pendingTimeSlotChange);
+        } catch (error) {
+          const errorMessage = `タイムスロットの変更に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
+      // 2. 会場の変更を保存
+      // 削除を先に処理
+      const venueRemoves = pendingVenueChanges.filter(c => c.type === 'remove') as PendingVenueRemove[];
+      for (const remove of venueRemoves) {
+        try {
+          await scheduleAvailableVenueService.delete(remove.venueId);
+          console.log('会場削除を保存:', remove.venueId);
+        } catch (error) {
+          const errorMessage = `会場(${remove.venueId})の削除に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
+      // 追加を処理
+      const venueAdds = pendingVenueChanges.filter(c => c.type === 'add') as PendingVenueAdd[];
+      if (venueAdds.length > 0) {
+        try {
+          const bulkData = {
+            schedule_id: scheduleId,
+            venues: venueAdds.map(add => ({
+              venue_id: add.venue.venue_id, // 元の会場マスターID
+              is_preferred: add.venue.is_preferred || false,
+              priority: add.venue.priority || 0,
+              notes: add.venue.notes || '',
+            })),
+          };
+          await scheduleAvailableVenueService.createBulk(bulkData);
+          console.log('会場追加を保存:', venueAdds);
+        } catch (error) {
+          const errorMessage = `会場の追加に失敗: ${error instanceof Error ? error.message : '不明なエラー'}`;
+          errors.push(errorMessage);
+          console.error(errorMessage);
+        }
+      }
+
+      // 3. セッションの移動を保存
       for (const move of pendingSessionMoves) {
         try {
           await sessionService.moveSession(move.sessionId, move.venueId, move.slotOrder);
@@ -733,7 +906,7 @@ export const useSessionEditor = (scheduleId: string) => {
         }
       }
 
-      // インストラクターの移動を保存
+      // 4. インストラクターの移動を保存
       for (const move of pendingInstructorMoves) {
         try {
           await sessionInstructorService.moveSessionInstructor(move.instructorId, move.venueId, move.slotOrder);
@@ -749,6 +922,8 @@ export const useSessionEditor = (scheduleId: string) => {
         // すべて成功した場合は未保存の変更をクリア
         setPendingSessionMoves([]);
         setPendingInstructorMoves([]);
+        setPendingVenueChanges([]);
+        setPendingTimeSlotChange(null);
 
         // 最新の状態を取得して初期状態を更新
         await fetchScheduleDetails();
@@ -766,7 +941,7 @@ export const useSessionEditor = (scheduleId: string) => {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, pendingSessionMoves, pendingInstructorMoves, fetchScheduleDetails]);
+  }, [hasUnsavedChanges, pendingSessionMoves, pendingInstructorMoves, pendingVenueChanges, pendingTimeSlotChange, scheduleId, fetchScheduleDetails]);
 
   /**
    * 変更を破棄して元に戻す
@@ -784,10 +959,18 @@ export const useSessionEditor = (scheduleId: string) => {
     if (originalInstructorsRef.current.length > 0) {
       dispatch({ type: 'SET_INSTRUCTORS', payload: originalInstructorsRef.current });
     }
+    if (originalVenuesRef.current.length > 0) {
+      dispatch({ type: 'SET_VENUES', payload: originalVenuesRef.current });
+    }
+    if (originalTimeSlotsRef.current.length > 0) {
+      dispatch({ type: 'SET_TIME_SLOTS', payload: originalTimeSlotsRef.current });
+    }
 
     // 未保存の変更をクリア
     setPendingSessionMoves([]);
     setPendingInstructorMoves([]);
+    setPendingVenueChanges([]);
+    setPendingTimeSlotChange(null);
 
     console.log('変更を破棄しました');
   }, [hasUnsavedChanges]);
@@ -807,6 +990,13 @@ export const useSessionEditor = (scheduleId: string) => {
     fetchScheduleDetails();
   }, [scheduleId]);
 
+  // 未保存の変更数を計算
+  const pendingChangesCount =
+    pendingSessionMoves.length +
+    pendingInstructorMoves.length +
+    pendingVenueChanges.length +
+    (pendingTimeSlotChange ? 1 : 0);
+
   return {
     ...state,
     parts,
@@ -824,11 +1014,14 @@ export const useSessionEditor = (scheduleId: string) => {
     addVenues,
     removeVenue,
     updateVenue,
+    // タイムスロット追加・削除（ローカル処理）
+    addTimeSlot,
+    removeTimeSlot,
     // 一括保存関連
     hasUnsavedChanges,
     isSaving,
     saveAllChanges,
     discardChanges,
-    pendingChangesCount: pendingSessionMoves.length + pendingInstructorMoves.length,
+    pendingChangesCount,
   };
 };
