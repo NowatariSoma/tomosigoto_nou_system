@@ -10,7 +10,7 @@ function AdminAttendanceContent() {
     <AppTemplate
       title="管理者用出席管理"
       description="練習への出席状況を一括登録・管理"
-      icon={<Users className="h-8 w-8 text-blue-600" />}
+      icon={<Users className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'alpha',
         text: '管理者向け機能'

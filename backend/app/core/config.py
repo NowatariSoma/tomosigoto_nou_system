@@ -5,6 +5,9 @@ import json
 
 
 class Settings(BaseSettings):
+    # 環境設定
+    ENVIRONMENT: str = "development"
+
     # Supabase設定
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""

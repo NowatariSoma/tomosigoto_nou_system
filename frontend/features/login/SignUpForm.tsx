@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginBackground } from './components/login-background';
 import { LoginCard } from './components/login-card';
 import { LoginLogo } from './components/login-logo';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
 
 interface SignUpFormProps {
   onSignUp: () => void;
@@ -88,7 +90,7 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
 
           {/* Email field */}
           <div className="relative mx-4">
-            <input
+            <Input
               id="email"
               type="email"
               placeholder="Email"
@@ -103,7 +105,7 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
 
           {/* Password field */}
           <div className="relative mx-4">
-            <input
+            <Input
               id="password"
               type="password"
               placeholder="Password"
@@ -118,7 +120,7 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
 
           {/* Confirm Password field */}
           <div className="relative mx-4">
-            <input
+            <Input
               id="confirmPassword"
               type="password"
               placeholder="Confirm Password"
@@ -133,7 +135,7 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
 
           {/* Sign up button */}
           <div className="mx-4">
-            <button
+            <Button
               type="submit"
               className="w-full h-[39px] text-white text-[18px] rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
@@ -150,7 +152,7 @@ export function SignUpForm({ onSignUp }: SignUpFormProps) {
             ) : (
               'Sign up'
             )}
-            </button>
+            </Button>
           </div>
 
           {/* Sign in link */}

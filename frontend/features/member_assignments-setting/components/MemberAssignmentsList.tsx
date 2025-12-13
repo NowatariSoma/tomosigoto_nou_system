@@ -19,10 +19,10 @@ export const MemberAssignmentsList: React.FC<MemberAssignmentsListProps> = ({
   if (safeStages.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center text-gray-500">
-          <Theater className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg mb-2">{UI_TEXT.NO_ASSIGNMENTS}</p>
-          <p className="text-gray-500">{UI_TEXT.START_MESSAGE}</p>
+        <div className="text-center text-black">
+          <Theater className="h-16 w-16 text-black mx-auto mb-4" />
+          <p className="text-black text-lg mb-2">{UI_TEXT.NO_ASSIGNMENTS}</p>
+          <p className="text-black">{UI_TEXT.START_MESSAGE}</p>
         </div>
       </div>
     );

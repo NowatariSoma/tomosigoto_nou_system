@@ -52,8 +52,8 @@ const Information: React.FC<InformationProps> = ({
   // 練習内容のローディング状態
   if (basicLoading) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6 text-center", className)}>
-        <div className="text-gray-500">練習情報を読み込み中...</div>
+      <div className={cn("card-blue shadow-lg p-6 mt-6 text-center", className)}>
+        <div className="text-black">練習情報を読み込み中...</div>
       </div>
     );
   }
@@ -61,7 +61,7 @@ const Information: React.FC<InformationProps> = ({
   // 練習内容のエラー状態
   if (basicError) {
     return (
-      <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6 text-center", className)}>
+      <div className={cn("card-blue shadow-lg p-6 mt-6 text-center", className)}>
         <div className="text-red-500">エラー: {basicError}</div>
       </div>
     );
@@ -73,12 +73,12 @@ const Information: React.FC<InformationProps> = ({
   }
 
   return (
-    <div className={cn("bg-white rounded-lg shadow-lg p-6 mt-6", className)}>
-      <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
+    <div className={cn("card-blue shadow-lg p-6 mt-6", className)}>
+      <h2 className="section-title-xl font-bold mb-4 text-center">
         正規練習 {formatDate(currentDate)}（{getWeekday(currentDate)}）
       </h2>
 
-      <div className="space-y-3 text-sm text-gray-600 max-w-5xl mx-auto">
+      <div className="space-y-3 text-sm text-black max-w-5xl mx-auto">
         {/* 練習内容（軽量データから先に表示） */}
         <div className="mb-6">
           <PracticeDescription description={description} />

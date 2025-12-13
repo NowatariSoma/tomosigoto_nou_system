@@ -310,7 +310,7 @@ export default function MonthView({
               <div
                 key={idx}
                 className={`text-center my-1 sm:my-2 md:my-3 text-xs sm:text-base md:text-lg tracking-tighter font-medium opacity-40 ${
-                  isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                  isSunday ? "text-red-600" : isSaturday ? "text-black" : "text-muted-foreground"
                 }`}
               >
                 {day}
@@ -341,7 +341,7 @@ export default function MonthView({
                 <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
                   <div className={clsx(
                     "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
-                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                    isSunday ? "text-red-600" : isSaturday ? "text-black" : "text-muted-foreground"
                   )}>
                     {prevMonthDay}
                   </div>
@@ -396,7 +396,7 @@ export default function MonthView({
                           : isSunday
                           ? "text-red-600"
                           : isSaturday
-                          ? "text-blue-600"
+                          ? "text-black"
                           : dayEvents.length > 0
                           ? "text-primary-600"
                           : "text-muted-foreground"
@@ -462,7 +462,7 @@ export default function MonthView({
                 <Card className="shadow-none cursor-default overflow-hidden relative p-1 sm:p-2 md:p-3 lg:p-4 border-t border-l-0 border-r-0 border-b-0 border-border/50 bg-transparent h-full rounded-none">
                   <div className={clsx(
                     "font-semibold relative text-sm sm:text-xl md:text-2xl lg:text-3xl mb-1 opacity-40 text-center",
-                    isSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
+                    isSunday ? "text-red-600" : isSaturday ? "text-black" : "text-muted-foreground"
                   )}>
                     {nextMonthDay}
                   </div>

@@ -39,7 +39,7 @@ export default function Page() {
     <AppTemplate
       title="練習表編集"
       description="練習スケジュールのセッション編集"
-      icon={<Edit3 className="h-8 w-8 text-blue-600" />}
+      icon={<Edit3 className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'alpha',
         text: '開発中'

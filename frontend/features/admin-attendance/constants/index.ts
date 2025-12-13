@@ -23,12 +23,12 @@ export const ATTENDANCE_STATUS_LABELS = {
   [ATTENDANCE_STATUS.NO_SHOW]: '無断欠席',
 } as const;
 
-// 出席ステータス色
+// 出席ステータス色（統一カラーパレット）
 export const ATTENDANCE_STATUS_COLORS = {
-  [ATTENDANCE_STATUS.PRESENT]: 'text-green-600 bg-green-50',
-  [ATTENDANCE_STATUS.ABSENT]: 'text-red-600 bg-red-50',
-  [ATTENDANCE_STATUS.LATE]: 'text-yellow-600 bg-yellow-50',
-  [ATTENDANCE_STATUS.NO_SHOW]: 'text-red-700 bg-red-100',
+  [ATTENDANCE_STATUS.PRESENT]: 'text-black bg-blue-50',
+  [ATTENDANCE_STATUS.ABSENT]: 'text-black bg-gray-100',
+  [ATTENDANCE_STATUS.LATE]: 'text-black bg-yellow-50',
+  [ATTENDANCE_STATUS.NO_SHOW]: 'text-black bg-gray-200',
 } as const;
 
 // UI表示用テキスト

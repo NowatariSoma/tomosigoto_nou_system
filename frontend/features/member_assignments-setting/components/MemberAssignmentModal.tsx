@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { 
-  MemberAssignmentWithDetails, 
-  CreateMemberAssignmentRequest, 
-  StageWithPartsAndAssignments 
+import {
+  MemberAssignmentWithDetails,
+  CreateMemberAssignmentRequest,
+  StageWithPartsAndAssignments
 } from '../types';
 import { UI_TEXT, CATEGORY_OPTIONS, DISPLAY_ORDER_LIMITS } from '../constants';
 import { userService, User as UserType } from '../services/user-service';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface MemberAssignmentModalProps {
   assignment: MemberAssignmentWithDetails | null;
@@ -111,66 +114,70 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="modal-container w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="modal-header flex items-center justify-between">
+          <h2 className="modal-title">
             {UI_TEXT.ASSIGNMENT_TITLE}
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="rounded-full"
           >
-            <X className="h-6 w-6 text-gray-500" />
-          </button>
+            <X className="h-6 w-6 text-black" />
+          </Button>
         </div>
 
         {/* フォーム */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 舞台選択 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               舞台
             </label>
-            <select
-              value={selectedStageId}
-              onChange={(e) => handleStageChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value="">舞台を選択してください</option>
-              {stages.map((stage) => (
-                <option key={stage.id} value={stage.id}>
-                  {stage.name} ({new Date(stage.performance_date).toLocaleDateString('ja-JP')})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedStageId} onValueChange={handleStageChange} required>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="舞台を選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {stages.map((stage) => (
+                  <SelectItem key={stage.id} value={stage.id}>
+                    {stage.name} ({new Date(stage.performance_date).toLocaleDateString('ja-JP')})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* パート選択 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.PART_LABEL}
             </label>
-            <select
+            <Select
               value={selectedPartId}
-              onChange={(e) => handlePartChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
+              onValueChange={handlePartChange}
               disabled={!selectedStageId}
+              required
             >
-              <option value="">パートを選択してください</option>
-              {availableParts.map((part) => (
-                <option key={part.id} value={part.id}>
-                  {part.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="パートを選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableParts.map((part) => (
+                  <SelectItem key={part.id} value={part.id}>
+                    {part.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* 謡舞区分 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.CATEGORY_LABEL}
             </label>
             <div className="flex gap-4">
@@ -182,9 +189,9 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
                     value={option.value}
                     checked={formData.category === option.value}
                     onChange={(e) => handleInputChange('category', e.target.value as 'utai' | 'mai')}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                    className="mr-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                  <span className="label-form">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -192,44 +199,43 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
 
           {/* 表示順序 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="label-form block mb-2">
               {UI_TEXT.DISPLAY_ORDER_LABEL}
             </label>
-            <input
+            <Input
               type="number"
               min={DISPLAY_ORDER_LIMITS.MIN}
               max={DISPLAY_ORDER_LIMITS.MAX}
               value={formData.display_order || 0}
               onChange={(e) => handleInputChange('display_order', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           {/* 現在の所属情報表示 */}
           {assignment && (
             <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">現在の所属情報</h3>
+              <h3 className="label-form mb-2">現在の所属情報</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">ユーザー:</span>
+                  <span className="text-black">ユーザー:</span>
                   <span className="font-medium">{assignment.user.name} ({assignment.user.email})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">パート:</span>
+                  <span className="text-black">パート:</span>
                   <span className="font-medium">{assignment.part.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">舞台:</span>
+                  <span className="text-black">舞台:</span>
                   <span className="font-medium">{assignment.part.stage.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">謡舞区分:</span>
+                  <span className="text-black">謡舞区分:</span>
                   <span className="font-medium">
                     {formData.category === 'utai' ? '謡' : '舞'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">表示順序:</span>
+                  <span className="text-black">表示順序:</span>
                   <span className="font-medium">{assignment.display_order}</span>
                 </div>
               </div>
@@ -239,30 +245,32 @@ export const MemberAssignmentModal: React.FC<MemberAssignmentModalProps> = ({
           {/* ボタン */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
             <div className="flex gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={onClose}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-semibold"
+                className="px-6 py-3 border-2"
               >
                 {UI_TEXT.CANCEL}
-              </button>
+              </Button>
               {onDelete && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
                   onClick={onDelete}
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                  className="px-6 py-3"
                 >
                   {UI_TEXT.DELETE}
-                </button>
+                </Button>
               )}
             </div>
-            <button
+            <Button
               type="submit"
               disabled={!isFormValid}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg"
+              className="px-8 py-3 text-lg"
             >
               {UI_TEXT.UPDATE}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

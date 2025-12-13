@@ -9,7 +9,7 @@ export default function Settings() {
     <AppTemplate
       title="設定"
       description="アカウントの基本情報を管理します"
-      icon={<SettingsIcon className="h-8 w-8 text-blue-600" />}
+      icon={<SettingsIcon className="h-8 w-8 text-black" />}
       developmentBadge={{
         level: 'alpha',
         text: 'バックエンド作成'

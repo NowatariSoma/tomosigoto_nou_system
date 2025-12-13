@@ -39,7 +39,7 @@ const variantColors = {
   primary: {
     bg: "bg-blue-100",
     border: "border-blue-200",
-    text: "text-blue-800",
+    text: "text-black",
   },
   danger: {
     bg: "bg-red-100",

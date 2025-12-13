@@ -7,6 +7,9 @@ import { memberAssignmentService } from '../services/member-assignment-service';
 import { partAssignmentsService } from '../services/part-assignments-service';
 import { CreateMemberAssignmentRequest, MemberAssignmentWithDetails } from '../types';
 import { UI_TEXT, CATEGORY_OPTIONS } from '../constants';
+import { Button } from '@/components/ui/forms/button';
+import { Input } from '@/components/ui/inputs/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
 
 interface MemberRegistrationModalProps {
   isOpen: boolean;
@@ -186,82 +189,83 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-blue-50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100">
+          <h2 className="text-2xl font-bold text-black">
             メンバー登録
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="rounded-full"
           >
-            <X className="h-6 w-6 text-gray-500" />
-          </button>
+            <X className="h-6 w-6 text-black" />
+          </Button>
         </div>
 
         {/* フォーム */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 舞台・パート情報 */}
-          <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-lg">
+          <div className="bg-white border-2 border-blue-300 rounded-lg p-6 shadow-lg">
             <div>
-              <div className="text-2xl font-black text-gray-900 mb-1">{stageName}</div>
-              <div className="text-base font-bold text-blue-600">パート: <span className="text-2xl font-black text-blue-800">{partName}</span></div>
+              <div className="text-2xl font-black text-black mb-1">{stageName}</div>
+              <div className="text-base font-bold text-black">パート: <span className="text-2xl font-black text-black">{partName}</span></div>
             </div>
           </div>
 
           {/* ユーザー検索 */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
               <Search className="h-5 w-5" />
               ユーザー検索
             </h3>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     姓（カタカナ）
                   </label>
-                  <input
+                  <Input
                     id="lastName"
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="タナカ"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     名（カタカナ）
                   </label>
-                  <input
+                  <Input
                     id="firstName"
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="タロウ"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <button
+                <Button
                   type="button"
                   onClick={handleSearch}
                   disabled={loading || (!firstName.trim() && !lastName.trim())}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold"
+                  className="px-6 py-3"
                 >
                   {loading ? '検索中...' : '検索'}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={handleClearSearch}
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-semibold"
+                  className="px-6 py-3 border-2"
                 >
                   検索クリア
-                </button>
+                </Button>
               </div>
           </div>
 
@@ -279,7 +283,7 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* 検索結果 */}
             {hasSearched && (
               <div className="mt-4 bg-white border-2 border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                <h4 className="text-sm font-semibold text-black mb-3">
                   検索結果 ({searchResults.length}件)
                 </h4>
                 {searchResults.length > 0 ? (
@@ -299,39 +303,36 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
                           }`}
                         >
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-600 rounded-full text-sm font-bold">
+                          <div className="flex items-center justify-center w-10 h-10 bg-blue-100 text-black rounded-full text-sm font-bold">
                             <UserIcon className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-black">
                               {user.last_name_katakana} {user.first_name_katakana}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-black">
                               {user.last_name_kanji} {user.first_name_kanji}
                             </div>
                           </div>
                         </div>
-                        <button
+                        <Button
                           type="button"
                           onClick={() => handleUserSelect(user)}
                           disabled={isDisabled}
-                          className={`px-4 py-2 text-sm rounded-lg transition-colors font-semibold ${
-                            isDisabled
-                              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
+                          variant={isDisabled ? "outline" : "default"}
+                          className="text-sm"
                         >
-                          <Plus className="h-4 w-4 mr-1 inline" />
-                          {isAlreadySelected ? '選択済み' : 
+                          <Plus className="h-4 w-4 mr-1" />
+                          {isAlreadySelected ? '選択済み' :
                            isExistingMember ? '登録済み' : '選択'}
-                        </button>
+                        </Button>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    <UserIcon className="h-6 w-6 mx-auto mb-2 text-gray-300" />
+                  <div className="text-center py-4 text-black">
+                    <UserIcon className="h-6 w-6 mx-auto mb-2 text-black" />
                     <p>該当するユーザーが見つかりませんでした</p>
                   </div>
                 )}
@@ -343,55 +344,61 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {selectedUsers.length > 0 && (
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-green-800">
+                <h4 className="text-lg font-semibold text-black">
                   選択されたユーザー ({selectedUsers.length}名)
                 </h4>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={handleClear}
-                  className="px-3 py-1 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-400 transition-colors text-sm font-semibold"
+                  className="px-3 py-1 border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 text-sm"
                 >
                   全クリア
-                </button>
+                </Button>
               </div>
               <div className="space-y-3">
                 {selectedUsers.map((user, index) => (
-                  <div key={user.id} className="flex items-center justify-between bg-white rounded-lg p-4 hover:bg-green-100/30 transition-colors">
+                  <div key={user.id} className="flex items-center justify-between bg-white rounded-lg p-4 hover:bg-blue-100/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-bold text-green-800 text-xl">
+                        <div className="font-bold text-black text-xl">
                           {user.last_name_katakana} {user.first_name_katakana}
                         </div>
-                        <div className="text-sm text-green-600">
+                        <div className="text-sm text-black">
                           {user.last_name_kanji} {user.first_name_kanji}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 font-medium">区分:</span>
-                        <select
+                        <span className="text-sm text-black font-medium">区分:</span>
+                        <Select
                           value={userCategories[user.id] || 'utai'}
-                          onChange={(e) => setUserCategories(prev => ({
+                          onValueChange={(value) => setUserCategories(prev => ({
                             ...prev,
-                            [user.id]: e.target.value as 'utai' | 'mai'
+                            [user.id]: value as 'utai' | 'mai'
                           }))}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         >
-                          {CATEGORY_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORY_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
                         onClick={() => handleUserRemove(user.id)}
-                        className="px-3 py-1 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-400 transition-colors text-sm font-semibold"
+                        className="px-3 py-1 border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 text-sm"
                       >
                         削除
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -402,36 +409,37 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* 既存メンバー */}
           {existingMembers.length > 0 && (
             <div className="p-4">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+              <h4 className="text-lg font-semibold text-black mb-4">
                 既存メンバー ({existingMembers.length}名)
               </h4>
               <div className="space-y-3">
                 {existingMembers.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-bold text-gray-900 text-xl">
+                        <div className="font-bold text-black text-xl">
                           {member.user.name}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-black">
                           {member.user.last_name_kanji} {member.user.first_name_kanji}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-black">
                           区分: {member.category === 'utai' ? '謡' : '舞'}
                         </div>
                       </div>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="destructive"
                       onClick={() => handleDeleteMember(member.id)}
                       disabled={submitting}
-                      className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold"
+                      className="px-3 py-1 text-sm"
                     >
                       削除
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -441,23 +449,24 @@ export const MemberRegistrationModal: React.FC<MemberRegistrationModalProps> = (
           {/* ボタン */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
             <div className="flex gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={onClose}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-semibold"
+                className="px-6 py-3 border-2"
               >
                 キャンセル
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
               type="submit"
               disabled={selectedUsers.length === 0 || submitting}
-              className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg"
+              className="px-8 py-3 text-lg"
             >
-              {submitting ? '登録中...' : 
+              {submitting ? '登録中...' :
                selectedUsers.length === 0 ? 'メンバーを選択してください' :
                `${selectedUsers.length}名のメンバーを登録`}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

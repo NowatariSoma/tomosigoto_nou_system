@@ -94,7 +94,7 @@ export const InstructorApiDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={`text-xs text-gray-800 ${className}`}>
+    <div className={`text-xs text-black ${className}`}>
       <span className="mr-1">🎭</span>
       {displayInstructors.map((instructor, index) => (
         <span key={instructor.id}>
@@ -103,7 +103,7 @@ export const InstructorApiDisplay: React.FC<{
              (instructor.user_email ? instructor.user_email.split('@')[0] : `指導者${instructor.id.slice(-4)}`)}
           </span>
           {showEmail && instructor.user_email && !instructor.user_name && (
-            <span className="text-gray-700 ml-1">
+            <span className="text-black ml-1">
               ({instructor.user_email})
             </span>
           )}
@@ -111,7 +111,7 @@ export const InstructorApiDisplay: React.FC<{
         </span>
       ))}
       {remainingCount > 0 && (
-        <span className="text-gray-700 ml-1">
+        <span className="text-black ml-1">
           他{remainingCount}名
         </span>
       )}
@@ -136,7 +136,7 @@ export const InstructorFallbackDisplay: React.FC<{
   const remainingCount = Math.max(0, instructors.length - maxDisplay);
 
   return (
-    <div className={`text-xs text-gray-800 ${className}`}>
+    <div className={`text-xs text-black ${className}`}>
       <span className="mr-1">🎭</span>
       {displayInstructors.map((instructor, index) => (
         <span key={index}>
@@ -145,7 +145,7 @@ export const InstructorFallbackDisplay: React.FC<{
         </span>
       ))}
       {remainingCount > 0 && (
-        <span className="text-gray-700 ml-1">
+        <span className="text-black ml-1">
           他{remainingCount}名
         </span>
       )}

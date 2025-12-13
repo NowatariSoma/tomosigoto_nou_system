@@ -4,6 +4,7 @@ import React from 'react';
 import { Session, EditMode } from '../types/session-editor';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { InstructorDisplay } from './InstructorDisplay';
+import { Button } from '@/components/ui/forms/button';
 
 interface DraggableSessionCardProps {
   session: Session;
@@ -34,7 +35,7 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
     <div
       draggable={edit_mode === 'edit'}
       onDragStart={onDragStart ? (e) => onDragStart(e, session) : undefined}
-      className={`w-full rounded-lg px-4 py-4 bg-blue-100 border border-blue-200 hover:bg-blue-200 hover:shadow-md transition-all ${
+      className={`w-full rounded-lg px-4 py-4 card-blue-hover ${
         edit_mode === 'edit' ? 'cursor-move' : 'cursor-pointer'
       } ${is_dragging ? 'opacity-50' : ''}`}
       onClick={(e) => {
@@ -46,14 +47,14 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
         {/* ドラッグハンドル（編集モード時のみ） */}
         {edit_mode === 'edit' && (
           <div className="mt-1 cursor-grab hover:cursor-grabbing">
-            <GripVertical className="h-4 w-4 text-gray-400" />
+            <GripVertical className="h-4 w-4 text-black" />
           </div>
         )}
 
         {/* セッション情報 */}
         <div className="flex-1">
           {session.part_name && (
-            <div className="font-bold text-sm text-gray-800 leading-tight mb-1">
+            <div className="font-bold text-sm text-black leading-tight mb-1">
               {session.part_name}
             </div>
           )}
@@ -64,16 +65,18 @@ export const DraggableSessionCard: React.FC<DraggableSessionCardProps> = ({
 
         {/* 削除ボタン（編集モード時のみ） */}
         {edit_mode === 'edit' && (
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onDelete(session.id);
             }}
-            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-1 text-black hover-subtle"
             title="削除"
           >
             <Trash2 className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </div>
     </div>
