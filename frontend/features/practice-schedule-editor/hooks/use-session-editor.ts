@@ -888,12 +888,14 @@ export const useSessionEditor = (scheduleId: string) => {
 
       // 追加を処理
       const venueAdds = pendingVenueChanges.filter(c => c.type === 'add') as PendingVenueAdd[];
-      if (venueAdds.length > 0) {
+      // venue_idが存在する会場のみをフィルタリング
+      const validVenueAdds = venueAdds.filter(add => add.venue.venue_id !== undefined);
+      if (validVenueAdds.length > 0) {
         try {
           const bulkData = {
             schedule_id: scheduleId,
-            venues: venueAdds.map(add => ({
-              venue_id: add.venue.venue_id, // 元の会場マスターID
+            venues: validVenueAdds.map(add => ({
+              venue_id: add.venue.venue_id!, // 元の会場マスターID（フィルタ済みなので必ず存在）
               is_preferred: add.venue.is_preferred || false,
               priority: add.venue.priority || 0,
               notes: add.venue.notes || '',
