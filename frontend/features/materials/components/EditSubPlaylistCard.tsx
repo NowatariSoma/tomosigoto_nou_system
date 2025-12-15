@@ -36,6 +36,7 @@ interface EditSubPlaylistCardProps {
   onClick?: (id: string) => void;
   playlistId?: string;
   onUpdate?: (updatedSubPlaylist: SubPlaylist) => void;
+  allSubPlaylists?: SubPlaylist[];
 }
 
 export const EditSubPlaylistCard = ({
@@ -50,6 +51,7 @@ export const EditSubPlaylistCard = ({
   onClick,
   playlistId,
   onUpdate,
+  allSubPlaylists,
 }: EditSubPlaylistCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(subPlaylist.title);
@@ -69,7 +71,8 @@ export const EditSubPlaylistCard = ({
     const loadPhases = async () => {
       if (playlistId) {
         try {
-          const subPlaylists = await materialsService.getSubPlaylists(playlistId);
+          // allSubPlaylistsが渡されている場合はそれを使用、そうでなければAPIから取得
+          const subPlaylists = allSubPlaylists || await materialsService.getSubPlaylists(playlistId);
           setExistingSubPlaylists(subPlaylists);
           // 既存のサブプレイリストからフェーズを抽出（空文字を除く）
           const phases = Array.from(
@@ -92,7 +95,7 @@ export const EditSubPlaylistCard = ({
       }
     };
     loadPhases();
-  }, [playlistId]);
+  }, [playlistId, allSubPlaylists]);
 
   const handlePhaseSelect = (phase: string) => {
     setEditPhase(phase);

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/feedback/badge';
 import { SubPlaylist, Playlist, Video } from '@/features/materials/types/material_types';
 import { EditVideoCard } from './EditVideoCard';
 import { CreateSubPlaylistDialog } from './CreateSubPlaylistDialog';
+import { CreateVideoDialog } from './CreateVideoDialog';
 import { materialsService } from '@/features/materials/services/materials-service';
 
 interface SubPlaylistEditViewProps {
@@ -29,6 +30,7 @@ interface SubPlaylistEditViewProps {
   formatDate: (dateString?: string) => string;
   onSubPlaylistCreate?: (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
   onSubPlaylistUpdate?: (id: string, data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
+  onVideoAdd?: (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => Promise<void>;
 }
 
 export const SubPlaylistEditView = ({
@@ -42,6 +44,7 @@ export const SubPlaylistEditView = ({
   formatDate,
   onSubPlaylistCreate,
   onSubPlaylistUpdate,
+  onVideoAdd,
 }: SubPlaylistEditViewProps) => {
   const [isSubPlaylistDialogOpen, setIsSubPlaylistDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -52,6 +55,13 @@ export const SubPlaylistEditView = ({
     recordedDate: '',
     phase: '',
     playlistUrl: '',
+  });
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [videoData, setVideoData] = useState({
+    title: '',
+    videoUrl: '',
+    recordedDate: '',
+    thumbnailUrl: '',
   });
 
   // 編集モードの初期化
@@ -124,6 +134,31 @@ export const SubPlaylistEditView = ({
     setIsSubPlaylistDialogOpen(true);
   };
 
+  const handleVideoAddClick = () => {
+    setVideoData({ title: '', videoUrl: '', recordedDate: '', thumbnailUrl: '' });
+    setIsVideoDialogOpen(true);
+  };
+
+  const handleVideoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onVideoAdd && playlist?.id) {
+      try {
+        await onVideoAdd(playlist.id, subPlaylist.id, {
+          title: videoData.title,
+          videoUrl: videoData.videoUrl,
+          recordedDate: videoData.recordedDate,
+          thumbnailUrl: videoData.thumbnailUrl || undefined,
+        });
+        // Reset form
+        setVideoData({ title: '', videoUrl: '', recordedDate: '', thumbnailUrl: '' });
+        setIsVideoDialogOpen(false);
+      } catch (error) {
+        console.error('Failed to add video:', error);
+        alert('動画の追加に失敗しました');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4">
@@ -152,17 +187,6 @@ export const SubPlaylistEditView = ({
                 <ChevronRight className="h-4 w-4" />
                 移動
               </Button>
-              {onSubPlaylistCreate && (
-                <Button
-                  variant="outline"
-                  onClick={handleAddClick}
-                  size="sm"
-                  className="flex items-center gap-2 flex-1 sm:flex-initial"
-                >
-                  <Plus className="h-4 w-4" />
-                  追加
-                </Button>
-              )}
               {onSubPlaylistUpdate && (
                 <Button
                   variant="outline"
@@ -205,7 +229,19 @@ export const SubPlaylistEditView = ({
       </Card>
 
       <div>
-        <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">動画一覧</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900">動画一覧</h3>
+          {onVideoAdd && (
+            <Button
+              onClick={handleVideoAddClick}
+              className="flex items-center gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              動画を追加
+            </Button>
+          )}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {videos.map((video) => (
             <EditVideoCard
@@ -231,6 +267,14 @@ export const SubPlaylistEditView = ({
         isEditMode={isEditMode}
         existingSubPlaylists={existingSubPlaylists}
         currentSubPlaylistId={isEditMode ? subPlaylist.id : undefined}
+      />
+
+      <CreateVideoDialog
+        open={isVideoDialogOpen}
+        onOpenChange={setIsVideoDialogOpen}
+        videoData={videoData}
+        setVideoData={setVideoData}
+        onSubmit={handleVideoSubmit}
       />
     </div>
   );

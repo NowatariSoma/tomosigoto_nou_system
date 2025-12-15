@@ -27,6 +27,7 @@ function PlaylistEditViewAsyncWrapper({
   onDeleteVideo,
   onMoveSubPlaylist,
   onSubPlaylistCreate,
+  onVideoAdd,
   formatDate,
   onSubPlaylistClick,
 }: {
@@ -38,6 +39,7 @@ function PlaylistEditViewAsyncWrapper({
   onDeleteVideo: (id: string) => void;
   onMoveSubPlaylist: (id: string) => void;
   onSubPlaylistCreate?: (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
+  onVideoAdd?: (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => Promise<void>;
   formatDate: (dateString?: string) => string;
   onSubPlaylistClick?: (subPlaylist: SubPlaylist) => void;
 }) {
@@ -77,6 +79,143 @@ function PlaylistEditViewAsyncWrapper({
     return videosBySubPlaylist[subPlaylistId] || [];
   };
 
+  const handleSavePlaylist = async (data: { title: string; year: number; stage: string }) => {
+    try {
+      // 直接APIを呼び出してプレイリストを更新
+      const updatedPlaylist = await materialsService.updatePlaylist(playlist.id, {
+        title: data.title,
+        year: data.year,
+        stage: data.stage,
+      });
+      // 親コンポーネントのハンドラーも呼び出す
+      onSavePlaylist(data);
+      // プレイリスト情報を更新（useEffectの依存配列にplaylist.idがあるため、新しいオブジェクトを渡す必要がある）
+      // ただし、playlistプロップは親から来るので、ここでは更新できない
+      // 親コンポーネントで更新されることを期待する
+    } catch (error) {
+      console.error('Failed to save playlist:', error);
+      alert('プレイリストの保存に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleCreateSubPlaylist = async (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => {
+    try {
+      // 直接APIを呼び出してサブプレイリストを作成
+      const newSubPlaylist = await materialsService.createSubPlaylist(playlist.id, {
+        title: data.title,
+        recordedDate: data.recordedDate,
+        phase: data.phase,
+        playlistUrl: data.playlistUrl,
+      });
+      alert('サブプレイリストを作成しました');
+      // サブプレイリスト一覧を再取得
+      const updatedSubPlaylists = await materialsService.getSubPlaylists(playlist.id);
+      setSubPlaylists(updatedSubPlaylists);
+      // 新しく作成されたサブプレイリストの動画も取得
+      try {
+        const videos = await materialsService.getVideos(playlist.id, newSubPlaylist.id);
+        setVideosBySubPlaylist(prev => ({ ...prev, [newSubPlaylist.id]: videos }));
+      } catch (err) {
+        console.error(`Failed to load videos for new sub-playlist ${newSubPlaylist.id}:`, err);
+        setVideosBySubPlaylist(prev => ({ ...prev, [newSubPlaylist.id]: [] }));
+      }
+    } catch (error) {
+      console.error('Failed to create sub-playlist:', error);
+      alert('サブプレイリストの作成に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleUpdateSubPlaylist = (updatedSubPlaylist: SubPlaylist) => {
+    // サブプレイリスト一覧を更新
+    setSubPlaylists(prev => prev.map(sp => sp.id === updatedSubPlaylist.id ? updatedSubPlaylist : sp));
+  };
+
+  const handleDeleteSubPlaylist = async (subPlaylistId: string) => {
+    try {
+      // 直接APIを呼び出してサブプレイリストを削除
+      await materialsService.deleteSubPlaylist(playlist.id, subPlaylistId);
+      alert('サブプレイリストを削除しました');
+      // サブプレイリスト一覧を再取得
+      const updatedSubPlaylists = await materialsService.getSubPlaylists(playlist.id);
+      setSubPlaylists(updatedSubPlaylists);
+      // 削除されたサブプレイリストの動画データも削除
+      setVideosBySubPlaylist(prev => {
+        const updated = { ...prev };
+        delete updated[subPlaylistId];
+        return updated;
+      });
+    } catch (error) {
+      console.error(`Failed to delete sub-playlist ${subPlaylistId}:`, error);
+      alert('サブプレイリストの削除に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleVideoAdd = async (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => {
+    try {
+      // 直接APIを呼び出して動画を追加
+      await materialsService.createVideo(playlistId, subPlaylistId, {
+        title: data.title,
+        videoUrl: data.videoUrl,
+        recordedDate: data.recordedDate,
+        thumbnailUrl: data.thumbnailUrl,
+      });
+      alert('動画を追加しました');
+      // 動画一覧を再取得
+      const videos = await materialsService.getVideos(playlistId, subPlaylistId);
+      setVideosBySubPlaylist(prev => ({ ...prev, [subPlaylistId]: videos }));
+    } catch (error) {
+      console.error(`Failed to add video to sub-playlist ${subPlaylistId}:`, error);
+      alert('動画の追加に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleVideoDelete = async (videoId: string) => {
+    try {
+      // どのサブプレイリストに属しているかを特定
+      let targetSubPlaylistId: string | null = null;
+      for (const subPlaylist of subPlaylists) {
+        const videos = videosBySubPlaylist[subPlaylist.id] || [];
+        if (videos.some(v => v.id === videoId)) {
+          targetSubPlaylistId = subPlaylist.id;
+          break;
+        }
+      }
+
+      if (!targetSubPlaylistId) {
+        // 見つからない場合は親コンポーネントのハンドラーに任せる
+        await onDeleteVideo(videoId);
+        // すべてのサブプレイリストの動画一覧を再取得
+        const videosMap: Record<string, Video[]> = {};
+        for (const subPlaylist of subPlaylists) {
+          try {
+            const videos = await materialsService.getVideos(playlist.id, subPlaylist.id);
+            videosMap[subPlaylist.id] = videos;
+          } catch (err) {
+            console.error(`Failed to reload videos for sub-playlist ${subPlaylist.id}:`, err);
+            videosMap[subPlaylist.id] = videosBySubPlaylist[subPlaylist.id] || [];
+          }
+        }
+        setVideosBySubPlaylist(videosMap);
+        return;
+      }
+
+      // 直接APIを呼び出して動画を削除
+      await materialsService.deleteVideo(playlist.id, targetSubPlaylistId, videoId);
+      alert('動画を削除しました');
+      // 該当サブプレイリストの動画一覧を再取得
+      const updatedVideos = await materialsService.getVideos(playlist.id, targetSubPlaylistId);
+      setVideosBySubPlaylist(prev => ({ ...prev, [targetSubPlaylistId]: updatedVideos }));
+    } catch (error) {
+      console.error(`Failed to delete video ${videoId}:`, error);
+      alert('動画の削除に失敗しました');
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return <div>読み込み中...</div>;
   }
@@ -87,15 +226,16 @@ function PlaylistEditViewAsyncWrapper({
       subPlaylists={subPlaylists}
       getVideosForSubPlaylist={getVideosForSubPlaylist}
       onBack={onBack}
-      onSavePlaylist={onSavePlaylist}
+      onSavePlaylist={handleSavePlaylist}
       onDeletePlaylist={onDeletePlaylist}
-      onDeleteSubPlaylist={onDeleteSubPlaylist}
-      onDeleteVideo={onDeleteVideo}
+      onDeleteSubPlaylist={handleDeleteSubPlaylist}
+      onDeleteVideo={handleVideoDelete}
       onMoveSubPlaylist={onMoveSubPlaylist}
-      onSubPlaylistCreate={onSubPlaylistCreate}
-      onVideoAdd={true}
+      onSubPlaylistCreate={handleCreateSubPlaylist}
+      onVideoAdd={handleVideoAdd}
       formatDate={formatDate}
       onSubPlaylistClick={onSubPlaylistClick}
+      onSubPlaylistUpdate={handleUpdateSubPlaylist}
     />
   );
 }
@@ -111,6 +251,7 @@ function SubPlaylistEditViewAsyncWrapper({
   formatDate,
   onSubPlaylistCreate,
   onSubPlaylistUpdate,
+  onVideoAdd,
 }: {
   subPlaylist: SubPlaylist;
   playlist: Playlist;
@@ -121,6 +262,7 @@ function SubPlaylistEditViewAsyncWrapper({
   formatDate: (dateString?: string) => string;
   onSubPlaylistCreate?: (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
   onSubPlaylistUpdate?: (id: string, data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
+  onVideoAdd?: (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => Promise<void>;
 }) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,6 +282,63 @@ function SubPlaylistEditViewAsyncWrapper({
     loadVideos();
   }, [playlist.id, subPlaylist.id]);
 
+  const handleVideoAdd = async (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => {
+    try {
+      // 直接APIを呼び出して動画を追加
+      await materialsService.createVideo(playlistId, subPlaylistId, {
+        title: data.title,
+        videoUrl: data.videoUrl,
+        recordedDate: data.recordedDate,
+        thumbnailUrl: data.thumbnailUrl,
+      });
+      alert('動画を追加しました');
+      // 動画一覧を再取得
+      const updatedVideos = await materialsService.getVideos(playlistId, subPlaylistId);
+      setVideos(updatedVideos);
+    } catch (error) {
+      console.error('Failed to add video:', error);
+      alert('動画の追加に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleVideoDelete = async (videoId: string) => {
+    try {
+      // 直接APIを呼び出して動画を削除
+      await materialsService.deleteVideo(playlist.id, subPlaylist.id, videoId);
+      alert('動画を削除しました');
+      // 動画一覧を再取得
+      const updatedVideos = await materialsService.getVideos(playlist.id, subPlaylist.id);
+      setVideos(updatedVideos);
+    } catch (error) {
+      console.error(`Failed to delete video ${videoId}:`, error);
+      alert('動画の削除に失敗しました');
+      throw error;
+    }
+  };
+
+  const handleUpdateSubPlaylist = async (subPlaylistId: string, data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => {
+    try {
+      // 直接APIを呼び出してサブプレイリストを更新
+      const updatedSubPlaylist = await materialsService.updateSubPlaylist(playlist.id, subPlaylistId, {
+        title: data.title,
+        recordedDate: data.recordedDate,
+        phase: data.phase,
+        playlistUrl: data.playlistUrl,
+      });
+      alert('サブプレイリストを更新しました');
+      // 親コンポーネントのハンドラーも呼び出す
+      if (onSubPlaylistUpdate) {
+        await onSubPlaylistUpdate(subPlaylistId, data);
+      }
+      // サブプレイリスト情報を更新（useEffectの依存配列にsubPlaylist.idがあるため、親コンポーネントで更新されることを期待する）
+    } catch (error) {
+      console.error(`Failed to update sub-playlist ${subPlaylistId}:`, error);
+      alert('サブプレイリストの更新に失敗しました');
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return <div>読み込み中...</div>;
   }
@@ -152,10 +351,11 @@ function SubPlaylistEditViewAsyncWrapper({
       onBack={onBack}
       onDelete={onDelete}
       onMove={onMove}
-      onVideoDelete={onVideoDelete}
+      onVideoDelete={handleVideoDelete}
       formatDate={formatDate}
       onSubPlaylistCreate={onSubPlaylistCreate}
-      onSubPlaylistUpdate={onSubPlaylistUpdate}
+      onSubPlaylistUpdate={handleUpdateSubPlaylist}
+      onVideoAdd={handleVideoAdd}
     />
   );
 }
@@ -365,6 +565,22 @@ export default function EditMaterialPage() {
     }
   };
 
+  const handleVideoAdd = async (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => {
+    try {
+      await materialsService.createVideo(playlistId, subPlaylistId, {
+        title: data.title,
+        videoUrl: data.videoUrl,
+        recordedDate: data.recordedDate,
+        thumbnailUrl: data.thumbnailUrl,
+      });
+      alert('動画を追加しました');
+    } catch (error) {
+      console.error('Failed to add video:', error);
+      alert('動画の追加に失敗しました');
+      throw error;
+    }
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '日付未設定';
     const date = new Date(dateString);
@@ -497,6 +713,7 @@ export default function EditMaterialPage() {
             onDeleteVideo={handleDeleteVideo}
             onMoveSubPlaylist={handleMoveSubPlaylist}
             onSubPlaylistCreate={handleCreateSubPlaylist}
+            onVideoAdd={handleVideoAdd}
             formatDate={formatDate}
             onSubPlaylistClick={(subPlaylist) => {
               setSelectedSubPlaylist(subPlaylist);
@@ -516,6 +733,7 @@ export default function EditMaterialPage() {
             formatDate={formatDate}
             onSubPlaylistCreate={handleCreateSubPlaylist}
             onSubPlaylistUpdate={handleUpdateSubPlaylist}
+            onVideoAdd={handleVideoAdd}
           />
         )}
       </main>
