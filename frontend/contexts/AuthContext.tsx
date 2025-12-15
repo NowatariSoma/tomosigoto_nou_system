@@ -139,17 +139,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserRole, ensureProfileExists]);
 
   const login = async (email: string, password: string) => {
-    // ログイン機能をコメントアウト
     setIsLoading(true);
     try {
-      // const { data, error } = await supabase.auth.signInWithPassword({
-      //   email,
-      //   password,
-      // });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // if (error) {
-      //   throw new Error(error.message);
-      // }
+      if (error) {
+        throw new Error(error.message);
+      }
 
       // onAuthStateChangeで処理されるため、ここでは何もしない
       // setUser(data.user);
@@ -158,8 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       //   if (data.session?.access_token) {
       //     localStorage.setItem('authToken', data.session.access_token);
       //   }
-      //   await fetchUserRole(data.user);
+      //   await fetchUserRole(data.user, data.session);
       // }
+    } catch (error: any) {
+      throw error;
     } finally {
       setIsLoading(false);
     }

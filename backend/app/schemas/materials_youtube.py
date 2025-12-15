@@ -127,3 +127,39 @@ class MaterialsFavoritesDeleteResponse(MaterialsFavoritesBase):
     id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+class MaterialsPlaylistSearchParams(BaseModel):
+    """プレイリスト検索パラメータ"""
+    title: Optional[str] = Field(None, description="タイトル（部分一致）")
+    name: Optional[str] = Field(None, description="舞台名（部分一致）")
+    year: Optional[int] = Field(None, description="年度")
+
+
+class MaterialsSubPlaylistSearchParams(BaseModel):
+    """サブプレイリスト検索パラメータ"""
+    title: Optional[str] = Field(None, description="タイトル（部分一致）")
+    phase: Optional[str] = Field(None, description="フェーズ")
+    recorded_date_from: Optional[date] = Field(None, description="録画日（開始日）")
+    recorded_date_to: Optional[date] = Field(None, description="録画日（終了日）")
+
+
+class MaterialsVideoSearchParams(BaseModel):
+    """ビデオ検索パラメータ"""
+    title: Optional[str] = Field(None, description="タイトル（部分一致）")
+    recorded_date_from: Optional[date] = Field(None, description="録画日（開始日）")
+    recorded_date_to: Optional[date] = Field(None, description="録画日（終了日）")
+
+
+class FavoriteVideoDetailResponse(BaseModel):
+    """お気に入り動画の詳細情報レスポンス用スキーマ"""
+    id: UUID
+    user_id: UUID
+    video_id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    video: MaterialsVideoResponse
+    sub_playlist: MaterialsSubPlaylistResponse
+    playlist: MaterialsPlaylistResponse
+
+    model_config = ConfigDict(from_attributes=True)

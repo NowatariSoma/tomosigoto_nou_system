@@ -14,7 +14,7 @@ export const useFavoriteVideos = () => {
       try {
         setIsLoading(true);
         const favoritesList = await materialsService.getFavorites();
-        const favoriteIds = favoritesList.map(fav => fav.video_id);
+        const favoriteIds = favoritesList.map(fav => fav.videoId);
         setFavoritesInternal(new Set(favoriteIds));
         
         // キャッシュを更新

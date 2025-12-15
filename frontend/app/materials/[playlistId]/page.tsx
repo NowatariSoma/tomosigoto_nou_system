@@ -9,9 +9,8 @@ import { MaterialFilterSelects } from '@/features/materials/components/MaterialF
 import { usePlaylistDetailPage } from '@/features/materials/hooks/usePlaylistDetailPage';
 import { VideoCard } from '@/features/materials/components/VideoCard';
 import { PlaylistCard } from '@/features/materials/components/PlaylistCard';
-import { FavoriteFilterToggle } from '@/features/materials/components/FavoriteFilterToggle';
 import { EmptyState } from '@/features/materials/components/EmptyState';
-import { playlistVideos } from '@/features/materials/data/playlist_data';
+import { Heart } from 'lucide-react';
 
 export default function PlaylistDetailPage() {
   const params = useParams();
@@ -20,16 +19,16 @@ export default function PlaylistDetailPage() {
   
   const {
     stageData,
+    stagePlaylists,
     searchQuery,
     setSearchQuery,
-    showFavoritesOnly,
-    setShowFavoritesOnly,
-    isVideoSearch,
+    filteredSubPlaylists,
     filteredVideos,
     filteredPlaylists,
     isFavorite,
     handleToggleFavorite,
     filterConfigs,
+    getFavoriteCount,
   } = usePlaylistDetailPage(playlistId);
   
   if (!stageData) {
@@ -111,46 +110,97 @@ export default function PlaylistDetailPage() {
 
           <div className="flex items-center gap-4 flex-wrap">
             <MaterialFilterSelects filters={filterConfigs} />
-            <FavoriteFilterToggle
-              showFavoritesOnly={showFavoritesOnly}
-              onToggle={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            />
+            <Button
+              onClick={() => router.push('/materials/favorites')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-4 w-4" />
+              お気に入り ({getFavoriteCount()})
+            </Button>
           </div>
         </div>
 
         {/* 検索結果表示 */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">
-            {isVideoSearch ? `動画一覧 (${filteredVideos.length}件)` : `プレイリスト一覧 (${filteredPlaylists.length}件)`}
-            {isVideoSearch && <span className="text-sm text-slate-500 ml-2">(動画検索結果)</span>}
-          </h2>
-
-          {isVideoSearch ? (
-            // 動画検索結果の表示
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredVideos.map((video) => {
-                const subPlaylist = playlistVideos.find(item => item.id === video.subPlaylistId);
-                if (!subPlaylist) return null;
-                const isFavoriteVideo = isFavorite(video.id);
-                
-                return (
-                  <VideoCard
-                    key={video.id}
-                    video={video}
-                    playlistTitle={stageData.title}
-                    playlistYear={stageData.year}
-                    playlistStage={stageData.stage}
-                    subPlaylistPhase={subPlaylist.phase}
-                    recordedDate={video.recordedDate}
-                    showFavorite={true}
-                    isFavorite={isFavorite(video.id)}
-                    onToggleFavorite={(e) => handleToggleFavorite(video.id, e)}
-                  />
-                );
-              })}
+        {searchQuery !== '' ? (
+          // 検索結果をサブプレイリストと動画の2つのカテゴリに分けて表示
+          <div className="space-y-8">
+            {/* 検索結果の総数と詳細 */}
+            <div className="mb-4">
+              <p className="text-slate-600">
+                {filteredSubPlaylists.length + filteredVideos.length}件の記録が見つかりました
+                {(() => {
+                  const details: string[] = [];
+                  if (filteredSubPlaylists.length > 0) details.push(`サブプレイリスト: ${filteredSubPlaylists.length}件`);
+                  if (filteredVideos.length > 0) details.push(`動画: ${filteredVideos.length}件`);
+                  return details.length > 0 ? (
+                    <span className="text-sm text-slate-500 ml-2">({details.join('、')})</span>
+                  ) : null;
+                })()}
+              </p>
             </div>
-          ) : (
-            // プレイリスト検索結果の表示
+
+            {/* サブプレイリスト検索結果 */}
+            {filteredSubPlaylists.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                  サブプレイリスト ({filteredSubPlaylists.length}件)
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredSubPlaylists.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={playlist}
+                      customDescription={`${stageData.year}年 ${stageData.stage} • ${playlist.phase} • YouTubeで視聴`}
+                      onClick={() => router.push(`/materials/${playlistId}/${playlist.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 動画検索結果 */}
+            {filteredVideos.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                  動画 ({filteredVideos.length}件)
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredVideos.map((video) => {
+                    const subPlaylist = filteredSubPlaylists.find(item => item.id === video.subPlaylistId) || 
+                                      stagePlaylists.find(item => item.id === video.subPlaylistId);
+                    if (!subPlaylist) return null;
+                    
+                    return (
+                      <VideoCard
+                        key={video.id}
+                        video={video}
+                        playlistTitle={stageData.title}
+                        playlistYear={stageData.year}
+                        playlistStage={stageData.stage}
+                        subPlaylistPhase={subPlaylist.phase}
+                        recordedDate={video.recordedDate}
+                        showFavorite={true}
+                        isFavorite={isFavorite(video.id)}
+                        onToggleFavorite={(e) => handleToggleFavorite(video.id, e)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 検索結果がない場合 */}
+            {filteredSubPlaylists.length === 0 && filteredVideos.length === 0 && (
+              <EmptyState message="該当する記録が見つかりませんでした" />
+            )}
+          </div>
+        ) : (
+          // 検索クエリがない場合は通常のサブプレイリスト一覧を表示
+          <>
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">
+              サブプレイリスト一覧 ({filteredPlaylists.length}件)
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredPlaylists.map((playlist) => (
                 <PlaylistCard
@@ -161,13 +211,10 @@ export default function PlaylistDetailPage() {
                 />
               ))}
             </div>
-          )}
-        </div>
-
-        {(isVideoSearch ? filteredVideos.length === 0 : filteredPlaylists.length === 0) && (
-          <EmptyState
-            message={isVideoSearch ? '該当する動画が見つかりませんでした' : '該当するプレイリストが見つかりませんでした'}
-          />
+            {filteredPlaylists.length === 0 && (
+              <EmptyState message="該当するプレイリストが見つかりませんでした" />
+            )}
+          </>
         )}
       </main>
     </AppTemplate>

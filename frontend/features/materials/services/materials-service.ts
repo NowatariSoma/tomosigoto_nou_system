@@ -4,6 +4,8 @@ import {
   Playlist,
   SubPlaylist,
   Video,
+  Favorite,
+  FavoriteVideoDetail,
   CreatePlaylistRequest,
   UpdatePlaylistRequest,
   CreateSubPlaylistRequest,
@@ -15,6 +17,8 @@ import {
   mapApiPlaylistToPlaylist,
   mapApiSubPlaylistToSubPlaylist,
   mapApiVideoToVideo,
+  mapApiFavoriteToFavorite,
+  mapApiFavoriteVideoDetailToFavoriteVideoDetail,
   mapPlaylistToApiRequest,
   mapUpdatePlaylistToApiRequest,
   mapSubPlaylistToApiRequest,
@@ -169,9 +173,10 @@ export class MaterialsService {
   }
 
   // お気に入り関連
-  async getFavorites(): Promise<Array<{ id: string; user_id: string; video_id: string; created_at?: string; updated_at?: string }>> {
+  async getFavorites(): Promise<Favorite[]> {
     const response = await fetchApi(buildApiUrl(`${this.basePath}/favorites`));
-    return await response.json();
+    const apiFavorites = await response.json();
+    return apiFavorites.map(mapApiFavoriteToFavorite);
   }
 
   async getFavoriteStatus(videoId: string): Promise<{ is_favorited: boolean; video_id: string; user_id: string }> {
@@ -197,6 +202,12 @@ export class MaterialsService {
       method: 'POST',
     });
     return await response.json();
+  }
+
+  async getFavoriteVideosWithDetails(): Promise<FavoriteVideoDetail[]> {
+    const response = await fetchApi(buildApiUrl(`${this.basePath}/favorites/videos`));
+    const apiFavoriteVideos = await response.json();
+    return apiFavoriteVideos.map(mapApiFavoriteVideoDetailToFavoriteVideoDetail);
   }
 }
 

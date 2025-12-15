@@ -2,7 +2,7 @@ import re
 import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -41,6 +41,19 @@ class MaterialsPlaylistService:
     async def delete_materials_playlist(self, playlist_id: UUID) -> bool:
         """プレイリストを削除"""
         return await self.materials_playlist_repository.delete(playlist_id)
+
+    async def search_materials_playlists(
+        self,
+        title: Optional[str] = None,
+        name: Optional[str] = None,
+        year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """プレイリストを検索"""
+        return await self.materials_playlist_repository.search(
+            title=title,
+            name=name,
+            year=year
+        )
 
 
 class MaterialsSubPlaylistService:
@@ -503,6 +516,23 @@ class MaterialsSubPlaylistService:
         """サブプレイリストを削除"""
         return await self.materials_sub_playlist_repository.delete(playlist_id, sub_playlist_id)
 
+    async def search_materials_sub_playlists(
+        self,
+        playlist_id: UUID,
+        title: Optional[str] = None,
+        phase: Optional[str] = None,
+        recorded_date_from: Optional[date] = None,
+        recorded_date_to: Optional[date] = None
+    ) -> List[Dict[str, Any]]:
+        """サブプレイリストを検索"""
+        return await self.materials_sub_playlist_repository.search(
+            playlist_id=playlist_id,
+            title=title,
+            phase=phase,
+            recorded_date_from=recorded_date_from,
+            recorded_date_to=recorded_date_to
+        )
+
 
 class MaterialsVideoService:
     """ビデオの関連の機能を実装するクラス"""
@@ -548,6 +578,23 @@ class MaterialsVideoService:
         """ビデオを削除"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.delete(sub_playlist_id, video_id)
+
+    async def search_materials_videos(
+        self,
+        playlist_id: UUID,
+        sub_playlist_id: UUID,
+        title: Optional[str] = None,
+        recorded_date_from: Optional[date] = None,
+        recorded_date_to: Optional[date] = None
+    ) -> List[Dict[str, Any]]:
+        """ビデオを検索"""
+        await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
+        return await self.materials_video_repository.search(
+            sub_playlist_id=sub_playlist_id,
+            title=title,
+            recorded_date_from=recorded_date_from,
+            recorded_date_to=recorded_date_to
+        )
 
 
 class MaterialsFavoriteService:
@@ -618,3 +665,7 @@ class MaterialsFavoriteService:
     async def delete_materials_favorite_by_id(self, favorite_id: UUID) -> bool:
         """お気に入りを削除（ID指定）"""
         return await self.materials_favorite_repository.delete(favorite_id)
+
+    async def get_favorite_videos_with_details(self, user_id: UUID) -> List[Dict[str, Any]]:
+        """指定したユーザーIDのお気に入り動画とその関連情報（プレイリスト、サブプレイリスト）を取得"""
+        return await self.materials_favorite_repository.find_favorite_videos_with_details(user_id)

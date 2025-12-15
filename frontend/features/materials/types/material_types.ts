@@ -75,3 +75,22 @@ export interface UpdateVideoRequest {
   recordedDate?: string;
   thumbnailUrl?: string;
 }
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  videoId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FavoriteVideoDetail {
+  id: string;
+  userId: string;
+  videoId: string;
+  createdAt: string;
+  updatedAt: string;
+  video: Video;
+  subPlaylist: SubPlaylist;
+  playlist: Playlist;
+}

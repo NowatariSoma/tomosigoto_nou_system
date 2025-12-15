@@ -3,6 +3,7 @@ youtubeプレイリストのAPIエンドポイント
 """
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import date
 
 from app.api.deps import get_current_user, get_materials_playlist_service, get_materials_sub_playlist_service, get_materials_video_service, get_materials_favorite_service
 from app.core.error_messages import ErrorMessage
@@ -20,6 +21,7 @@ from app.schemas.materials_youtube import (
     MaterialsVideoUpdate,
     MaterialsFavoritesResponse,
     MaterialsFavoritesCreate,
+    FavoriteVideoDetailResponse,
 )
 from app.services.materials_youtube_service import MaterialsPlaylistService, MaterialsSubPlaylistService, MaterialsVideoService, MaterialsFavoriteService
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -30,11 +32,21 @@ router = APIRouter()
 @router.get("", response_model=List[MaterialsPlaylistResponse])
 @router.get("/", response_model=List[MaterialsPlaylistResponse])
 async def get_materials_playlists(
+    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
+    name: Optional[str] = Query(None, description="舞台名（部分一致）"),
+    year: Optional[int] = Query(None, description="年度"),
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
 ):
     """
-    youtubeプレイリスト一覧を取得
+    youtubeプレイリスト一覧を取得（検索パラメータ対応）
     """
+    # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
+    if title or name or year is not None:
+        return await materials_playlist_service.search_materials_playlists(
+            title=title,
+            name=name,
+            year=year
+        )
     return await materials_playlist_service.get_all_materials_playlists()
 
 
@@ -72,6 +84,87 @@ async def get_user_favorites(
             favorite_response = MaterialsFavoritesResponse(**favorite_dict)
             result.append(favorite_response)
         except (ValidationError, ValueError, KeyError):
+            # バリデーションエラーはスキップして続行
+            continue
+
+    return result
+
+
+@router.get("/favorites/videos", response_model=List[FavoriteVideoDetailResponse])
+async def get_user_favorite_videos_with_details(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
+):
+    """
+    現在のユーザーのお気に入り動画とその関連情報（プレイリスト、サブプレイリスト）を取得
+    """
+    user_id = UUID(current_user["id"])
+    favorites_data = await materials_favorite_service.get_favorite_videos_with_details(user_id)
+
+    if not favorites_data:
+        return []
+
+    # Supabaseから返されるネストされたデータ構造をマッピング
+    result = []
+    for favorite_item in favorites_data:
+        try:
+            # ネストされた構造: favorites -> videos -> sub_playlists -> playlists
+            video_data = favorite_item.get("videos", [])
+            if not video_data or len(video_data) == 0:
+                continue
+            
+            video = video_data[0] if isinstance(video_data, list) else video_data
+            sub_playlist_data = video.get("sub_playlists", [])
+            if not sub_playlist_data or len(sub_playlist_data) == 0:
+                continue
+            
+            sub_playlist = sub_playlist_data[0] if isinstance(sub_playlist_data, list) else sub_playlist_data
+            playlist_data = sub_playlist.get("playlists", [])
+            if not playlist_data or len(playlist_data) == 0:
+                continue
+            
+            playlist = playlist_data[0] if isinstance(playlist_data, list) else playlist_data
+
+            # UUID変換とデータ構造の整理
+            favorite_dict = {
+                "id": UUID(favorite_item["id"]) if isinstance(favorite_item.get("id"), str) else favorite_item.get("id"),
+                "user_id": UUID(favorite_item["user_id"]) if isinstance(favorite_item.get("user_id"), str) else favorite_item.get("user_id"),
+                "video_id": UUID(favorite_item["video_id"]) if isinstance(favorite_item.get("video_id"), str) else favorite_item.get("video_id"),
+                "created_at": favorite_item.get("created_at"),
+                "updated_at": favorite_item.get("updated_at"),
+            }
+
+            # Videoデータの変換
+            video_dict = dict(video)
+            if 'id' in video_dict and isinstance(video_dict['id'], str):
+                video_dict['id'] = UUID(video_dict['id'])
+            if 'sub_playlist_id' in video_dict and isinstance(video_dict.get('sub_playlist_id'), str):
+                video_dict['sub_playlist_id'] = UUID(video_dict['sub_playlist_id'])
+            video_response = MaterialsVideoResponse(**video_dict)
+
+            # SubPlaylistデータの変換
+            sub_playlist_dict = dict(sub_playlist)
+            if 'id' in sub_playlist_dict and isinstance(sub_playlist_dict['id'], str):
+                sub_playlist_dict['id'] = UUID(sub_playlist_dict['id'])
+            if 'playlist_id' in sub_playlist_dict and isinstance(sub_playlist_dict.get('playlist_id'), str):
+                sub_playlist_dict['playlist_id'] = UUID(sub_playlist_dict['playlist_id'])
+            sub_playlist_response = MaterialsSubPlaylistResponse(**sub_playlist_dict)
+
+            # Playlistデータの変換
+            playlist_dict = dict(playlist)
+            if 'id' in playlist_dict and isinstance(playlist_dict['id'], str):
+                playlist_dict['id'] = UUID(playlist_dict['id'])
+            playlist_response = MaterialsPlaylistResponse(**playlist_dict)
+
+            # 最終的なレスポンスを作成
+            favorite_video_detail = FavoriteVideoDetailResponse(
+                **favorite_dict,
+                video=video_response,
+                sub_playlist=sub_playlist_response,
+                playlist=playlist_response
+            )
+            result.append(favorite_video_detail)
+        except (ValidationError, ValueError, KeyError) as e:
             # バリデーションエラーはスキップして続行
             continue
 
@@ -231,11 +324,24 @@ async def delete_materials_playlist(
 @router.get("/{playlist_id}/sub-playlists", response_model=List[MaterialsSubPlaylistResponse])
 async def get_materials_sub_playlists(
     playlist_id: UUID,
+    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
+    phase: Optional[str] = Query(None, description="フェーズ"),
+    recorded_date_from: Optional[date] = Query(None, description="録画日（開始日）"),
+    recorded_date_to: Optional[date] = Query(None, description="録画日（終了日）"),
     materials_sub_playlist_service: MaterialsSubPlaylistService = Depends(get_materials_sub_playlist_service),
 ):
     """
-    youtubeプレイリストのサブプレイリスト一覧を取得
+    youtubeプレイリストのサブプレイリスト一覧を取得（検索パラメータ対応）
     """
+    # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
+    if title or phase or recorded_date_from or recorded_date_to:
+        return await materials_sub_playlist_service.search_materials_sub_playlists(
+            playlist_id=playlist_id,
+            title=title,
+            phase=phase,
+            recorded_date_from=recorded_date_from,
+            recorded_date_to=recorded_date_to
+        )
     return await materials_sub_playlist_service.get_all_materials_sub_playlists(playlist_id)
     
 
@@ -328,11 +434,23 @@ async def delete_materials_sub_playlist(
 async def get_materials_videos(
     playlist_id: UUID,
     sub_playlist_id: UUID,
+    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
+    recorded_date_from: Optional[date] = Query(None, description="録画日（開始日）"),
+    recorded_date_to: Optional[date] = Query(None, description="録画日（終了日）"),
     materials_video_service: MaterialsVideoService = Depends(get_materials_video_service),
 ):
     """
-    youtubeプレイリストのサブプレイリストのビデオ一覧を取得
+    youtubeプレイリストのサブプレイリストのビデオ一覧を取得（検索パラメータ対応）
     """
+    # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
+    if title or recorded_date_from or recorded_date_to:
+        return await materials_video_service.search_materials_videos(
+            playlist_id=playlist_id,
+            sub_playlist_id=sub_playlist_id,
+            title=title,
+            recorded_date_from=recorded_date_from,
+            recorded_date_to=recorded_date_to
+        )
     return await materials_video_service.get_all_materials_videos(playlist_id, sub_playlist_id)
 
 
