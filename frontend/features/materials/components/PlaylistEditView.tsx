@@ -27,9 +27,10 @@ interface PlaylistEditViewProps {
   onDeleteVideo: (id: string) => void;
   onMoveSubPlaylist: (id: string) => void;
   onSubPlaylistCreate?: (data: { title: string; recordedDate: string; phase: string; playlistUrl: string }) => void;
-  onVideoAdd?: boolean;
+  onVideoAdd?: (playlistId: string, subPlaylistId: string, data: { title: string; videoUrl: string; recordedDate: string; thumbnailUrl?: string }) => Promise<void>;
   formatDate: (dateString?: string) => string;
   onSubPlaylistClick?: (subPlaylist: SubPlaylist) => void;
+  onSubPlaylistUpdate?: (updatedSubPlaylist: SubPlaylist) => void;
 }
 
 export const PlaylistEditView = ({
@@ -46,6 +47,7 @@ export const PlaylistEditView = ({
   onVideoAdd,
   formatDate,
   onSubPlaylistClick,
+  onSubPlaylistUpdate,
 }: PlaylistEditViewProps) => {
   const [isSubPlaylistDialogOpen, setIsSubPlaylistDialogOpen] = useState(false);
   const [subPlaylistData, setSubPlaylistData] = useState({
@@ -96,16 +98,25 @@ export const PlaylistEditView = ({
     setIsVideoDialogOpen(true);
   };
 
-  const handleVideoSubmit = (e: React.FormEvent) => {
+  const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (onVideoAdd && selectedSubPlaylistId) {
-      // API連携は親コンポーネントで処理
+      try {
+        await onVideoAdd(playlist.id, selectedSubPlaylistId, {
+          title: videoData.title,
+          videoUrl: videoData.videoUrl,
+          recordedDate: videoData.recordedDate,
+          thumbnailUrl: videoData.thumbnailUrl || undefined,
+        });
+        // Reset form
+        setVideoData({ title: '', videoUrl: '', recordedDate: '', thumbnailUrl: '' });
+        setSelectedSubPlaylistId(null);
+        setIsVideoDialogOpen(false);
+      } catch (error) {
+        console.error('Failed to add video:', error);
+        alert('動画の追加に失敗しました');
+      }
     }
-    
-    // Reset form
-    setVideoData({ title: '', videoUrl: '', recordedDate: '', thumbnailUrl: '' });
-    setSelectedSubPlaylistId(null);
-    setIsVideoDialogOpen(false);
   };
 
   // ソートされたサブプレイリスト一覧
@@ -189,12 +200,14 @@ export const PlaylistEditView = ({
                 videoCount={videoCount}
                 onMove={onMoveSubPlaylist}
                 onDelete={onDeleteSubPlaylist}
-                onVideoAdd={onVideoAdd !== false ? () => handleVideoAddClick(subPlaylist.id) : undefined}
+                onVideoAdd={onVideoAdd ? () => handleVideoAddClick(subPlaylist.id) : undefined}
                 formatDate={formatDate}
                 getVideosForSubPlaylist={getVideosForSubPlaylist}
                 onVideoDelete={onDeleteVideo}
                 onClick={onSubPlaylistClick ? () => onSubPlaylistClick(subPlaylist) : undefined}
                 playlistId={playlist.id}
+                onUpdate={onSubPlaylistUpdate}
+                allSubPlaylists={subPlaylists}
               />
             );
           })}
