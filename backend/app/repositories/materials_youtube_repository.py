@@ -55,6 +55,26 @@ class MaterialsPlaylistRepository:
         self.client.table(self.table_name).delete().eq("id", str(playlist_id)).execute()
         return True
 
+    @handle_supabase_errors("search")
+    async def search(
+        self,
+        title: Optional[str] = None,
+        name: Optional[str] = None,
+        year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """プレイリストを検索"""
+        query = self.client.table(self.table_name).select("*")
+        
+        if title:
+            query = query.ilike("title", f"%{title}%")
+        if name:
+            query = query.ilike("name", f"%{name}%")
+        if year is not None:
+            query = query.eq("year", year)
+        
+        response = query.execute()
+        return response.data
+
 
 class MaterialsSubPlaylistRepository:
     """サブプレイリストの関連のリポジトリクラス"""
@@ -109,6 +129,30 @@ class MaterialsSubPlaylistRepository:
         """サブプレイリストを削除"""
         self.client.table(self.table_name).delete().eq("playlist_id", str(playlist_id)).eq("id", str(sub_playlist_id)).execute()
         return True
+
+    @handle_supabase_errors("search")
+    async def search(
+        self,
+        playlist_id: UUID,
+        title: Optional[str] = None,
+        phase: Optional[str] = None,
+        recorded_date_from: Optional[date] = None,
+        recorded_date_to: Optional[date] = None
+    ) -> List[Dict[str, Any]]:
+        """サブプレイリストを検索"""
+        query = self.client.table(self.table_name).select("*").eq("playlist_id", str(playlist_id))
+        
+        if title:
+            query = query.ilike("title", f"%{title}%")
+        if phase:
+            query = query.eq("phase", phase)
+        if recorded_date_from:
+            query = query.gte("recorded_date", recorded_date_from.isoformat())
+        if recorded_date_to:
+            query = query.lte("recorded_date", recorded_date_to.isoformat())
+        
+        response = query.execute()
+        return response.data
 
 
 class MaterialsVideoRepository:
@@ -169,6 +213,27 @@ class MaterialsVideoRepository:
         """ビデオを削除"""
         self.client.table(self.table_name).delete().eq("sub_playlist_id", str(sub_playlist_id)).eq("id", str(video_id)).execute()
         return True
+
+    @handle_supabase_errors("search")
+    async def search(
+        self,
+        sub_playlist_id: UUID,
+        title: Optional[str] = None,
+        recorded_date_from: Optional[date] = None,
+        recorded_date_to: Optional[date] = None
+    ) -> List[Dict[str, Any]]:
+        """ビデオを検索"""
+        query = self.client.table(self.table_name).select("*").eq("sub_playlist_id", str(sub_playlist_id))
+        
+        if title:
+            query = query.ilike("title", f"%{title}%")
+        if recorded_date_from:
+            query = query.gte("recorded_date", recorded_date_from.isoformat())
+        if recorded_date_to:
+            query = query.lte("recorded_date", recorded_date_to.isoformat())
+        
+        response = query.execute()
+        return response.data
 
 
 class MaterialsFavoriteRepository:
@@ -231,3 +296,18 @@ class MaterialsFavoriteRepository:
         """指定したユーザーIDとビデオIDのお気に入りを削除"""
         self.client.table(self.table_name).delete().eq("user_id", str(user_id)).eq("video_id", str(video_id)).execute()
         return True
+
+    @handle_supabase_errors("find_favorite_videos_with_details")
+    async def find_favorite_videos_with_details(self, user_id: UUID) -> List[Dict[str, Any]]:
+        """指定したユーザーIDのお気に入り動画とその関連情報（プレイリスト、サブプレイリスト）を取得"""
+        # SupabaseのPostgRESTでネストされたリレーションを取得
+        # favorites -> videos -> sub_playlists -> playlists の順にJOIN
+        response = (
+            self.client.table(self.table_name)
+            .select(
+                "*,videos(*,sub_playlists(*,playlists(*)))"
+            )
+            .eq("user_id", str(user_id))
+            .execute()
+        )
+        return response.data

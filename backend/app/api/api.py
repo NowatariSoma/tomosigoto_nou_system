@@ -4,6 +4,7 @@ from app.api.endpoints import (
     attendance,
     auth,
     contacts,
+    materials_youtube,
     member_assignments,
     parts,
     practice_slots,
@@ -30,6 +31,7 @@ api_router.include_router(member_assignments.router, prefix="/member-assignments
 
 api_router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 api_router.include_router(account_setting.router, prefix="/account-setting", tags=["account-setting"])
+api_router.include_router(materials_youtube.router, prefix="/materials-youtube", tags=["materials-youtube"])
 api_router.include_router(practice_slots.router, prefix="/practice_schedules", tags=["practice_schedules"])
 api_router.include_router(session_instructors.router, prefix="/session-instructors", tags=["session-instructors"])
 api_router.include_router(schedule_available_venues.router, prefix="/schedule-available-venues", tags=["schedule-available-venues"])

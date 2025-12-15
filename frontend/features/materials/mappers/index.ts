@@ -2,6 +2,8 @@ import {
   Playlist,
   SubPlaylist,
   Video,
+  Favorite,
+  FavoriteVideoDetail,
   CreatePlaylistRequest,
   UpdatePlaylistRequest,
   CreateSubPlaylistRequest,
@@ -40,6 +42,14 @@ interface VideoApiResponse {
   video_url: string;
   recorded_date: string | null;
   thumbnail_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface FavoriteApiResponse {
+  id: string;
+  user_id: string;
+  video_id: string;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -104,6 +114,40 @@ export const mapApiVideoToVideo = (api: VideoApiResponse): Video => {
     thumbnailUrl: api.thumbnail_url || '',
     createdAt: api.created_at || '',
     updatedAt: api.updated_at || '',
+  };
+};
+
+export const mapApiFavoriteToFavorite = (api: FavoriteApiResponse): Favorite => {
+  return {
+    id: api.id,
+    userId: api.user_id,
+    videoId: api.video_id,
+    createdAt: api.created_at || '',
+    updatedAt: api.updated_at || '',
+  };
+};
+
+interface FavoriteVideoDetailApiResponse {
+  id: string;
+  user_id: string;
+  video_id: string;
+  created_at: string | null;
+  updated_at: string | null;
+  video: VideoApiResponse;
+  sub_playlist: SubPlaylistApiResponse;
+  playlist: PlaylistApiResponse;
+}
+
+export const mapApiFavoriteVideoDetailToFavoriteVideoDetail = (api: FavoriteVideoDetailApiResponse): FavoriteVideoDetail => {
+  return {
+    id: api.id,
+    userId: api.user_id,
+    videoId: api.video_id,
+    createdAt: api.created_at || '',
+    updatedAt: api.updated_at || '',
+    video: mapApiVideoToVideo(api.video),
+    subPlaylist: mapApiSubPlaylistToSubPlaylist(api.sub_playlist),
+    playlist: mapApiPlaylistToPlaylist(api.playlist),
   };
 };
 

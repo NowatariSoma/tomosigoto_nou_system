@@ -14,7 +14,7 @@ export const usePlaylistDetailPage = (playlistId: string) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const { isFavorite, toggleFavorite } = useFavoriteVideos();
+  const { isFavorite, toggleFavorite, getFavoriteCount } = useFavoriteVideos();
 
   // データ取得
   useEffect(() => {
@@ -36,7 +36,12 @@ export const usePlaylistDetailPage = (playlistId: string) => {
         for (const subPlaylist of subPlaylists) {
           try {
             const videosData = await materialsService.getVideos(playlistId, subPlaylist.id);
-            allVideos.push(...videosData);
+            // 各動画にsubPlaylistIdを明示的に設定（APIレスポンスに含まれていない場合に備える）
+            const videosWithSubPlaylistId = videosData.map(video => ({
+              ...video,
+              subPlaylistId: video.subPlaylistId || subPlaylist.id,
+            }));
+            allVideos.push(...videosWithSubPlaylistId);
           } catch (err) {
             console.error(`Failed to load videos for sub-playlist ${subPlaylist.id}:`, err);
           }
@@ -62,49 +67,41 @@ export const usePlaylistDetailPage = (playlistId: string) => {
     { value: '本番', label: '本番' },
   ];
 
-  // 検索クエリが演目名を含むかチェック
-  const isVideoSearch =
-    searchQuery !== '' &&
-    videos.some(video => video.title.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    !stagePlaylists.some(
-      playlist =>
-        playlist.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        playlist.phase.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-  // 動画検索の場合
-  const filteredVideos: Video[] = [];
-  if (isVideoSearch) {
-    videos.forEach((video: Video) => {
-      const subPlaylist = stagePlaylists.find(item => item.id === video.subPlaylistId);
-      if (!subPlaylist || subPlaylist.playlistId !== playlistId) return;
-
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch =
-        video.title.toLowerCase().includes(searchLower) ||
-        subPlaylist.title.toLowerCase().includes(searchLower) ||
-        stageData?.title.toLowerCase().includes(searchLower) ||
-        stageData?.stage.toLowerCase().includes(searchLower);
-      const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
-      const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
-
-      if (matchesSearch && matchesPhase && matchesFavorite) {
-        filteredVideos.push(video);
-      }
-    });
-  }
-
-  // プレイリスト検索の場合
-  const filteredPlaylists = stagePlaylists.filter((playlist: SubPlaylist) => {
+  // 検索時にサブプレイリストと動画の両方をフィルタリング
+  const filteredSubPlaylists = stagePlaylists.filter((playlist: SubPlaylist) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       searchQuery === '' ||
       playlist.title.toLowerCase().includes(searchLower) ||
-      playlist.phase.toLowerCase().includes(searchLower);
+      playlist.phase.toLowerCase().includes(searchLower) ||
+      stageData?.title.toLowerCase().includes(searchLower) ||
+      stageData?.stage.toLowerCase().includes(searchLower);
     const matchesPhase = selectedPhase === 'all' || playlist.phase === selectedPhase;
 
     return matchesSearch && matchesPhase;
   });
+
+  const filteredVideos = videos.filter((video: Video) => {
+    // 検索クエリがない場合は動画を表示しない
+    if (searchQuery === '') return false;
+
+    const subPlaylist = stagePlaylists.find(item => item.id === video.subPlaylistId);
+    if (!subPlaylist || subPlaylist.playlistId !== playlistId) return false;
+
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      video.title.toLowerCase().includes(searchLower) ||
+      subPlaylist.title.toLowerCase().includes(searchLower) ||
+      stageData?.title.toLowerCase().includes(searchLower) ||
+      stageData?.stage.toLowerCase().includes(searchLower);
+    const matchesPhase = selectedPhase === 'all' || subPlaylist.phase === selectedPhase;
+    const matchesFavorite = !showFavoritesOnly || isFavorite(video.id);
+
+    return matchesSearch && matchesPhase && matchesFavorite;
+  });
+
+  // 後方互換性のため
+  const filteredPlaylists = filteredSubPlaylists;
 
   // お気に入り切り替え
   const handleToggleFavorite = (videoId: string, e: React.MouseEvent) => {
@@ -134,13 +131,14 @@ export const usePlaylistDetailPage = (playlistId: string) => {
     selectedPhase,
     showFavoritesOnly,
     setShowFavoritesOnly,
-    isVideoSearch,
+    filteredSubPlaylists,
     filteredVideos,
-    filteredPlaylists,
+    filteredPlaylists, // 後方互換性のため
     isFavorite,
     toggleFavorite,
     handleToggleFavorite,
     filterConfigs,
+    getFavoriteCount,
   };
 };
 
