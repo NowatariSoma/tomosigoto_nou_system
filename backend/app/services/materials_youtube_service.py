@@ -63,10 +63,12 @@ class MaterialsSubPlaylistService:
         self, 
         materials_sub_playlist_repository: MaterialsSubPlaylistRepository,
         materials_video_repository: MaterialsVideoRepository,
+        materials_playlist_repository: MaterialsPlaylistRepository,
         supabase_client: Client
     ):
         self.materials_sub_playlist_repository = materials_sub_playlist_repository
         self.materials_video_repository = materials_video_repository
+        self.materials_playlist_repository = materials_playlist_repository
         self.supabase_client = supabase_client
         self.youtube_scopes = [
             'https://www.googleapis.com/auth/youtube.readonly'
@@ -269,6 +271,77 @@ class MaterialsSubPlaylistService:
         
         return videos
 
+    async def _update_sub_playlist_thumbnail_from_videos(
+        self,
+        sub_playlist_id: UUID,
+        playlist_id: UUID
+    ) -> None:
+        """
+        サブプレイリストのサムネイルを子の動画の最初のサムネイルで更新
+        
+        Args:
+            sub_playlist_id: サブプレイリストID
+            playlist_id: プレイリストID（更新用）
+        """
+        try:
+            # サブプレイリストに紐づく動画を取得
+            videos = await self.materials_video_repository.find_all(sub_playlist_id)
+            
+            # thumbnail_url が設定されている最初の動画を探す
+            thumbnail_url = None
+            for video in videos:
+                if video.get("thumbnail_url"):
+                    thumbnail_url = video["thumbnail_url"]
+                    break
+            
+            # サムネイルが見つかった場合のみ更新
+            if thumbnail_url:
+                await self.materials_sub_playlist_repository.update(
+                    playlist_id,
+                    sub_playlist_id,
+                    {"thumbnail_url": thumbnail_url}
+                )
+                logger.info(f"Updated sub-playlist {sub_playlist_id} thumbnail from videos")
+            else:
+                logger.debug(f"No thumbnail found for sub-playlist {sub_playlist_id} videos")
+        except Exception as e:
+            # エラーが発生しても処理は継続（警告として記録）
+            logger.warning(f"Failed to update sub-playlist thumbnail from videos: {str(e)}")
+
+    async def _update_playlist_thumbnail_from_sub_playlists(
+        self,
+        playlist_id: UUID
+    ) -> None:
+        """
+        プレイリストのサムネイルを関連サブプレイリストの最初のサムネイルで更新
+        
+        Args:
+            playlist_id: プレイリストID
+        """
+        try:
+            # プレイリストに紐づくサブプレイリストを取得
+            sub_playlists = await self.materials_sub_playlist_repository.find_all(playlist_id)
+            
+            # thumbnail_url が設定されている最初のサブプレイリストを探す
+            thumbnail_url = None
+            for sub_playlist in sub_playlists:
+                if sub_playlist.get("thumbnail_url"):
+                    thumbnail_url = sub_playlist["thumbnail_url"]
+                    break
+            
+            # サムネイルが見つかった場合のみ更新
+            if thumbnail_url:
+                await self.materials_playlist_repository.update(
+                    playlist_id,
+                    {"thumbnail_url": thumbnail_url}
+                )
+                logger.info(f"Updated playlist {playlist_id} thumbnail from sub-playlists")
+            else:
+                logger.debug(f"No thumbnail found for playlist {playlist_id} sub-playlists")
+        except Exception as e:
+            # エラーが発生しても処理は継続（警告として記録）
+            logger.warning(f"Failed to update playlist thumbnail from sub-playlists: {str(e)}")
+
     async def _import_videos_from_playlist(
         self,
         playlist_url: str,
@@ -348,6 +421,26 @@ class MaterialsSubPlaylistService:
                 except Exception as e:
                     logger.error(f"Failed to create video {video.get('youtube_video_id', 'unknown')}: {str(e)}")
                     warnings.append(f"動画 '{video.get('title', 'Unknown')}' の登録に失敗しました: {str(e)}")
+            
+            # サブプレイリストのサムネイルを更新（子の動画の最初のサムネイルを使用）
+            try:
+                # サブプレイリスト情報を取得して playlist_id を取得
+                sub_playlist_info = (
+                    self.supabase_client.table("sub_playlists")
+                    .select("playlist_id")
+                    .eq("id", str(sub_playlist_id))
+                    .execute()
+                )
+                if sub_playlist_info.data:
+                    playlist_id = UUID(sub_playlist_info.data[0]["playlist_id"])
+                    # サブプレイリストのサムネイルを更新
+                    await self._update_sub_playlist_thumbnail_from_videos(sub_playlist_id, playlist_id)
+                    # 親プレイリストのサムネイルも更新
+                    await self._update_playlist_thumbnail_from_sub_playlists(playlist_id)
+            except Exception as e:
+                # サムネイル更新のエラーは警告として記録するが、処理は継続
+                logger.warning(f"Failed to update thumbnails after video import: {str(e)}")
+            
             return {
                 "imported_count": imported_count,
                 "skipped_count": skipped_count,
@@ -509,6 +602,15 @@ class MaterialsSubPlaylistService:
                     "warnings": [f"動画のインポート中にエラーが発生しました: {str(e)}"]
                 }
                 updated_sub_playlist["import_warnings"] = [f"動画のインポート中にエラーが発生しました: {str(e)}"]
+        
+        # 既存の動画からサムネイルを更新（動画インポートが行われなかった場合でも実行）
+        try:
+            await self._update_sub_playlist_thumbnail_from_videos(sub_playlist_id, playlist_id)
+            # 親プレイリストのサムネイルも更新
+            await self._update_playlist_thumbnail_from_sub_playlists(playlist_id)
+        except Exception as e:
+            # サムネイル更新のエラーは警告として記録するが、処理は継続
+            logger.warning(f"Failed to update thumbnails after sub-playlist update: {str(e)}")
         
         return updated_sub_playlist
 
