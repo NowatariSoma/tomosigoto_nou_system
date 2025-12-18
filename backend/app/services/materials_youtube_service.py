@@ -104,10 +104,7 @@ class MaterialsSubPlaylistService:
             if match:
                 return match.group(1)
         
-        raise APIException(
-            error_code="INVALID_PLAYLIST_URL",
-            error_msg="無効な再生リストURLです"
-        )
+        raise APIException(ErrorMessage.INVALID_PLAYLIST_URL)
 
     def _get_client_secret(self) -> Optional[str]:
         """
@@ -143,10 +140,7 @@ class MaterialsSubPlaylistService:
 
             if not client_secret:
                 logger.error("client_secret not found in DB or secrets file")
-                raise APIException(
-                    error_code="CLIENT_SECRET_NOT_FOUND",
-                    error_msg="client_secretが見つかりません。GOOGLE_CLIENT_SECRETS_FILEを確認してください。"
-                )
+                raise APIException(ErrorMessage.CLIENT_SECRET_NOT_FOUND)
 
             creds = Credentials(
                 token=token_data["access_token"],
@@ -170,10 +164,7 @@ class MaterialsSubPlaylistService:
                     logger.info("YouTube OAuth token refreshed successfully")
                 except Exception as e:
                     logger.error(f"Failed to refresh YouTube OAuth token: {str(e)}")
-                    raise APIException(
-                        error_code="TOKEN_REFRESH_FAILED",
-                        error_msg=f"トークンのリフレッシュに失敗しました: {str(e)}"
-                    )
+                    raise APIException(ErrorMessage.TOKEN_REFRESH_FAILED(str(e)))
 
             return creds
         except APIException:
@@ -209,10 +200,7 @@ class MaterialsSubPlaylistService:
             credentials = await self._get_system_credentials()
         
         if not credentials:
-            raise APIException(
-                error_code="OAUTH_TOKEN_NOT_FOUND",
-                error_msg="YouTube OAuthトークンが見つかりません。先に認証を行ってください。"
-            )
+            raise APIException(ErrorMessage.OAUTH_TOKEN_NOT_FOUND)
         
         try:
             service = build("youtube", "v3", credentials=credentials)
@@ -268,28 +256,16 @@ class MaterialsSubPlaylistService:
                     
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"YouTube API error: {error_msg}")
+            logger.error(f"YouTube API error: {error_msg}", exc_info=True)
             
             if "quotaExceeded" in error_msg or "quota" in error_msg.lower():
-                raise APIException(
-                    error_code="YOUTUBE_QUOTA_EXCEEDED",
-                    error_msg="YouTube APIのクォータを超過しました"
-                )
+                raise APIException(ErrorMessage.YOUTUBE_QUOTA_EXCEEDED)
             elif "forbidden" in error_msg.lower() or "403" in error_msg:
-                raise APIException(
-                    error_code="YOUTUBE_ACCESS_DENIED",
-                    error_msg="この再生リストにアクセスできません。限定公開動画を含む場合は適切なOAuth認証が必要です。"
-                )
+                raise APIException(ErrorMessage.YOUTUBE_ACCESS_DENIED)
             elif "notFound" in error_msg.lower() or "404" in error_msg:
-                raise APIException(
-                    error_code="YOUTUBE_PLAYLIST_NOT_FOUND",
-                    error_msg="指定された再生リストが見つかりません"
-                )
+                raise APIException(ErrorMessage.YOUTUBE_PLAYLIST_NOT_FOUND)
             else:
-                raise APIException(
-                    error_code="YOUTUBE_API_ERROR",
-                    error_msg=f"YouTube APIからの取得に失敗しました: {error_msg}"
-                )
+                raise APIException(ErrorMessage.YOUTUBE_API_ERROR(error_msg))
         
         return videos
 
@@ -363,12 +339,15 @@ class MaterialsSubPlaylistService:
                     "thumbnail_url": video.get("thumbnail_url")
                 }
                 
-                await self.materials_video_repository.create(
-                    sub_playlist_id,
-                    video_data
-                )
-                imported_count += 1
-            
+                try:
+                    await self.materials_video_repository.create(
+                        sub_playlist_id,
+                        video_data
+                    )
+                    imported_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to create video {video.get('youtube_video_id', 'unknown')}: {str(e)}")
+                    warnings.append(f"動画 '{video.get('title', 'Unknown')}' の登録に失敗しました: {str(e)}")
             return {
                 "imported_count": imported_count,
                 "skipped_count": skipped_count,
@@ -378,8 +357,9 @@ class MaterialsSubPlaylistService:
             
         except APIException as e:
             # API例外は警告として返す
-            logger.warning(f"Failed to import videos from playlist: {e.error_msg}")
-            warnings.append(f"動画のインポートに失敗しました: {e.error_msg}")
+            error_msg = e.detail.get("error_msg", str(e.detail)) if isinstance(e.detail, dict) else str(e.detail)
+            logger.warning(f"Failed to import videos from playlist: {error_msg}")
+            warnings.append(f"動画のインポートに失敗しました: {error_msg}")
             return {
                 "imported_count": imported_count,
                 "skipped_count": skipped_count,
@@ -419,6 +399,7 @@ class MaterialsSubPlaylistService:
         
         # playlist_urlが存在し、自動インポートが有効な場合
         playlist_url = sub_playlist_data.get("playlist_url")
+        
         if playlist_url and auto_import_videos:
             sub_playlist_id = UUID(sub_playlist["id"])
             recorded_date = sub_playlist_data.get("recorded_date")
@@ -434,16 +415,27 @@ class MaterialsSubPlaylistService:
                     recorded_date_str = str(recorded_date)
             
             # 動画をインポート
-            import_result = await self._import_videos_from_playlist(
-                playlist_url,
-                sub_playlist_id,
-                recorded_date_str
-            )
-            
-            # インポート結果をサブプレイリストに追加
-            sub_playlist["import_result"] = import_result
-            if import_result["warnings"]:
-                sub_playlist["import_warnings"] = import_result["warnings"]
+            try:
+                import_result = await self._import_videos_from_playlist(
+                    playlist_url,
+                    sub_playlist_id,
+                    recorded_date_str
+                )
+                
+                # インポート結果をサブプレイリストに追加
+                sub_playlist["import_result"] = import_result
+                if import_result["warnings"]:
+                    sub_playlist["import_warnings"] = import_result["warnings"]
+            except Exception as e:
+                logger.error(f"Failed to import videos during sub-playlist creation: {str(e)}", exc_info=True)
+                # エラーが発生してもサブプレイリストは作成済みなので、エラー情報を追加
+                sub_playlist["import_result"] = {
+                    "imported_count": 0,
+                    "skipped_count": 0,
+                    "total_count": 0,
+                    "warnings": [f"動画のインポート中にエラーが発生しました: {str(e)}"]
+                }
+                sub_playlist["import_warnings"] = [f"動画のインポート中にエラーが発生しました: {str(e)}"]
         
         return sub_playlist
 
@@ -469,10 +461,7 @@ class MaterialsSubPlaylistService:
         )
         
         if not existing_sub_playlist:
-            raise APIException(
-                error_code="NOT_FOUND",
-                error_msg="指定されたサブプレイリストが見つかりません"
-            )
+            raise APIException(ErrorMessage.SUB_PLAYLIST_NOT_FOUND)
         
         # サブプレイリストを更新
         updated_sub_playlist = await self.materials_sub_playlist_repository.update(
@@ -499,16 +488,27 @@ class MaterialsSubPlaylistService:
                     recorded_date_str = str(recorded_date)
             
             # 動画をインポート
-            import_result = await self._import_videos_from_playlist(
-                new_playlist_url,
-                sub_playlist_id,
-                recorded_date_str
-            )
-            
-            # インポート結果をサブプレイリストに追加
-            updated_sub_playlist["import_result"] = import_result
-            if import_result["warnings"]:
-                updated_sub_playlist["import_warnings"] = import_result["warnings"]
+            try:
+                import_result = await self._import_videos_from_playlist(
+                    new_playlist_url,
+                    sub_playlist_id,
+                    recorded_date_str
+                )
+                
+                # インポート結果をサブプレイリストに追加
+                updated_sub_playlist["import_result"] = import_result
+                if import_result["warnings"]:
+                    updated_sub_playlist["import_warnings"] = import_result["warnings"]
+            except Exception as e:
+                logger.error(f"Failed to import videos during sub-playlist update: {str(e)}", exc_info=True)
+                # エラーが発生してもサブプレイリストは更新済みなので、エラー情報を追加
+                updated_sub_playlist["import_result"] = {
+                    "imported_count": 0,
+                    "skipped_count": 0,
+                    "total_count": 0,
+                    "warnings": [f"動画のインポート中にエラーが発生しました: {str(e)}"]
+                }
+                updated_sub_playlist["import_warnings"] = [f"動画のインポート中にエラーが発生しました: {str(e)}"]
         
         return updated_sub_playlist
 
@@ -549,10 +549,7 @@ class MaterialsVideoService:
         """サブプレイリストが指定されたプレイリストに属しているかを検証"""
         sub_playlist = await self.materials_sub_playlist_repository.find_by_id(playlist_id, sub_playlist_id)
         if not sub_playlist:
-            raise APIException(
-                error_code="NOT_FOUND",
-                error_msg="指定されたサブプレイリストが見つかりません、または指定されたプレイリストに属していません"
-            )
+            raise APIException(ErrorMessage.SUB_PLAYLIST_NOT_FOUND)
 
     async def get_all_materials_videos(self, playlist_id: UUID, sub_playlist_id: UUID) -> List[Dict[str, Any]]:
         """指定されたサブプレイリストのビデオを取得"""
@@ -631,10 +628,7 @@ class MaterialsFavoriteService:
                 UUID(video_id) if isinstance(video_id, str) else video_id
             )
             if existing:
-                raise APIException(
-                    error_code="FAVORITE_ALREADY_EXISTS",
-                    error_msg="既にお気に入りに登録されています"
-                )
+                raise APIException(ErrorMessage.FAVORITE_ALREADY_EXISTS)
         return await self.materials_favorite_repository.create(favorite_data)
 
     async def toggle_favorite(self, user_id: UUID, video_id: UUID) -> Dict[str, Any]:

@@ -326,7 +326,36 @@ function SubPlaylistEditViewAsyncWrapper({
         phase: data.phase,
         playlistUrl: data.playlistUrl,
       });
-      alert('サブプレイリストを更新しました');
+      
+      // インポート結果を確認（型安全でないため、anyでアクセス）
+      const importResult = (updatedSubPlaylist as any).import_result;
+      const importWarnings = (updatedSubPlaylist as any).import_warnings;
+      
+      if (importResult || importWarnings) {
+        const resultData = importResult || {
+          imported_count: 0,
+          skipped_count: 0,
+          total_count: 0,
+          warnings: importWarnings || []
+        };
+        
+        if (resultData.warnings && resultData.warnings.length > 0) {
+          // エラーや警告がある場合
+          const warningMsg = resultData.warnings.join('\n');
+          alert(`サブプレイリストを更新しましたが、動画のインポートで問題が発生しました:\n\n${warningMsg}`);
+        } else if (resultData.imported_count > 0) {
+          // 成功した場合
+          alert(`サブプレイリストを更新しました。${resultData.imported_count}件の動画をインポートしました。`);
+        } else if (resultData.total_count === 0 && data.playlistUrl) {
+          // 動画が見つからなかった場合
+          alert('サブプレイリストを更新しましたが、動画が見つかりませんでした。URLを確認してください。');
+        } else {
+          alert('サブプレイリストを更新しました');
+        }
+      } else {
+        alert('サブプレイリストを更新しました');
+      }
+      
       // 親コンポーネントのハンドラーも呼び出す
       if (onSubPlaylistUpdate) {
         await onSubPlaylistUpdate(subPlaylistId, data);

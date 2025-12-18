@@ -52,6 +52,8 @@ class MaterialsSubPlaylistResponse(MaterialsSubPlaylistBase):
     playlist_id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True, extra='allow')  # 追加フィールド（import_result等）を許可
 
 
 class MaterialsSubPlaylistUpdate(MaterialsSubPlaylistBase):

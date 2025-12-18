@@ -57,13 +57,43 @@ export default function NewMaterialPage() {
     e.preventDefault();
     try {
       const { materialsService } = await import('@/features/materials/services/materials-service');
-      await materialsService.createSubPlaylist(subPlaylistData.playlistId, {
+      const result = await materialsService.createSubPlaylist(subPlaylistData.playlistId, {
         title: subPlaylistData.title,
         recordedDate: subPlaylistData.recordedDate,
         phase: subPlaylistData.phase,
         playlistUrl: subPlaylistData.playlistUrl,
         thumbnailUrl: subPlaylistData.thumbnailUrl || undefined,
       });
+      
+      // インポート結果を確認（型安全でないため、anyでアクセス）
+      const importResult = (result as any).import_result;
+      const importWarnings = (result as any).import_warnings;
+      
+      if (importResult || importWarnings) {
+        const resultData = importResult || {
+          imported_count: 0,
+          skipped_count: 0,
+          total_count: 0,
+          warnings: importWarnings || []
+        };
+        
+        if (resultData.warnings && resultData.warnings.length > 0) {
+          // エラーや警告がある場合
+          const warningMsg = resultData.warnings.join('\n');
+          alert(`サブプレイリストを作成しましたが、動画のインポートで問題が発生しました:\n\n${warningMsg}`);
+        } else if (resultData.imported_count > 0) {
+          // 成功した場合
+          alert(`サブプレイリストを作成しました。${resultData.imported_count}件の動画をインポートしました。`);
+        } else if (resultData.total_count === 0 && subPlaylistData.playlistUrl) {
+          // 動画が見つからなかった場合
+          alert('サブプレイリストを作成しましたが、動画が見つかりませんでした。URLを確認してください。');
+        }
+      } else if (subPlaylistData.playlistUrl) {
+        // playlist_urlが指定されているが、import_resultが返されていない場合
+        console.warn('playlist_url was provided but no import_result in response');
+        alert('サブプレイリストを作成しました。動画のインポート状況は確認できませんでした。');
+      }
+      
       router.push('/materials');
     } catch (error) {
       console.error('Failed to create sub-playlist:', error);
