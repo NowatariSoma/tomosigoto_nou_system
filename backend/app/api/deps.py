@@ -488,11 +488,13 @@ def get_materials_sub_playlist_service(
     supabase_client: Client = Depends(get_supabase),
     materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
     materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
+    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
 ) -> MaterialsSubPlaylistService:
     """MaterialsSubPlaylistServiceのインスタンスを依存性注入で取得"""
     return MaterialsSubPlaylistService(
         materials_sub_playlist_repository,
         materials_video_repository,
+        materials_playlist_repository,
         supabase_client
     )
 
