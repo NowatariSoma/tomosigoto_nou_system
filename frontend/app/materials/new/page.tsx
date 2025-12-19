@@ -1,6 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+/**
+ * このページは現在使用していません。
+ * ルーティングでアクセスできないように、自動的に /materials にリダイレクトします。
+ * コードは参考用に残しています。
+ */
+
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Archive } from 'lucide-react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
@@ -13,6 +19,11 @@ type FormType = 'playlist' | 'subPlaylist' | 'video' | null;
 
 export default function NewMaterialPage() {
   const router = useRouter();
+  
+  // このページは使用していないため、自動的にリダイレクト
+  useEffect(() => {
+    router.replace('/materials');
+  }, [router]);
   const [formType, setFormType] = useState<FormType>(null);
   const [playlistData, setPlaylistData] = useState({
     title: '',

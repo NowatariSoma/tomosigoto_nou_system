@@ -60,11 +60,18 @@ export const usePlaylistDetailPage = (playlistId: string) => {
     }
   }, [playlistId]);
 
-  // フェーズオプションの定義
+  // フェーズオプションの定義（サブプレイリストから動的に抽出）
+  const phases = Array.from(
+    new Set(
+      stagePlaylists
+        .map((item: SubPlaylist) => item.phase)
+        .filter((phase): phase is string => Boolean(phase && phase.trim()))
+    )
+  ).sort();
+
   const phaseOptions: FilterOption[] = [
     { value: 'all', label: 'すべてのフェーズ' },
-    { value: '稽古', label: '稽古' },
-    { value: '本番', label: '本番' },
+    ...phases.map((phase: string) => ({ value: phase, label: phase })),
   ];
 
   // 検索時にサブプレイリストと動画の両方をフィルタリング

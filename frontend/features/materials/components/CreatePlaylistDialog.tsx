@@ -69,20 +69,24 @@ export function CreatePlaylistDialog({
     }
   }, [open, currentYear]);
 
-  // ダイアログが開かれたときに、年度と舞台が既に入力されている場合はタイトルを設定
+  // タイトルを自動生成する関数
+  const generateTitle = (year: string, stage: string): string => {
+    if (year && stage) {
+      return `${year}年 ${stage}`;
+    } else if (year) {
+      return `${year}年`;
+    } else if (stage) {
+      return stage;
+    }
+    return '';
+  };
+
+  // 年度と舞台の入力に応じてリアルタイムでタイトルを提案
   useEffect(() => {
     if (open && !isTitleManuallyEdited) {
-      if (playlistData.year && playlistData.stage) {
-        const defaultTitle = `${playlistData.year}年 ${playlistData.stage}`;
-        // タイトルがデフォルト値と異なる場合のみ更新
-        if (playlistData.title !== defaultTitle) {
-          setPlaylistData(prev => ({ ...prev, title: defaultTitle }));
-        }
-      } else if ((playlistData.year && !playlistData.stage) || (!playlistData.year && playlistData.stage)) {
-        // 年度または舞台のどちらか一方だけ入力されている場合はタイトルをクリア
-        if (playlistData.title) {
-          setPlaylistData(prev => ({ ...prev, title: '' }));
-        }
+      const suggestedTitle = generateTitle(playlistData.year, playlistData.stage);
+      if (playlistData.title !== suggestedTitle) {
+        setPlaylistData(prev => ({ ...prev, title: suggestedTitle }));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,12 +95,8 @@ export function CreatePlaylistDialog({
   const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newYear = e.target.value;
     if (!isTitleManuallyEdited) {
-      if (newYear && playlistData.stage) {
-        const newTitle = `${newYear}年 ${playlistData.stage}`;
-        setPlaylistData({ ...playlistData, year: newYear, title: newTitle });
-      } else {
-        setPlaylistData({ ...playlistData, year: newYear, title: '' });
-      }
+      const newTitle = generateTitle(newYear, playlistData.stage);
+      setPlaylistData({ ...playlistData, year: newYear, title: newTitle });
     } else {
       setPlaylistData({ ...playlistData, year: newYear });
     }
@@ -105,12 +105,8 @@ export function CreatePlaylistDialog({
   const handleYearSelect = (year: number) => {
     const newYear = year.toString();
     if (!isTitleManuallyEdited) {
-      if (newYear && playlistData.stage) {
-        const newTitle = `${newYear}年 ${playlistData.stage}`;
-        setPlaylistData({ ...playlistData, year: newYear, title: newTitle });
-      } else {
-        setPlaylistData({ ...playlistData, year: newYear, title: '' });
-      }
+      const newTitle = generateTitle(newYear, playlistData.stage);
+      setPlaylistData({ ...playlistData, year: newYear, title: newTitle });
     } else {
       setPlaylistData({ ...playlistData, year: newYear });
     }
@@ -120,12 +116,8 @@ export function CreatePlaylistDialog({
   const handleStageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStage = e.target.value;
     if (!isTitleManuallyEdited) {
-      if (playlistData.year && newStage) {
-        const newTitle = `${playlistData.year}年 ${newStage}`;
-        setPlaylistData({ ...playlistData, stage: newStage, title: newTitle });
-      } else {
-        setPlaylistData({ ...playlistData, stage: newStage, title: '' });
-      }
+      const newTitle = generateTitle(playlistData.year, newStage);
+      setPlaylistData({ ...playlistData, stage: newStage, title: newTitle });
     } else {
       setPlaylistData({ ...playlistData, stage: newStage });
     }
