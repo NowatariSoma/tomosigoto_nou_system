@@ -68,11 +68,18 @@ export const useMaterialListPage = () => {
     loadData();
   }, []);
 
-  // 年度・舞台のオプションを生成
+  // 年度・舞台・フェーズのオプションを生成
   const years = Array.from(new Set(playlists.map((item: Playlist) => item.year))).sort(
     (a: number, b: number) => b - a
   );
   const stages = Array.from(new Set(playlists.map((item: Playlist) => item.stage))).sort();
+  const phases = Array.from(
+    new Set(
+      subPlaylists
+        .map((item: SubPlaylist) => item.phase)
+        .filter((phase): phase is string => Boolean(phase && phase.trim()))
+    )
+  ).sort();
 
   const yearOptions: FilterOption[] = [
     { value: 'all', label: 'すべての年度' },
@@ -86,8 +93,7 @@ export const useMaterialListPage = () => {
 
   const phaseOptions: FilterOption[] = [
     { value: 'all', label: 'すべてのフェーズ' },
-    { value: '稽古', label: '稽古' },
-    { value: '本番', label: '本番' },
+    ...phases.map((phase: string) => ({ value: phase, label: phase })),
   ];
 
   const filterConfigs = [
