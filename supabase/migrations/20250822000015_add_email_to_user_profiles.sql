@@ -1,5 +1,5 @@
 -- user_profilesテーブルにemailカラムを追加
-ALTER TABLE public.user_profiles 
+ALTER TABLE public.user_profiles
 ADD COLUMN email TEXT;
 
 -- emailカラムにインデックスを追加（検索性能向上のため）

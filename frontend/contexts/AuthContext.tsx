@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 権限フラグの計算（is_instructorフラグを使用）
   const roleType = userRole?.role_type;
   const isInstructorFlag = userRole?.is_instructor || false;
-  
+
   const isAdmin = roleType === 'admin';
   // admin または basic+is_instructor=true が指導者
   const isInstructor = isAdmin || (roleType === 'basic' && isInstructorFlag);
@@ -158,8 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       //   if (data.session?.access_token) {
       //     localStorage.setItem('authToken', data.session.access_token);
       //   }
-      //   await fetchUserRole(data.user);
+      //   await fetchUserRole(data.user, data.session);
       // }
+    } catch (error: any) {
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -245,20 +247,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserRole, user]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      userRole, 
-      isAdmin, 
+    <AuthContext.Provider value={{
+      user,
+      userRole,
+      isAdmin,
       isInstructor,
       isMember,
       canEdit,
       canManage,
-      isLoading, 
-      login, 
-      signUp, 
-      logout, 
-      checkAuth, 
-      refreshUserRole 
+      isLoading,
+      login,
+      signUp,
+      logout,
+      checkAuth,
+      refreshUserRole
     }}>
       {children}
     </AuthContext.Provider>

@@ -21,6 +21,7 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
+
 # CORS設定
 # 開発環境ではすべてのオリジンを許可（本番環境では適切に制限すること）
 cors_origins = settings.BACKEND_CORS_ORIGINS if settings.BACKEND_CORS_ORIGINS else ["*"]
