@@ -1,4 +1,4 @@
-import { fetchApi, buildApiUrl } from '../../../lib/api';
+import { fetchApi } from '../../../lib/api';
 import { API_ENDPOINTS } from '../constants';
 import {
   Playlist,
@@ -32,20 +32,20 @@ export class MaterialsService {
 
   // プレイリスト関連
   async getPlaylists(): Promise<Playlist[]> {
-    const response = await fetchApi(buildApiUrl(this.basePath));
+    const response = await fetchApi(this.basePath);
     const apiPlaylists = await response.json();
     return apiPlaylists.map(mapApiPlaylistToPlaylist);
   }
 
   async getPlaylist(playlistId: string): Promise<Playlist> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}`));
+    const response = await fetchApi(`${this.basePath}/${playlistId}`);
     const apiPlaylist = await response.json();
     return mapApiPlaylistToPlaylist(apiPlaylist);
   }
 
   async createPlaylist(data: CreatePlaylistRequest): Promise<Playlist> {
     const apiData = mapPlaylistToApiRequest(data);
-    const response = await fetchApi(buildApiUrl(this.basePath), {
+    const response = await fetchApi(this.basePath, {
       method: 'POST',
       body: JSON.stringify(apiData),
     });
@@ -55,7 +55,7 @@ export class MaterialsService {
 
   async updatePlaylist(playlistId: string, data: UpdatePlaylistRequest): Promise<Playlist> {
     const apiData = mapUpdatePlaylistToApiRequest(data);
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}`), {
+    const response = await fetchApi(`${this.basePath}/${playlistId}`, {
       method: 'PUT',
       body: JSON.stringify(apiData),
     });
@@ -64,27 +64,27 @@ export class MaterialsService {
   }
 
   async deletePlaylist(playlistId: string): Promise<void> {
-    await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}`), {
+    await fetchApi(`${this.basePath}/${playlistId}`, {
       method: 'DELETE',
     });
   }
 
   // サブプレイリスト関連
   async getSubPlaylists(playlistId: string): Promise<SubPlaylist[]> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists`));
+    const response = await fetchApi(`${this.basePath}/${playlistId}/sub-playlists`);
     const apiSubPlaylists = await response.json();
     return apiSubPlaylists.map(mapApiSubPlaylistToSubPlaylist);
   }
 
   async getSubPlaylist(playlistId: string, subPlaylistId: string): Promise<SubPlaylist> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`));
+    const response = await fetchApi(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`);
     const apiSubPlaylist = await response.json();
     return mapApiSubPlaylistToSubPlaylist(apiSubPlaylist);
   }
 
   async createSubPlaylist(playlistId: string, data: CreateSubPlaylistRequest): Promise<SubPlaylist> {
     const apiData = mapSubPlaylistToApiRequest(data);
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists`), {
+    const response = await fetchApi(`${this.basePath}/${playlistId}/sub-playlists`, {
       method: 'POST',
       body: JSON.stringify(apiData),
     });
@@ -99,7 +99,7 @@ export class MaterialsService {
   ): Promise<SubPlaylist> {
     const apiData = mapUpdateSubPlaylistToApiRequest(data);
     const response = await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`),
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`,
       {
         method: 'PUT',
         body: JSON.stringify(apiData),
@@ -110,7 +110,7 @@ export class MaterialsService {
   }
 
   async deleteSubPlaylist(playlistId: string, subPlaylistId: string): Promise<void> {
-    await fetchApi(buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`), {
+    await fetchApi(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}`, {
       method: 'DELETE',
     });
   }
@@ -118,7 +118,7 @@ export class MaterialsService {
   // 動画関連
   async getVideos(playlistId: string, subPlaylistId: string): Promise<Video[]> {
     const response = await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos`)
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos`
     );
     const apiVideos = await response.json();
     return apiVideos.map(mapApiVideoToVideo);
@@ -126,7 +126,7 @@ export class MaterialsService {
 
   async getVideo(playlistId: string, subPlaylistId: string, videoId: string): Promise<Video> {
     const response = await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`)
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`
     );
     const apiVideo = await response.json();
     return mapApiVideoToVideo(apiVideo);
@@ -135,7 +135,7 @@ export class MaterialsService {
   async createVideo(playlistId: string, subPlaylistId: string, data: CreateVideoRequest): Promise<Video> {
     const apiData = mapVideoToApiRequest(data);
     const response = await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos`),
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos`,
       {
         method: 'POST',
         body: JSON.stringify(apiData),
@@ -153,7 +153,7 @@ export class MaterialsService {
   ): Promise<Video> {
     const apiData = mapUpdateVideoToApiRequest(data);
     const response = await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`),
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`,
       {
         method: 'PUT',
         body: JSON.stringify(apiData),
@@ -165,7 +165,7 @@ export class MaterialsService {
 
   async deleteVideo(playlistId: string, subPlaylistId: string, videoId: string): Promise<void> {
     await fetchApi(
-      buildApiUrl(`${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`),
+      `${this.basePath}/${playlistId}/sub-playlists/${subPlaylistId}/videos/${videoId}`,
       {
         method: 'DELETE',
       }
@@ -174,38 +174,38 @@ export class MaterialsService {
 
   // お気に入り関連
   async getFavorites(): Promise<Favorite[]> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/favorites`));
+    const response = await fetchApi(`${this.basePath}/favorites`);
     const apiFavorites = await response.json();
     return apiFavorites.map(mapApiFavoriteToFavorite);
   }
 
   async getFavoriteStatus(videoId: string): Promise<{ is_favorited: boolean; video_id: string; user_id: string }> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/videos/${videoId}/favorites/status`));
+    const response = await fetchApi(`${this.basePath}/videos/${videoId}/favorites/status`);
     return await response.json();
   }
 
   async createFavorite(videoId: string): Promise<{ id: string; user_id: string; video_id: string; created_at?: string; updated_at?: string }> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/videos/${videoId}/favorites`), {
+    const response = await fetchApi(`${this.basePath}/videos/${videoId}/favorites`, {
       method: 'POST',
     });
     return await response.json();
   }
 
   async deleteFavorite(videoId: string): Promise<void> {
-    await fetchApi(buildApiUrl(`${this.basePath}/videos/${videoId}/favorites`), {
+    await fetchApi(`${this.basePath}/videos/${videoId}/favorites`, {
       method: 'DELETE',
     });
   }
 
   async toggleFavorite(videoId: string): Promise<{ is_favorited: boolean; message: string; favorite?: any }> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/videos/${videoId}/favorites/toggle`), {
+    const response = await fetchApi(`${this.basePath}/videos/${videoId}/favorites/toggle`, {
       method: 'POST',
     });
     return await response.json();
   }
 
   async getFavoriteVideosWithDetails(): Promise<FavoriteVideoDetail[]> {
-    const response = await fetchApi(buildApiUrl(`${this.basePath}/favorites/videos`));
+    const response = await fetchApi(`${this.basePath}/favorites/videos`);
     const apiFavoriteVideos = await response.json();
     return apiFavoriteVideos.map(mapApiFavoriteVideoDetailToFavoriteVideoDetail);
   }
