@@ -129,3 +129,57 @@ class ErrorMessage:
     class INVALID_DATE_FORMAT(BaseMessage):
         status_code = status.HTTP_400_BAD_REQUEST
         text = "日付はYYYY-MM-DD形式で指定してください"
+    
+    # YouTube関連
+    class INVALID_PLAYLIST_URL(BaseMessage):
+        status_code = status.HTTP_400_BAD_REQUEST
+        text = "無効な再生リストURLです"
+    
+    class CLIENT_SECRET_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "client_secretが見つかりません。GOOGLE_CLIENT_SECRETS_FILEを確認してください。"
+    
+    class TOKEN_REFRESH_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "トークンのリフレッシュに失敗しました: {}"
+    
+    class OAUTH_TOKEN_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_401_UNAUTHORIZED
+        text = "YouTube OAuthトークンが見つかりません。先に認証を行ってください。"
+    
+    class YOUTUBE_QUOTA_EXCEEDED(BaseMessage):
+        status_code = status.HTTP_429_TOO_MANY_REQUESTS
+        text = "YouTube APIのクォータを超過しました"
+    
+    class YOUTUBE_ACCESS_DENIED(BaseMessage):
+        status_code = status.HTTP_403_FORBIDDEN
+        text = "この再生リストにアクセスできません。限定公開動画を含む場合は適切なOAuth認証が必要です。"
+    
+    class YOUTUBE_PLAYLIST_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "指定された再生リストが見つかりません"
+    
+    class YOUTUBE_API_ERROR(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "YouTube APIからの取得に失敗しました: {}"
+    
+    class SUB_PLAYLIST_NOT_FOUND(BaseMessage):
+        status_code = status.HTTP_404_NOT_FOUND
+        text = "指定されたサブプレイリストが見つかりません"
+    
+    class FAVORITE_ALREADY_EXISTS(BaseMessage):
+        status_code = status.HTTP_409_CONFLICT
+        text = "既にお気に入りに登録されています"
+    
+    # OAuth関連
+    class STATE_SAVE_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "OAuth stateの保存に失敗しました: {}"
+    
+    class TOKEN_UPDATE_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "OAuthトークンの更新に失敗しました"
+    
+    class TOKEN_SAVE_FAILED(BaseMessage):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        text = "OAuthトークンの保存に失敗しました: {}"

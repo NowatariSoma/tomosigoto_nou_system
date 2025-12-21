@@ -26,3 +26,7 @@ ortools>=9.10.0
 
 # Core dependencies only for Docker
 # Linting tools can be installed separately in development 
+
+google-api-python-client==2.151.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0

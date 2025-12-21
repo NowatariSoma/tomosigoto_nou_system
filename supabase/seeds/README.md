@@ -11,6 +11,7 @@
 - `04_practice_schedules_seed.sql` - 練習スケジュール関連データ（practice_schedules, schedule_available_venues）
 - `05_practice_user_attendance_seed.sql` - 練習出欠データ（practice_user_attendance）
 - `06_session_instructors_seed.sql` - セッション指導者データ（session_instructors）
+- `07_materials_seed.sql` - 資料庫関連データ（playlists, sub_playlists, videos, favorites）
 
 ## 実行方法
 
@@ -48,6 +49,9 @@ psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/05_practice
 
 # 7. セッション指導者データ
 psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/06_session_instructors_seed.sql
+
+# 8. 資料庫データ
+psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/07_materials_seed.sql
 ```
 
 ### 方法3: 特定のseedファイルのみ実行
@@ -72,6 +76,7 @@ psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/02_stage_an
    5. `04_practice_schedules_seed.sql` （practice_schedules, schedule_available_venues）
    6. `05_practice_user_attendance_seed.sql` （practice_user_attendance）
    7. `06_session_instructors_seed.sql` （session_instructors）
+   8. `07_materials_seed.sql` （playlists, sub_playlists, videos, favorites）
 
 3. **重複実行**
    - 同じseedファイルを複数回実行するとエラーになる可能性があります
@@ -101,6 +106,12 @@ psql -h localhost -p 54322 -U postgres -d postgres -f supabase/seeds/02_stage_an
 ### 学部データ
 - 学部: 法学部、経済学部、商学部、文学部、社会学部等（13学部）
 - 大学院: 法学研究科、経済学研究科等（7研究科）
+
+### 資料庫データ
+- プレイリスト（2023-2025年度、高砂・羽衣・船弁慶など、6件）
+- サブプレイリスト（本番・稽古のプレイリスト、9件）
+- 動画（各サブプレイリストに含まれる個別動画、18件）
+- お気に入り（ユーザーがお気に入り登録した動画、10件）
 
 ### その他
 - テストユーザー（15名、ダミーauth.usersデータ）

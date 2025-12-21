@@ -34,7 +34,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <LoginBackground />
-      
+
       <LoginCard>
         <form onSubmit={handleSubmit} className="space-y-5">
           <LoginLogo />

@@ -20,6 +20,18 @@ from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_role_repository import UserRoleRepository
 from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
+from app.repositories.materials_youtube_repository import (
+    MaterialsPlaylistRepository,
+    MaterialsSubPlaylistRepository,
+    MaterialsVideoRepository,
+    MaterialsFavoriteRepository,
+)
+from app.services.materials_youtube_service import (
+    MaterialsPlaylistService,
+    MaterialsSubPlaylistService,
+    MaterialsVideoService,
+    MaterialsFavoriteService,
+)
 
 from app.services.user_service import UserService
 from app.services.venue_service import VenueService
@@ -71,7 +83,7 @@ async def get_current_user(
         raise APIException(
             ErrorMessage.INVALID_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     token = credentials.credentials
     user = await user_service.verify_jwt_token(token)
 
@@ -90,7 +102,7 @@ async def get_current_user_optional(
     """JWTトークンから現在のユーザー情報を取得（オプショナル）"""
     if not credentials:
         return None
-    
+
     try:
         token = credentials.credentials
         user = await user_service.verify_jwt_token(token)
@@ -339,14 +351,14 @@ async def require_instructor_or_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="ユーザーロールが見つかりません"
         )
-    
+
     role_type = role.get("role_type")
     is_instructor = role.get("is_instructor", False)
-    
+
     # admin または basic+is_instructor=true が指導者以上
     if role_type == "admin" or (role_type == "basic" and is_instructor):
         return current_user
-    
+
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="指導者以上の権限が必要です"
@@ -366,14 +378,14 @@ async def require_member_or_above(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="ユーザーロールが見つかりません"
         )
-    
+
     role_type = role.get("role_type")
-    
+
     # admin, basic（指導者・一般メンバー含む）がメンバー以上
     # general, viewerは閲覧のみなので除外
     if role_type in ["admin", "basic"]:
         return current_user
-    
+
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="メンバー権限が必要です"
@@ -396,13 +408,6 @@ def get_member_admin_service(
 ) -> MemberAdminService:
     """MemberAdminServiceのインスタンスを依存性注入で取得"""
     return MemberAdminService(user_service, user_role_repository, user_profile_repository)
-
-
-def get_schedule_available_venue_repository(
-    supabase_client: Client = Depends(get_supabase),
-) -> ScheduleAvailableVenueRepository:
-    """ScheduleAvailableVenueRepositoryのインスタンスを取得"""
-    return ScheduleAvailableVenueRepository(supabase_client)
 
 
 def get_schedule_available_venue_service(
@@ -441,3 +446,69 @@ def get_scheduling_optimization_service(
         attendance_repository,
         user_role_repository
     )
+
+
+# Materials YouTube関連の依存性注入
+def get_materials_playlist_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsPlaylistRepository:
+    """MaterialsPlaylistRepositoryのインスタンスを取得"""
+    return MaterialsPlaylistRepository(supabase_client)
+
+
+def get_materials_sub_playlist_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsSubPlaylistRepository:
+    """MaterialsSubPlaylistRepositoryのインスタンスを取得"""
+    return MaterialsSubPlaylistRepository(supabase_client)
+
+
+def get_materials_video_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsVideoRepository:
+    """MaterialsVideoRepositoryのインスタンスを取得"""
+    return MaterialsVideoRepository(supabase_client)
+
+
+def get_materials_favorite_repository(
+    supabase_client: Client = Depends(get_supabase),
+) -> MaterialsFavoriteRepository:
+    """MaterialsFavoriteRepositoryのインスタンスを取得"""
+    return MaterialsFavoriteRepository(supabase_client)
+
+
+def get_materials_playlist_service(
+    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
+) -> MaterialsPlaylistService:
+    """MaterialsPlaylistServiceのインスタンスを依存性注入で取得"""
+    return MaterialsPlaylistService(materials_playlist_repository)
+
+
+def get_materials_sub_playlist_service(
+    supabase_client: Client = Depends(get_supabase),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
+    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
+    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
+) -> MaterialsSubPlaylistService:
+    """MaterialsSubPlaylistServiceのインスタンスを依存性注入で取得"""
+    return MaterialsSubPlaylistService(
+        materials_sub_playlist_repository,
+        materials_video_repository,
+        materials_playlist_repository,
+        supabase_client
+    )
+
+
+def get_materials_video_service(
+    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
+) -> MaterialsVideoService:
+    """MaterialsVideoServiceのインスタンスを依存性注入で取得"""
+    return MaterialsVideoService(materials_video_repository, materials_sub_playlist_repository)
+
+
+def get_materials_favorite_service(
+    materials_favorite_repository: MaterialsFavoriteRepository = Depends(get_materials_favorite_repository),
+) -> MaterialsFavoriteService:
+    """MaterialsFavoriteServiceのインスタンスを依存性注入で取得"""
+    return MaterialsFavoriteService(materials_favorite_repository)
