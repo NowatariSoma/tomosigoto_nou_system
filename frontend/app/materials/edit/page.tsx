@@ -204,11 +204,12 @@ function PlaylistEditViewAsyncWrapper({
       }
 
       // 直接APIを呼び出して動画を削除
-      await materialsService.deleteVideo(playlist.id, targetSubPlaylistId, videoId);
+      const subPlaylistIdToUpdate = targetSubPlaylistId;
+      await materialsService.deleteVideo(playlist.id, subPlaylistIdToUpdate, videoId);
       alert('動画を削除しました');
       // 該当サブプレイリストの動画一覧を再取得
-      const updatedVideos = await materialsService.getVideos(playlist.id, targetSubPlaylistId);
-      setVideosBySubPlaylist(prev => ({ ...prev, [targetSubPlaylistId]: updatedVideos }));
+      const updatedVideos = await materialsService.getVideos(playlist.id, subPlaylistIdToUpdate);
+      setVideosBySubPlaylist(prev => ({ ...prev, [subPlaylistIdToUpdate]: updatedVideos }));
     } catch (error) {
       console.error(`Failed to delete video ${videoId}:`, error);
       alert('動画の削除に失敗しました');
