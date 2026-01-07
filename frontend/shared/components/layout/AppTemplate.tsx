@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ReactNode, useEffect } from 'react';
+import { useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Header } from '@/components/layout/header';
@@ -8,7 +8,6 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Badge } from '@/components/ui/feedback/badge';
 import { StatusBadge } from '@/components/ui/feedback/status-badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShieldAlert } from 'lucide-react';
 
 interface AppTemplateProps {
   children: ReactNode;
@@ -42,11 +41,24 @@ export function AppTemplate({
   className = ''
 }: AppTemplateProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { isAdmin, isLoading, user } = useAuth();
+  const { isAdmin, isInstructor, isMember, isLoading } = useAuth();
   const router = useRouter();
 
-  // 自動アクセス制御：permissionBadge.level が 'admin' または 'super' の場合
+  // 自動アクセス制御：permissionBadge.level に応じた権限チェック
   const requiresAdmin = permissionBadge?.level === 'admin' || permissionBadge?.level === 'super';
+  const requiresInstructor = permissionBadge?.level === 'instructor';
+  const requiresMember = permissionBadge?.level === 'basic';
+
+  // 権限チェック結果
+  const hasRequiredPermission = () => {
+    if (requiresAdmin) return isAdmin;
+    if (requiresInstructor) return isInstructor;
+    if (requiresMember) return isMember;
+    return true;
+  };
+
+  // 権限チェックが必要かどうか
+  const requiresPermissionCheck = requiresAdmin || requiresInstructor || requiresMember;
 
   const handleMobileSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -70,8 +82,8 @@ export function AppTemplate({
     }
   };
 
-  // 管理者権限が必要だが、管理者でない場合はアクセス拒否画面を表示
-  if (requiresAdmin && !isLoading && !isAdmin) {
+  // 権限が必要だが、権限がない場合はアクセス拒否画面を表示
+  if (requiresPermissionCheck && !isLoading && !hasRequiredPermission()) {
     return (
       <div className="min-h-screen bg-white">
         <Sidebar
@@ -97,7 +109,7 @@ export function AppTemplate({
                       <div className="absolute inset-0 -m-4 bg-gradient-to-br from-[#83A4FF]/40 via-[#B9D4FF]/40 to-blue-600/40 rounded-full blur-2xl"></div>
                       <div className="absolute inset-0 bg-gradient-to-br from-[#83A4FF] via-[#B9D4FF] to-blue-600 rounded-full blur-sm opacity-60 animate-pulse"></div>
                       <Image
-                        src="/god_takuichi.jpg"
+                        src="/honwaka-kosuke.jpg"
                         alt="アクセス拒否"
                         width={420}
                         height={420}
@@ -109,7 +121,7 @@ export function AppTemplate({
                     <h2 className="text-5xl font-black bg-gradient-to-r from-[#83A4FF] via-[#B9D4FF] to-[#FFD07F] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(131,164,255,0.5)] tracking-tight">
                       やっと会えたね（はあと）
                     </h2>
-                    <p className="text-black/80 text-2xl font-light tracking-wide">
+                    <p className="text-black/80 text-3xl font-light tracking-wide">
                       君のこと、ずっと考えていたんだ。
                     </p>
                   </div>
@@ -131,8 +143,8 @@ export function AppTemplate({
     );
   }
 
-  // ローディング中の表示（管理者権限が必要な場合のみ）
-  if (requiresAdmin && isLoading) {
+  // ローディング中の表示（権限チェックが必要な場合のみ）
+  if (requiresPermissionCheck && isLoading) {
     return (
       <div className="min-h-screen bg-white">
         <Sidebar
