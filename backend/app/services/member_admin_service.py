@@ -127,7 +127,7 @@ class MemberAdminService:
             return "admin"
         if role == "viewer":
             return "viewer"
-        return "user"
+        return "basic"
 
     def _build_display_name(
         self,
