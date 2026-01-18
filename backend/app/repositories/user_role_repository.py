@@ -27,7 +27,7 @@ class UserRoleRepository:
             user_id: ユーザーID
 
         Returns:
-            ロール情報（role_type: user/admin/viewer）、見つからない場合はNone
+            ロール情報（role_type: basic/admin/viewer/general）、見つからない場合はNone
         """
         response = (
             self.client.table(self.table_name)
@@ -68,7 +68,7 @@ class UserRoleRepository:
         ユーザーロールを作成（user_roleテーブルに）
 
         Args:
-            role_data: ロール情報（role_type: user/admin/viewerを含む）
+            role_data: ロール情報（role_type: basic/admin/viewer/generalを含む）
 
         Returns:
             作成されたロール情報
@@ -161,7 +161,7 @@ class UserRoleRepository:
         ロールタイプでユーザーロールを取得（user_roleテーブルから）
 
         Args:
-            role_type: ロールタイプ（user/admin/viewer）
+            role_type: ロールタイプ（basic/admin/viewer/general）
             include_hidden: 非表示ロールも含めるか（user_roleテーブルでは未使用）
 
         Returns:
@@ -254,7 +254,7 @@ class UserRoleRepository:
                 .insert({
                     "user_id": user_id,
                     "is_instructor": is_instructor,
-                    "role_type": "user",
+                    "role_type": "basic",
                 })
                 .execute()
             )
