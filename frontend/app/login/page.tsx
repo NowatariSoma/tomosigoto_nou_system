@@ -7,7 +7,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = () => {
-    router.push('/');
+    router.push('/settings');
   };
 
   return <LoginForm onLogin={handleLogin} />;
