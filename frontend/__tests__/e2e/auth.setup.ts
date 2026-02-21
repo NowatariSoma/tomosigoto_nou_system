@@ -19,8 +19,8 @@ setup('authenticate', async ({ page }) => {
   // ログインボタンをクリック
   await page.click('button[type="submit"]');
 
-  // ログイン後、ホームページ（/）にリダイレクトされるので待機
-  await page.waitForURL('/', { timeout: 10000 });
+  // ログイン後、設定ページ（/settings）にリダイレクトされるので待機
+  await page.waitForURL('/settings', { timeout: 10000 });
 
   // 認証が成功したことを確認（サイドバーのスケジュールリンクが表示されているか）
   await expect(page.getByRole('link', { name: 'スケジュール' })).toBeVisible({ timeout: 5000 });
