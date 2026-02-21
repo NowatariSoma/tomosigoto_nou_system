@@ -22,8 +22,13 @@ from app.schemas.materials_youtube import (
     MaterialsFavoritesResponse,
     MaterialsFavoritesCreate,
     FavoriteVideoDetailResponse,
+    TagSuggestionRequest,
+    TagSuggestionResponse,
+    AutoTagRequest,
+    VideoTagResponse,
 )
 from app.services.materials_youtube_service import MaterialsPlaylistService, MaterialsSubPlaylistService, MaterialsVideoService, MaterialsFavoriteService
+from app.services.auto_tagging_service import AutoTaggingService
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 router = APIRouter()
@@ -530,3 +535,109 @@ async def delete_materials_video(
         )
     
     return {"message": "ビデオを削除しました"}
+
+
+# タグ関連のAPIエンドポイント
+@router.post("/suggest-tags", response_model=List[TagSuggestionResponse])
+async def suggest_tags(
+    request: TagSuggestionRequest,
+):
+    """
+    動画タイトルからタグを提案
+    """
+    try:
+        auto_tagging_service = AutoTaggingService()
+        suggestions = await auto_tagging_service.suggest_tags_for_video(
+            request.video_title, 
+            request.video_description or ""
+        )
+        return suggestions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"タグ提案に失敗しました: {str(e)}"
+        )
+
+
+@router.post("/videos/{video_id}/auto-tag", response_model=List[VideoTagResponse])
+async def apply_auto_tags(
+    video_id: UUID,
+    request: Optional[AutoTagRequest] = None,
+):
+    """
+    動画に自動タグを適用
+    """
+    force_update = request.force_update if request else False
+    
+    try:
+        auto_tagging_service = AutoTaggingService()
+        applied_tags = await auto_tagging_service.apply_auto_tags(video_id, force_update)
+        return applied_tags
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"自動タグ適用に失敗しました: {str(e)}"
+        )
+
+
+@router.get("/videos/{video_id}/tags", response_model=List[VideoTagResponse])
+async def get_video_tags(
+    video_id: UUID,
+):
+    """
+    動画のタグ一覧を取得
+    """
+    try:
+        auto_tagging_service = AutoTaggingService()
+        tags = await auto_tagging_service.get_video_tags(video_id)
+        return tags
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"タグ取得に失敗しました: {str(e)}"
+        )
+
+
+@router.get("/tags", response_model=Dict[str, List])
+async def get_all_tags():
+    """
+    すべてのタグをカテゴリ別に取得
+    """
+    try:
+        auto_tagging_service = AutoTaggingService()
+        tags_by_category = await auto_tagging_service.get_all_tags()
+        
+        # レスポンス形式に変換
+        result = {}
+        for category_name, tags in tags_by_category.items():
+            result[category_name] = [tag.model_dump() for tag in tags]
+        
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"タグ一覧取得に失敗しました: {str(e)}"
+        )
+
+
+@router.get("/search/by-tags")
+async def search_videos_by_tags(
+    tags: List[str] = Query([], description="検索するタグ名のリスト"),
+):
+    """
+    タグで動画を検索
+    """
+    try:
+        auto_tagging_service = AutoTaggingService()
+        videos = await auto_tagging_service.search_videos_by_tags(tags)
+        return videos
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"タグ検索に失敗しました: {str(e)}"
+        )

@@ -81,8 +81,14 @@ class MaterialsVideoCreate(MaterialsVideoBase):
 class MaterialsVideoResponse(MaterialsVideoBase):
     """ビデオレスポンス用スキーマ"""
     id: UUID
+    sub_playlist_id: Optional[UUID] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    
+    # タグ情報
+    tags: Optional[List["VideoTagResponse"]] = Field(None, description="関連タグ")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MaterialsVideoUpdate(MaterialsVideoBase):
@@ -165,3 +171,90 @@ class FavoriteVideoDetailResponse(BaseModel):
     playlist: MaterialsPlaylistResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# タグ関連のスキーマ
+class TagCategoryBase(BaseModel):
+    """タグカテゴリの基本情報"""
+    name: str = Field(..., description="カテゴリ名")
+    description: Optional[str] = Field(None, description="説明")
+
+
+class TagCategoryCreate(TagCategoryBase):
+    """タグカテゴリ作成用スキーマ"""
+    pass
+
+
+class TagCategoryResponse(TagCategoryBase):
+    """タグカテゴリレスポンス用スキーマ"""
+    id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagBase(BaseModel):
+    """タグの基本情報"""
+    name: str = Field(..., description="タグ名")
+    description: Optional[str] = Field(None, description="説明")
+
+
+class TagCreate(TagBase):
+    """タグ作成用スキーマ"""
+    category_id: UUID = Field(..., description="カテゴリID")
+
+
+class TagResponse(TagBase):
+    """タグレスポンス用スキーマ"""
+    id: UUID
+    category_id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VideoTagBase(BaseModel):
+    """ビデオタグの基本情報"""
+    confidence: Optional[float] = Field(None, description="信頼度", ge=0.0, le=1.0)
+    auto_generated: bool = Field(False, description="AI生成かどうか")
+
+
+class VideoTagCreate(VideoTagBase):
+    """ビデオタグ作成用スキーマ"""
+    video_id: UUID = Field(..., description="ビデオID")
+    tag_id: UUID = Field(..., description="タグID")
+
+
+class VideoTagResponse(VideoTagBase):
+    """ビデオタグレスポンス用スキーマ"""
+    id: UUID
+    video_id: UUID
+    tag_id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    # 関連データ
+    tag: Optional[TagResponse] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagSuggestionRequest(BaseModel):
+    """タグ提案リクエスト"""
+    video_title: str = Field(..., description="動画タイトル")
+    video_description: Optional[str] = Field(None, description="動画説明")
+
+
+class TagSuggestionResponse(BaseModel):
+    """タグ提案レスポンス"""
+    category: str = Field(..., description="カテゴリ名")
+    tag: str = Field(..., description="タグ名")
+    confidence: float = Field(..., description="信頼度", ge=0.0, le=1.0)
+
+
+class AutoTagRequest(BaseModel):
+    """自動タグ付けリクエスト"""
+    video_id: UUID = Field(..., description="対象動画ID")
+    force_update: bool = Field(False, description="既存タグを強制更新するか")
