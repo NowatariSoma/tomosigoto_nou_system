@@ -2,7 +2,6 @@
 スケジュール利用可能会場関連のスキーマ定義
 """
 from datetime import datetime
-from typing import Optional
 from pydantic import BaseModel, Field
 from uuid import UUID
 
@@ -13,7 +12,7 @@ class ScheduleAvailableVenueBase(BaseModel):
     venue_id: UUID = Field(..., description="会場ID")
     is_preferred: bool = Field(False, description="優先会場かどうか")
     priority: int = Field(0, description="優先度（数値が大きいほど優先）")
-    notes: Optional[str] = Field(None, description="備考")
+    notes: str | None = Field(None, description="備考")
 
 
 class ScheduleAvailableVenueCreate(ScheduleAvailableVenueBase):
@@ -23,11 +22,11 @@ class ScheduleAvailableVenueCreate(ScheduleAvailableVenueBase):
 
 class ScheduleAvailableVenueUpdate(BaseModel):
     """スケジュール利用可能会場更新用スキーマ"""
-    schedule_id: Optional[UUID] = Field(None, description="練習スケジュールID")
-    venue_id: Optional[UUID] = Field(None, description="会場ID")
-    is_preferred: Optional[bool] = Field(None, description="優先会場かどうか")
-    priority: Optional[int] = Field(None, description="優先度（数値が大きいほど優先）")
-    notes: Optional[str] = Field(None, description="備考")
+    schedule_id: UUID | None = Field(None, description="練習スケジュールID")
+    venue_id: UUID | None = Field(None, description="会場ID")
+    is_preferred: bool | None = Field(None, description="優先会場かどうか")
+    priority: int | None = Field(None, description="優先度（数値が大きいほど優先）")
+    notes: str | None = Field(None, description="備考")
 
 
 class ScheduleAvailableVenueResponse(ScheduleAvailableVenueBase):
@@ -43,18 +42,18 @@ class ScheduleAvailableVenueResponse(ScheduleAvailableVenueBase):
 class ScheduleAvailableVenueWithDetails(ScheduleAvailableVenueResponse):
     """詳細情報付きスケジュール利用可能会場レスポンス用スキーマ"""
     # 会場情報
-    venue_name: Optional[str] = Field(None, description="会場名")
-    venue_address: Optional[str] = Field(None, description="会場住所")
-    venue_capacity: Optional[int] = Field(None, description="会場収容人数")
-    venue_phone: Optional[str] = Field(None, description="会場電話番号")
-    venue_email: Optional[str] = Field(None, description="会場メールアドレス")
-    venue_website: Optional[str] = Field(None, description="会場ウェブサイト")
+    venue_name: str | None = Field(None, description="会場名")
+    venue_address: str | None = Field(None, description="会場住所")
+    venue_capacity: int | None = Field(None, description="会場収容人数")
+    venue_phone: str | None = Field(None, description="会場電話番号")
+    venue_email: str | None = Field(None, description="会場メールアドレス")
+    venue_website: str | None = Field(None, description="会場ウェブサイト")
     
     # スケジュール情報
-    schedule_date: Optional[str] = Field(None, description="練習日")
-    schedule_title: Optional[str] = Field(None, description="練習タイトル")
-    schedule_start_time: Optional[str] = Field(None, description="開始時間")
-    schedule_end_time: Optional[str] = Field(None, description="終了時間")
+    schedule_date: str | None = Field(None, description="練習日")
+    schedule_title: str | None = Field(None, description="練習タイトル")
+    schedule_start_time: str | None = Field(None, description="開始時間")
+    schedule_end_time: str | None = Field(None, description="終了時間")
 
 
 class ScheduleAvailableVenueBulkCreate(BaseModel):

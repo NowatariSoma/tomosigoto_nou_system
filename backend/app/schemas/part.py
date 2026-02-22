@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_serializer
@@ -9,7 +8,7 @@ class PartBase(BaseModel):
     """パートの基本情報"""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str = 'active'
 
 
@@ -22,16 +21,16 @@ class PartCreate(PartBase):
 
 
 class PartUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    status: str | None = None
 
 class PartResponse(PartCreate):
     """パートレスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
     

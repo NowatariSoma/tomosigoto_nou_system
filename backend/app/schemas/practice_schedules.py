@@ -1,5 +1,5 @@
 from datetime import datetime, date, time
-from typing import Optional, List, Dict, Any
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -12,10 +12,10 @@ class PracticeScheduleBase(BaseModel):
     start_time: time
     end_time: time
     division_count: int = 6
-    title: Optional[str] = None
-    description: Optional[str] = None
-    schedule_type: Optional[str] = None
-    status: Optional[str] = "active"
+    title: str | None = None
+    description: str | None = None
+    schedule_type: str | None = None
+    status: str | None = "active"
 
     @model_validator(mode='after')
     def validate_time_order(self) -> 'PracticeScheduleBase':
@@ -29,26 +29,26 @@ class PracticeScheduleBase(BaseModel):
 class PracticeScheduleCreate(PracticeScheduleBase):
     """練習スケジュール作成用スキーマ"""
     # 複数部屋選択対応
-    venue_ids: Optional[List[UUID]] = None
+    venue_ids: list[UUID] | None = None
     # ステージID（この練習で扱う舞台）
-    stage_id: Optional[UUID] = None
+    stage_id: UUID | None = None
 
 
 class PracticeScheduleUpdate(BaseModel):
     """練習スケジュール更新用スキーマ"""
 
-    schedule_date: Optional[date] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    division_count: Optional[int] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
-    schedule_type: Optional[str] = None
-    status: Optional[str] = None
+    schedule_date: date | None = None
+    start_time: time | None = None
+    end_time: time | None = None
+    division_count: int | None = None
+    title: str | None = None
+    description: str | None = None
+    schedule_type: str | None = None
+    status: str | None = None
     # 複数部屋選択対応
-    venue_ids: Optional[List[UUID]] = None
+    venue_ids: list[UUID] | None = None
     # ステージID（この練習で扱う舞台）
-    stage_id: Optional[UUID] = None
+    stage_id: UUID | None = None
 
     @model_validator(mode='after')
     def validate_time_order(self) -> 'PracticeScheduleUpdate':
@@ -63,16 +63,16 @@ class PracticeScheduleResponse(PracticeScheduleBase):
     """練習スケジュールレスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
     # 複数部屋選択対応
-    venue_ids: Optional[List[UUID]] = None
-    venues: Optional[List[dict]] = None
+    venue_ids: list[UUID] | None = None
+    venues: list[dict[str, Any]] | None = None
     # ステージID（この練習で扱う舞台）
-    stage_id: Optional[UUID] = None
-    stage: Optional[dict] = None
+    stage_id: UUID | None = None
+    stage: dict[str, Any] | None = None
 
     model_config = ConfigDict(from_attributes=True, json_encoders={
         date: lambda v: v.isoformat() if v else None,
@@ -88,7 +88,7 @@ class ScheduleAvailableVenueBase(BaseModel):
     venue_id: UUID
     is_preferred: bool = False
     priority: int = 0
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ScheduleAvailableVenueCreate(ScheduleAvailableVenueBase):
@@ -99,17 +99,17 @@ class ScheduleAvailableVenueCreate(ScheduleAvailableVenueBase):
 class ScheduleAvailableVenueUpdate(BaseModel):
     """スケジュール利用可能会場更新用スキーマ"""
 
-    is_preferred: Optional[bool] = None
-    priority: Optional[int] = None
-    notes: Optional[str] = None
+    is_preferred: bool | None = None
+    priority: int | None = None
+    notes: str | None = None
 
 
 class ScheduleAvailableVenueResponse(ScheduleAvailableVenueBase):
     """スケジュール利用可能会場レスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -118,11 +118,11 @@ class SessionBase(BaseModel):
     """セッションの基本情報"""
 
     schedule_id: UUID
-    part_id: Optional[UUID] = None
-    part_name: Optional[str] = None  # パート名
+    part_id: UUID | None = None
+    part_name: str | None = None  # パート名
     slot_order: int
-    venue_id: Optional[UUID] = None  # フロントエンドから送信される会場ID
-    schedule_available_venue_id: Optional[UUID] = None
+    venue_id: UUID | None = None  # フロントエンドから送信される会場ID
+    schedule_available_venue_id: UUID | None = None
     priority: int = 0
 
 
@@ -134,18 +134,18 @@ class SessionCreate(SessionBase):
 class SessionUpdate(BaseModel):
     """セッション更新用スキーマ"""
 
-    part_id: Optional[UUID] = None
-    slot_order: Optional[int] = None
-    schedule_available_venue_id: Optional[UUID] = None
-    priority: Optional[int] = None
+    part_id: UUID | None = None
+    slot_order: int | None = None
+    schedule_available_venue_id: UUID | None = None
+    priority: int | None = None
 
 
 class SessionResponse(SessionBase):
     """セッションレスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -166,8 +166,8 @@ class SessionInstructorResponse(SessionInstructorBase):
     """セッション指導者レスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -176,14 +176,14 @@ class SessionInstructorResponse(SessionInstructorBase):
 class SessionWithInstructorsResponse(SessionResponse):
     """指導者情報を含むセッションレスポンス"""
 
-    instructors: List[SessionInstructorResponse] = []
+    instructors: list[SessionInstructorResponse] = []
 
 
 class PracticeScheduleWithDetailsResponse(PracticeScheduleResponse):
     """詳細情報を含む練習スケジュールレスポンス"""
 
-    available_venues: List[ScheduleAvailableVenueResponse] = []
-    sessions: List[SessionWithInstructorsResponse] = []
+    available_venues: list[ScheduleAvailableVenueResponse] = []
+    sessions: list[SessionWithInstructorsResponse] = []
 
 
 # フロントエンド表示用スキーマ
@@ -194,7 +194,7 @@ class VenueDisplayInfo(BaseModel):
     name: str
     is_preferred: bool = False
     priority: int = 0
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class InstructorDisplayInfo(BaseModel):
@@ -202,7 +202,7 @@ class InstructorDisplayInfo(BaseModel):
 
     id: UUID
     name: str
-    email: Optional[str] = None
+    email: str | None = None
 
 
 class SessionDisplayInfo(BaseModel):
@@ -211,10 +211,10 @@ class SessionDisplayInfo(BaseModel):
     id: UUID
     title: str
     slot_order: int
-    part_name: Optional[str] = None
-    venue_name: Optional[str] = None
+    part_name: str | None = None
+    venue_name: str | None = None
     priority: int = 0
-    instructors: List[InstructorDisplayInfo] = []
+    instructors: list[InstructorDisplayInfo] = []
 
 
 class PracticeScheduleDisplayResponse(BaseModel):
@@ -222,13 +222,13 @@ class PracticeScheduleDisplayResponse(BaseModel):
 
     id: UUID
     schedule_date: date
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    description: Optional[str] = None
-    schedule_type: Optional[str] = None
-    status: Optional[str] = None
-    available_venues: List[VenueDisplayInfo] = []
-    sessions: List[SessionDisplayInfo] = []
+    start_time: time | None = None
+    end_time: time | None = None
+    description: str | None = None
+    schedule_type: str | None = None
+    status: str | None = None
+    available_venues: list[VenueDisplayInfo] = []
+    sessions: list[SessionDisplayInfo] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -236,13 +236,13 @@ class PracticeScheduleDisplayResponse(BaseModel):
 class BundleVenueInfo(BaseModel):
     """bundle API 用の会場情報"""
 
-    id: Optional[str] = None  # schedule_available_venue_id
-    venue_id: Optional[str] = None
+    id: str | None = None  # schedule_available_venue_id
+    venue_id: str | None = None
     name: str
-    color: Optional[str] = None
-    is_preferred: Optional[bool] = None
-    priority: Optional[int] = None
-    campus: Optional[str] = None
+    color: str | None = None
+    is_preferred: bool | None = None
+    priority: int | None = None
+    campus: str | None = None
 
 
 class PracticeScheduleBundleSchedule(BaseModel):
@@ -250,28 +250,28 @@ class PracticeScheduleBundleSchedule(BaseModel):
 
     id: str
     schedule_date: str
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
-    division_count: Optional[int] = None
-    venues: List[BundleVenueInfo] = []
+    start_time: str | None = None
+    end_time: str | None = None
+    title: str | None = None
+    description: str | None = None
+    division_count: int | None = None
+    venues: list[BundleVenueInfo] = []
 
 
 class PracticeScheduleBundleIdeal(BaseModel):
     """bundle API のidealデータ"""
 
-    schedule_info: Optional[Dict[str, Any]] = None
-    venues: Optional[List[Dict[str, Any]]] = None
-    time_schedule: Optional[Dict[str, Any]] = None
-    debug_info: Optional[Dict[str, Any]] = None
+    schedule_info: dict[str, Any] | None = None
+    venues: list[dict[str, Any]] | None = None
+    time_schedule: dict[str, Any] | None = None
+    debug_info: dict[str, Any] | None = None
 
 
 class PracticeScheduleBundleAttendance(BaseModel):
     """bundle API の出欠情報"""
 
-    entries: List[Dict[str, Any]] = []
-    my_entry: Optional[Dict[str, Any]] = None
+    entries: list[dict[str, Any]] = []
+    my_entry: dict[str, Any] | None = None
 
 
 class PracticeScheduleBundleInstructor(BaseModel):
@@ -280,20 +280,20 @@ class PracticeScheduleBundleInstructor(BaseModel):
     id: str
     attendance_id: str
     schedule_id: str
-    schedule_available_venue_id: Optional[str] = None
+    schedule_available_venue_id: str | None = None
     slot_order: int
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    user_name: Optional[str] = None
-    user_email: Optional[str] = None
-    attendance_status: Optional[str] = None
-    schedule_date: Optional[str] = None
-    schedule_title: Optional[str] = None
-    schedule_start_time: Optional[str] = None
-    schedule_end_time: Optional[str] = None
-    venue_name: Optional[str] = None
-    venue_address: Optional[str] = None
-    part_name: Optional[str] = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    user_name: str | None = None
+    user_email: str | None = None
+    attendance_status: str | None = None
+    schedule_date: str | None = None
+    schedule_title: str | None = None
+    schedule_start_time: str | None = None
+    schedule_end_time: str | None = None
+    venue_name: str | None = None
+    venue_address: str | None = None
+    part_name: str | None = None
 
 
 class PracticeScheduleBundleUser(BaseModel):
@@ -301,7 +301,7 @@ class PracticeScheduleBundleUser(BaseModel):
 
     id: str
     name: str
-    email: Optional[str] = None
+    email: str | None = None
 
 
 class PracticeScheduleBundleMeta(BaseModel):
@@ -317,6 +317,6 @@ class PracticeScheduleBundleResponse(BaseModel):
     schedule: PracticeScheduleBundleSchedule
     ideal: PracticeScheduleBundleIdeal
     attendance: PracticeScheduleBundleAttendance
-    users: List[PracticeScheduleBundleUser] = []
-    session_instructors: Dict[str, List[PracticeScheduleBundleInstructor]] = {}
+    users: list[PracticeScheduleBundleUser] = []
+    session_instructors: dict[str, list[PracticeScheduleBundleInstructor]] = {}
     meta: PracticeScheduleBundleMeta

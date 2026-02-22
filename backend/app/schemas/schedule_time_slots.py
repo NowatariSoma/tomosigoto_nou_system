@@ -2,7 +2,6 @@
 スケジュール時間スロット関連のスキーマ定義
 """
 from datetime import datetime, time
-from typing import Optional, Union
 from pydantic import BaseModel, Field, field_serializer, field_validator
 from uuid import UUID
 
@@ -16,7 +15,7 @@ class ScheduleTimeSlotBase(BaseModel):
     
     @field_validator('start_time', 'end_time', mode='before')
     @classmethod
-    def parse_time(cls, v: Union[str, time]) -> time:
+    def parse_time(cls, v: str | time) -> time:
         """文字列（HH:MM、HH:MM:SS、タイムスタンプ形式）をtime型に変換"""
         if isinstance(v, time):
             return v
@@ -65,14 +64,14 @@ class ScheduleTimeSlotCreate(ScheduleTimeSlotBase):
 
 class ScheduleTimeSlotUpdate(BaseModel):
     """スケジュール時間スロット更新用スキーマ"""
-    schedule_id: Optional[UUID] = Field(None, description="練習スケジュールID")
-    slot_order: Optional[int] = Field(None, description="時間スロットの順序（上から何個目か）", gt=0)
-    start_time: Optional[time] = Field(None, description="時間スロットの開始時刻")
-    end_time: Optional[time] = Field(None, description="時間スロットの終了時刻")
+    schedule_id: UUID | None = Field(None, description="練習スケジュールID")
+    slot_order: int | None = Field(None, description="時間スロットの順序（上から何個目か）", gt=0)
+    start_time: time | None = Field(None, description="時間スロットの開始時刻")
+    end_time: time | None = Field(None, description="時間スロットの終了時刻")
     
     @field_validator('start_time', 'end_time', mode='before')
     @classmethod
-    def parse_time(cls, v: Union[str, time, None]) -> Optional[time]:
+    def parse_time(cls, v: str | time | None) -> time | None:
         """文字列（HH:MM、HH:MM:SS、タイムスタンプ形式）をtime型に変換"""
         if v is None:
             return None

@@ -1,7 +1,6 @@
 """
 認証関連のスキーマ定義
 """
-from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from app.schemas.user import UserResponse
 
@@ -17,7 +16,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
-    refresh_token: Optional[str] = None
+    refresh_token: str | None = None
 
 
 class AuthResponse(BaseModel):
@@ -25,7 +24,7 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
-    refresh_token: Optional[str] = None
+    refresh_token: str | None = None
     user: UserResponse
 
     model_config = ConfigDict(from_attributes=True)

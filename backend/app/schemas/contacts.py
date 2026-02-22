@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -39,10 +38,10 @@ class ContactCreate(ContactBase):
 class ContactUpdate(BaseModel):
     """お問い合わせ更新用スキーマ"""
 
-    name: Optional[str] = None
-    category: Optional[ContactCategory] = None
-    content: Optional[str] = None
-    status: Optional[ContactStatus] = None
+    name: str | None = None
+    category: ContactCategory | None = None
+    content: str | None = None
+    status: ContactStatus | None = None
 
 
 class ContactResponse(ContactBase):
@@ -50,10 +49,10 @@ class ContactResponse(ContactBase):
 
     id: UUID
     user_id: UUID
-    name: Optional[str] = None  # ユーザープロフィールから自動生成
+    name: str | None = None  # ユーザープロフィールから自動生成
     status: ContactStatus
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
