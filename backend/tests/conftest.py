@@ -1,18 +1,16 @@
 """
 テスト共通設定
 """
-import pytest
+import os
 import tempfile
-import os
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock
-from fastapi.testclient import TestClient
-from app.main import app
+from unittest.mock import Mock
+
 import pytest
-import os
-from unittest.mock import Mock, MagicMock
 from fastapi.testclient import TestClient
+
 from app.main import app
+from tests.helpers.factories import make_current_user
 
 
 @pytest.fixture
@@ -30,12 +28,26 @@ def temp_dir():
 
 @pytest.fixture
 def mock_current_user():
-    """モックユーザー"""
-    return {
-        "user_id": "test-user-123",
-        "email": "test@example.com",
-        "name": "Test User"
-    }
+    """モックユーザー（CurrentUser TypedDict 準拠）"""
+    return make_current_user()
+
+
+@pytest.fixture
+def mock_admin_user():
+    """管理者モックユーザー（CurrentUser TypedDict 準拠）"""
+    return make_current_user(
+        email="admin@example.com",
+        app_metadata={"provider": "email", "providers": ["email"]},
+    )
+
+
+@pytest.fixture
+def mock_instructor_user():
+    """指導者モックユーザー（CurrentUser TypedDict 準拠）"""
+    return make_current_user(
+        email="instructor@example.com",
+        app_metadata={"provider": "email", "providers": ["email"]},
+    )
 
 
 @pytest.fixture
@@ -100,51 +112,12 @@ def sample_users():
             "updated_at": "2025-01-01T00:00:00.000Z"
         },
         {
-            "id": "user2", 
+            "id": "user2",
             "email": "user2@example.com",
             "created_at": "2025-01-01T00:00:00.000Z",
             "updated_at": "2025-01-01T00:00:00.000Z"
         }
     ]
-
-
-@pytest.fixture
-def pdf_service():
-    """PDFサービスインスタンス（モック）"""
-    return Mock()
-
-
-@pytest.fixture
-def pdf_generator():
-    """PDF生成エンジンインスタンス（モック）"""
-    return Mock()
-
-
-@pytest.fixture
-def pdf_template_engine():
-    """PDFテンプレートエンジンインスタンス（モック）"""
-    return Mock()
-
-
-@pytest.fixture
-def cache_manager():
-    """キャッシュマネージャーインスタンス（モック）"""
-    return Mock()
-
-
-@pytest.fixture
-def sample_pdf_export_options():
-    """サンプルPDFエクスポートオプション（モック）"""
-    return {
-        "start_date": "2024-01-01",
-        "end_date": "2024-01-31",
-        "part_id": "part-1",
-        "format": "detailed",
-        "paper_size": "A4",
-        "orientation": "portrait",
-        "font_size": 10,
-        "include_details": True
-    }
 
 
 @pytest.fixture(autouse=True)
@@ -153,15 +126,16 @@ def setup_test_environment():
     # テスト用の環境変数設定
     os.environ["TESTING"] = "1"
     os.environ["CACHE_EXPIRY_HOURS"] = "1"
-    
+
     yield
-    
+
     # クリーンアップ
     if "TESTING" in os.environ:
         del os.environ["TESTING"]
     if "CACHE_EXPIRY_HOURS" in os.environ:
         del os.environ["CACHE_EXPIRY_HOURS"]
-          
+
+
 def mock_jwt_token():
     """Mock JWT token for testing"""
     return "mock.jwt.token"
