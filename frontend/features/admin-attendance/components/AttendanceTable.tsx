@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { User, Attendance, PracticeSchedule, AttendanceCreate, UserWithAttendanceResponse } from '../types';
+import React, { useState, useEffect } from 'react';
+import { PracticeSchedule } from '../types';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABELS, UI_TEXT } from '../constants';
 import { Calendar, Filter, Save, X, Search, Edit } from 'lucide-react';
-import { ApiError } from '../../../lib/api';
 import { useAdminAttendance } from '../hooks/use-admin-attendance';
-import { toast } from 'sonner';
+import { useAttendanceEdits } from '../hooks/useAttendanceEdits';
+import { AttendanceStatusEditButtons, AttendanceStatusBadge } from './AttendanceStatusButtons';
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/inputs/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/inputs/select';
@@ -25,32 +25,31 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     fetchUsersWithAttendance,
     upsertAttendance,
   } = useAdminAttendance();
-  
-  // practiceSchedulesはpropsから取得、なければhookから取得
+
   const displayPracticeSchedules = practiceSchedules.length > 0 ? practiceSchedules : schedulesFromHook;
 
   const [filterPracticeId, setFilterPracticeId] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterUserName, setFilterUserName] = useState<string>('');
-  const [saving, setSaving] = useState(false);
 
-  // 編集モード/閲覧モード
-  const [isEditMode, setIsEditMode] = useState(false);
+  const tableData = usersWithAttendance;
 
-  // 編集中のデータを保持（userId -> 変更データ）
-  const [editedChanges, setEditedChanges] = useState<Record<string, {
-    status?: 'present' | 'absent' | 'late' | 'no_show';
-    availableFrom?: string;
-    availableTo?: string;
-    notes?: string;
-  }>>({});
+  const {
+    isEditMode,
+    editedChanges,
+    saving,
+    handleEditModeToggle,
+    handleLocalStatusChange,
+    handleLocalTimeChange,
+    handleLocalNotesChange,
+    handleSaveAllChanges,
+    handleCancelChanges,
+    getCurrentValue,
+  } = useAttendanceEdits(tableData, filterPracticeId, upsertAttendance);
 
-  // フィルタ変更時にAPIを呼び出す（練習IDが選択されている場合のみ）
+  // フィルタ変更時にAPIを呼び出す
   useEffect(() => {
-    if (!filterPracticeId) {
-      // 練習IDが選択されていない場合は空の配列を設定
-      return;
-    }
+    if (!filterPracticeId) return;
 
     const params: {
       practice_schedule_id?: string;
@@ -58,172 +57,25 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       user_name?: string;
       page?: number;
       limit?: number;
-    } = {
-      page: 1,
-      limit: 100,
-    };
+    } = { page: 1, limit: 100, practice_schedule_id: filterPracticeId };
 
-    params.practice_schedule_id = filterPracticeId;
-    
-    if (filterStatus !== 'all') {
-      params.status = filterStatus;
-    }
-    if (filterUserName) {
-      params.user_name = filterUserName;
-    }
+    if (filterStatus !== 'all') params.status = filterStatus;
+    if (filterUserName) params.user_name = filterUserName;
 
     fetchUsersWithAttendance(params);
   }, [filterPracticeId, filterStatus, filterUserName, fetchUsersWithAttendance]);
 
-  // テーブルデータ（バックエンドから取得したデータをそのまま使用）
-  const tableData = usersWithAttendance;
-
   const selectedPractice = displayPracticeSchedules.find(p => p.id === filterPracticeId);
-
-  // 編集モード切り替え
-  const handleEditModeToggle = () => {
-    if (isEditMode) {
-      // 編集モードを終了する場合、確認
-      if (Object.keys(editedChanges).length > 0) {
-        if (!confirm('保存されていない変更があります。編集モードを終了しますか？')) {
-          return;
-        }
-      }
-      setEditedChanges({});
-    }
-    setIsEditMode(!isEditMode);
-  };
-
-  // 編集モードでの出席状況変更（ローカルステートのみ）
-  const handleLocalStatusChange = (userId: string, status: 'present' | 'absent' | 'late' | 'no_show') => {
-    setEditedChanges(prev => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        status,
-      }
-    }));
-  };
-
-  // 編集モードでの時間変更
-  const handleLocalTimeChange = (userId: string, field: 'availableFrom' | 'availableTo', value: string) => {
-    setEditedChanges(prev => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        [field]: value,
-      }
-    }));
-  };
-
-  // 編集モードでの備考変更
-  const handleLocalNotesChange = (userId: string, notes: string) => {
-    setEditedChanges(prev => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        notes,
-      }
-    }));
-  };
-
-  // 一括保存
-  const handleSaveAllChanges = async () => {
-    if (!filterPracticeId) return;
-
-    setSaving(true);
-    try {
-      const promises = Object.entries(editedChanges).map(([userId, changes]) => {
-        const item = tableData.find(d => d.user.id === userId);
-        const currentAttendance = item?.attendance;
-
-        const updateData: AttendanceCreate = {
-          practice_schedule_id: filterPracticeId,
-          user_id: userId,
-          status: changes.status || currentAttendance?.status || ATTENDANCE_STATUS.PRESENT,
-          notes: changes.notes !== undefined ? changes.notes : currentAttendance?.notes || undefined,
-        };
-
-        // 遅刻の場合は参加可能時間を設定
-        if (updateData.status === ATTENDANCE_STATUS.LATE) {
-          updateData.available_from = changes.availableFrom !== undefined ? changes.availableFrom : currentAttendance?.available_from || undefined;
-          updateData.available_to = changes.availableTo !== undefined ? changes.availableTo : currentAttendance?.available_to || undefined;
-        } else {
-          updateData.available_from = null;
-          updateData.available_to = null;
-        }
-
-        return upsertAttendance(updateData);
-      });
-
-      await Promise.all(promises);
-      setEditedChanges({});
-      setIsEditMode(false);
-
-      // トースト通知を表示
-      toast.success('出席を記録しました');
-    } catch (error) {
-      const errorMessage = error instanceof ApiError
-        ? error.message
-        : error instanceof Error
-        ? error.message
-        : String(error);
-
-      console.error('Failed to save changes:', error);
-      toast.error(`変更の保存に失敗しました: ${errorMessage}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // キャンセル
-  const handleCancelChanges = () => {
-    if (Object.keys(editedChanges).length > 0) {
-      if (!confirm('保存されていない変更があります。キャンセルしますか？')) {
-        return;
-      }
-    }
-    setEditedChanges({});
-    setIsEditMode(false);
-  };
-
-  // 現在の値を取得（編集中の変更 or 元のデータ）
-  const getCurrentValue = (userId: string, field: 'status' | 'availableFrom' | 'availableTo' | 'notes') => {
-    const item = tableData.find(d => d.user.id === userId);
-    const changes = editedChanges[userId];
-
-    if (changes && changes[field] !== undefined) {
-      return changes[field];
-    }
-
-    if (field === 'status') {
-      return item?.attendance?.status || null;
-    }
-
-    // フィールド名をsnake_caseに変換
-    const fieldMap = {
-      availableFrom: 'available_from',
-      availableTo: 'available_to',
-      notes: 'notes'
-    } as const;
-
-    const dbField = fieldMap[field as keyof typeof fieldMap];
-    return item?.attendance?.[dbField] || '';
-  };
 
   return (
     <>
       <div className="panel-info p-3 sm:p-6">
+      {/* ツールバー */}
       <div className="flex justify-end mb-4 sm:mb-6">
         <div className="flex items-center gap-2">
           {isEditMode ? (
             <>
-              <Button
-                onClick={handleCancelChanges}
-                disabled={saving}
-                variant="outline"
-                className="flex items-center gap-1.5"
-              >
+              <Button onClick={handleCancelChanges} disabled={saving} variant="outline" className="flex items-center gap-1.5">
                 <X className="h-4 w-4" />
                 キャンセル
               </Button>
@@ -237,10 +89,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               </Button>
             </>
           ) : (
-            <Button
-              onClick={handleEditModeToggle}
-              className="flex items-center gap-1.5"
-            >
+            <Button onClick={handleEditModeToggle} className="flex items-center gap-1.5">
               <Edit className="h-4 w-4" />
               編集モード
             </Button>
@@ -254,9 +103,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
           <h3 className="text-xs sm:text-sm font-semibold text-black">フィルタ</h3>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-          {/* 練習選択 */}
           <div>
             <label className="label-form block mb-1.5 sm:mb-2">
               {UI_TEXT.PRACTICE}
@@ -276,12 +123,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               </SelectContent>
             </Select>
           </div>
-
-          {/* 出席状況フィルタ */}
           <div>
-            <label className="label-form block mb-1.5 sm:mb-2">
-              {UI_TEXT.FILTER_BY_STATUS}
-            </label>
+            <label className="label-form block mb-1.5 sm:mb-2">{UI_TEXT.FILTER_BY_STATUS}</label>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={UI_TEXT.ALL_STATUS} />
@@ -290,19 +133,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 <SelectItem value="all">{UI_TEXT.ALL_STATUS}</SelectItem>
                 <SelectItem value="unregistered">未登録</SelectItem>
                 {Object.entries(ATTENDANCE_STATUS_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
-          {/* ユーザー名フィルタ */}
           <div>
-            <label className="label-form block mb-1.5 sm:mb-2">
-              ユーザー名
-            </label>
+            <label className="label-form block mb-1.5 sm:mb-2">ユーザー名</label>
             <div className="relative">
               <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-black" />
               <Input
@@ -323,10 +160,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <h3 className="text-xs sm:text-sm font-semibold text-black mb-1.5 sm:mb-2">練習情報</h3>
           <div className="text-xs sm:text-sm text-black space-y-1">
             <p>日付: {new Date(selectedPractice.schedule_date).toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
+              year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
             })}</p>
             <p>時間: {selectedPractice.start_time} - {selectedPractice.end_time}</p>
             {selectedPractice.title && <p>タイトル: {selectedPractice.title}</p>}
@@ -334,7 +168,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         </div>
       )}
 
-      {/* テーブル */}
+      {/* データ表示 */}
       {filterPracticeId ? (
         <>
           {/* デスクトップ用テーブル */}
@@ -342,166 +176,58 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             <Table className="min-w-full table-fixed divide-y divide-gray-200">
             <TableHeader className="bg-white">
               <TableRow>
-                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
-                  {UI_TEXT.USER_NAME}
-                </TableHead>
-                <TableHead style={isEditMode ? { width: '280px', minWidth: '280px', maxWidth: '280px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
-                  {UI_TEXT.STATUS}
-                </TableHead>
-                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
-                  参加可能時間
-                </TableHead>
-                <TableHead style={{ minWidth: '240px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">
-                  {UI_TEXT.NOTES}
-                </TableHead>
+                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">{UI_TEXT.USER_NAME}</TableHead>
+                <TableHead style={isEditMode ? { width: '280px', minWidth: '280px', maxWidth: '280px' } : { width: '150px', minWidth: '150px', maxWidth: '150px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">{UI_TEXT.STATUS}</TableHead>
+                <TableHead style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">参加可能時間</TableHead>
+                <TableHead style={{ minWidth: '240px' }} className="table-header-cell px-6 py-3 text-left uppercase tracking-wider">{UI_TEXT.NOTES}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white divide-y divide-gray-200">
               {tableData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="px-6 py-8 text-center text-black">
-                    {UI_TEXT.NO_ATTENDANCE_DATA}
-                  </TableCell>
+                  <TableCell colSpan={4} className="px-6 py-8 text-center text-black">{UI_TEXT.NO_ATTENDANCE_DATA}</TableCell>
                 </TableRow>
               ) : (
                 tableData.map((item) => {
                   const user = item.user;
-                  const currentStatus = getCurrentValue(user.id, 'status') as string | null;
+                  const currentStatus = getCurrentValue(user.id, 'status');
                   const currentAvailableFrom = getCurrentValue(user.id, 'availableFrom') as string;
                   const currentAvailableTo = getCurrentValue(user.id, 'availableTo') as string;
                   const currentNotes = getCurrentValue(user.id, 'notes') as string;
 
                   return (
                     <TableRow key={user.id} className="hover-subtle">
-                      {/* ユーザー名 */}
                       <TableCell style={{ width: '180px', maxWidth: '180px' }} className="px-6 py-4 overflow-hidden">
                         <div className="w-full min-w-0 overflow-hidden">
                           <div className="text-sm font-medium text-black truncate" title={user.name}>{user.name}</div>
                           <div className="text-sm text-black truncate" title={user.email}>{user.email}</div>
                         </div>
                       </TableCell>
-
-                      {/* 出席状況 */}
                       <TableCell className="px-6 py-4 whitespace-nowrap" style={isEditMode ? { width: '280px', maxWidth: '280px' } : { width: '150px', maxWidth: '150px' }}>
                         {isEditMode ? (
-                          <div className="flex gap-1.5">
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.PRESENT
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-blue-300 hover:bg-blue-50'
-                              }`}
-                            >
-                              出席
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.ABSENT
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-gray-400 hover:bg-gray-50'
-                              }`}
-                            >
-                              欠席
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.LATE
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-yellow-300 hover:bg-yellow-50'
-                              }`}
-                            >
-                              遅刻
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                              className={`flex-1 px-1.5 py-1.5 text-xs font-medium whitespace-nowrap rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.NO_SHOW
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-gray-500 hover:bg-gray-50'
-                              }`}
-                            >
-                              無断欠席
-                            </button>
-                          </div>
+                          <AttendanceStatusEditButtons currentStatus={currentStatus} onStatusChange={(s) => handleLocalStatusChange(user.id, s)} />
                         ) : (
-                          <div>
-                            {currentStatus === ATTENDANCE_STATUS.PRESENT && (
-                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border status-present shadow-sm">
-                                出席
-                              </span>
-                            )}
-                            {currentStatus === ATTENDANCE_STATUS.ABSENT && (
-                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border status-absent shadow-sm">
-                                欠席
-                              </span>
-                            )}
-                            {currentStatus === ATTENDANCE_STATUS.LATE && (
-                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border status-late shadow-sm">
-                                遅刻
-                              </span>
-                            )}
-                            {currentStatus === ATTENDANCE_STATUS.NO_SHOW && (
-                              <span className="inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-md border status-no-show shadow-sm">
-                                無断欠席
-                              </span>
-                            )}
-                            {!currentStatus && (
-                              <span className="text-sm text-black">未登録</span>
-                            )}
-                          </div>
+                          <AttendanceStatusBadge status={currentStatus} />
                         )}
                       </TableCell>
-
-                      {/* 参加可能時間 */}
                       <TableCell className="px-6 py-4 whitespace-nowrap" style={{ width: '180px', maxWidth: '180px' }}>
                         {isEditMode && currentStatus === ATTENDANCE_STATUS.LATE ? (
-                          // 編集モード & 遅刻の場合：時間入力フィールド
                           <div className="flex gap-1 items-center text-xs">
-                            <Input
-                              type="time"
-                              value={currentAvailableFrom}
-                              onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)}
-                              className="w-20 px-1 py-1 text-xs h-8"
-                            />
+                            <Input type="time" value={currentAvailableFrom} onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)} className="w-20 px-1 py-1 text-xs h-8" />
                             <span>-</span>
-                            <Input
-                              type="time"
-                              value={currentAvailableTo}
-                              onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)}
-                              className="w-20 px-1 py-1 text-xs h-8"
-                            />
+                            <Input type="time" value={currentAvailableTo} onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)} className="w-20 px-1 py-1 text-xs h-8" />
                           </div>
+                        ) : currentStatus === ATTENDANCE_STATUS.LATE && currentAvailableFrom && currentAvailableTo ? (
+                          <div className="text-sm text-black">{currentAvailableFrom.substring(0, 5)} - {currentAvailableTo.substring(0, 5)}</div>
                         ) : (
-                          // 閲覧モード or 遅刻以外：表示のみ
-                          currentStatus === ATTENDANCE_STATUS.LATE && currentAvailableFrom && currentAvailableTo ? (
-                            <div className="text-sm text-black">
-                              {currentAvailableFrom.substring(0, 5)} - {currentAvailableTo.substring(0, 5)}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-black">-</span>
-                          )
+                          <span className="text-sm text-black">-</span>
                         )}
                       </TableCell>
-
-                      {/* 備考 */}
                       <TableCell className="px-6 py-4">
                         {isEditMode ? (
-                          // 編集モード：テキスト入力
-                          <Input
-                            type="text"
-                            value={currentNotes}
-                            onChange={(e) => handleLocalNotesChange(user.id, e.target.value)}
-                            placeholder="備考を入力"
-                            className="px-2 py-1 text-sm h-8"
-                          />
+                          <Input type="text" value={currentNotes} onChange={(e) => handleLocalNotesChange(user.id, e.target.value)} placeholder="備考を入力" className="px-2 py-1 text-sm h-8" />
                         ) : (
-                          // 閲覧モード：表示のみ
-                          <div className="text-sm text-black max-w-xs truncate" title={currentNotes}>
-                            {currentNotes || '-'}
-                          </div>
+                          <div className="text-sm text-black max-w-xs truncate" title={currentNotes}>{currentNotes || '-'}</div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -522,7 +248,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             ) : (
               tableData.map((item) => {
                 const user = item.user;
-                const currentStatus = getCurrentValue(user.id, 'status') as string | null;
+                const currentStatus = getCurrentValue(user.id, 'status');
                 const currentAvailableFrom = getCurrentValue(user.id, 'availableFrom') as string;
                 const currentAvailableTo = getCurrentValue(user.id, 'availableTo') as string;
                 const currentNotes = getCurrentValue(user.id, 'notes') as string;
@@ -530,115 +256,32 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 return (
                   <div key={user.id} className="p-3">
                     {isEditMode ? (
-                      // 編集モード：縦レイアウト
                       <div className="space-y-3">
                         <div className="text-sm font-semibold text-black">{user.name}</div>
                         <div>
                           <p className="text-xs font-medium text-black mb-1">出席状況</p>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.PRESENT)}
-                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.PRESENT
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-blue-300 hover:bg-blue-50'
-                              }`}
-                            >
-                              出席
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.ABSENT)}
-                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.ABSENT
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-gray-400 hover:bg-gray-50'
-                              }`}
-                            >
-                              欠席
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.LATE)}
-                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.LATE
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-yellow-300 hover:bg-yellow-50'
-                              }`}
-                            >
-                              遅刻
-                            </button>
-                            <button
-                              onClick={() => handleLocalStatusChange(user.id, ATTENDANCE_STATUS.NO_SHOW)}
-                              className={`px-1.5 py-1.5 text-xs font-medium rounded-md border ${
-                                currentStatus === ATTENDANCE_STATUS.NO_SHOW
-                                  ? 'bg-yellow-300 text-black border-yellow-400 shadow-sm'
-                                  : 'bg-white text-black border-gray-500 hover:bg-gray-50'
-                              }`}
-                            >
-                              無断
-                            </button>
-                          </div>
+                          <AttendanceStatusEditButtons currentStatus={currentStatus} onStatusChange={(s) => handleLocalStatusChange(user.id, s)} layout="grid" useShortLabels />
                         </div>
                         {currentStatus === ATTENDANCE_STATUS.LATE && (
                           <div>
                             <p className="text-xs font-medium text-black mb-1">参加可能時間</p>
                             <div className="flex gap-1 items-center text-xs">
-                              <Input
-                                type="time"
-                                value={currentAvailableFrom}
-                                onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs h-8"
-                              />
+                              <Input type="time" value={currentAvailableFrom} onChange={(e) => handleLocalTimeChange(user.id, 'availableFrom', e.target.value)} className="flex-1 px-2 py-1 text-xs h-8" />
                               <span>-</span>
-                              <Input
-                                type="time"
-                                value={currentAvailableTo}
-                                onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs h-8"
-                              />
+                              <Input type="time" value={currentAvailableTo} onChange={(e) => handleLocalTimeChange(user.id, 'availableTo', e.target.value)} className="flex-1 px-2 py-1 text-xs h-8" />
                             </div>
                           </div>
                         )}
                         <div>
                           <p className="text-xs font-medium text-black mb-1">備考</p>
-                          <Input
-                            type="text"
-                            value={currentNotes}
-                            onChange={(e) => handleLocalNotesChange(user.id, e.target.value)}
-                            placeholder="備考を入力"
-                            className="px-2 py-1 text-xs h-8"
-                          />
+                          <Input type="text" value={currentNotes} onChange={(e) => handleLocalNotesChange(user.id, e.target.value)} placeholder="備考を入力" className="px-2 py-1 text-xs h-8" />
                         </div>
                       </div>
                     ) : (
-                      // 通常モード：横一列レイアウト
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-black truncate flex-shrink min-w-0">{user.name}</span>
                         <div className="flex-shrink-0">
-                          {currentStatus === ATTENDANCE_STATUS.PRESENT && (
-                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border status-present shadow-sm">
-                              出席
-                            </span>
-                          )}
-                          {currentStatus === ATTENDANCE_STATUS.ABSENT && (
-                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border status-absent shadow-sm">
-                              欠席
-                            </span>
-                          )}
-                          {currentStatus === ATTENDANCE_STATUS.LATE && (
-                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border status-late shadow-sm">
-                              遅刻
-                            </span>
-                          )}
-                          {currentStatus === ATTENDANCE_STATUS.NO_SHOW && (
-                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border status-no-show shadow-sm">
-                              無断
-                            </span>
-                          )}
-                          {!currentStatus && (
-                            <span className="inline-flex items-center justify-center w-16 px-2 py-1 text-xs font-medium rounded-md border bg-gray-400 text-white border-gray-400 shadow-sm">
-                              未登録
-                            </span>
-                          )}
+                          <AttendanceStatusBadge status={currentStatus} size="sm" />
                         </div>
                       </div>
                     )}
@@ -658,4 +301,3 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     </>
   );
 };
-
