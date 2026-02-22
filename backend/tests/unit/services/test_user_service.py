@@ -1,177 +1,252 @@
+"""
+UserService のユニットテスト（リポジトリモックパターン版）
+"""
 import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
-from typing import Dict, Any, List
+from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
 from app.services.user_service import UserService
+from app.core.exceptions import APIException
+from fastapi import HTTPException
+from tests.helpers.factories import make_user
 
 
 class TestUserService:
-    """UserServiceの新しいテストケース（依存性注入版）"""
-    
-    @pytest.fixture
-    def mock_supabase_client(self):
-        """モックのSupabaseクライアントを作成"""
-        client = Mock()
-        client.table = Mock(return_value=Mock())
-        client.auth = Mock()
-        client.auth.admin = Mock()
-        return client
-    
-    @pytest.fixture
-    def user_service(self, mock_supabase_client):
-        """UserServiceインスタンスを作成"""
-        return UserService(mock_supabase_client)
-    
+    """UserService のテスト"""
+
+    def setup_method(self):
+        self.mock_repo = AsyncMock()
+        self.mock_auth_client = Mock()
+        self.service = UserService(
+            user_repository=self.mock_repo,
+            auth_client=self.mock_auth_client,
+        )
+
+    # ===== get_all_users =====
+
     @pytest.mark.asyncio
-    async def test_get_all_users_success(self, user_service, mock_supabase_client):
-        """すべてのユーザー取得のテスト"""
-        # モックデータ
-        mock_users = [
-            {"id": "1", "email": "user1@example.com"},
-            {"id": "2", "email": "user2@example.com"}
-        ]
-        
-        # モックのレスポンスを設定
-        mock_response = Mock()
-        mock_response.data = mock_users
-        mock_supabase_client.table.return_value.select.return_value.execute.return_value = mock_response
-        
-        # 実行
-        result = await user_service.get_all_users()
-        
-        # アサーション
-        assert result == mock_users
-        mock_supabase_client.table.assert_called_with('users')
-        mock_supabase_client.table.return_value.select.assert_called_with('*')
-    
+    async def test_get_all_users_success(self):
+        """すべてのユーザー取得 - 正常"""
+        users = [make_user(), make_user(name="ユーザー2")]
+        self.mock_repo.get_all_users.return_value = users
+
+        result = await self.service.get_all_users()
+
+        assert result == users
+        self.mock_repo.get_all_users.assert_called_once()
+
     @pytest.mark.asyncio
-    async def test_get_all_users_empty(self, user_service, mock_supabase_client):
-        """ユーザーが存在しない場合のテスト"""
-        # モックのレスポンスを設定
-        mock_response = Mock()
-        mock_response.data = None
-        mock_supabase_client.table.return_value.select.return_value.execute.return_value = mock_response
-        
-        # 実行
-        result = await user_service.get_all_users()
-        
-        # アサーション
+    async def test_get_all_users_empty(self):
+        """すべてのユーザー取得 - 空"""
+        self.mock_repo.get_all_users.return_value = []
+
+        result = await self.service.get_all_users()
+
         assert result == []
-    
+
+    # ===== get_user_by_id =====
+
     @pytest.mark.asyncio
-    async def test_get_user_by_id_found(self, user_service, mock_supabase_client):
-        """IDでユーザーを取得（見つかった場合）"""
-        # モックデータ
-        user_id = "test-user-id"
-        mock_user = {"id": user_id, "email": "test@example.com"}
-        
-        # モックのレスポンスを設定
-        mock_response = Mock()
-        mock_response.data = [mock_user]
-        mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
-        
-        # 実行
-        result = await user_service.get_user_by_id(user_id)
-        
-        # アサーション
-        assert result == mock_user
-        mock_supabase_client.table.assert_called_with('users')
-        mock_supabase_client.table.return_value.select.assert_called_with('*')
-        mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with('id', user_id)
-    
+    async def test_get_user_by_id_found(self):
+        """IDでユーザー取得 - 見つかった"""
+        user_id = str(uuid4())
+        user = make_user(id=user_id)
+        self.mock_repo.get_user_by_id.return_value = user
+
+        result = await self.service.get_user_by_id(user_id)
+
+        assert result == user
+        self.mock_repo.get_user_by_id.assert_called_once_with(user_id)
+
     @pytest.mark.asyncio
-    async def test_get_user_by_id_not_found(self, user_service, mock_supabase_client):
-        """IDでユーザーを取得（見つからない場合）"""
-        # モックのレスポンスを設定
+    async def test_get_user_by_id_not_found(self):
+        """IDでユーザー取得 - 見つからない場合はAPIException"""
+        self.mock_repo.get_user_by_id.return_value = None
+
+        with pytest.raises(APIException):
+            await self.service.get_user_by_id("non-existent-id")
+
+    # ===== verify_jwt_token =====
+
+    @pytest.mark.asyncio
+    async def test_verify_jwt_token_valid(self):
+        """JWTトークン検証 - 有効"""
+        mock_user = Mock()
+        mock_user.dict.return_value = {"id": "user-id", "email": "test@example.com"}
+
         mock_response = Mock()
-        mock_response.data = []
-        mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
-        
-        # 実行
-        result = await user_service.get_user_by_id("non-existent-id")
-        
-        # アサーション
+        mock_response.user = mock_user
+
+        self.mock_auth_client.get_user.return_value = mock_response
+
+        result = await self.service.verify_jwt_token("valid-token")
+
+        assert result is not None
+        assert result["id"] == "user-id"
+
+    @pytest.mark.asyncio
+    async def test_verify_jwt_token_no_user(self):
+        """JWTトークン検証 - ユーザーなし"""
+        mock_response = Mock()
+        mock_response.user = None
+
+        self.mock_auth_client.get_user.return_value = mock_response
+
+        result = await self.service.verify_jwt_token("invalid-token")
+
         assert result is None
-    
+
     @pytest.mark.asyncio
-    async def test_create_user_success(self, user_service, mock_supabase_client):
-        """ユーザー作成のテスト"""
-        # テストデータ
+    async def test_verify_jwt_token_exception(self):
+        """JWTトークン検証 - エラーの場合はNone"""
+        self.mock_auth_client.get_user.side_effect = Exception("Auth error")
+
+        result = await self.service.verify_jwt_token("error-token")
+
+        assert result is None
+
+    # ===== create_user =====
+
+    @pytest.mark.asyncio
+    async def test_create_user_success(self):
+        """ユーザー作成 - 正常"""
         user_data = {
             "email": "newuser@example.com",
-            "password": "password123"
+            "password": "password123",
+            "name": "新ユーザー",
         }
-        
-        # モックの認証レスポンス
+
         mock_auth_user = Mock()
         mock_auth_user.id = "new-user-id"
         mock_auth_user.created_at = None
         mock_auth_user.updated_at = None
-        
+
         mock_auth_response = Mock()
         mock_auth_response.user = mock_auth_user
-        mock_supabase_client.auth.admin.create_user.return_value = mock_auth_response
-        
-        # モックのDBレスポンス
-        mock_db_response = Mock()
-        mock_db_response.data = [{
-            "id": "new-user-id",
-            "email": "newuser@example.com",
-            "created_at": None,
-            "updated_at": None
-        }]
-        mock_supabase_client.table.return_value.insert.return_value.execute.return_value = mock_db_response
-        
-        # 実行
-        result = await user_service.create_user(user_data)
-        
-        # アサーション
+        self.mock_auth_client.admin.create_user.return_value = mock_auth_response
+
+        self.mock_repo.get_user_by_email.return_value = None
+        created_user = make_user(id="new-user-id", email="newuser@example.com")
+        self.mock_repo.create_user.return_value = created_user
+
+        result = await self.service.create_user(user_data)
+
         assert result["id"] == "new-user-id"
         assert result["email"] == "newuser@example.com"
-        mock_supabase_client.auth.admin.create_user.assert_called_once()
-        mock_supabase_client.table.assert_called_with('users')
-    
+        self.mock_auth_client.admin.create_user.assert_called_once()
+
     @pytest.mark.asyncio
-    async def test_delete_user_success(self, user_service, mock_supabase_client):
-        """ユーザー削除のテスト"""
-        user_id = "user-to-delete"
-        
-        # モックのレスポンスを設定
-        mock_db_response = Mock()
-        mock_supabase_client.table.return_value.delete.return_value.eq.return_value.execute.return_value = mock_db_response
-        
+    async def test_create_user_already_exists(self):
+        """ユーザー作成 - 既存ユーザー"""
+        user_data = {"email": "existing@example.com", "password": "password123"}
+
+        self.mock_repo.get_user_by_email.return_value = make_user(
+            email="existing@example.com"
+        )
+
+        with pytest.raises(APIException):
+            await self.service.create_user(user_data)
+
+        self.mock_auth_client.admin.create_user.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_create_user_weak_password(self):
+        """ユーザー作成 - パスワードが弱い"""
+        user_data = {"email": "user@example.com", "password": "12345"}
+
+        self.mock_repo.get_user_by_email.return_value = None
+
+        with pytest.raises(HTTPException) as exc_info:
+            await self.service.create_user(user_data)
+
+        assert exc_info.value.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_create_user_auth_failure(self):
+        """ユーザー作成 - 認証ユーザー作成失敗"""
+        user_data = {"email": "user@example.com", "password": "password123"}
+
+        self.mock_repo.get_user_by_email.return_value = None
+
         mock_auth_response = Mock()
-        mock_supabase_client.auth.admin.delete_user.return_value = mock_auth_response
-        
-        # 実行
-        result = await user_service.delete_user(user_id)
-        
-        # アサーション
-        assert result is True
-        mock_supabase_client.table.assert_called_with('users')
-        mock_supabase_client.table.return_value.delete.return_value.eq.assert_called_with('id', user_id)
-        mock_supabase_client.auth.admin.delete_user.assert_called_with(user_id)
-    
+        mock_auth_response.user = None
+        self.mock_auth_client.admin.create_user.return_value = mock_auth_response
+
+        with pytest.raises(APIException):
+            await self.service.create_user(user_data)
+
+    # ===== delete_user =====
+
     @pytest.mark.asyncio
-    async def test_update_user_with_data(self, user_service, mock_supabase_client):
-        """ユーザー更新のテスト（データあり）"""
-        user_id = "user-to-update"
+    async def test_delete_user_success(self):
+        """ユーザー削除 - 正常"""
+        user_id = str(uuid4())
+        self.mock_repo.get_user_by_id.return_value = make_user(id=user_id)
+        self.mock_repo.delete_user.return_value = None
+        self.mock_auth_client.admin.delete_user.return_value = None
+
+        result = await self.service.delete_user(user_id)
+
+        assert result is True
+        self.mock_repo.delete_user.assert_called_once_with(user_id)
+        self.mock_auth_client.admin.delete_user.assert_called_once_with(user_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_user_not_found(self):
+        """ユーザー削除 - 存在しない"""
+        self.mock_repo.get_user_by_id.return_value = None
+
+        with pytest.raises(APIException):
+            await self.service.delete_user(str(uuid4()))
+
+    @pytest.mark.asyncio
+    async def test_delete_user_auth_failure_still_succeeds(self):
+        """ユーザー削除 - Auth削除失敗してもDB削除は成功"""
+        user_id = str(uuid4())
+        self.mock_repo.get_user_by_id.return_value = make_user(id=user_id)
+        self.mock_repo.delete_user.return_value = None
+        self.mock_auth_client.admin.delete_user.side_effect = Exception("Auth error")
+
+        result = await self.service.delete_user(user_id)
+
+        assert result is True
+
+    # ===== update_user =====
+
+    @pytest.mark.asyncio
+    async def test_update_user_success(self):
+        """ユーザー更新 - 正常"""
+        user_id = str(uuid4())
         update_data = {"email": "updated@example.com", "name": "Updated Name"}
-        
-        # モックのレスポンスを設定
-        mock_response = Mock()
-        mock_response.data = [{
-            "id": user_id,
-            "email": "updated@example.com",
-            "name": "Updated Name"
-        }]
-        mock_supabase_client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_response
-        
-        # 実行
-        result = await user_service.update_user(user_id, update_data)
-        
-        # アサーション
+        existing_user = make_user(id=user_id)
+        updated_user = make_user(
+            id=user_id, email="updated@example.com", name="Updated Name"
+        )
+
+        self.mock_repo.get_user_by_id.return_value = existing_user
+        self.mock_repo.update_user.return_value = updated_user
+
+        result = await self.service.update_user(user_id, update_data)
+
         assert result["email"] == "updated@example.com"
         assert result["name"] == "Updated Name"
-        mock_supabase_client.table.assert_called_with('users')
-        mock_supabase_client.table.return_value.update.assert_called_with(update_data)
+
+    @pytest.mark.asyncio
+    async def test_update_user_not_found(self):
+        """ユーザー更新 - 存在しない"""
+        self.mock_repo.get_user_by_id.return_value = None
+
+        with pytest.raises(APIException):
+            await self.service.update_user(str(uuid4()), {"name": "New Name"})
+
+    @pytest.mark.asyncio
+    async def test_update_user_empty_data(self):
+        """ユーザー更新 - 空データの場合は既存を返す"""
+        user_id = str(uuid4())
+        existing_user = make_user(id=user_id)
+        self.mock_repo.get_user_by_id.return_value = existing_user
+
+        result = await self.service.update_user(user_id, {})
+
+        assert result == existing_user
+        self.mock_repo.update_user.assert_not_called()
