@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from app.core.supabase import handle_supabase_errors
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class UserRoleRepository:
         self.table_name = "user_roles"  # リモートのSupabaseでは複数形
 
     @handle_supabase_errors("get_role_by_user_id")
-    async def get_role_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_role_by_user_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザーロールを取得（user_roleテーブルからrole_typeを取得）
 
@@ -44,7 +44,7 @@ class UserRoleRepository:
         return None
 
     @handle_supabase_errors("get_role_by_user_and_type")
-    async def get_role_by_user_and_type(self, user_id: str, role_type: str) -> Optional[Dict[str, Any]]:
+    async def get_role_by_user_and_type(self, user_id: str, role_type: str) -> dict[str, Any] | None:
         """
         ユーザーIDとロール種別でロールを取得（user_roleテーブルから）
         """
@@ -63,7 +63,7 @@ class UserRoleRepository:
         return None
 
     @handle_supabase_errors("create_role")
-    async def create_role(self, role_data: dict) -> Dict[str, Any]:
+    async def create_role(self, role_data: dict[str, Any]) -> dict[str, Any]:
         """
         ユーザーロールを作成（user_roleテーブルに）
 
@@ -82,7 +82,7 @@ class UserRoleRepository:
         return {}
 
     @handle_supabase_errors("update_role")
-    async def update_role(self, user_id: str, role_data: dict) -> Optional[Dict[str, Any]]:
+    async def update_role(self, user_id: str, role_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザーロールを更新（user_roleテーブルで）
 
@@ -156,7 +156,7 @@ class UserRoleRepository:
         return False
 
     @handle_supabase_errors("get_roles_by_type")
-    async def get_roles_by_type(self, role_type: str, include_hidden: bool = False) -> List[Dict[str, Any]]:
+    async def get_roles_by_type(self, role_type: str, include_hidden: bool = False) -> list[dict[str, Any]]:
         """
         ロールタイプでユーザーロールを取得（user_roleテーブルから）
 
@@ -182,7 +182,7 @@ class UserRoleRepository:
         return []
 
     @handle_supabase_errors("get_all_roles")
-    async def get_all_roles(self, include_hidden: bool = False) -> List[Dict[str, Any]]:
+    async def get_all_roles(self, include_hidden: bool = False) -> list[dict[str, Any]]:
         """
         すべてのユーザーロールを取得（user_roleテーブルから）
 
@@ -202,7 +202,7 @@ class UserRoleRepository:
         return []
 
     @handle_supabase_errors("get_user_roles_with_instructor")
-    async def get_user_roles_with_instructor(self) -> List[Dict[str, Any]]:
+    async def get_user_roles_with_instructor(self) -> list[dict[str, Any]]:
         """
         user_rolesテーブルからis_instructorフラグを含むロール情報を取得
 
@@ -219,7 +219,7 @@ class UserRoleRepository:
         return []
 
     @handle_supabase_errors("update_instructor_flag")
-    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> Optional[Dict[str, Any]]:
+    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any] | None:
         """
         user_rolesテーブルのis_instructorフラグを更新
 

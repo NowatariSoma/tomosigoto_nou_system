@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -12,7 +12,7 @@ class ContactRepository:
         self.table_name = "contacts"
 
     @handle_supabase_errors("find_all")
-    async def find_all(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def find_all(self, user_id: str | None = None) -> list[dict[str, Any]]:
         """全お問い合わせを取得（user_idが指定された場合はそのユーザーのみ）"""
         query = self.client.table(self.table_name).select("*")
         if user_id:
@@ -21,7 +21,7 @@ class ContactRepository:
         return response.data
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, contact_id: str) -> Dict[str, Any]:
+    async def find_by_id(self, contact_id: str) -> dict[str, Any]:
         """IDでお問い合わせを取得"""
         response = (
             self.client.table(self.table_name)
@@ -32,15 +32,15 @@ class ContactRepository:
         return response.data[0]
 
     @handle_supabase_errors("create")
-    async def create(self, contact_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, contact_data: dict[str, Any]) -> dict[str, Any]:
         """お問い合わせを作成"""
         response = self.client.table(self.table_name).insert(contact_data).execute()
         return response.data[0]
 
     @handle_supabase_errors("update")
     async def update(
-        self, contact_id: str, contact_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, contact_id: str, contact_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """お問い合わせを更新"""
         response = (
             self.client.table(self.table_name)

@@ -1,7 +1,7 @@
 """
 セッションのデータアクセス層
 """
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 from enum import Enum
 
@@ -16,7 +16,7 @@ class SessionRepository:
         self.client = client
         self.table_name = "sessions"
     
-    def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _serialize_uuid_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """UUID型とEnum型を文字列に変換"""
         serialized_data = {}
         for key, value in data.items():
@@ -29,13 +29,13 @@ class SessionRepository:
         return serialized_data
 
     @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    async def find_all(self) -> list[dict[str, Any]]:
         """すべてのセッションを取得"""
         response = self.client.table(self.table_name).select("*").execute()
         return response.data
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, session_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, session_id: UUID) -> dict[str, Any] | None:
         """指定されたIDのセッションを取得"""
         session_id_str = str(session_id) if isinstance(session_id, UUID) else session_id
         response = self.client.table(self.table_name).select("*").eq("id", session_id_str).execute()
@@ -60,7 +60,7 @@ class SessionRepository:
         return formatted_item
 
     @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定されたスケジュールのセッションを取得（最適化版 - N+1問題を解決）
 
         JOINを使用してパート情報を一度に取得することで、
@@ -97,9 +97,9 @@ class SessionRepository:
         self, 
         limit: int = 100, 
         offset: int = 0,
-        schedule_id: Optional[UUID] = None,
-        part_id: Optional[UUID] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None,
+        part_id: UUID | None = None
+    ) -> list[dict[str, Any]]:
         """詳細情報付きでセッションを取得"""
         # 基本データを取得
         query = self.client.table(self.table_name).select("*")
@@ -181,8 +181,8 @@ class SessionRepository:
     @handle_supabase_errors("count_all")
     async def count_all(
         self,
-        schedule_id: Optional[UUID] = None,
-        part_id: Optional[UUID] = None
+        schedule_id: UUID | None = None,
+        part_id: UUID | None = None
     ) -> int:
         """セッションの総件数を取得"""
         query = self.client.table(self.table_name).select("id", count="exact")
@@ -197,7 +197,7 @@ class SessionRepository:
         return response.count
 
     @handle_supabase_errors("create")
-    async def create(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, session_data: dict[str, Any]) -> dict[str, Any]:
         """新しいセッションを作成"""
         # UUID型フィールドを文字列に変換
         if "schedule_available_venue_id" in session_data and session_data["schedule_available_venue_id"] is not None:
@@ -212,7 +212,7 @@ class SessionRepository:
         return response.data[0]
 
     @handle_supabase_errors("update")
-    async def update(self, session_id: UUID, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def update(self, session_id: UUID, session_data: dict[str, Any]) -> dict[str, Any]:
         """セッションを更新"""
         # UUID型フィールドを文字列に変換
         if "schedule_available_venue_id" in session_data and session_data["schedule_available_venue_id"] is not None:
@@ -269,19 +269,19 @@ class SessionRepository:
 
     # 関連テーブルの存在確認用メソッド
     @handle_supabase_errors("find_schedule_by_id")
-    async def find_schedule_by_id(self, schedule_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールの存在確認"""
         response = self.client.table("practice_schedules").select("*").eq("id", str(schedule_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_part_by_id")
-    async def find_part_by_id(self, part_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_part_by_id(self, part_id: UUID) -> dict[str, Any] | None:
         """部署の存在確認"""
         response = self.client.table("parts").select("*").eq("id", str(part_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_venue_by_id")
-    async def find_venue_by_id(self, venue_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_venue_by_id(self, venue_id: UUID) -> dict[str, Any] | None:
         """会場の存在確認"""
         response = self.client.table("schedule_available_venues").select("*").eq("id", str(venue_id)).execute()
         return response.data[0] if response.data else None

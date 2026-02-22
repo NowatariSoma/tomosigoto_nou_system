@@ -1,7 +1,7 @@
 """
 スケジュール利用可能会場のデータアクセス層
 """
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 from enum import Enum
 
@@ -16,7 +16,7 @@ class ScheduleAvailableVenueRepository:
         self.client = client
         self.table_name = "schedule_available_venues"
     
-    def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _serialize_uuid_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """UUID型とEnum型を文字列に変換"""
         serialized_data = {}
         for key, value in data.items():
@@ -29,7 +29,7 @@ class ScheduleAvailableVenueRepository:
         return serialized_data
 
     @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    async def find_all(self) -> list[dict[str, Any]]:
         """すべてのスケジュール利用可能会場を取得"""
         response = self.client.table(self.table_name).select("*").execute()
         return response.data
@@ -39,9 +39,9 @@ class ScheduleAvailableVenueRepository:
         self, 
         limit: int = 100, 
         offset: int = 0,
-        schedule_id: Optional[UUID] = None,
-        venue_id: Optional[UUID] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None,
+        venue_id: UUID | None = None
+    ) -> list[dict[str, Any]]:
         """詳細情報付きでスケジュール利用可能会場を取得"""
         # 基本データを取得
         query = self.client.table(self.table_name).select("*")
@@ -118,8 +118,8 @@ class ScheduleAvailableVenueRepository:
     @handle_supabase_errors("count_all")
     async def count_all(
         self,
-        schedule_id: Optional[UUID] = None,
-        venue_id: Optional[UUID] = None
+        schedule_id: UUID | None = None,
+        venue_id: UUID | None = None
     ) -> int:
         """スケジュール利用可能会場の総件数を取得"""
         query = self.client.table(self.table_name).select("id", count="exact")
@@ -134,13 +134,13 @@ class ScheduleAvailableVenueRepository:
         return response.count
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, schedule_venue_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, schedule_venue_id: UUID) -> dict[str, Any] | None:
         """指定したIDのスケジュール利用可能会場を取得"""
         response = self.client.table(self.table_name).select("*").eq("id", str(schedule_venue_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの利用可能会場一覧を取得"""
         response = (
             self.client.table(self.table_name)
@@ -208,7 +208,7 @@ class ScheduleAvailableVenueRepository:
         return formatted_data
 
     @handle_supabase_errors("find_by_venue")
-    async def find_by_venue(self, venue_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_venue(self, venue_id: UUID) -> list[dict[str, Any]]:
         """指定した会場のスケジュール利用可能性一覧を取得"""
         response = (
             self.client.table(self.table_name)
@@ -224,7 +224,7 @@ class ScheduleAvailableVenueRepository:
         self, 
         schedule_id: UUID, 
         venue_id: UUID
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """指定したスケジュールと会場の組み合わせを取得"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
         venue_id_str = str(venue_id) if isinstance(venue_id, UUID) else venue_id
@@ -239,7 +239,7 @@ class ScheduleAvailableVenueRepository:
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("create")
-    async def create(self, schedule_venue_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, schedule_venue_data: dict[str, Any]) -> dict[str, Any]:
         """スケジュール利用可能会場を作成"""
         serialized_data = self._serialize_uuid_fields(schedule_venue_data)
         response = self.client.table(self.table_name).insert(serialized_data).execute()
@@ -249,8 +249,8 @@ class ScheduleAvailableVenueRepository:
     async def update(
         self, 
         schedule_venue_id: UUID, 
-        update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        update_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """スケジュール利用可能会場を更新"""
         serialized_data = self._serialize_uuid_fields(update_data)
         response = (
@@ -296,13 +296,13 @@ class ScheduleAvailableVenueRepository:
 
     # 関連テーブルの存在確認用メソッド
     @handle_supabase_errors("find_schedule_by_id")
-    async def find_schedule_by_id(self, schedule_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールの存在確認"""
         response = self.client.table("practice_schedules").select("*").eq("id", str(schedule_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_venue_by_id")
-    async def find_venue_by_id(self, venue_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_venue_by_id(self, venue_id: UUID) -> dict[str, Any] | None:
         """会場の存在確認"""
         response = self.client.table("venues").select("*").eq("id", str(venue_id)).execute()
         return response.data[0] if response.data else None

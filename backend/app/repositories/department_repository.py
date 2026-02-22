@@ -4,7 +4,7 @@ departmentsテーブルに対するCRUD操作を提供
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -27,7 +27,7 @@ class DepartmentRepository:
         self.table_name = "departments"
 
     @handle_supabase_errors("get_all_departments")
-    async def get_all_departments(self) -> List[Dict[str, Any]]:
+    async def get_all_departments(self) -> list[dict[str, Any]]:
         """
         すべての学部を取得
 
@@ -46,7 +46,7 @@ class DepartmentRepository:
         return data
 
     @handle_supabase_errors("get_department_by_code")
-    async def get_department_by_code(self, department_code: str) -> Optional[Dict[str, Any]]:
+    async def get_department_by_code(self, department_code: str) -> dict[str, Any] | None:
         """
         学部コードで学部を取得
 
@@ -71,7 +71,7 @@ class DepartmentRepository:
         return None
 
     @handle_supabase_errors("get_department_by_id")
-    async def get_department_by_id(self, department_id: str) -> Optional[Dict[str, Any]]:
+    async def get_department_by_id(self, department_id: str) -> dict[str, Any] | None:
         """
         学部IDで学部を取得
 
@@ -96,7 +96,7 @@ class DepartmentRepository:
         return None
 
     @handle_supabase_errors("create_department")
-    async def create_department(self, department_data: dict) -> Dict[str, Any]:
+    async def create_department(self, department_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しい学部を作成
 
@@ -115,7 +115,7 @@ class DepartmentRepository:
         return {}
 
     @handle_supabase_errors("update_department")
-    async def update_department(self, department_id: str, department_data: dict) -> Optional[Dict[str, Any]]:
+    async def update_department(self, department_id: str, department_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         学部を更新
 
@@ -164,7 +164,7 @@ class DepartmentRepository:
         return False
 
     @handle_supabase_errors("get_departments_by_campus")
-    async def get_departments_by_campus(self, campus: str) -> List[Dict[str, Any]]:
+    async def get_departments_by_campus(self, campus: str) -> list[dict[str, Any]]:
         """
         キャンパスで学部一覧を取得
 

@@ -4,7 +4,7 @@ Supabaseのmember_assignmentsテーブルに対するCRUD操作を提供
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.exceptions import handle_supabase_errors
@@ -29,7 +29,7 @@ class MemberAssignmentRepository:
         self.table_name = "member_assignments"
 
     @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    async def find_all(self) -> list[dict[str, Any]]:
         """
         すべてのメンバー所属を取得
 
@@ -42,7 +42,7 @@ class MemberAssignmentRepository:
         return data
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, assignment_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, assignment_id: UUID) -> dict[str, Any] | None:
         """
         IDでメンバー所属を取得
 
@@ -63,7 +63,7 @@ class MemberAssignmentRepository:
         return None
 
     @handle_supabase_errors("find_by_part_id")
-    async def find_by_part_id(self, part_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_part_id(self, part_id: UUID) -> list[dict[str, Any]]:
         """
         パートIDでメンバー所属を取得
 
@@ -85,7 +85,7 @@ class MemberAssignmentRepository:
         return data
 
     @handle_supabase_errors("find_by_user_id")
-    async def find_by_user_id(self, user_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_user_id(self, user_id: UUID) -> list[dict[str, Any]]:
         """
         ユーザーIDでメンバー所属を取得
 
@@ -107,7 +107,7 @@ class MemberAssignmentRepository:
         return data
 
     @handle_supabase_errors("find_by_user_and_part")
-    async def find_by_user_and_part(self, user_id: UUID, part_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_user_and_part(self, user_id: UUID, part_id: UUID) -> dict[str, Any] | None:
         """
         ユーザーIDとパートIDでメンバー所属を取得
 
@@ -133,7 +133,7 @@ class MemberAssignmentRepository:
         return None
 
     @handle_supabase_errors("find_with_details")
-    async def find_with_details(self, assignment_id: Optional[UUID] = None, part_id: Optional[UUID] = None, user_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
+    async def find_with_details(self, assignment_id: UUID | None = None, part_id: UUID | None = None, user_id: UUID | None = None) -> list[dict[str, Any]]:
         """
         詳細情報付きでメンバー所属を取得
 
@@ -171,7 +171,7 @@ class MemberAssignmentRepository:
         return data
 
     @handle_supabase_errors("create")
-    async def create(self, assignment_data: dict) -> Dict[str, Any]:
+    async def create(self, assignment_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいメンバー所属をデータベースに作成
 
@@ -192,7 +192,7 @@ class MemberAssignmentRepository:
         return {}
 
     @handle_supabase_errors("update")
-    async def update(self, assignment_id: UUID, assignment_data: dict) -> Optional[Dict[str, Any]]:
+    async def update(self, assignment_id: UUID, assignment_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         メンバー所属情報を更新
 
