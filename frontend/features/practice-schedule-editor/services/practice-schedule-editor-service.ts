@@ -150,13 +150,8 @@ export class PracticeScheduleEditorService {
    * @returns 会場一覧
    */
   async getVenues(): Promise<VenueInfo[]> {
-    console.log('practiceScheduleEditorService.getVenues - 呼び出し開始');
-    console.log('practiceScheduleEditorService.getVenues - APIエンドポイント:', API_ENDPOINTS.VENUES);
-
     const response = await fetchApi(API_ENDPOINTS.VENUES);
     const venues = await response.json();
-
-    console.log('practiceScheduleEditorService.getVenues - APIレスポンス:', venues);
 
     if (!Array.isArray(venues)) {
       console.error('practiceScheduleEditorService.getVenues - 配列以外が返されました:', venues);
@@ -171,8 +166,6 @@ export class PracticeScheduleEditorService {
       priority: venue.priority || 0,
       notes: venue.notes,
     }));
-
-    console.log('practiceScheduleEditorService.getVenues - マッピング後:', mappedVenues);
 
     return mappedVenues;
   }

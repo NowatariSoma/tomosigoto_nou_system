@@ -92,24 +92,17 @@ export const useSessionInstructors = (): UseSessionInstructorsReturn => {
    * 指定したスケジュールとコマの指導者詳細情報を取得（表示用）
    */
   const fetchInstructorsForSlot = useCallback(async (scheduleId: string, slotOrder: number) => {
-    console.log('fetchInstructorsForSlot called with:', { scheduleId, slotOrder });
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const instructors = await sessionInstructorService.getInstructorsForSlot(scheduleId, slotOrder);
-      console.log('fetchInstructorsForSlot success:', { 
-        scheduleId, 
-        slotOrder, 
-        instructorsCount: Array.isArray(instructors) ? instructors.length : 'not array',
-        instructors 
-      });
-      
-      setState(prev => ({ 
-        ...prev, 
-        instructors, 
-        loading: false 
+
+      setState(prev => ({
+        ...prev,
+        instructors,
+        loading: false
       }));
-      
+
       // リフレッシュ用に関数を保存
       setLastFetchFunction(() => () => fetchInstructorsForSlot(scheduleId, slotOrder));
     } catch (error: any) {
@@ -177,13 +170,9 @@ export const useSlotInstructors = (scheduleId?: string, slotOrder?: number) => {
 
   // scheduleIdとslotOrderが変更されたときに自動でデータを取得
   const fetchData = useCallback(async () => {
-    console.log('useSlotInstructors.fetchData called with:', { scheduleId, slotOrder });
-    
     if (scheduleId && slotOrder !== undefined) {
-      console.log('Fetching instructors for slot:', { scheduleId, slotOrder });
       await fetchInstructorsForSlot(scheduleId, slotOrder);
     } else {
-      console.log('Clearing instructors - missing scheduleId or slotOrder');
       clearInstructors();
     }
   }, [scheduleId, slotOrder, fetchInstructorsForSlot, clearInstructors]);

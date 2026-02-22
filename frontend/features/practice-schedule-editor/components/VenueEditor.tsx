@@ -26,15 +26,10 @@ export const VenueEditor: React.FC<VenueEditorProps> = ({
   const [selectedRooms, setSelectedRooms] = useState<VenueInfo[]>([]);
 
   const handleOpenModal = () => {
-    console.log('VenueEditor - handleOpenModal called');
-    console.log('VenueEditor - availableRooms:', availableRooms);
-    console.log('VenueEditor - venues:', venues);
-
     // 既に選択されている会場をRoomに変換して初期選択とする
     const currentlySelectedRooms = availableRooms.filter(room =>
       venues.some(venue => venue.id === room.id)
     );
-    console.log('VenueEditor - currentlySelectedRooms:', currentlySelectedRooms);
 
     setSelectedRooms(currentlySelectedRooms);
     setIsModalOpen(true);

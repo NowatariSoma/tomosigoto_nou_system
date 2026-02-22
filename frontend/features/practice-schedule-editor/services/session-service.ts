@@ -95,13 +95,7 @@ export class SessionService {
     slotOrder: number
   ): Promise<Session> {
     const url = `${this.basePath}/${sessionId}/move?target_venue_id=${venueId}&target_slot_order=${slotOrder}`;
-    console.log('DEBUG SessionService.moveSession:', {
-      sessionId,
-      venueId,
-      slotOrder,
-      url
-    });
-    
+
     const response = await fetchApi(url, {
       method: 'PUT',
     });

@@ -47,11 +47,9 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
   const fetchAvailableInstructors = async () => {
     try {
       setLoading(true);
-      console.log('InstructorEditorModal: インストラクター候補を取得中。scheduleId=', scheduleId);
       // APIからインストラクター候補を取得
       const candidates = await sessionInstructorService.getInstructorCandidates(scheduleId);
-      console.log('InstructorEditorModal: 取得した候補', candidates);
-      
+
       // 候補データをattendanceInfo配列に変換
       const formattedCandidates = candidates.map(candidate => ({
         id: candidate.attendance_id,
@@ -60,8 +58,7 @@ export const InstructorEditorModal: React.FC<InstructorEditorModalProps> = ({
         user_email: candidate.email,
         user_id: candidate.user_id,
       }));
-      
-      console.log('InstructorEditorModal: フォーマット後の候補', formattedCandidates);
+
       setAvailableInstructors(formattedCandidates);
     } catch (error) {
       console.error('監督者候補の取得に失敗しました:', error);

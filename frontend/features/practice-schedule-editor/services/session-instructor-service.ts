@@ -109,23 +109,10 @@ export class SessionInstructorService {
       
       const queryString = params.toString();
       const url = queryString ? `${this.basePath}/?${queryString}` : `${this.basePath}/`;
-      
-      console.log('SessionInstructorService.getSessionInstructors called with:', {
-        scheduleId,
-        slotOrder,
-        url
-      });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('SessionInstructorService.getSessionInstructors response:', {
-        url,
-        status: response.status,
-        dataLength: Array.isArray(data) ? data.length : 'not array',
-        data
-      });
-      
+
       return data;
     } catch (error) {
       console.error('SessionInstructorService.getSessionInstructors error:', {
@@ -188,22 +175,11 @@ export class SessionInstructorService {
    * @returns 作成されたセッション指導者
    */
   async createSessionInstructor(data: SessionInstructorCreate): Promise<SessionInstructor> {
-    console.log('SessionInstructorService.createSessionInstructor called with:', {
-      data,
-      basePath: this.basePath,
-      url: `${this.basePath}/`
-    });
-    
     const response = await fetchApi(`${this.basePath}/`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    
-    console.log('SessionInstructorService.createSessionInstructor response:', {
-      status: response.status,
-      ok: response.ok
-    });
-    
+
     return await response.json();
   }
 
@@ -299,21 +275,10 @@ export class SessionInstructorService {
   async getInstructorCandidates(practiceScheduleId: string): Promise<InstructorCandidate[]> {
     try {
       const url = `${this.basePath}/candidates?practice_schedule_id=${practiceScheduleId}`;
-      console.log('SessionInstructorService.getInstructorCandidates called with:', {
-        practiceScheduleId,
-        url
-      });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('SessionInstructorService.getInstructorCandidates response:', {
-        url,
-        status: response.status,
-        dataLength: Array.isArray(data) ? data.length : 'not array',
-        data
-      });
-      
+
       return data;
     } catch (error) {
       console.error('SessionInstructorService.getInstructorCandidates error:', {
