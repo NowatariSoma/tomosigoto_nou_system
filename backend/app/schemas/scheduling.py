@@ -2,7 +2,7 @@
 スケジューリング最適化関連のスキーマ定義
 """
 import os
-from typing import Dict, Any, Optional, List
+from typing import Any
 from pydantic import BaseModel, Field, field_validator
 from uuid import UUID
 
@@ -27,13 +27,13 @@ class OptimizationParams(BaseModel):
 class OptimizationRequest(BaseModel):
     """最適化リクエスト"""
     schedule_id: UUID = Field(..., description="スケジュールID")
-    optimization_params: Optional[OptimizationParams] = Field(default=None, description="最適化パラメータ")
+    optimization_params: OptimizationParams | None = Field(default=None, description="最適化パラメータ")
 
 
 class PreviewRequest(BaseModel):
     """プレビューリクエスト"""
     schedule_id: UUID = Field(..., description="スケジュールID")
-    optimization_params: Optional[OptimizationParams] = Field(default=None, description="最適化パラメータ")
+    optimization_params: OptimizationParams | None = Field(default=None, description="最適化パラメータ")
 
 
 class OptimizationResponse(BaseModel):
@@ -44,8 +44,8 @@ class OptimizationResponse(BaseModel):
     objective_value: float = Field(..., description="目的関数値")
     is_optimal: bool = Field(..., description="最適解かどうか")
     solve_time_seconds: float = Field(..., description="求解時間（秒）")
-    instructor_distribution: Dict[str, int] = Field(..., description="指導者別セッション数")
-    part_distribution: Dict[str, int] = Field(..., description="パート別セッション数")
+    instructor_distribution: dict[str, int] = Field(..., description="指導者別セッション数")
+    part_distribution: dict[str, int] = Field(..., description="パート別セッション数")
 
 
 class PreviewResponse(BaseModel):
@@ -57,9 +57,9 @@ class PreviewResponse(BaseModel):
     objective_value: float = Field(..., description="目的関数値")
     is_optimal: bool = Field(..., description="最適解かどうか")
     solve_time_seconds: float = Field(..., description="求解時間（秒）")
-    instructor_distribution: Dict[str, int] = Field(..., description="指導者別セッション数")
-    part_distribution: Dict[str, int] = Field(..., description="パート別セッション数")
-    schedule_matrix: Dict[str, Dict[str, List[Dict[str, Any]]]] = Field(..., description="スケジュールマトリックス")
+    instructor_distribution: dict[str, int] = Field(..., description="指導者別セッション数")
+    part_distribution: dict[str, int] = Field(..., description="パート別セッション数")
+    schedule_matrix: dict[str, dict[str, list[dict[str, Any]]]] = Field(..., description="スケジュールマトリックス")
 
 
 class ErrorResponse(BaseModel):
@@ -67,4 +67,4 @@ class ErrorResponse(BaseModel):
     status: str = Field(default="error", description="ステータス")
     error_code: str = Field(..., description="エラーコード")
     message: str = Field(..., description="エラーメッセージ")
-    details: Optional[Dict[str, Any]] = Field(default=None, description="詳細情報")
+    details: dict[str, Any] | None = Field(default=None, description="詳細情報")

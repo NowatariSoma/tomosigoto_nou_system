@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_serializer, Field
@@ -29,16 +28,16 @@ class MemberAssignmentCreate(MemberAssignmentBase):
 class MemberAssignmentUpdate(BaseModel):
     """メンバー所属更新用スキーマ"""
     
-    category: Optional[str] = Field(None, description="謡舞区分", pattern="^(utai|mai)$")
-    display_order: Optional[int] = Field(None, description="表示順序", ge=0)
+    category: str | None = Field(None, description="謡舞区分", pattern="^(utai|mai)$")
+    display_order: int | None = Field(None, description="表示順序", ge=0)
 
 
 class MemberAssignmentResponse(MemberAssignmentBase):
     """メンバー所属レスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
     
@@ -79,7 +78,7 @@ class BulkAssignmentItem(BaseModel):
 class BulkAssignmentRequest(BaseModel):
     """一括所属リクエスト用スキーマ"""
     
-    assignments: List[BulkAssignmentItem] = Field(
+    assignments: list[BulkAssignmentItem] = Field(
         ..., 
         description="所属させるユーザーのリスト",
         min_items=1,
@@ -109,13 +108,13 @@ class MemberAssignmentWithDetails(MemberAssignmentResponse):
     """詳細情報付きメンバー所属レスポンス用スキーマ"""
     
     # ユーザー情報
-    user_name: Optional[str] = None
-    user_email: Optional[str] = None
+    user_name: str | None = None
+    user_email: str | None = None
     
     # パート情報
-    part_name: Optional[str] = None
-    part_description: Optional[str] = None
+    part_name: str | None = None
+    part_description: str | None = None
     
     # ステージ情報
-    stage_name: Optional[str] = None
-    stage_description: Optional[str] = None
+    stage_name: str | None = None
+    stage_description: str | None = None

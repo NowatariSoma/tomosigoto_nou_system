@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -8,7 +7,7 @@ class UserBase(BaseModel):
     """ユーザーの基本情報"""
 
     email: str
-    name: Optional[str] = None
+    name: str | None = None
 
 
 class UserCreate(UserBase):
@@ -20,19 +19,19 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """ユーザー更新用スキーマ"""
 
-    email: Optional[str] = None
-    name: Optional[str] = None
-    password: Optional[str] = None
+    email: str | None = None
+    name: str | None = None
+    password: str | None = None
 
 
 class UserResponse(UserBase):
     """ユーザーレスポンス用スキーマ"""
 
     id: str
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    email_confirmed_at: Optional[datetime] = None
-    last_sign_in_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    email_confirmed_at: datetime | None = None
+    last_sign_in_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -40,4 +39,4 @@ class UserResponse(UserBase):
 class UserInDB(UserResponse):
     """データベース内のユーザー情報（内部利用）"""
 
-    hashed_password: Optional[str] = None
+    hashed_password: str | None = None

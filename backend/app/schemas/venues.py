@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -19,29 +18,29 @@ class VenueCreate(VenueBase):
     address: str  # NOT NULL制約
     latitude: float  # NOT NULL制約
     longitude: float  # NOT NULL制約
-    description: Optional[str] = None
+    description: str | None = None
     can_mai: bool = False  # NOT NULL制約
-    desk: Optional[int] = None
-    chair: Optional[int] = None
+    desk: int | None = None
+    chair: int | None = None
 
 
 class VenueUpdate(BaseModel):
-    name: Optional[str] = None
-    capacity: Optional[int] = None
-    campus: Optional[str] = None
-    is_active: Optional[bool] = None
-    code: Optional[str] = None
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    description: Optional[str] = None
+    name: str | None = None
+    capacity: int | None = None
+    campus: str | None = None
+    is_active: bool | None = None
+    code: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    description: str | None = None
 
 
 class VenueResponse(VenueCreate):
     """会場レスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)

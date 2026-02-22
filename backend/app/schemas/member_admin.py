@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,7 +11,7 @@ class MemberSummaryResponse(BaseModel):
     name: str
     role: Literal["admin", "basic", "viewer"]
     is_instructor: bool = False
-    last_active_at: Optional[datetime] = None
+    last_active_at: datetime | None = None
 
 
 class MemberRoleUpdateRequest(BaseModel):

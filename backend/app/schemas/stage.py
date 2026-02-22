@@ -3,7 +3,6 @@ Stage関連のPydanticスキーマ定義
 """
 
 from datetime import date, datetime
-from typing import Optional
 from pydantic import BaseModel, Field
 from uuid import UUID
 
@@ -11,8 +10,8 @@ from uuid import UUID
 class StageBase(BaseModel):
     """ステージの基本スキーマ"""
     name: str = Field(..., max_length=255, description="舞台名称")
-    description: Optional[str] = Field(None, description="舞台説明")
-    performance_date: Optional[date] = Field(None, description="公演予定日")
+    description: str | None = Field(None, description="舞台説明")
+    performance_date: date | None = Field(None, description="公演予定日")
     status: str = Field(default="active", description="ステータス", pattern="^(active|inactive)$")
 
 
@@ -23,10 +22,10 @@ class StageCreate(StageBase):
 
 class StageUpdate(BaseModel):
     """ステージ更新用スキーマ"""
-    name: Optional[str] = Field(None, max_length=255, description="舞台名称")
-    description: Optional[str] = Field(None, description="舞台説明")
-    performance_date: Optional[date] = Field(None, description="公演予定日")
-    status: Optional[str] = Field(None, description="ステータス", pattern="^(active|inactive)$")
+    name: str | None = Field(None, max_length=255, description="舞台名称")
+    description: str | None = Field(None, description="舞台説明")
+    performance_date: date | None = Field(None, description="公演予定日")
+    status: str | None = Field(None, description="ステータス", pattern="^(active|inactive)$")
 
 
 class StageResponse(StageBase):

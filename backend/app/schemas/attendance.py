@@ -1,5 +1,4 @@
 from datetime import datetime, time
-from typing import Optional
 from uuid import UUID
 from enum import Enum
 
@@ -21,9 +20,9 @@ class AttendanceBase(BaseModel):
     practice_schedule_id: UUID
     user_id: UUID
     status: AttendanceStatus
-    notes: Optional[str] = None
-    available_from: Optional[time] = None
-    available_to: Optional[time] = None
+    notes: str | None = None
+    available_from: time | None = None
+    available_to: time | None = None
 
 
 class AttendanceCreate(AttendanceBase):
@@ -34,23 +33,23 @@ class AttendanceCreate(AttendanceBase):
 class AttendanceUpdate(BaseModel):
     """出欠記録更新用スキーマ"""
 
-    status: Optional[AttendanceStatus] = None
-    notes: Optional[str] = None
-    available_from: Optional[time] = None
-    available_to: Optional[time] = None
+    status: AttendanceStatus | None = None
+    notes: str | None = None
+    available_from: time | None = None
+    available_to: time | None = None
 
 
 class AttendanceResponse(AttendanceBase):
     """出欠記録レスポンス用スキーマ"""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
-    user_name: Optional[str] = None  # フルネーム（last_name_kanji first_name_kanji）
-    user_email: Optional[str] = None  # ユーザーのメールアドレス
-    user_year: Optional[int] = None  # ユーザーの学年
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
+    user_name: str | None = None  # フルネーム（last_name_kanji first_name_kanji）
+    user_email: str | None = None  # ユーザーのメールアドレス
+    user_year: int | None = None  # ユーザーの学年
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -60,8 +59,8 @@ class AttendanceSummary(BaseModel):
     
     practice_schedule_id: UUID
     schedule_date: datetime
-    description: Optional[str] = None
-    venue_name: Optional[str] = None
+    description: str | None = None
+    venue_name: str | None = None
     total_people: int
     present_count: int
     absent_count: int
@@ -77,16 +76,16 @@ class UserAttendanceHistory(BaseModel):
 
     user_id: UUID
     email: str
-    first_name_kanji: Optional[str] = None
-    last_name_kanji: Optional[str] = None
-    student_id: Optional[str] = None
-    attendance_status: Optional[AttendanceStatus] = None
-    available_from: Optional[time] = None
-    available_to: Optional[time] = None
-    schedule_date: Optional[datetime] = None
-    description: Optional[str] = None
-    venue_name: Optional[str] = None
-    notes: Optional[str] = None
+    first_name_kanji: str | None = None
+    last_name_kanji: str | None = None
+    student_id: str | None = None
+    attendance_status: AttendanceStatus | None = None
+    available_from: time | None = None
+    available_to: time | None = None
+    schedule_date: datetime | None = None
+    description: str | None = None
+    venue_name: str | None = None
+    notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
