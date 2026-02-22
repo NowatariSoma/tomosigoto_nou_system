@@ -11,10 +11,8 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.stage_repository import StageRepository
-from app.repositories.part_repository import PartRepository
+from app.repositories.protocols import StageRepositoryProtocol
 from app.schemas.stage import StageCreate, StageResponse, StageUpdate
-from supabase import Client
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +22,12 @@ class StageService:
     舞台情報の管理を行うサービスクラス
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, stage_repository: StageRepositoryProtocol):
         """
         Args:
-            client: Supabaseクライアントインスタンス
+            stage_repository: StageRepositoryProtocolインスタンス
         """
-        self.client = client
-        self.repository = StageRepository(client)
+        self.repository = stage_repository
 
     async def get_all_stages(self) -> list[StageResponse]:
         """
@@ -40,13 +37,13 @@ class StageService:
             舞台情報のリスト
         """
         try:
-            response = self.client.table("stages").select("*").order("created_at", desc=True).execute()
-            
-            if not response.data:
+            data = await self.repository.find_all()
+
+            if not data:
                 logger.info("No stages found")
                 return []
 
-            stages = [StageResponse(**stage) for stage in response.data]
+            stages = [StageResponse(**stage) for stage in data]
             logger.info(f"Retrieved {len(stages)} stages")
             return stages
 
@@ -74,7 +71,7 @@ class StageService:
             raise APIException(ErrorMessage.BAD_REQUEST)
 
         stage_data = await self.repository.find_by_id(uuid_stage_id)
-        
+
         if not stage_data:
             logger.error(f"Stage not found: {stage_id}")
             raise APIException(ErrorMessage.STAGE_NOT_FOUND)
@@ -97,19 +94,14 @@ class StageService:
         try:
             # 日付型をISO文字列形式に変換
             processed_data = self._serialize_dates(stage_data)
-            
-            response = (
-                self.client.table("stages")
-                .insert(processed_data)
-                .execute()
-            )
 
-            if not response.data or len(response.data) == 0:
+            created_stage = await self.repository.create(processed_data)
+
+            if not created_stage:
                 logger.error("Failed to create stage")
                 raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-            created_stage = response.data[0]
-            logger.info(f"Created stage with id: {created_stage['id']}")
+            logger.info(f"Created stage with id: {created_stage.get('id', 'unknown')}")
             return StageResponse(**created_stage)
 
         except APIException:
@@ -146,19 +138,13 @@ class StageService:
         try:
             # 日付型をISO文字列形式に変換
             processed_data = self._serialize_dates(update_data)
-            
-            response = (
-                self.client.table("stages")
-                .update(processed_data)
-                .eq("id", stage_id)
-                .execute()
-            )
 
-            if not response.data or len(response.data) == 0:
+            updated_stage = await self.repository.update(uuid_stage_id, processed_data)
+
+            if not updated_stage:
                 logger.error(f"Failed to update stage: {stage_id}")
                 raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-            updated_stage = response.data[0]
             logger.info(f"Updated stage with id: {stage_id}")
             return StageResponse(**updated_stage)
 
@@ -190,13 +176,7 @@ class StageService:
             raise APIException(ErrorMessage.STAGE_NOT_FOUND)
 
         try:
-            response = (
-                self.client.table("stages")
-                .delete()
-                .eq("id", stage_id)
-                .execute()
-            )
-
+            await self.repository.delete(uuid_stage_id)
             logger.info(f"Deleted stage with id: {stage_id}")
 
         except Exception as e:
@@ -218,19 +198,13 @@ class StageService:
             raise APIException(ErrorMessage.BAD_REQUEST)
 
         try:
-            response = (
-                self.client.table("stages")
-                .select("*")
-                .eq("status", status)
-                .order("created_at", desc=True)
-                .execute()
-            )
-            
-            if not response.data:
+            data = await self.repository.find_by_status(status)
+
+            if not data:
                 logger.info(f"No stages found with status: {status}")
                 return []
 
-            stages = [StageResponse(**stage) for stage in response.data]
+            stages = [StageResponse(**stage) for stage in data]
             logger.info(f"Retrieved {len(stages)} stages with status: {status}")
             return stages
 
@@ -251,11 +225,11 @@ class StageService:
             日付が文字列に変換されたデータ辞書
         """
         processed_data = data.copy()
-        
+
         for key, value in processed_data.items():
             if isinstance(value, date):
                 processed_data[key] = value.isoformat()
             elif isinstance(value, datetime):
                 processed_data[key] = value.isoformat()
-                
+
         return processed_data

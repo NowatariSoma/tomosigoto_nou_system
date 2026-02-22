@@ -1,7 +1,7 @@
 """
 StageService のユニットテスト
 
-NOTE: StageService はリポジトリではなく Supabase Client を直接使用するパターン。
+NOTE: StageService は StageRepositoryProtocol を受け取るパターン。
 """
 import pytest
 from unittest.mock import AsyncMock, Mock
@@ -10,7 +10,6 @@ from datetime import date
 
 from app.services.stage_service import StageService
 from app.core.exceptions import APIException
-from tests.helpers.supabase_mock import SupabaseMockBuilder
 from tests.helpers.factories import make_stage
 
 
@@ -28,26 +27,19 @@ class TestStageService:
             updated_at="2024-01-01T00:00:00.000Z",
         )
 
-    def _make_service(self, table_data=None):
-        """テスト用のモックclientでServiceを作成"""
-        mock_client = SupabaseMockBuilder()
-        if table_data is not None:
-            mock_client = mock_client.for_table("stages").with_response(data=table_data)
-        else:
-            mock_client = mock_client.with_response(data=[])
-        built_client = mock_client.build()
-
-        # repositoryのexistsとfind_by_idもモックする
-        service = StageService(client=built_client)
-        service.repository = AsyncMock()
-        return service, built_client
+    def _make_service(self):
+        """テスト用のモックリポジトリでServiceを作成"""
+        mock_repository = AsyncMock()
+        service = StageService(stage_repository=mock_repository)
+        return service, mock_repository
 
     # ===== get_all_stages =====
 
     @pytest.mark.asyncio
     async def test_get_all_stages_success(self):
         """全舞台取得 - 正常"""
-        service, client = self._make_service(table_data=[self.stage_data])
+        service, mock_repo = self._make_service()
+        mock_repo.find_all.return_value = [self.stage_data]
 
         result = await service.get_all_stages()
 
@@ -57,7 +49,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_all_stages_empty(self):
         """全舞台取得 - 空"""
-        service, client = self._make_service(table_data=[])
+        service, mock_repo = self._make_service()
+        mock_repo.find_all.return_value = []
 
         result = await service.get_all_stages()
 
@@ -66,12 +59,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_all_stages_no_data(self):
         """全舞台取得 - data=None"""
-        service, client = self._make_service(table_data=None)
-        # data=Noneの場合はNoneを設定（SupabaseMockBuilderはNoneをdata=[]に変換するので直接設定）
-        mock_table = client.table("stages")
-        mock_response = Mock()
-        mock_response.data = None
-        mock_table.execute.return_value = mock_response
+        service, mock_repo = self._make_service()
+        mock_repo.find_all.return_value = None
 
         result = await service.get_all_stages()
 
@@ -83,8 +72,8 @@ class TestStageService:
     async def test_get_stage_by_id_success(self):
         """ID指定で舞台取得 - 正常"""
         stage_id = self.stage_data["id"]
-        service, _ = self._make_service()
-        service.repository.find_by_id.return_value = self.stage_data
+        service, mock_repo = self._make_service()
+        mock_repo.find_by_id.return_value = self.stage_data
 
         result = await service.get_stage_by_id(stage_id)
 
@@ -93,8 +82,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_stage_by_id_not_found(self):
         """ID指定で舞台取得 - 存在しない"""
-        service, _ = self._make_service()
-        service.repository.find_by_id.return_value = None
+        service, mock_repo = self._make_service()
+        mock_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
             await service.get_stage_by_id(str(uuid4()))
@@ -102,7 +91,7 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_stage_by_id_invalid_uuid(self):
         """ID指定で舞台取得 - 無効なUUID"""
-        service, _ = self._make_service()
+        service, mock_repo = self._make_service()
 
         with pytest.raises(APIException):
             await service.get_stage_by_id("invalid-uuid")
@@ -112,7 +101,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_create_stage_success(self):
         """舞台作成 - 正常"""
-        service, client = self._make_service(table_data=[self.stage_data])
+        service, mock_repo = self._make_service()
+        mock_repo.create.return_value = self.stage_data
 
         result = await service.create_stage(
             {"name": "テスト舞台", "status": "active"}
@@ -123,7 +113,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_create_stage_empty_response(self):
         """舞台作成 - 空レスポンス"""
-        service, client = self._make_service(table_data=[])
+        service, mock_repo = self._make_service()
+        mock_repo.create.return_value = {}
 
         with pytest.raises(APIException):
             await service.create_stage({"name": "テスト"})
@@ -134,8 +125,9 @@ class TestStageService:
     async def test_update_stage_success(self):
         """舞台更新 - 正常"""
         stage_id = self.stage_data["id"]
-        service, client = self._make_service(table_data=[self.stage_data])
-        service.repository.exists.return_value = True
+        service, mock_repo = self._make_service()
+        mock_repo.exists.return_value = True
+        mock_repo.update.return_value = self.stage_data
 
         result = await service.update_stage(stage_id, {"name": "更新舞台"})
 
@@ -144,8 +136,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_update_stage_not_found(self):
         """舞台更新 - 存在しない"""
-        service, _ = self._make_service()
-        service.repository.exists.return_value = False
+        service, mock_repo = self._make_service()
+        mock_repo.exists.return_value = False
 
         with pytest.raises(APIException):
             await service.update_stage(str(uuid4()), {"name": "更新"})
@@ -153,7 +145,7 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_update_stage_invalid_uuid(self):
         """舞台更新 - 無効なUUID"""
-        service, _ = self._make_service()
+        service, mock_repo = self._make_service()
 
         with pytest.raises(APIException):
             await service.update_stage("invalid", {"name": "更新"})
@@ -164,8 +156,9 @@ class TestStageService:
     async def test_delete_stage_success(self):
         """舞台削除 - 正常"""
         stage_id = self.stage_data["id"]
-        service, client = self._make_service(table_data=[])
-        service.repository.exists.return_value = True
+        service, mock_repo = self._make_service()
+        mock_repo.exists.return_value = True
+        mock_repo.delete.return_value = True
 
         # 例外を発生しなければ成功
         await service.delete_stage(stage_id)
@@ -173,8 +166,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_delete_stage_not_found(self):
         """舞台削除 - 存在しない"""
-        service, _ = self._make_service()
-        service.repository.exists.return_value = False
+        service, mock_repo = self._make_service()
+        mock_repo.exists.return_value = False
 
         with pytest.raises(APIException):
             await service.delete_stage(str(uuid4()))
@@ -184,7 +177,8 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_stages_by_status_active(self):
         """ステータスで舞台取得 - active"""
-        service, client = self._make_service(table_data=[self.stage_data])
+        service, mock_repo = self._make_service()
+        mock_repo.find_by_status.return_value = [self.stage_data]
 
         result = await service.get_stages_by_status("active")
 
@@ -193,7 +187,7 @@ class TestStageService:
     @pytest.mark.asyncio
     async def test_get_stages_by_status_invalid(self):
         """ステータスで舞台取得 - 無効なステータス"""
-        service, _ = self._make_service()
+        service, mock_repo = self._make_service()
 
         with pytest.raises(APIException):
             await service.get_stages_by_status("unknown")
