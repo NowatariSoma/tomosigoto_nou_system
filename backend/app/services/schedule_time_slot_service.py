@@ -1,7 +1,9 @@
 """
 スケジュール時間スロット関連のビジネスロジック
 """
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 from datetime import time
 
@@ -19,8 +21,8 @@ class ScheduleTimeSlotService:
 
     async def get_all_schedule_time_slots(
         self,
-        schedule_id: Optional[UUID] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None
+    ) -> list[dict[str, Any]]:
         """スケジュール時間スロット一覧を取得"""
         if schedule_id:
             data = await self.repository.find_by_schedule(schedule_id)
@@ -28,19 +30,19 @@ class ScheduleTimeSlotService:
             data = await self.repository.find_all()
         return [self._format_time_slot(item) for item in data]
 
-    async def get_schedule_time_slot(self, time_slot_id: UUID) -> Dict[str, Any]:
+    async def get_schedule_time_slot(self, time_slot_id: UUID) -> dict[str, Any]:
         """指定したIDのスケジュール時間スロットを取得"""
         time_slot = await self.repository.find_by_id(time_slot_id)
         if not time_slot:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return self._format_time_slot(time_slot)
 
-    async def get_schedule_time_slots_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_schedule_time_slots_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの時間スロット一覧を取得"""
         data = await self.repository.find_by_schedule(schedule_id)
         return [self._format_time_slot(item) for item in data]
 
-    async def create_schedule_time_slot(self, time_slot_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_schedule_time_slot(self, time_slot_data: dict[str, Any]) -> dict[str, Any]:
         """スケジュール時間スロットを作成"""
         # スケジュールの存在確認
         await self._validate_schedule(time_slot_data["schedule_id"])
@@ -58,8 +60,8 @@ class ScheduleTimeSlotService:
     async def create_schedule_time_slots_bulk(
         self, 
         schedule_id: UUID,
-        time_slots: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        time_slots: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """スケジュール時間スロットを一括作成"""
         created_items = []
         errors = []
@@ -123,8 +125,8 @@ class ScheduleTimeSlotService:
     async def update_schedule_time_slot(
         self, 
         time_slot_id: UUID, 
-        update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        update_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """スケジュール時間スロットを更新"""
         from datetime import datetime
         
@@ -207,7 +209,7 @@ class ScheduleTimeSlotService:
         """指定したスケジュールの時間スロットをすべて削除"""
         return await self.repository.delete_by_schedule(schedule_id)
 
-    def _format_time_slot(self, time_slot: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_time_slot(self, time_slot: dict[str, Any]) -> dict[str, Any]:
         """時間スロットの時間フィールドをHH:MM形式に変換"""
         from datetime import datetime
         

@@ -1,4 +1,8 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
+
+from app.schemas.current_user import CurrentUser
 from uuid import UUID
 import asyncio
 from datetime import datetime
@@ -46,7 +50,7 @@ class PracticeScheduleService:
 
     # ===== 練習スケジュール CRUD =====
 
-    async def get_all_practice_schedules(self) -> List[Dict[str, Any]]:
+    async def get_all_practice_schedules(self) -> list[dict[str, Any]]:
         """すべての練習スケジュールを取得（関連データ付き最適化版）"""
         schedules = await self.practice_schedule_repository.find_all_with_relations()
 
@@ -93,7 +97,7 @@ class PracticeScheduleService:
 
         return schedules
 
-    async def get_practice_schedule(self, schedule_id: UUID) -> Dict[str, Any]:
+    async def get_practice_schedule(self, schedule_id: UUID) -> dict[str, Any]:
         """指定した練習スケジュール情報を取得"""
         print(f"DEBUG get_practice_schedule: schedule_id={schedule_id}, type={type(schedule_id)}")
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
@@ -131,12 +135,12 @@ class PracticeScheduleService:
         
         return schedule
 
-    async def get_practice_schedule_by_date(self, target_date: str) -> Dict[str, Any]:
+    async def get_practice_schedule_by_date(self, target_date: str) -> dict[str, Any]:
         """指定した日付の練習スケジュール情報を取得"""
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         return schedule  # None を返すことで、エンドポイント側で404を返す
 
-    async def get_practice_schedule_bundle(self, target_date: str, current_user: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    async def get_practice_schedule_bundle(self, target_date: str, current_user: CurrentUser | None = None) -> dict[str, Any] | None:
         """指定日付のボトムシート用 bundle データをまとめて取得"""
         schedule = await self.practice_schedule_repository.find_by_date(target_date)
         if not schedule:
@@ -180,7 +184,7 @@ class PracticeScheduleService:
             "venues": venues,
         }
 
-        instructors_by_slot: Dict[str, List[Dict[str, Any]]] = {}
+        instructors_by_slot: dict[str, list[dict[str, Any]]] = {}
         for instructor in instructors or []:
             slot_key = str(instructor.get("slot_order"))
             formatted_instructor = {
@@ -226,21 +230,21 @@ class PracticeScheduleService:
 
         return bundle_response
 
-    async def get_practice_schedule_with_details(self, schedule_id: UUID) -> Dict[str, Any]:
+    async def get_practice_schedule_with_details(self, schedule_id: UUID) -> dict[str, Any]:
         """練習スケジュールの詳細情報（利用可能会場、セッション含む）を取得"""
         schedule = await self.practice_schedule_repository.find_with_details(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         return schedule
 
-    async def get_practice_schedule_for_display(self, schedule_id: UUID) -> Dict[str, Any]:
+    async def get_practice_schedule_for_display(self, schedule_id: UUID) -> dict[str, Any]:
         """練習表表示用の練習スケジュール情報を取得（名前情報含む）"""
         schedule = await self.practice_schedule_repository.find_for_display(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         return schedule
 
-    async def create_practice_schedule(self, schedule_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_practice_schedule(self, schedule_data: dict[str, Any]) -> dict[str, Any]:
         """練習スケジュールを作成"""
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
@@ -277,8 +281,8 @@ class PracticeScheduleService:
         return created_schedule
 
     async def update_practice_schedule(
-        self, schedule_id: UUID, schedule_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, schedule_id: UUID, schedule_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """指定した練習スケジュール情報を更新"""
         try:
             print(f"DEBUG update_practice_schedule: schedule_id={schedule_id}, schedule_data={schedule_data}")
@@ -624,19 +628,19 @@ class PracticeScheduleService:
 
     # ===== スケジュール利用可能会場 CRUD =====
 
-    async def get_schedule_available_venues(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_schedule_available_venues(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの利用可能会場を取得"""
         return await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
 
     async def add_schedule_available_venue(
-        self, venue_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, venue_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """スケジュールに利用可能会場を追加"""
         return await self.schedule_available_venue_repository.create(venue_data)
 
     async def update_schedule_available_venue(
-        self, venue_id: UUID, venue_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, venue_id: UUID, venue_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """スケジュール利用可能会場を更新"""
         return await self.schedule_available_venue_repository.update(venue_id, venue_data)
 
@@ -647,7 +651,7 @@ class PracticeScheduleService:
 
     # ===== セッション CRUD =====
 
-    async def get_sessions_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_sessions_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールのセッション一覧を取得"""
         try:
             sessions = await self.session_repository.find_by_schedule(schedule_id)
@@ -662,7 +666,7 @@ class PracticeScheduleService:
             print(f"Error fetching sessions for schedule {schedule_id}: {e}")
             raise APIException(ErrorMessage.DATABASE_ERROR)
 
-    async def get_session(self, session_id: UUID) -> Dict[str, Any]:
+    async def get_session(self, session_id: UUID) -> dict[str, Any]:
         """指定したセッション情報を取得"""
         try:
             session = await self.session_repository.find_by_id(session_id)
@@ -679,7 +683,7 @@ class PracticeScheduleService:
             print(f"Error fetching session {session_id}: {e}")
             raise APIException(ErrorMessage.DATABASE_ERROR)
 
-    async def create_session(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_session(self, session_data: dict[str, Any]) -> dict[str, Any]:
         """セッションを作成"""
         print(f"DEBUG create_session: 受信データ = {session_data}")
 
@@ -701,8 +705,8 @@ class PracticeScheduleService:
         return result
 
     async def update_session(
-        self, session_id: UUID, session_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, session_id: UUID, session_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """指定したセッション情報を更新"""
         session = await self.session_repository.find_by_id(session_id)
         if not session:
@@ -712,7 +716,7 @@ class PracticeScheduleService:
 
     async def move_session(
         self, session_id: UUID, target_venue_id: UUID, target_slot_order: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """セッションを別の会場・時限に移動"""
         session = await self.session_repository.find_by_id(session_id)
         if not session:
@@ -813,13 +817,13 @@ class PracticeScheduleService:
     # 注意: これらの機能は新しいSessionInstructorServiceに移行されました
     # 新しいテーブル構造では session_id ではなく schedule_id + slot_order を使用します
 
-    # async def get_session_instructors(self, session_id: UUID) -> List[Dict[str, Any]]:
+    # async def get_session_instructors(self, session_id: UUID) -> list[dict[str, Any]]:
     #     """指定したセッションの指導者一覧を取得"""
     #     return await self.session_instructor_repository.find_by_session(session_id)
 
     # async def add_session_instructor(
-    #     self, instructor_data: Dict[str, Any]
-    # ) -> Dict[str, Any]:
+    #     self, instructor_data: dict[str, Any]
+    # ) -> dict[str, Any]:
     #     """セッションに指導者を追加"""
     #     return await self.session_instructor_repository.create(instructor_data)
 
@@ -832,8 +836,8 @@ class PracticeScheduleService:
 
 
     async def update_practice_schedule_with_details(
-        self, schedule_id: UUID, schedule_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, schedule_id: UUID, schedule_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """練習スケジュールを関連データと一緒に更新"""
         # 練習スケジュール存在確認
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
@@ -880,7 +884,7 @@ class PracticeScheduleService:
 
     # ===== ヘルパーメソッド =====
 
-    async def _get_venues_with_colors(self, schedule_id: UUID = None) -> List[Dict[str, Any]]:
+    async def _get_venues_with_colors(self, schedule_id: UUID = None) -> list[dict[str, Any]]:
         """会場情報を色情報とともに取得"""
         venues = []
 
@@ -911,7 +915,7 @@ class PracticeScheduleService:
 
         return venues
 
-    async def _get_session_instructors(self, session_id: UUID) -> List[str]:
+    async def _get_session_instructors(self, session_id: UUID) -> list[str]:
         """セッションの指導者名を取得（一旦実装しない）"""
         return []
 
@@ -928,7 +932,7 @@ class PracticeScheduleService:
             print(f"Warning: Could not calculate participants for schedule {schedule_id}: {e}")
             return 0  # データなし
 
-    async def _get_time_slots_from_db(self, schedule_id: Any) -> List[Dict[str, Any]]:
+    async def _get_time_slots_from_db(self, schedule_id: Any) -> list[dict[str, Any]]:
         """データベースから時間スロットを取得"""
         try:
             # schedule_idが文字列の場合はUUIDに変換
@@ -946,7 +950,7 @@ class PracticeScheduleService:
             print(f"Warning: Could not fetch time slots from DB: {e}")
             return []
 
-    def _calculate_slot_time(self, schedule: Dict[str, Any], slot_order: int, division_count: int, time_slots: Optional[List[Dict[str, Any]]] = None) -> str:
+    def _calculate_slot_time(self, schedule: dict[str, Any], slot_order: int, division_count: int, time_slots: list[dict[str, Any]] | None = None) -> str:
         """slot_orderに基づいて時間スロットを計算（DBから取得した時間スロットを優先）"""
         # データベースから取得した時間スロットがある場合はそれを使用
         if time_slots:
@@ -972,7 +976,7 @@ class PracticeScheduleService:
         slot_time = start_time + timedelta(minutes=slot_start_minutes)
         return slot_time.strftime("%H:%M")
 
-    async def _generate_time_schedule(self, venues: List[Dict[str, Any]], schedule: Dict[str, Any], division_count: int) -> Dict[str, Dict[str, List]]:
+    async def _generate_time_schedule(self, venues: list[dict[str, Any]], schedule: dict[str, Any], division_count: int) -> dict[str, dict[str, list]]:
         """時間スケジュールの枠を生成（データベースから時間スロットを取得）"""
         time_schedule = {}
         schedule_id = schedule.get("id")
@@ -1009,7 +1013,7 @@ class PracticeScheduleService:
 
         return time_schedule
 
-    async def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> Dict[str, Any]:
+    async def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> dict[str, Any]:
         """指定した日付の練習スケジュールを理想的な形式で取得"""
         debug_logs = [f"Searching for schedule with date: {target_date}"]
 
@@ -1064,7 +1068,7 @@ class PracticeScheduleService:
 
         return result
 
-    async def _convert_to_ideal_format(self, display_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _convert_to_ideal_format(self, display_data: dict[str, Any]) -> dict[str, Any]:
         """表示用データを理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -1144,7 +1148,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _convert_to_ideal_format_simple(self, schedule: Dict[str, Any], details_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _convert_to_ideal_format_simple(self, schedule: dict[str, Any], details_data: dict[str, Any]) -> dict[str, Any]:
         """実データを理想的な形式に変換（シンプル版）"""
         # 基本情報
         schedule_info = {
@@ -1210,7 +1214,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _convert_basic_to_ideal_format(self, schedule: Dict[str, Any], division_count: int = 6) -> Dict[str, Any]:
+    async def _convert_basic_to_ideal_format(self, schedule: dict[str, Any], division_count: int = 6) -> dict[str, Any]:
         """基本スケジュールデータから理想的な形式に変換（実データのみ使用）"""
         # 基本情報
         schedule_info = {
@@ -1260,7 +1264,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _get_absent_members_for_session(self, schedule_id: UUID, part_id: UUID) -> List[Dict[str, Any]]:
+    async def _get_absent_members_for_session(self, schedule_id: UUID, part_id: UUID) -> list[dict[str, Any]]:
         """セッションの欠席メンバーを取得"""
         try:
             # パート所属メンバーを取得
@@ -1320,7 +1324,7 @@ class PracticeScheduleService:
             print(f"Error getting absent members for session: {e}")
             return []
 
-    async def _convert_basic_to_ideal_format_with_sessions(self, schedule: Dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> Dict[str, Any]:
+    async def _convert_basic_to_ideal_format_with_sessions(self, schedule: dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> dict[str, Any]:
         """基本スケジュールデータとセッション情報から理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -1538,7 +1542,7 @@ class PracticeScheduleService:
             }
         }
 
-    async def _get_bundle_users(self) -> List[Dict[str, Any]]:
+    async def _get_bundle_users(self) -> list[dict[str, Any]]:
         """bundle API 用にユーザー一覧を取得"""
         try:
             profiles = await self.user_profile_repository.get_all_profiles_basic()
@@ -1565,7 +1569,7 @@ class PracticeScheduleService:
 
         return users
 
-    async def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
+    async def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> dict[str, Any]:
         """指定したIDの練習スケジュールの詳細情報を取得"""
         # 基本スケジュール情報を取得
         schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
@@ -1583,7 +1587,7 @@ class PracticeScheduleService:
         # 詳細形式に変換
         return await self._convert_to_details_format(schedule, sessions)
 
-    async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> Dict[str, Any]:
+    async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> dict[str, Any]:
         """指定したIDの練習スケジュールのidealフォーマット詳細情報を取得（並列化で高速化）"""
         import time
         ideal_start = time.time()
@@ -1624,7 +1628,7 @@ class PracticeScheduleService:
         print(f"DEBUG: ideal convert実行時間: {convert_elapsed:.3f}秒, ideal合計: {ideal_total:.3f}秒")
         return result
 
-    async def _convert_to_details_format(self, schedule: Dict[str, Any], sessions: list) -> Dict[str, Any]:
+    async def _convert_to_details_format(self, schedule: dict[str, Any], sessions: list) -> dict[str, Any]:
         """基本スケジュールデータとセッション情報から詳細形式に変換"""
         # 基本情報
         result = {
@@ -1682,7 +1686,7 @@ class PracticeScheduleService:
 
     async def get_practice_schedules_for_month_calendar(
         self, year: int, month: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Monthカレンダー表示用の練習スケジュール一覧を取得（最適化版 - N+1問題を解決）
 
         従来は各スケジュールごとにループ内で以下のクエリを実行していました：
@@ -1772,7 +1776,7 @@ class PracticeScheduleService:
 
     async def get_practice_schedules_for_date_range(
         self, start_date: str, end_date: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """指定した日付範囲の練習スケジュール一覧を取得（カレンダー表示用・最適化版）
 
         N+1問題を解決した高速版です。

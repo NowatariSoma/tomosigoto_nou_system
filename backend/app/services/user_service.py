@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -15,7 +17,7 @@ class UserService:
     リポジトリパターンと依存性注入に対応
     """
 
-    def __init__(self, user_repository: UserRepository, auth_client):
+    def __init__(self, user_repository: UserRepository, auth_client) -> None:
         """
         Args:
             user_repository: UserRepositoryインスタンス
@@ -24,18 +26,18 @@ class UserService:
         self.repository = user_repository
         self.auth_client = auth_client
 
-    async def get_all_users(self) -> List[Dict[str, Any]]:
+    async def get_all_users(self) -> list[dict[str, Any]]:
         """すべてのユーザーを取得"""
         return await self.repository.get_all_users()
 
-    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
         """IDでユーザーを取得"""
         user = await self.repository.get_user_by_id(user_id)
         if not user:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return user
 
-    async def verify_jwt_token(self, token: str) -> Optional[Dict[str, Any]]:
+    async def verify_jwt_token(self, token: str) -> dict[str, Any] | None:
         """JWTトークンを検証"""
         try:
             response = self.auth_client.get_user(token)
@@ -49,7 +51,7 @@ class UserService:
             logger.error(f"Error verifying token: {str(e)}")
             return None
 
-    async def create_user(self, user_data: dict) -> Dict[str, Any]:
+    async def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
         """ユーザーを作成（認証とDB両方）"""
         logger.info(f"Creating user with email: {user_data['email']}")
 
@@ -128,8 +130,8 @@ class UserService:
         return True
 
     async def update_user(
-        self, user_id: str, user_data: dict
-    ) -> Optional[Dict[str, Any]]:
+        self, user_id: str, user_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """ユーザー情報を更新"""
         # ユーザーの存在確認
         existing_user = await self.repository.get_user_by_id(user_id)

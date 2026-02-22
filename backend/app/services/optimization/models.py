@@ -1,8 +1,9 @@
 """
 データモデルの定義
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List, Dict, Optional
 from datetime import time
 from app.services.optimization.constants import ProblemConfig
 
@@ -20,12 +21,12 @@ class Player:
     """プレイヤー（参加者）"""
     id: int
     name: str
-    part_assignments: List[PartAssignment]  # パート割り当てと優先度
+    part_assignments: list[PartAssignment]  # パート割り当てと優先度
     is_instructor: bool = False  # 指導者かどうか
-    user_id: Optional[str] = None  # ユーザーID（UUID）- データベース保存時に使用
+    user_id: str | None = None  # ユーザーID（UUID）- データベース保存時に使用
     
     @property
-    def part_ids(self) -> List[str]:
+    def part_ids(self) -> list[str]:
         """所属パートIDのリスト"""
         return [pa.part_id for pa in self.part_assignments]
 
@@ -42,8 +43,8 @@ class TimeSlot:
     """時間コマ"""
     id: int
     name: str  # 例: "1限目", "2限目", "3限目"
-    start_time: Optional[time] = None  # 開始時刻（schedule_time_slotsから取得）
-    end_time: Optional[time] = None    # 終了時刻（schedule_time_slotsから取得）
+    start_time: time | None = None  # 開始時刻（schedule_time_slotsから取得）
+    end_time: time | None = None    # 終了時刻（schedule_time_slotsから取得）
 
 
 @dataclass
@@ -55,22 +56,22 @@ class PracticeSession:
     room_id: int
     time_slot_id: int
     instructor_id: int
-    player_ids: List[int]  # 参加プレイヤーのIDリスト
+    player_ids: list[int]  # 参加プレイヤーのIDリスト
 
 
 @dataclass
 class SchedulingProblem:
     """スケジューリング問題の全体設定"""
-    players: List[Player]  # プレイヤーリスト（指導者含む）
-    rooms: List[Room]
-    time_slots: List[TimeSlot]
-    parts: List[Dict[str, str]]  # [{"id": "uuid", "name": "第1バイオリン"}, ...]
+    players: list[Player]  # プレイヤーリスト（指導者含む）
+    rooms: list[Room]
+    time_slots: list[TimeSlot]
+    parts: list[dict[str, str]]  # [{"id": "uuid", "name": "第1バイオリン"}, ...]
     
-    def get_players_by_part(self, part_id: str) -> List[Player]:
+    def get_players_by_part(self, part_id: str) -> list[Player]:
         """指定されたパートのプレイヤーリストを取得"""
         return [p for p in self.players if part_id in p.part_ids]
     
-    def get_instructors_by_part(self, part_id: str) -> List[Player]:
+    def get_instructors_by_part(self, part_id: str) -> list[Player]:
         """指定されたパートの指導者リストを取得"""
         return [p for p in self.players if p.is_instructor and part_id in p.part_ids]
 
@@ -78,12 +79,12 @@ class SchedulingProblem:
 @dataclass
 class SchedulingSolution:
     """スケジューリングの解"""
-    sessions: List[PracticeSession]
+    sessions: list[PracticeSession]
     objective_value: float
     is_optimal: bool
     solve_time_seconds: float
     
-    def get_schedule_matrix(self) -> Dict[int, Dict[int, List[PracticeSession]]]:
+    def get_schedule_matrix(self) -> dict[int, dict[int, list[PracticeSession]]]:
         """時間コマ×部屋のスケジュールマトリックスを返す（複数セッション対応）"""
         matrix = {}
         
@@ -106,7 +107,7 @@ class SchedulingSolution:
 
         return matrix
 
-    def get_instructor_distribution(self) -> Dict[int, int]:
+    def get_instructor_distribution(self) -> dict[int, int]:
         """指導者ごとのセッション数を取得"""
         distribution = {}
         for session in self.sessions:
@@ -114,7 +115,7 @@ class SchedulingSolution:
             distribution[instructor_id] = distribution.get(instructor_id, 0) + 1
         return distribution
 
-    def get_part_distribution(self) -> Dict[str, int]:
+    def get_part_distribution(self) -> dict[str, int]:
         """パートIDごとのセッション数を取得"""
         distribution = {}
         for session in self.sessions:
@@ -122,7 +123,7 @@ class SchedulingSolution:
             distribution[part_id] = distribution.get(part_id, 0) + 1
         return distribution
     
-    def get_part_distribution_by_name(self) -> Dict[str, int]:
+    def get_part_distribution_by_name(self) -> dict[str, int]:
         """パート名ごとのセッション数を取得"""
         distribution = {}
         for session in self.sessions:

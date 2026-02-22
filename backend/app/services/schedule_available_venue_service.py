@@ -1,7 +1,9 @@
 """
 スケジュール利用可能会場関連のビジネスロジック
 """
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -18,9 +20,9 @@ class ScheduleAvailableVenueService:
 
     async def get_all_schedule_available_venues(
         self,
-        schedule_id: Optional[UUID] = None,
-        venue_id: Optional[UUID] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None,
+        venue_id: UUID | None = None
+    ) -> list[dict[str, Any]]:
         """スケジュール利用可能会場一覧を取得"""
         items = await self.repository.find_all_with_details(
             limit=1000,  # 十分大きな値を設定
@@ -31,22 +33,22 @@ class ScheduleAvailableVenueService:
         
         return items
 
-    async def get_schedule_available_venue(self, schedule_venue_id: UUID) -> Dict[str, Any]:
+    async def get_schedule_available_venue(self, schedule_venue_id: UUID) -> dict[str, Any]:
         """指定したIDのスケジュール利用可能会場を取得"""
         schedule_venue = await self.repository.find_by_id(schedule_venue_id)
         if not schedule_venue:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return schedule_venue
 
-    async def get_schedule_available_venues_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_schedule_available_venues_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの利用可能会場一覧を取得"""
         return await self.repository.find_by_schedule(schedule_id)
 
-    async def get_schedule_available_venues_by_venue(self, venue_id: UUID) -> List[Dict[str, Any]]:
+    async def get_schedule_available_venues_by_venue(self, venue_id: UUID) -> list[dict[str, Any]]:
         """指定した会場のスケジュール利用可能性一覧を取得"""
         return await self.repository.find_by_venue(venue_id)
 
-    async def create_schedule_available_venue(self, schedule_venue_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_schedule_available_venue(self, schedule_venue_data: dict[str, Any]) -> dict[str, Any]:
         """スケジュール利用可能会場を作成"""
         # スケジュールと会場の存在確認
         await self._validate_schedule_and_venue(
@@ -70,8 +72,8 @@ class ScheduleAvailableVenueService:
     async def create_schedule_available_venues_bulk(
         self, 
         schedule_id: UUID,
-        venues: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        venues: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """スケジュール利用可能会場を一括作成"""
         created_items = []
         errors = []
@@ -126,8 +128,8 @@ class ScheduleAvailableVenueService:
     async def update_schedule_available_venue(
         self, 
         schedule_venue_id: UUID, 
-        update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        update_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """スケジュール利用可能会場を更新"""
         # 存在確認
         existing = await self.repository.find_by_id(schedule_venue_id)
@@ -153,8 +155,8 @@ class ScheduleAvailableVenueService:
     async def update_venue_availability_bulk(
         self,
         schedule_id: UUID,
-        venue_updates: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        venue_updates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """会場利用可能性を一括更新"""
         created_count = 0
         updated_count = 0

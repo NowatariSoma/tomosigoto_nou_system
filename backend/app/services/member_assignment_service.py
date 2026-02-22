@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -36,18 +38,18 @@ class MemberAssignmentService:
         self.user_repository = user_repository
         self.auth_client = auth_client
 
-    async def get_all_assignments(self) -> List[Dict[str, Any]]:
+    async def get_all_assignments(self) -> list[dict[str, Any]]:
         """すべてのメンバー所属を取得"""
         return await self.repository.find_all()
 
-    async def get_assignment_by_id(self, assignment_id: UUID) -> Dict[str, Any]:
+    async def get_assignment_by_id(self, assignment_id: UUID) -> dict[str, Any]:
         """IDでメンバー所属を取得"""
         assignment = await self.repository.find_by_id(assignment_id)
         if not assignment:
             raise APIException(ErrorMessage.MEMBER_ASSIGNMENT_NOT_FOUND)
         return assignment
 
-    async def get_assignments_by_part(self, part_id: UUID) -> List[Dict[str, Any]]:
+    async def get_assignments_by_part(self, part_id: UUID) -> list[dict[str, Any]]:
         """パートIDでメンバー所属を取得"""
         # パートの存在確認
         part = await self.part_repository.find_by_id(part_id)
@@ -56,7 +58,7 @@ class MemberAssignmentService:
         
         return await self.repository.find_by_part_id(part_id)
 
-    async def get_assignments_by_user(self, user_id: str) -> List[Dict[str, Any]]:
+    async def get_assignments_by_user(self, user_id: str) -> list[dict[str, Any]]:
         """ユーザーIDでメンバー所属を取得"""
         # ユーザーの存在確認
         user = await self.user_repository.find_by_id(user_id)
@@ -67,15 +69,15 @@ class MemberAssignmentService:
 
     async def get_assignments_with_details(
         self, 
-        assignment_id: Optional[UUID] = None,
-        part_id: Optional[UUID] = None,
-        user_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        assignment_id: UUID | None = None,
+        part_id: UUID | None = None,
+        user_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """詳細情報付きでメンバー所属を取得"""
         user_uuid = UUID(user_id) if user_id else None
         return await self.repository.find_with_details(assignment_id, part_id, user_uuid)
 
-    async def create_assignment(self, assignment_data: dict) -> Dict[str, Any]:
+    async def create_assignment(self, assignment_data: dict[str, Any]) -> dict[str, Any]:
         """メンバー所属を作成"""
         # ユーザーの存在確認
         if "user_id" in assignment_data:
@@ -112,8 +114,8 @@ class MemberAssignmentService:
         return created_assignment
 
     async def update_assignment(
-        self, assignment_id: UUID, assignment_data: dict
-    ) -> Dict[str, Any]:
+        self, assignment_id: UUID, assignment_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """メンバー所属情報を更新"""
         # メンバー所属の存在確認
         existing_assignment = await self.repository.find_by_id(assignment_id)
@@ -178,7 +180,7 @@ class MemberAssignmentService:
         """メンバー所属数を取得"""
         return await self.repository.count()
 
-    async def bulk_assign_to_part(self, part_id: UUID, user_assignments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def bulk_assign_to_part(self, part_id: UUID, user_assignments: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """パートに複数のユーザーを一括所属させる"""
         # パートの存在確認
         part = await self.part_repository.find_by_id(part_id)

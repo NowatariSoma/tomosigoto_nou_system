@@ -2,10 +2,11 @@
 StageService - ビジネスロジック層の実装
 舞台情報の管理に関する業務処理を提供
 """
+from __future__ import annotations
 
 import logging
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -31,7 +32,7 @@ class StageService:
         self.client = client
         self.repository = StageRepository(client)
 
-    async def get_all_stages(self) -> List[StageResponse]:
+    async def get_all_stages(self) -> list[StageResponse]:
         """
         全ての舞台情報を取得
 
@@ -80,7 +81,7 @@ class StageService:
 
         return StageResponse(**stage_data)
 
-    async def create_stage(self, stage_data: Dict[str, Any]) -> StageResponse:
+    async def create_stage(self, stage_data: dict[str, Any]) -> StageResponse:
         """
         新しい舞台を作成
 
@@ -117,7 +118,7 @@ class StageService:
             logger.error(f"Failed to create stage: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def update_stage(self, stage_id: str, update_data: Dict[str, Any]) -> StageResponse:
+    async def update_stage(self, stage_id: str, update_data: dict[str, Any]) -> StageResponse:
         """
         舞台情報を更新
 
@@ -202,7 +203,7 @@ class StageService:
             logger.error(f"Failed to delete stage {stage_id}: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def get_stages_by_status(self, status: str) -> List[StageResponse]:
+    async def get_stages_by_status(self, status: str) -> list[StageResponse]:
         """
         ステータスで舞台を絞り込み取得
 
@@ -239,7 +240,7 @@ class StageService:
             logger.error(f"Failed to get stages by status {status}: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    def _serialize_dates(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _serialize_dates(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         日付型をISO文字列形式に変換する
 

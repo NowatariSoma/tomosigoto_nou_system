@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -22,7 +22,7 @@ class MemberAdminService:
         self.user_role_repository = user_role_repository
         self.user_profile_repository = user_profile_repository
 
-    async def list_members(self) -> List[Dict[str, Any]]:
+    async def list_members(self) -> list[dict[str, Any]]:
         """全メンバーの一覧を取得"""
         users = await self.user_service.get_all_users()
         if not users:
@@ -34,8 +34,8 @@ class MemberAdminService:
 
         # user_rolesテーブルからロール & is_instructorを取得
         user_roles_with_instructor = await self.user_role_repository.get_user_roles_with_instructor()
-        role_map: Dict[str, str] = {}
-        instructor_map: Dict[str, bool] = {}
+        role_map: dict[str, str] = {}
+        instructor_map: dict[str, bool] = {}
         for record in user_roles_with_instructor:
             user_id = record.get("user_id")
             if not user_id:
@@ -53,7 +53,7 @@ class MemberAdminService:
             for user in users
         ]
 
-    async def get_member(self, user_id: str) -> Dict[str, Any]:
+    async def get_member(self, user_id: str) -> dict[str, Any]:
         """単一メンバーの情報を取得"""
         user = await self.user_service.get_user_by_id(user_id)
         if not user:
@@ -70,7 +70,7 @@ class MemberAdminService:
             bool(is_instructor) if is_instructor is not None else False,
         )
 
-    async def update_member_role(self, user_id: str, role: str) -> Dict[str, Any]:
+    async def update_member_role(self, user_id: str, role: str) -> dict[str, Any]:
         """管理者権限の付与/剥奪（user_roleテーブルで）"""
         await self.user_service.get_user_by_id(user_id)  # ensure user exists
 
@@ -87,7 +87,7 @@ class MemberAdminService:
 
         return await self.get_member(user_id)
 
-    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> Dict[str, Any]:
+    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any]:
         """指導者フラグの更新（user_rolesテーブルで）"""
         await self.user_service.get_user_by_id(user_id)  # ensure user exists
         await self.user_role_repository.update_instructor_flag(user_id, is_instructor)
@@ -100,11 +100,11 @@ class MemberAdminService:
 
     def _serialize_member(
         self,
-        user: Dict[str, Any],
-        profile: Optional[Dict[str, Any]],
+        user: dict[str, Any],
+        profile: dict[str, Any] | None,
         role: str,
         is_instructor: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         display_name = self._build_display_name(profile, user)
         return {
             "id": user["id"],
@@ -115,7 +115,7 @@ class MemberAdminService:
             "last_active_at": user.get("last_sign_in_at"),
         }
 
-    def _normalize_role_type(self, role_type: Optional[str]) -> str:
+    def _normalize_role_type(self, role_type: str | None) -> str:
         if role_type == "admin":
             return "admin"
         if role_type == "viewer":
@@ -131,8 +131,8 @@ class MemberAdminService:
 
     def _build_display_name(
         self,
-        profile: Optional[Dict[str, Any]],
-        user: Dict[str, Any],
+        profile: dict[str, Any] | None,
+        user: dict[str, Any],
     ) -> str:
         if profile:
             last_name = profile.get("last_name_kanji") or ""

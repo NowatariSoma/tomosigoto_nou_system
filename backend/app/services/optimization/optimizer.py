@@ -1,13 +1,13 @@
 """
 メインのスケジューリング最適化クラス
 """
+from __future__ import annotations
+
 import time
 import logging
-from typing import List, Optional
 from ortools.sat.python import cp_model
 from app.services.optimization.models import (
-    SchedulingProblem, SchedulingSolution, PracticeSession, 
-    Player, Room, TimeSlot
+    SchedulingProblem, SchedulingSolution, PracticeSession,
 )
 from app.services.optimization.constraints import SchedulingConstraints
 from app.services.optimization.objectives import SchedulingObjectives
@@ -24,7 +24,7 @@ class SchedulingOptimizer:
         self.constraints = SchedulingConstraints(problem)
         self.objectives = None  # 制約設定後に初期化
         
-    def solve(self, time_limit_seconds: int = SchedulingConfig.DEFAULT_TIME_LIMIT, equality_weight: int = SchedulingConfig.DEFAULT_EQUALITY_WEIGHT) -> Optional[SchedulingSolution]:
+    def solve(self, time_limit_seconds: int = SchedulingConfig.DEFAULT_TIME_LIMIT, equality_weight: int = SchedulingConfig.DEFAULT_EQUALITY_WEIGHT) -> SchedulingSolution | None:
         """スケジューリング問題を解く"""
         model = self.constraints.setup_all_constraints()
         
@@ -81,7 +81,7 @@ class SchedulingOptimizer:
             logger.error("最適化が完了しませんでした")
             raise ValueError(f"最適化が完了しませんでした（ステータス: {status}）")
     
-    def _diagnose_infeasibility(self) -> List[str]:
+    def _diagnose_infeasibility(self) -> list[str]:
         """実行不可能な理由を診断する"""
         # 基本情報を取得
         num_parts = len(self.problem.parts)
@@ -141,7 +141,7 @@ class SchedulingOptimizer:
         return ["制約条件が複雑で解を見つけられませんでした。時間コマ数を増やす、部屋数を増やす、または指導者の割り当てを調整してください。"]
     
     
-    def _extract_solution(self, solver: cp_model.CpSolver) -> List[PracticeSession]:
+    def _extract_solution(self, solver: cp_model.CpSolver) -> list[PracticeSession]:
         """ソルバーの解から練習セッションを抽出"""
         sessions = []
         session_id = 0
@@ -172,7 +172,7 @@ class SchedulingOptimizer:
         
         return sessions
     
-    def _calculate_objective_value(self, sessions: List[PracticeSession]) -> float:
+    def _calculate_objective_value(self, sessions: list[PracticeSession]) -> float:
         """目的関数の値を計算"""
         # 指導者ごとのセッション数を計算
         instructor_counts = {}

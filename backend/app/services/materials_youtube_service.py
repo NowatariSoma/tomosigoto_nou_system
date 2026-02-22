@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 from datetime import datetime, date
 
@@ -22,19 +24,19 @@ class MaterialsPlaylistService:
     def __init__(self, materials_playlist_repository: MaterialsPlaylistRepository):
         self.materials_playlist_repository = materials_playlist_repository
 
-    async def get_all_materials_playlists(self) -> List[Dict[str, Any]]:
+    async def get_all_materials_playlists(self) -> list[dict[str, Any]]:
         """すべてのプレイリストを取得"""
         return await self.materials_playlist_repository.find_all()
 
-    async def get_materials_playlist_by_id(self, playlist_id: UUID) -> Dict[str, Any]:
+    async def get_materials_playlist_by_id(self, playlist_id: UUID) -> dict[str, Any]:
         """指定したIDのプレイリストを取得"""
         return await self.materials_playlist_repository.find_by_id(playlist_id)
 
-    async def create_materials_playlist(self, playlist_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_materials_playlist(self, playlist_data: dict[str, Any]) -> dict[str, Any]:
         """プレイリストを作成"""
         return await self.materials_playlist_repository.create(playlist_data)
 
-    async def update_materials_playlist(self, playlist_id: UUID, playlist_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def update_materials_playlist(self, playlist_id: UUID, playlist_data: dict[str, Any]) -> dict[str, Any]:
         """プレイリストを更新"""
         return await self.materials_playlist_repository.update(playlist_id, playlist_data)
 
@@ -44,10 +46,10 @@ class MaterialsPlaylistService:
 
     async def search_materials_playlists(
         self,
-        title: Optional[str] = None,
-        name: Optional[str] = None,
-        year: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        title: str | None = None,
+        name: str | None = None,
+        year: int | None = None
+    ) -> list[dict[str, Any]]:
         """プレイリストを検索"""
         return await self.materials_playlist_repository.search(
             title=title,
@@ -74,11 +76,11 @@ class MaterialsSubPlaylistService:
             'https://www.googleapis.com/auth/youtube.readonly'
         ]
 
-    async def get_all_materials_sub_playlists(self, playlist_id: UUID) -> List[Dict[str, Any]]:
+    async def get_all_materials_sub_playlists(self, playlist_id: UUID) -> list[dict[str, Any]]:
         """指定されたプレイリストのサブプレイリストを取得"""
         return await self.materials_sub_playlist_repository.find_all(playlist_id)
 
-    async def get_materials_sub_playlist_by_id(self, playlist_id: UUID, sub_playlist_id: UUID) -> Dict[str, Any]:
+    async def get_materials_sub_playlist_by_id(self, playlist_id: UUID, sub_playlist_id: UUID) -> dict[str, Any]:
         """指定したIDのサブプレイリストを取得"""
         return await self.materials_sub_playlist_repository.find_by_id(playlist_id, sub_playlist_id)
 
@@ -108,7 +110,7 @@ class MaterialsSubPlaylistService:
         
         raise APIException(ErrorMessage.INVALID_PLAYLIST_URL)
 
-    def _get_client_secret(self) -> Optional[str]:
+    def _get_client_secret(self) -> str | None:
         """
         環境変数からclient_secretを取得
 
@@ -117,7 +119,7 @@ class MaterialsSubPlaylistService:
         """
         return settings.GOOGLE_CLIENT_SECRET
 
-    async def _get_system_credentials(self) -> Optional[Credentials]:
+    async def _get_system_credentials(self) -> Credentials | None:
         """
         システム管理者のOAuth認証情報を取得
 
@@ -178,8 +180,8 @@ class MaterialsSubPlaylistService:
     async def _get_videos_from_playlist(
         self,
         playlist_url: str,
-        credentials: Optional[Credentials] = None
-    ) -> List[Dict[str, Any]]:
+        credentials: Credentials | None = None
+    ) -> list[dict[str, Any]]:
         """
         YouTube APIから再生リスト内の動画一覧を取得（限定公開動画も含む）
         
@@ -346,8 +348,8 @@ class MaterialsSubPlaylistService:
         self,
         playlist_url: str,
         sub_playlist_id: UUID,
-        recorded_date: Optional[str] = None
-    ) -> Dict[str, Any]:
+        recorded_date: str | None = None
+    ) -> dict[str, Any]:
         """
         再生リストURLから動画を取得し、指定されたサブプレイリストに登録
         
@@ -473,9 +475,9 @@ class MaterialsSubPlaylistService:
     async def create_materials_sub_playlist(
         self, 
         playlist_id: UUID, 
-        sub_playlist_data: Dict[str, Any],
+        sub_playlist_data: dict[str, Any],
         auto_import_videos: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         サブプレイリストを作成し、playlist_urlがある場合は動画を自動インポート
         
@@ -536,9 +538,9 @@ class MaterialsSubPlaylistService:
         self, 
         playlist_id: UUID, 
         sub_playlist_id: UUID, 
-        sub_playlist_data: Dict[str, Any],
+        sub_playlist_data: dict[str, Any],
         auto_import_videos: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         サブプレイリストを更新し、playlist_urlが変更された場合は動画を再インポート
         
@@ -621,11 +623,11 @@ class MaterialsSubPlaylistService:
     async def search_materials_sub_playlists(
         self,
         playlist_id: UUID,
-        title: Optional[str] = None,
-        phase: Optional[str] = None,
-        recorded_date_from: Optional[date] = None,
-        recorded_date_to: Optional[date] = None
-    ) -> List[Dict[str, Any]]:
+        title: str | None = None,
+        phase: str | None = None,
+        recorded_date_from: date | None = None,
+        recorded_date_to: date | None = None
+    ) -> list[dict[str, Any]]:
         """サブプレイリストを検索"""
         return await self.materials_sub_playlist_repository.search(
             playlist_id=playlist_id,
@@ -653,22 +655,22 @@ class MaterialsVideoService:
         if not sub_playlist:
             raise APIException(ErrorMessage.SUB_PLAYLIST_NOT_FOUND)
 
-    async def get_all_materials_videos(self, playlist_id: UUID, sub_playlist_id: UUID) -> List[Dict[str, Any]]:
+    async def get_all_materials_videos(self, playlist_id: UUID, sub_playlist_id: UUID) -> list[dict[str, Any]]:
         """指定されたサブプレイリストのビデオを取得"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.find_all(sub_playlist_id)
 
-    async def get_materials_video_by_id(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID) -> Dict[str, Any]:
+    async def get_materials_video_by_id(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID) -> dict[str, Any]:
         """指定したIDのビデオを取得"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.find_by_id(sub_playlist_id, video_id)
 
-    async def create_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_data: dict[str, Any]) -> dict[str, Any]:
         """ビデオを作成"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.create(sub_playlist_id, video_data)
 
-    async def update_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID, video_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def update_materials_video(self, playlist_id: UUID, sub_playlist_id: UUID, video_id: UUID, video_data: dict[str, Any]) -> dict[str, Any]:
         """ビデオを更新"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.update(sub_playlist_id, video_id, video_data)
@@ -682,10 +684,10 @@ class MaterialsVideoService:
         self,
         playlist_id: UUID,
         sub_playlist_id: UUID,
-        title: Optional[str] = None,
-        recorded_date_from: Optional[date] = None,
-        recorded_date_to: Optional[date] = None
-    ) -> List[Dict[str, Any]]:
+        title: str | None = None,
+        recorded_date_from: date | None = None,
+        recorded_date_to: date | None = None
+    ) -> list[dict[str, Any]]:
         """ビデオを検索"""
         await self._validate_sub_playlist_belongs_to_playlist(playlist_id, sub_playlist_id)
         return await self.materials_video_repository.search(
@@ -702,15 +704,15 @@ class MaterialsFavoriteService:
     def __init__(self, materials_favorite_repository: MaterialsFavoriteRepository):
         self.materials_favorite_repository = materials_favorite_repository
 
-    async def get_all_materials_favorites(self) -> List[Dict[str, Any]]:
+    async def get_all_materials_favorites(self) -> list[dict[str, Any]]:
         """すべてのお気に入りを取得"""
         return await self.materials_favorite_repository.find_all()
 
-    async def get_materials_favorite_by_id(self, favorite_id: UUID) -> Dict[str, Any]:
+    async def get_materials_favorite_by_id(self, favorite_id: UUID) -> dict[str, Any]:
         """指定したIDのお気に入りを取得"""
         return await self.materials_favorite_repository.find_by_id(favorite_id)
 
-    async def get_favorites_by_user_id(self, user_id: UUID) -> List[Dict[str, Any]]:
+    async def get_favorites_by_user_id(self, user_id: UUID) -> list[dict[str, Any]]:
         """指定したユーザーIDのお気に入り一覧を取得"""
         return await self.materials_favorite_repository.find_by_user_id(user_id)
 
@@ -719,7 +721,7 @@ class MaterialsFavoriteService:
         favorite = await self.materials_favorite_repository.find_by_user_id_and_video_id(user_id, video_id)
         return favorite is not None
 
-    async def create_materials_favorite(self, favorite_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_materials_favorite(self, favorite_data: dict[str, Any]) -> dict[str, Any]:
         """お気に入りを作成"""
         # 既に存在する場合はエラーを返す
         user_id = favorite_data.get("user_id")
@@ -733,7 +735,7 @@ class MaterialsFavoriteService:
                 raise APIException(ErrorMessage.FAVORITE_ALREADY_EXISTS)
         return await self.materials_favorite_repository.create(favorite_data)
 
-    async def toggle_favorite(self, user_id: UUID, video_id: UUID) -> Dict[str, Any]:
+    async def toggle_favorite(self, user_id: UUID, video_id: UUID) -> dict[str, Any]:
         """お気に入りの追加/削除を切り替え"""
         existing = await self.materials_favorite_repository.find_by_user_id_and_video_id(user_id, video_id)
         
@@ -754,7 +756,7 @@ class MaterialsFavoriteService:
         """指定したユーザーIDとビデオIDのお気に入りを削除"""
         return await self.materials_favorite_repository.delete_by_user_id_and_video_id(user_id, video_id)
 
-    async def update_materials_favorite(self, favorite_id: UUID, favorite_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def update_materials_favorite(self, favorite_id: UUID, favorite_data: dict[str, Any]) -> dict[str, Any]:
         """お気に入りを更新"""
         return await self.materials_favorite_repository.update(favorite_id, favorite_data)
 
@@ -762,6 +764,6 @@ class MaterialsFavoriteService:
         """お気に入りを削除（ID指定）"""
         return await self.materials_favorite_repository.delete(favorite_id)
 
-    async def get_favorite_videos_with_details(self, user_id: UUID) -> List[Dict[str, Any]]:
+    async def get_favorite_videos_with_details(self, user_id: UUID) -> list[dict[str, Any]]:
         """指定したユーザーIDのお気に入り動画とその関連情報（プレイリスト、サブプレイリスト）を取得"""
         return await self.materials_favorite_repository.find_favorite_videos_with_details(user_id)

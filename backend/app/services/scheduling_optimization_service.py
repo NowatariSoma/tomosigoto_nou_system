@@ -3,7 +3,9 @@
 
 練習スケジュールの自動最適化機能を提供します。
 """
-from typing import Dict, Any, List, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 import logging
 import asyncio
@@ -51,8 +53,8 @@ class SchedulingOptimizationService:
     async def optimize_schedule(
         self, 
         schedule_id: UUID, 
-        optimization_params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        optimization_params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """スケジュールを最適化し、結果をデータベースに保存"""
         
         try:
@@ -137,8 +139,8 @@ class SchedulingOptimizationService:
     async def preview_optimization(
         self, 
         schedule_id: UUID, 
-        optimization_params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        optimization_params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """最適化結果をプレビュー（データベースに保存しない）"""
         
         try:
@@ -203,7 +205,7 @@ class SchedulingOptimizationService:
             logger.error(f"スケジュール最適化プレビューエラー: {e}")
             raise APIException(ErrorMessages.OPTIMIZATION_FAILED)
     
-    async def _get_schedule_data(self, schedule_id: UUID) -> Optional[Dict[str, Any]]:
+    async def _get_schedule_data(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールデータを取得"""
         return await self.practice_schedule_repository.find_by_id(schedule_id)
     
@@ -287,8 +289,8 @@ class SchedulingOptimizationService:
         solution: SchedulingSolution,
         problem: SchedulingProblem,
         schedule_id: UUID, 
-        venue_mapping: Dict[int, str],
-        part_mapping: Dict[str, str]
+        venue_mapping: dict[int, str],
+        part_mapping: dict[str, str]
     ) -> int:
         """最適化結果からセッションを作成"""
         from app.repositories.session_instructor_repository import SessionInstructorRepository
