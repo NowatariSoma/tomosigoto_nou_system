@@ -1,22 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { http, HttpResponse } from 'msw';
-import { server } from '@/__mocks__/msw/server';
 import { MemberManagementService } from '@/features/member-management/services/member-management-service';
 
-// supabaseをモック
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({
-        data: {
-          session: {
-            access_token: 'mock-access-token',
-          },
-        },
-      }),
-    },
-  },
+const mockFetchApi = vi.fn();
+vi.mock('@/lib/api', () => ({
+  fetchApi: (...args: unknown[]) => mockFetchApi(...args),
 }));
+
+function mockJsonResponse(data: unknown) {
+  return { json: vi.fn().mockResolvedValue(data) };
+}
 
 const mockMember = {
   id: 'member-1',
@@ -37,74 +29,80 @@ describe('MemberManagementService', () => {
 
   describe('listMembers', () => {
     it('メンバー一覧を配列で取得する', async () => {
-      server.use(
-        http.get(/\/admin\/members\/$/, () => {
-          return HttpResponse.json([mockMember]);
-        })
-      );
+      mockFetchApi.mockResolvedValue(mockJsonResponse([mockMember]));
 
       const result = await service.listMembers();
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('田中太郎');
+      expect(mockFetchApi).toHaveBeenCalledWith('/admin/members/');
     });
 
     it('data wrapperの場合も正しく取得する', async () => {
-      server.use(
-        http.get(/\/admin\/members\/$/, () => {
-          return HttpResponse.json({ data: [mockMember] });
-        })
-      );
+      mockFetchApi.mockResolvedValue(mockJsonResponse({ data: [mockMember] }));
 
       const result = await service.listMembers();
       expect(result).toHaveLength(1);
+    });
+
+    it('取得失敗時にエラーをスローする', async () => {
+      mockFetchApi.mockRejectedValue(new Error('取得失敗'));
+
+      await expect(service.listMembers()).rejects.toThrow('取得失敗');
     });
   });
 
   describe('updateRole', () => {
     it('メンバーのロールを更新する', async () => {
       const updated = { ...mockMember, role: 'admin' as const };
-      server.use(
-        http.patch(/\/admin\/members\/member-1\/role$/, () => {
-          return HttpResponse.json(updated);
-        })
-      );
+      mockFetchApi.mockResolvedValue(mockJsonResponse(updated));
 
       const result = await service.updateRole('member-1', { role: 'admin' });
       expect(result.role).toBe('admin');
+      expect(mockFetchApi).toHaveBeenCalledWith('/admin/members/member-1/role', {
+        method: 'PATCH',
+        body: JSON.stringify({ role: 'admin' }),
+      });
+    });
+
+    it('更新失敗時にエラーをスローする', async () => {
+      mockFetchApi.mockRejectedValue(new Error('更新失敗'));
+
+      await expect(service.updateRole('member-1', { role: 'admin' })).rejects.toThrow('更新失敗');
     });
   });
 
   describe('updateInstructorFlag', () => {
     it('指導者フラグを更新する', async () => {
       const updated = { ...mockMember, is_instructor: true };
-      server.use(
-        http.patch(/\/admin\/members\/member-1\/instructor$/, () => {
-          return HttpResponse.json(updated);
-        })
-      );
+      mockFetchApi.mockResolvedValue(mockJsonResponse(updated));
 
       const result = await service.updateInstructorFlag('member-1', { is_instructor: true });
       expect(result.is_instructor).toBe(true);
+      expect(mockFetchApi).toHaveBeenCalledWith('/admin/members/member-1/instructor', {
+        method: 'PATCH',
+        body: JSON.stringify({ is_instructor: true }),
+      });
+    });
+
+    it('更新失敗時にエラーをスローする', async () => {
+      mockFetchApi.mockRejectedValue(new Error('更新失敗'));
+
+      await expect(service.updateInstructorFlag('member-1', { is_instructor: true })).rejects.toThrow();
     });
   });
 
   describe('deleteMember', () => {
     it('メンバーを削除する', async () => {
-      server.use(
-        http.delete(/\/admin\/members\/member-1$/, () => {
-          return new HttpResponse(null, { status: 204 });
-        })
-      );
+      mockFetchApi.mockResolvedValue(undefined);
 
       await expect(service.deleteMember('member-1')).resolves.toBeUndefined();
+      expect(mockFetchApi).toHaveBeenCalledWith('/admin/members/member-1', {
+        method: 'DELETE',
+      });
     });
 
     it('削除失敗時にエラーをスローする', async () => {
-      server.use(
-        http.delete(/\/admin\/members\/member-1$/, () => {
-          return new HttpResponse('Forbidden', { status: 403 });
-        })
-      );
+      mockFetchApi.mockRejectedValue(new Error('Forbidden'));
 
       await expect(service.deleteMember('member-1')).rejects.toThrow();
     });
