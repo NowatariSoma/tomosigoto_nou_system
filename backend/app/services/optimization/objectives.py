@@ -1,16 +1,21 @@
 """
 スケジューリング最適化の目的関数
 """
-from typing import List, Optional
+from __future__ import annotations
+
 from ortools.sat.python import cp_model
 from app.services.optimization.models import SchedulingProblem
 from app.services.optimization.constants import ConstraintLimits
 
+# session_vars のキー型: (part_id, room_id, time_slot_id, instructor_id)
+SessionVarsKey = tuple[str, int, int, int]
+SessionVarsDict = dict[SessionVarsKey, cp_model.IntVar]
+
 
 class SchedulingObjectives:
     """スケジューリングの目的関数を管理するクラス"""
-    
-    def __init__(self, problem: SchedulingProblem, session_vars: dict):
+
+    def __init__(self, problem: SchedulingProblem, session_vars: SessionVarsDict) -> None:
         self.problem = problem
         self.session_vars = session_vars
     

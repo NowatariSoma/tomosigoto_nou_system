@@ -1,9 +1,10 @@
 """
 制約定義クラス
 """
+from __future__ import annotations
+
 from ortools.sat.python import cp_model
-from typing import List, Dict, Tuple
-from app.services.optimization.models import SchedulingProblem, Player, Room, TimeSlot
+from app.services.optimization.models import SchedulingProblem
 from app.services.optimization.constants import ProblemConfig
 
 

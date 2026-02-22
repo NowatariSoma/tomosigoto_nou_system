@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -16,7 +18,7 @@ class PartService:
     リポジトリパターンと依存性注入に対応
     """
 
-    def __init__(self, part_repository: PartRepository, stage_repository: StageRepository, auth_client):
+    def __init__(self, part_repository: PartRepository, stage_repository: StageRepository, auth_client) -> None:
         """
         Args:
             part_repository: PartRepositoryインスタンス
@@ -27,22 +29,22 @@ class PartService:
         self.stage_repository = stage_repository
         self.auth_client = auth_client
 
-    async def get_all_parts(self) -> List[Dict[str, Any]]:
+    async def get_all_parts(self) -> list[dict[str, Any]]:
         """すべてのパートを取得"""
         return await self.repository.find_all()
 
-    async def get_part(self, part_id: UUID) -> Dict[str, Any]:
+    async def get_part(self, part_id: UUID) -> dict[str, Any]:
         """IDでパートを取得"""
         part = await self.repository.find_by_id(part_id)
         if not part:
             raise APIException(ErrorMessage.PART_NOT_FOUND)
         return part
 
-    async def get_active_parts(self) -> List[Dict[str, Any]]:
+    async def get_active_parts(self) -> list[dict[str, Any]]:
         """アクティブなパートのみを取得"""
         return await self.repository.find_active()
 
-    async def create_part(self, part_data: dict) -> Dict[str, Any]:
+    async def create_part(self, part_data: dict[str, Any]) -> dict[str, Any]:
         """パートを作成"""
         # stage_idの存在確認
         if "stage_id" in part_data:
@@ -67,8 +69,8 @@ class PartService:
         return created_part
 
     async def update_part(
-        self, part_id: UUID, part_data: dict
-    ) -> Dict[str, Any]:
+        self, part_id: UUID, part_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """パート情報を更新"""
         # パートの存在確認
         existing_part = await self.repository.find_by_id(part_id)
@@ -111,7 +113,7 @@ class PartService:
         """パート数を取得"""
         return await self.repository.count()
 
-    async def deactivate_part(self, part_id: UUID) -> Dict[str, Any]:
+    async def deactivate_part(self, part_id: UUID) -> dict[str, Any]:
         """パートを非アクティブ化（論理削除）"""
         # パートの存在確認
         existing_part = await self.repository.find_by_id(part_id)
@@ -128,7 +130,7 @@ class PartService:
         logger.info(f"Part deactivated successfully: {part_id}")
         return updated_part
 
-    async def activate_part(self, part_id: UUID) -> Dict[str, Any]:
+    async def activate_part(self, part_id: UUID) -> dict[str, Any]:
         """パートをアクティブ化"""
         # パートの存在確認
         existing_part = await self.repository.find_by_id(part_id)
@@ -145,7 +147,7 @@ class PartService:
         logger.info(f"Part activated successfully: {part_id}")
         return updated_part
 
-    async def get_parts_by_stage_id(self, stage_id: str) -> List[Dict[str, Any]]:
+    async def get_parts_by_stage_id(self, stage_id: str) -> list[dict[str, Any]]:
         """指定された舞台IDに紐づくパート一覧を取得"""
         # 舞台の存在確認
         try:

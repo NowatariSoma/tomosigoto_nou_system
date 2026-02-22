@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 
@@ -41,7 +43,7 @@ class ContactService:
         # プロフィールが見つからない場合はデフォルト値を返す
         return "不明"
 
-    async def create_contact(self, contact_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_contact(self, contact_data: dict[str, Any]) -> dict[str, Any]:
         """お問い合わせを作成し、Discordに通知を送信"""
         # user_idからユーザー名を取得して自動設定
         user_id = contact_data.get("user_id")
@@ -64,7 +66,7 @@ class ContactService:
 
         return contact
 
-    async def _send_discord_notification(self, contact: Dict[str, Any]) -> None:
+    async def _send_discord_notification(self, contact: dict[str, Any]) -> None:
         """Discord Webhookに通知を送信"""
         if not settings.DISCORD_WEBHOOK_URL:
             logger.warning("DISCORD_WEBHOOK_URLが設定されていません。通知をスキップします。")
@@ -120,19 +122,19 @@ class ContactService:
             )
             response.raise_for_status()
 
-    async def get_contact(self, contact_id: str) -> Dict[str, Any]:
+    async def get_contact(self, contact_id: str) -> dict[str, Any]:
         """指定したお問い合わせ情報を取得"""
         return await self.repository.find_by_id(contact_id)
 
     async def get_all_contacts(
-        self, user_id: Optional[str] = None
-    ) -> list[Dict[str, Any]]:
+        self, user_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """お問い合わせ一覧を取得（user_idが指定された場合はそのユーザーのみ）"""
         return await self.repository.find_all(user_id=user_id)
 
     async def update_contact(
-        self, contact_id: str, contact_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, contact_id: str, contact_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """指定したお問い合わせ情報を更新"""
         return await self.repository.update(contact_id, contact_data)
 

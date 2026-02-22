@@ -1,7 +1,9 @@
 """
 スケジューリングシステムの定数定義
 """
-from typing import Dict, Any
+from __future__ import annotations
+
+from typing import Any
 
 # 制約関連
 class ConstraintLimits:
@@ -35,7 +37,7 @@ class ProblemConfig:
         return 2
 
 # 最適化パラメータのデフォルト値
-DEFAULT_OPTIMIZATION_PARAMS: Dict[str, Any] = {
+DEFAULT_OPTIMIZATION_PARAMS: dict[str, Any] = {
     "time_limit_seconds": SchedulingConfig.DEFAULT_TIME_LIMIT,
     "equality_weight": SchedulingConfig.DEFAULT_EQUALITY_WEIGHT,
     "allow_overlap": False,

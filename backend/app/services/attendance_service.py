@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -14,39 +16,39 @@ class AttendanceService:
     def __init__(
         self, 
         attendance_repository: AttendanceRepository,
-        user_repository: Optional[UserRepository] = None,
-        user_profile_repository: Optional[UserProfileRepository] = None
+        user_repository: UserRepository | None = None,
+        user_profile_repository: UserProfileRepository | None = None
     ):
         self.repository = attendance_repository
         self.user_repository = user_repository
         self.user_profile_repository = user_profile_repository
 
-    async def get_all_attendances(self) -> List[Dict[str, Any]]:
+    async def get_all_attendances(self) -> list[dict[str, Any]]:
         """すべての出欠記録を取得"""
         return await self.repository.find_all()
 
-    async def get_attendance(self, attendance_id: UUID) -> Dict[str, Any]:
+    async def get_attendance(self, attendance_id: UUID) -> dict[str, Any]:
         """指定したIDの出欠記録を取得"""
         attendance = await self.repository.find_by_id(attendance_id)
         if not attendance:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return attendance
 
-    async def get_attendances_by_practice(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_attendances_by_practice(self, practice_schedule_id: UUID) -> list[dict[str, Any]]:
         """指定した練習スケジュールの出欠記録を取得"""
         return await self.repository.find_by_practice_schedule(practice_schedule_id)
 
-    async def get_attendances_by_user(self, user_id: UUID) -> List[Dict[str, Any]]:
+    async def get_attendances_by_user(self, user_id: UUID) -> list[dict[str, Any]]:
         """指定したユーザーの出欠記録を取得"""
         return await self.repository.find_by_user(user_id)
 
     async def get_attendance_by_practice_and_user(
         self, practice_schedule_id: UUID, user_id: UUID
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """指定した練習とユーザーの組み合わせの出欠記録を取得"""
         return await self.repository.find_by_practice_and_user(practice_schedule_id, user_id)
 
-    async def create_attendance(self, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_attendance(self, attendance_data: dict[str, Any]) -> dict[str, Any]:
         """出欠記録を作成"""
         # 既存の記録があるかチェック
         existing = await self.repository.find_by_practice_and_user(
@@ -57,7 +59,7 @@ class AttendanceService:
         
         return await self.repository.create(attendance_data)
 
-    async def update_attendance(self, attendance_id: UUID, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def update_attendance(self, attendance_id: UUID, attendance_data: dict[str, Any]) -> dict[str, Any]:
         """出欠記録を更新"""
         # 存在チェック
         existing = await self.repository.find_by_id(attendance_id)
@@ -66,7 +68,7 @@ class AttendanceService:
         
         return await self.repository.update(attendance_id, attendance_data)
 
-    async def upsert_attendance(self, attendance_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def upsert_attendance(self, attendance_data: dict[str, Any]) -> dict[str, Any]:
         """出欠記録を作成または更新（practice_schedule_id + user_idの組み合わせで）"""
         return await self.repository.upsert(attendance_data)
 
@@ -79,17 +81,17 @@ class AttendanceService:
         await self.repository.delete(attendance_id)
         return True
 
-    async def get_attendance_summary(self) -> List[Dict[str, Any]]:
+    async def get_attendance_summary(self) -> list[dict[str, Any]]:
         """練習別の出欠サマリーを取得"""
         return await self.repository.get_attendance_summary()
 
-    async def get_user_attendance_history(self) -> List[Dict[str, Any]]:
+    async def get_user_attendance_history(self) -> list[dict[str, Any]]:
         """ユーザー別の出欠履歴を取得"""
         return await self.repository.get_user_attendance_history()
 
     async def bulk_update_attendances(
-        self, practice_schedule_id: UUID, attendances: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, practice_schedule_id: UUID, attendances: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """複数の出欠記録を一括更新"""
         results = []
         for attendance_data in attendances:
@@ -100,12 +102,12 @@ class AttendanceService:
 
     async def get_users_with_attendance_for_admin(
         self,
-        practice_schedule_id: Optional[UUID] = None,
-        status: Optional[str] = None,
-        user_name: Optional[str] = None,
+        practice_schedule_id: UUID | None = None,
+        status: str | None = None,
+        user_name: str | None = None,
         page: int = 1,
         limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         管理者用：ユーザー情報と出席記録を結合して取得（最適化版）
         

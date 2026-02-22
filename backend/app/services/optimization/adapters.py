@@ -1,7 +1,9 @@
 """
 データベースとOR-Toolsデータモデル間の変換アダプター
 """
-from typing import List, Dict, Any, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 from app.services.optimization.models import (
     SchedulingProblem, Player, Room, TimeSlot, 
@@ -15,17 +17,17 @@ class SchedulingDataAdapter:
     
     @staticmethod
     def db_to_scheduling_problem(
-        schedule_data: Dict[str, Any],
-        venues_data: List[Dict[str, Any]],
-        parts_data: List[Dict[str, Any]],
-        users_data: List[Dict[str, Any]],
-        member_assignments_data: List[Dict[str, Any]],
-        session_instructors_data: List[Dict[str, Any]] = None,
+        schedule_data: dict[str, Any],
+        venues_data: list[dict[str, Any]],
+        parts_data: list[dict[str, Any]],
+        users_data: list[dict[str, Any]],
+        member_assignments_data: list[dict[str, Any]],
+        session_instructors_data: list[dict[str, Any]] = None,
         stage_id: str = None,  # ステージIDを追加
-        sessions_data: List[Dict[str, Any]] = None,  # セッションデータを追加
-        attendance_data: List[Dict[str, Any]] = None,  # 出席データを追加
-        user_roles_data: List[Dict[str, Any]] = None,  # ユーザーロールデータを追加
-        time_slots_data: List[Dict[str, Any]] = None  # 時間スロットデータを追加
+        sessions_data: list[dict[str, Any]] = None,  # セッションデータを追加
+        attendance_data: list[dict[str, Any]] = None,  # 出席データを追加
+        user_roles_data: list[dict[str, Any]] = None,  # ユーザーロールデータを追加
+        time_slots_data: list[dict[str, Any]] = None  # 時間スロットデータを追加
     ) -> SchedulingProblem:
         """データベースデータをSchedulingProblemに変換"""
         from datetime import datetime, time
@@ -299,8 +301,8 @@ class SchedulingDataAdapter:
     def solution_to_db_sessions(
         solution: SchedulingSolution,
         schedule_id: UUID,
-        venue_mapping: Dict[int, str]  # room_id -> venue_id のマッピング
-    ) -> List[Dict[str, Any]]:
+        venue_mapping: dict[int, str]  # room_id -> venue_id のマッピング
+    ) -> list[dict[str, Any]]:
         """SchedulingSolutionをデータベースのsessions形式に変換"""
         
         sessions = []
@@ -323,7 +325,7 @@ class SchedulingDataAdapter:
         return sessions
     
     @staticmethod
-    def _get_part_id_by_name(part_name: str, parts_data: List[Dict[str, Any]]) -> str:
+    def _get_part_id_by_name(part_name: str, parts_data: list[dict[str, Any]]) -> str:
         """パート名からパートIDを取得"""
         if not parts_data:
             # パートデータがない場合は仮のIDを生成
@@ -337,7 +339,7 @@ class SchedulingDataAdapter:
         return f"part_{part_name.lower()}"
     
     @staticmethod
-    def create_venue_mapping(venues_data: List[Dict[str, Any]]) -> Dict[int, str]:
+    def create_venue_mapping(venues_data: list[dict[str, Any]]) -> dict[int, str]:
         """部屋IDと会場IDのマッピングを作成"""
         mapping = {}
         for i, venue_data in enumerate(venues_data):
@@ -348,7 +350,7 @@ class SchedulingDataAdapter:
         return mapping
     
     @staticmethod
-    def create_part_mapping(parts_data: List[Dict[str, Any]]) -> Dict[str, str]:
+    def create_part_mapping(parts_data: list[dict[str, Any]]) -> dict[str, str]:
         """パート名とパートIDのマッピングを作成"""
         mapping = {}
         for part_data in parts_data:
@@ -360,14 +362,14 @@ class SchedulingDataAdapter:
     
     @staticmethod
     def validate_scheduling_data(
-        schedule_data: Dict[str, Any],
-        venues_data: List[Dict[str, Any]],
-        parts_data: List[Dict[str, Any]],
-        users_data: List[Dict[str, Any]],
-        member_assignments_data: List[Dict[str, Any]],
-        session_instructors_data: List[Dict[str, Any]] = None,
-        user_roles_data: List[Dict[str, Any]] = None
-    ) -> List[str]:
+        schedule_data: dict[str, Any],
+        venues_data: list[dict[str, Any]],
+        parts_data: list[dict[str, Any]],
+        users_data: list[dict[str, Any]],
+        member_assignments_data: list[dict[str, Any]],
+        session_instructors_data: list[dict[str, Any]] = None,
+        user_roles_data: list[dict[str, Any]] = None
+    ) -> list[str]:
         """スケジューリングデータの妥当性を検証し、エラーメッセージを返す"""
         from app.services.optimization.constants import ErrorMessages
         
@@ -411,10 +413,10 @@ class SchedulingDataAdapter:
     
     @staticmethod
     def _get_stage_id_from_schedule(
-        schedule_data: Dict[str, Any],
-        sessions_data: List[Dict[str, Any]] = None,
-        parts_data: List[Dict[str, Any]] = None
-    ) -> Optional[str]:
+        schedule_data: dict[str, Any],
+        sessions_data: list[dict[str, Any]] = None,
+        parts_data: list[dict[str, Any]] = None
+    ) -> str | None:
         """
         スケジュールからステージIDを取得
         
@@ -467,9 +469,9 @@ class SchedulingDataAdapter:
     
     @staticmethod
     def _get_parts_by_stage_id(
-        parts_data: List[Dict[str, Any]], 
+        parts_data: list[dict[str, Any]], 
         stage_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         指定されたステージIDのパートのみを取得
         
@@ -484,10 +486,10 @@ class SchedulingDataAdapter:
     
     @staticmethod
     def _get_member_assignments_by_stage_id(
-        member_assignments_data: List[Dict[str, Any]],
-        parts_data: List[Dict[str, Any]],
+        member_assignments_data: list[dict[str, Any]],
+        parts_data: list[dict[str, Any]],
         stage_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         指定されたステージIDのパートに属するメンバー割り当てのみを取得
         

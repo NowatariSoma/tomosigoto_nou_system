@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -72,7 +74,7 @@ class AccountSettingService:
             logger.warning(f"Failed to ensure test user exists: {e}")
             # エラーが発生しても処理を続行
 
-    async def get_profile_by_user_id(self, user_id: str) -> Optional[AccountSettingProfileResponse]:
+    async def get_profile_by_user_id(self, user_id: str) -> AccountSettingProfileResponse | None:
         """ユーザーIDでアカウント設定プロフィールを取得"""
         profile_data = await self.user_profile_repo.get_profile_by_user_id(user_id)
         if not profile_data:
@@ -110,7 +112,7 @@ class AccountSettingService:
             updated_at=profile_data["updated_at"]
         )
 
-    async def get_profile_by_student_id(self, student_id: str) -> Optional[AccountSettingProfileResponse]:
+    async def get_profile_by_student_id(self, student_id: str) -> AccountSettingProfileResponse | None:
         """学籍番号でアカウント設定プロフィールを取得"""
         profile_data = await self.user_profile_repo.get_profile_by_student_id(student_id)
         if not profile_data:
@@ -319,27 +321,27 @@ class AccountSettingService:
         logger.info(f"Account setting profile deleted successfully for user: {user_id}")
         return result
 
-    async def get_all_departments(self) -> List[DepartmentResponse]:
+    async def get_all_departments(self) -> list[DepartmentResponse]:
         """すべての学部を取得"""
         departments = await self.department_repo.get_all_departments()
         return [DepartmentResponse(**department) for department in departments]
 
-    async def get_department_by_code(self, department_code: str) -> Optional[DepartmentResponse]:
+    async def get_department_by_code(self, department_code: str) -> DepartmentResponse | None:
         """学部コードで学部を取得"""
         department = await self.department_repo.get_department_by_code(department_code)
         return DepartmentResponse(**department) if department else None
 
-    async def get_profile_history(self, user_id: str, limit: int = 50) -> List[AccountSettingHistoryResponse]:
+    async def get_profile_history(self, user_id: str, limit: int = 50) -> list[AccountSettingHistoryResponse]:
         """ユーザーのアカウント設定変更履歴を取得"""
         history = await self.history_repo.get_history_by_user_id(user_id, limit)
         return [AccountSettingHistoryResponse(**record) for record in history]
 
-    async def get_field_history(self, user_id: str, field_name: str, limit: int = 20) -> List[AccountSettingHistoryResponse]:
+    async def get_field_history(self, user_id: str, field_name: str, limit: int = 20) -> list[AccountSettingHistoryResponse]:
         """特定フィールドの変更履歴を取得"""
         history = await self.history_repo.get_history_by_field(user_id, field_name, limit)
         return [AccountSettingHistoryResponse(**record) for record in history]
 
-    async def validate_profile_data(self, profile_data: Dict[str, Any], user_id: Optional[str] = None) -> AccountSettingValidationResponse:
+    async def validate_profile_data(self, profile_data: dict[str, Any], user_id: str | None = None) -> AccountSettingValidationResponse:
         """プロフィールデータのバリデーション"""
         errors = []
         warnings = []
@@ -437,7 +439,7 @@ class AccountSettingService:
             warnings=warnings
         )
 
-    async def get_profile_statistics(self) -> Dict[str, Any]:
+    async def get_profile_statistics(self) -> dict[str, Any]:
         """プロフィール統計情報を取得"""
         total_count = await self.user_profile_repo.get_profile_count()
         # faculty_distribution = await self.department_repo.get_faculty_distribution()  # 実装が必要
@@ -447,8 +449,8 @@ class AccountSettingService:
             "faculty_distribution": faculty_distribution
         }
 
-    async def _record_profile_changes(self, user_id: str, old_profile: Dict[str, Any], 
-                                    new_data: Dict[str, Any], change_reason: Optional[str] = None) -> None:
+    async def _record_profile_changes(self, user_id: str, old_profile: dict[str, Any], 
+                                    new_data: dict[str, Any], change_reason: str | None = None) -> None:
         """プロフィール変更履歴を記録"""
         history_records = []
         

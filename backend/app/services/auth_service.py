@@ -1,9 +1,10 @@
 """
 認証関連のビジネスロジックを処理するサービスクラス
 """
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, Optional
-from datetime import datetime
+from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
@@ -28,7 +29,7 @@ class AuthService:
         self.repository = user_repository
         self.auth_client = auth_client
 
-    async def signin(self, email: str, password: str) -> Dict[str, Any]:
+    async def signin(self, email: str, password: str) -> dict[str, Any]:
         """
         ユーザーサインイン
         
@@ -83,7 +84,7 @@ class AuthService:
                 raise APIException(ErrorMessage.INVALID_CREDENTIALS)
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def signout(self, access_token: str) -> Dict[str, str]:
+    async def signout(self, access_token: str) -> dict[str, str]:
         """
         ユーザーサインアウト
         
@@ -105,7 +106,7 @@ class AuthService:
             # サインアウトの失敗は致命的ではない
             return {"message": "Signed out (with warnings)"}
 
-    async def refresh_token(self, refresh_token: str) -> Dict[str, Any]:
+    async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         """
         トークンリフレッシュ
         
@@ -141,7 +142,7 @@ class AuthService:
                 raise APIException(ErrorMessage.INVALID_CREDENTIALS)
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def reset_password(self, email: str) -> Dict[str, str]:
+    async def reset_password(self, email: str) -> dict[str, str]:
         """
         パスワードリセット
         
@@ -163,7 +164,7 @@ class AuthService:
             # セキュリティのため、メールアドレスが存在しない場合も成功として返す
             return {"message": "Password reset email sent"}
 
-    async def update_password(self, access_token: str, new_password: str) -> Dict[str, str]:
+    async def update_password(self, access_token: str, new_password: str) -> dict[str, str]:
         """
         パスワード更新
         
@@ -196,7 +197,7 @@ class AuthService:
                 raise APIException(ErrorMessage.INVALID_CREDENTIALS)
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def verify_token(self, access_token: str) -> Optional[Dict[str, Any]]:
+    async def verify_token(self, access_token: str) -> dict[str, Any] | None:
         """
         トークン検証
         

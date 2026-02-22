@@ -1,7 +1,9 @@
 """
 セッション指導者関連のビジネスロジック
 """
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
@@ -20,9 +22,9 @@ class SessionInstructorService:
         self, 
         page: int = 1, 
         per_page: int = 20,
-        schedule_id: Optional[UUID] = None,
-        slot_order: Optional[int] = None
-    ) -> Dict[str, Any]:
+        schedule_id: UUID | None = None,
+        slot_order: int | None = None
+    ) -> dict[str, Any]:
         """セッション指導者一覧を取得（ページネーション対応）"""
         offset = (page - 1) * per_page
         
@@ -52,9 +54,9 @@ class SessionInstructorService:
 
     async def get_all_session_instructors_simple(
         self,
-        schedule_id: Optional[UUID] = None,
-        slot_order: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None,
+        slot_order: int | None = None
+    ) -> list[dict[str, Any]]:
         """セッション指導者一覧を取得（シンプル版）"""
         # 詳細情報付きで全件取得
         items = await self.repository.find_all_with_details(
@@ -66,26 +68,26 @@ class SessionInstructorService:
         
         return items
 
-    async def get_session_instructor(self, session_instructor_id: UUID) -> Dict[str, Any]:
+    async def get_session_instructor(self, session_instructor_id: UUID) -> dict[str, Any]:
         """指定したIDのセッション指導者を取得"""
         session_instructor = await self.repository.find_by_id(session_instructor_id)
         if not session_instructor:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
         return session_instructor
 
-    async def get_session_instructors_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_session_instructors_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの指導者一覧を取得"""
         return await self.repository.find_by_schedule(schedule_id)
 
-    async def get_session_instructors_by_schedule_and_slot(self, schedule_id: UUID, slot_order: int) -> List[Dict[str, Any]]:
+    async def get_session_instructors_by_schedule_and_slot(self, schedule_id: UUID, slot_order: int) -> list[dict[str, Any]]:
         """指定したスケジュールとコマの指導者一覧を取得"""
         return await self.repository.find_by_schedule_and_slot(schedule_id, slot_order)
 
-    async def get_session_instructors_by_attendance(self, attendance_id: UUID) -> List[Dict[str, Any]]:
+    async def get_session_instructors_by_attendance(self, attendance_id: UUID) -> list[dict[str, Any]]:
         """指定した出席IDの指導者割り当て一覧を取得"""
         return await self.repository.find_by_attendance_id(attendance_id)
 
-    async def create_session_instructor(self, session_instructor_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_session_instructor(self, session_instructor_data: dict[str, Any]) -> dict[str, Any]:
         """セッション指導者を作成"""
         # スケジュールと出席記録の存在確認
         await self._validate_schedule_and_attendance(
@@ -100,9 +102,9 @@ class SessionInstructorService:
         self, 
         schedule_id: UUID,
         slot_order: int,
-        schedule_available_venue_id: Optional[UUID],
-        attendance_ids: List[UUID]
-    ) -> Dict[str, Any]:
+        schedule_available_venue_id: UUID | None,
+        attendance_ids: list[UUID]
+    ) -> dict[str, Any]:
         """セッション指導者を一括作成"""
         created_items = []
         errors = []
@@ -144,8 +146,8 @@ class SessionInstructorService:
     async def update_session_instructor(
         self, 
         session_instructor_id: UUID, 
-        update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        update_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """セッション指導者を更新"""
         # 存在確認
         existing = await self.repository.find_by_id(session_instructor_id)
@@ -185,7 +187,7 @@ class SessionInstructorService:
         self, 
         schedule_id: UUID, 
         attendance_id: UUID, 
-        schedule_available_venue_id: Optional[UUID] = None
+        schedule_available_venue_id: UUID | None = None
     ):
         """スケジュールと出席記録の存在確認"""
         # スケジュールの存在確認
@@ -222,7 +224,7 @@ class SessionInstructorService:
         
         return True
 
-    async def get_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def get_instructor_candidates(self, practice_schedule_id: UUID) -> list[dict[str, Any]]:
         """インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）"""
         return await self.repository.find_instructor_candidates(practice_schedule_id)
     
@@ -231,7 +233,7 @@ class SessionInstructorService:
         session_instructor_id: UUID,
         target_venue_id: UUID,
         target_slot_order: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """インストラクターを別の会場・時限に移動"""
         # インストラクター情報を取得
         session_instructor = await self.repository.find_by_id(session_instructor_id)
