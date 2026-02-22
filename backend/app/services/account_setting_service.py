@@ -5,9 +5,11 @@ from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.user_profile_repository import UserProfileRepository
-from app.repositories.department_repository import DepartmentRepository
-from app.repositories.account_setting_history_repository import AccountSettingHistoryRepository
+from app.repositories.protocols import (
+    UserProfileRepositoryProtocol,
+    DepartmentRepositoryProtocol,
+    AccountSettingHistoryRepositoryProtocol,
+)
 from app.schemas.account_setting import (
     AccountSettingProfileCreate,
     AccountSettingProfileUpdate,
@@ -29,16 +31,16 @@ class AccountSettingService:
     """
 
     def __init__(
-        self, 
-        user_profile_repository: UserProfileRepository,
-        department_repository: DepartmentRepository,
-        history_repository: AccountSettingHistoryRepository
+        self,
+        user_profile_repository: UserProfileRepositoryProtocol,
+        department_repository: DepartmentRepositoryProtocol,
+        history_repository: AccountSettingHistoryRepositoryProtocol
     ):
         """
         Args:
-            user_profile_repository: UserProfileRepositoryインスタンス
-            department_repository: DepartmentRepositoryインスタンス
-            history_repository: AccountSettingHistoryRepositoryインスタンス
+            user_profile_repository: UserProfileRepositoryProtocolインスタンス
+            department_repository: DepartmentRepositoryProtocolインスタンス
+            history_repository: AccountSettingHistoryRepositoryProtocolインスタンス
         """
         self.user_profile_repo = user_profile_repository
         self.department_repo = department_repository

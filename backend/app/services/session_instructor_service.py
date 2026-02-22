@@ -9,13 +9,13 @@ from uuid import UUID
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from fastapi import HTTPException, status
-from app.repositories.session_instructor_repository import SessionInstructorRepository
+from app.repositories.protocols import SessionInstructorRepositoryProtocol
 
 
 class SessionInstructorService:
     """セッション指導者のビジネスロジックを実装するクラス"""
 
-    def __init__(self, session_instructor_repository: SessionInstructorRepository):
+    def __init__(self, session_instructor_repository: SessionInstructorRepositoryProtocol):
         self.repository = session_instructor_repository
 
     async def get_all_session_instructors(

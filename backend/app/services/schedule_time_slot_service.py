@@ -10,13 +10,13 @@ from datetime import time
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from fastapi import HTTPException, status
-from app.repositories.schedule_time_slot_repository import ScheduleTimeSlotRepository
+from app.repositories.protocols import ScheduleTimeSlotRepositoryProtocol
 
 
 class ScheduleTimeSlotService:
     """スケジュール時間スロットのビジネスロジックを実装するクラス"""
 
-    def __init__(self, schedule_time_slot_repository: ScheduleTimeSlotRepository):
+    def __init__(self, schedule_time_slot_repository: ScheduleTimeSlotRepositoryProtocol):
         self.repository = schedule_time_slot_repository
 
     async def get_all_schedule_time_slots(
