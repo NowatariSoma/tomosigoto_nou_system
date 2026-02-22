@@ -50,6 +50,29 @@ from app.services.practice_schedule_service import PracticeScheduleService
 from app.services.schedule_available_venue_service import ScheduleAvailableVenueService
 from app.services.schedule_time_slot_service import ScheduleTimeSlotService
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
+from app.repositories.protocols import (
+    UserRepositoryProtocol,
+    UserRoleRepositoryProtocol,
+    VenueRepositoryProtocol,
+    PartRepositoryProtocol,
+    StageRepositoryProtocol,
+    MemberAssignmentRepositoryProtocol,
+    AttendanceRepositoryProtocol,
+    UserProfileRepositoryProtocol,
+    ContactRepositoryProtocol,
+    DepartmentRepositoryProtocol,
+    AccountSettingHistoryRepositoryProtocol,
+    PracticeScheduleRepositoryProtocol,
+    SessionRepositoryProtocol,
+    SessionRepositoryNewProtocol,
+    SessionInstructorRepositoryProtocol,
+    ScheduleAvailableVenueRepositoryProtocol,
+    ScheduleTimeSlotRepositoryProtocol,
+    MaterialsPlaylistRepositoryProtocol,
+    MaterialsSubPlaylistRepositoryProtocol,
+    MaterialsVideoRepositoryProtocol,
+    MaterialsFavoriteRepositoryProtocol,
+)
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -60,14 +83,14 @@ security = HTTPBearer(auto_error=False)
 
 def get_user_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> UserRepository:
+) -> UserRepositoryProtocol:
     """UserRepositoryのインスタンスを取得"""
     return UserRepository(supabase_client)
 
 
 def get_user_service(
     supabase_client: Client = Depends(get_supabase),
-    user_repository: UserRepository = Depends(get_user_repository),
+    user_repository: UserRepositoryProtocol = Depends(get_user_repository),
 ) -> UserService:
     """UserServiceのインスタンスを依存性注入で取得"""
     return UserService(user_repository, supabase_client.auth)
@@ -122,42 +145,42 @@ async def get_current_active_user(
 
 def get_venue_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> VenueRepository:
+) -> VenueRepositoryProtocol:
     return VenueRepository(supabase_client)
 
 
 def get_venue_service(
     supabase_client: Client = Depends(get_supabase),
-    venue_repository: VenueRepository = Depends(get_venue_repository),
+    venue_repository: VenueRepositoryProtocol = Depends(get_venue_repository),
 ) -> VenueService:
     return VenueService(venue_repository, supabase_client.auth)
 
 
 def get_contact_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> ContactRepository:
+) -> ContactRepositoryProtocol:
     """ContactRepositoryのインスタンスを取得"""
     return ContactRepository(supabase_client)
 
 
 def get_part_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> PartRepository:
+) -> PartRepositoryProtocol:
     """PartRepositoryのインスタンスを取得"""
     return PartRepository(supabase_client)
 
 
 def get_stage_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> StageRepository:
+) -> StageRepositoryProtocol:
     """StageRepositoryのインスタンスを取得"""
     return StageRepository(supabase_client)
 
 
 def get_part_service(
     supabase_client: Client = Depends(get_supabase),
-    part_repository: PartRepository = Depends(get_part_repository),
-    stage_repository: StageRepository = Depends(get_stage_repository),
+    part_repository: PartRepositoryProtocol = Depends(get_part_repository),
+    stage_repository: StageRepositoryProtocol = Depends(get_stage_repository),
 ) -> PartService:
     """PartServiceのインスタンスを依存性注入で取得"""
     return PartService(part_repository, stage_repository, supabase_client.auth)
@@ -165,44 +188,44 @@ def get_part_service(
 
 def get_member_assignment_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> MemberAssignmentRepository:
+) -> MemberAssignmentRepositoryProtocol:
     """MemberAssignmentRepositoryのインスタンスを取得"""
     return MemberAssignmentRepository(supabase_client)
 
 
 def get_stage_service(
-    supabase_client: Client = Depends(get_supabase),
+    stage_repository: StageRepositoryProtocol = Depends(get_stage_repository),
 ) -> StageService:
     """StageServiceのインスタンスを依存性注入で取得"""
-    return StageService(supabase_client)
+    return StageService(stage_repository)
 
 
 def get_member_assignment_service(
     supabase_client: Client = Depends(get_supabase),
-    member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
-    part_repository: PartRepository = Depends(get_part_repository),
-    user_repository: UserRepository = Depends(get_user_repository),
+    member_assignment_repository: MemberAssignmentRepositoryProtocol = Depends(get_member_assignment_repository),
+    part_repository: PartRepositoryProtocol = Depends(get_part_repository),
+    user_repository: UserRepositoryProtocol = Depends(get_user_repository),
 ) -> MemberAssignmentService:
     """MemberAssignmentServiceのインスタンスを依存性注入で取得"""
     return MemberAssignmentService(member_assignment_repository, part_repository, user_repository, supabase_client.auth)
 
 def get_attendance_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> "AttendanceRepository":
+) -> AttendanceRepositoryProtocol:
     """AttendanceRepositoryのインスタンスを取得"""
     return AttendanceRepository(supabase_client)
 
 
 def get_user_profile_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> UserProfileRepository:
+) -> UserProfileRepositoryProtocol:
     """UserProfileRepositoryのインスタンスを取得"""
     return UserProfileRepository(supabase_client)
 
 
 def get_contact_service(
-    contact_repository: ContactRepository = Depends(get_contact_repository),
-    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+    contact_repository: ContactRepositoryProtocol = Depends(get_contact_repository),
+    user_profile_repository: UserProfileRepositoryProtocol = Depends(get_user_profile_repository),
 ) -> ContactService:
     """ContactServiceのインスタンスを依存性注入で取得"""
     return ContactService(contact_repository, user_profile_repository)
@@ -210,10 +233,10 @@ def get_contact_service(
 
 def get_attendance_service(
     supabase_client: Client = Depends(get_supabase),
-    attendance_repository: "AttendanceRepository" = Depends(get_attendance_repository),
-    user_repository: UserRepository = Depends(get_user_repository),
-    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
-) -> "AttendanceService":
+    attendance_repository: AttendanceRepositoryProtocol = Depends(get_attendance_repository),
+    user_repository: UserRepositoryProtocol = Depends(get_user_repository),
+    user_profile_repository: UserProfileRepositoryProtocol = Depends(get_user_profile_repository),
+) -> AttendanceService:
     """AttendanceServiceのインスタンスを依存性注入で取得"""
     return AttendanceService(
         attendance_repository,
@@ -224,86 +247,86 @@ def get_attendance_service(
 
 def get_department_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> DepartmentRepository:
+) -> DepartmentRepositoryProtocol:
     """DepartmentRepositoryのインスタンスを取得"""
     return DepartmentRepository(supabase_client)
 
 
 def get_user_role_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> UserRoleRepository:
+) -> UserRoleRepositoryProtocol:
     """UserRoleRepositoryのインスタンスを取得"""
     return UserRoleRepository(supabase_client)
 
 
 def get_account_setting_history_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> AccountSettingHistoryRepository:
+) -> AccountSettingHistoryRepositoryProtocol:
     """AccountSettingHistoryRepositoryのインスタンスを取得"""
     return AccountSettingHistoryRepository(supabase_client)
 
 
 def get_account_setting_service(
-    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
-    department_repository: DepartmentRepository = Depends(get_department_repository),
-    history_repository: AccountSettingHistoryRepository = Depends(get_account_setting_history_repository),
+    user_profile_repository: UserProfileRepositoryProtocol = Depends(get_user_profile_repository),
+    department_repository: DepartmentRepositoryProtocol = Depends(get_department_repository),
+    history_repository: AccountSettingHistoryRepositoryProtocol = Depends(get_account_setting_history_repository),
 ) -> AccountSettingService:
     """AccountSettingServiceのインスタンスを依存性注入で取得"""
     return AccountSettingService(user_profile_repository, department_repository, history_repository)
 
 def get_practice_schedule_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> PracticeScheduleRepository:
+) -> PracticeScheduleRepositoryProtocol:
     """PracticeScheduleRepositoryのインスタンスを取得"""
     return PracticeScheduleRepository(supabase_client)
 
 
 def get_schedule_available_venue_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> ScheduleAvailableVenueRepository:
+) -> ScheduleAvailableVenueRepositoryProtocol:
     """ScheduleAvailableVenueRepositoryのインスタンスを取得"""
     return ScheduleAvailableVenueRepository(supabase_client)
 
 
 def get_session_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> SessionRepository:
+) -> SessionRepositoryProtocol:
     """SessionRepositoryのインスタンスを取得"""
     return SessionRepository(supabase_client)
 
 
 def get_session_repository_new(
     supabase_client: Client = Depends(get_supabase),
-) -> SessionRepositoryNew:
+) -> SessionRepositoryNewProtocol:
     """SessionRepositoryNew（拡張版）のインスタンスを取得"""
     return SessionRepositoryNew(supabase_client)
 
 
 def get_session_instructor_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> SessionInstructorRepository:
+) -> SessionInstructorRepositoryProtocol:
     """SessionInstructorRepositoryのインスタンスを取得"""
     return SessionInstructorRepository(supabase_client)
 
 
 def get_schedule_time_slot_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> ScheduleTimeSlotRepository:
+) -> ScheduleTimeSlotRepositoryProtocol:
     """ScheduleTimeSlotRepositoryのインスタンスを取得"""
     return ScheduleTimeSlotRepository(supabase_client)
 
 
 def get_practice_schedule_service(
     supabase_client: Client = Depends(get_supabase),
-    practice_schedule_repository: PracticeScheduleRepository = Depends(get_practice_schedule_repository),
-    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
-    session_repository: SessionRepository = Depends(get_session_repository),
-    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
-    venue_repository: VenueRepository = Depends(get_venue_repository),
-    member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
-    attendance_repository: AttendanceRepository = Depends(get_attendance_repository),
-    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
-    schedule_time_slot_repository: ScheduleTimeSlotRepository = Depends(get_schedule_time_slot_repository),
+    practice_schedule_repository: PracticeScheduleRepositoryProtocol = Depends(get_practice_schedule_repository),
+    schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol = Depends(get_schedule_available_venue_repository),
+    session_repository: SessionRepositoryProtocol = Depends(get_session_repository),
+    session_instructor_repository: SessionInstructorRepositoryProtocol = Depends(get_session_instructor_repository),
+    venue_repository: VenueRepositoryProtocol = Depends(get_venue_repository),
+    member_assignment_repository: MemberAssignmentRepositoryProtocol = Depends(get_member_assignment_repository),
+    attendance_repository: AttendanceRepositoryProtocol = Depends(get_attendance_repository),
+    user_profile_repository: UserProfileRepositoryProtocol = Depends(get_user_profile_repository),
+    schedule_time_slot_repository: ScheduleTimeSlotRepositoryProtocol = Depends(get_schedule_time_slot_repository),
 ) -> PracticeScheduleService:
     """PracticeScheduleServiceのインスタンスを依存性注入で取得"""
     return PracticeScheduleService(
@@ -322,7 +345,7 @@ def get_practice_schedule_service(
 
 async def require_admin(
     current_user: CurrentUser = Depends(get_current_user),
-    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+    user_role_repository: UserRoleRepositoryProtocol = Depends(get_user_role_repository),
 ) -> CurrentUser:
     """管理者権限チェック"""
     user_id = current_user.get("id")
@@ -339,7 +362,7 @@ async def require_admin(
 
 async def require_instructor_or_admin(
     current_user: CurrentUser = Depends(get_current_user),
-    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+    user_role_repository: UserRoleRepositoryProtocol = Depends(get_user_role_repository),
 ) -> CurrentUser:
     """指導者または管理者権限チェック（is_instructorフラグを使用）"""
     user_id = current_user.get("id")
@@ -366,7 +389,7 @@ async def require_instructor_or_admin(
 
 async def require_member_or_above(
     current_user: CurrentUser = Depends(get_current_user),
-    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+    user_role_repository: UserRoleRepositoryProtocol = Depends(get_user_role_repository),
 ) -> CurrentUser:
     """メンバー以上の権限チェック（閲覧者を除く）"""
     user_id = current_user.get("id")
@@ -394,7 +417,7 @@ async def require_member_or_above(
 
 
 def get_session_instructor_service(
-    session_instructor_repository: SessionInstructorRepository = Depends(get_session_instructor_repository),
+    session_instructor_repository: SessionInstructorRepositoryProtocol = Depends(get_session_instructor_repository),
 ) -> SessionInstructorService:
     """SessionInstructorServiceのインスタンスを依存性注入で取得"""
     return SessionInstructorService(session_instructor_repository)
@@ -402,22 +425,22 @@ def get_session_instructor_service(
 
 def get_member_admin_service(
     user_service: UserService = Depends(get_user_service),
-    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
-    user_profile_repository: UserProfileRepository = Depends(get_user_profile_repository),
+    user_role_repository: UserRoleRepositoryProtocol = Depends(get_user_role_repository),
+    user_profile_repository: UserProfileRepositoryProtocol = Depends(get_user_profile_repository),
 ) -> MemberAdminService:
     """MemberAdminServiceのインスタンスを依存性注入で取得"""
     return MemberAdminService(user_service, user_role_repository, user_profile_repository)
 
 
 def get_schedule_available_venue_service(
-    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
+    schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol = Depends(get_schedule_available_venue_repository),
 ) -> ScheduleAvailableVenueService:
     """ScheduleAvailableVenueServiceのインスタンスを依存性注入で取得"""
     return ScheduleAvailableVenueService(schedule_available_venue_repository)
 
 
 def get_schedule_time_slot_service(
-    schedule_time_slot_repository: ScheduleTimeSlotRepository = Depends(get_schedule_time_slot_repository),
+    schedule_time_slot_repository: ScheduleTimeSlotRepositoryProtocol = Depends(get_schedule_time_slot_repository),
 ) -> ScheduleTimeSlotService:
     """ScheduleTimeSlotServiceのインスタンスを依存性注入で取得"""
     return ScheduleTimeSlotService(schedule_time_slot_repository)
@@ -425,14 +448,14 @@ def get_schedule_time_slot_service(
 
 def get_scheduling_optimization_service(
     supabase_client: Client = Depends(get_supabase),
-    practice_schedule_repository: PracticeScheduleRepository = Depends(get_practice_schedule_repository),
-    schedule_available_venue_repository: ScheduleAvailableVenueRepository = Depends(get_schedule_available_venue_repository),
-    session_repository: SessionRepository = Depends(get_session_repository),
-    part_repository: PartRepository = Depends(get_part_repository),
-    member_assignment_repository: MemberAssignmentRepository = Depends(get_member_assignment_repository),
-    user_repository: UserRepository = Depends(get_user_repository),
-    attendance_repository: AttendanceRepository = Depends(get_attendance_repository),
-    user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
+    practice_schedule_repository: PracticeScheduleRepositoryProtocol = Depends(get_practice_schedule_repository),
+    schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol = Depends(get_schedule_available_venue_repository),
+    session_repository: SessionRepositoryProtocol = Depends(get_session_repository),
+    part_repository: PartRepositoryProtocol = Depends(get_part_repository),
+    member_assignment_repository: MemberAssignmentRepositoryProtocol = Depends(get_member_assignment_repository),
+    user_repository: UserRepositoryProtocol = Depends(get_user_repository),
+    attendance_repository: AttendanceRepositoryProtocol = Depends(get_attendance_repository),
+    user_role_repository: UserRoleRepositoryProtocol = Depends(get_user_role_repository),
 ) -> SchedulingOptimizationService:
     """SchedulingOptimizationServiceのインスタンスを依存性注入で取得"""
     return SchedulingOptimizationService(
@@ -450,34 +473,34 @@ def get_scheduling_optimization_service(
 # Materials YouTube関連の依存性注入
 def get_materials_playlist_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> MaterialsPlaylistRepository:
+) -> MaterialsPlaylistRepositoryProtocol:
     """MaterialsPlaylistRepositoryのインスタンスを取得"""
     return MaterialsPlaylistRepository(supabase_client)
 
 
 def get_materials_sub_playlist_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> MaterialsSubPlaylistRepository:
+) -> MaterialsSubPlaylistRepositoryProtocol:
     """MaterialsSubPlaylistRepositoryのインスタンスを取得"""
     return MaterialsSubPlaylistRepository(supabase_client)
 
 
 def get_materials_video_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> MaterialsVideoRepository:
+) -> MaterialsVideoRepositoryProtocol:
     """MaterialsVideoRepositoryのインスタンスを取得"""
     return MaterialsVideoRepository(supabase_client)
 
 
 def get_materials_favorite_repository(
     supabase_client: Client = Depends(get_supabase),
-) -> MaterialsFavoriteRepository:
+) -> MaterialsFavoriteRepositoryProtocol:
     """MaterialsFavoriteRepositoryのインスタンスを取得"""
     return MaterialsFavoriteRepository(supabase_client)
 
 
 def get_materials_playlist_service(
-    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
+    materials_playlist_repository: MaterialsPlaylistRepositoryProtocol = Depends(get_materials_playlist_repository),
 ) -> MaterialsPlaylistService:
     """MaterialsPlaylistServiceのインスタンスを依存性注入で取得"""
     return MaterialsPlaylistService(materials_playlist_repository)
@@ -485,9 +508,9 @@ def get_materials_playlist_service(
 
 def get_materials_sub_playlist_service(
     supabase_client: Client = Depends(get_supabase),
-    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
-    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
-    materials_playlist_repository: MaterialsPlaylistRepository = Depends(get_materials_playlist_repository),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepositoryProtocol = Depends(get_materials_sub_playlist_repository),
+    materials_video_repository: MaterialsVideoRepositoryProtocol = Depends(get_materials_video_repository),
+    materials_playlist_repository: MaterialsPlaylistRepositoryProtocol = Depends(get_materials_playlist_repository),
 ) -> MaterialsSubPlaylistService:
     """MaterialsSubPlaylistServiceのインスタンスを依存性注入で取得"""
     return MaterialsSubPlaylistService(
@@ -499,15 +522,15 @@ def get_materials_sub_playlist_service(
 
 
 def get_materials_video_service(
-    materials_video_repository: MaterialsVideoRepository = Depends(get_materials_video_repository),
-    materials_sub_playlist_repository: MaterialsSubPlaylistRepository = Depends(get_materials_sub_playlist_repository),
+    materials_video_repository: MaterialsVideoRepositoryProtocol = Depends(get_materials_video_repository),
+    materials_sub_playlist_repository: MaterialsSubPlaylistRepositoryProtocol = Depends(get_materials_sub_playlist_repository),
 ) -> MaterialsVideoService:
     """MaterialsVideoServiceのインスタンスを依存性注入で取得"""
     return MaterialsVideoService(materials_video_repository, materials_sub_playlist_repository)
 
 
 def get_materials_favorite_service(
-    materials_favorite_repository: MaterialsFavoriteRepository = Depends(get_materials_favorite_repository),
+    materials_favorite_repository: MaterialsFavoriteRepositoryProtocol = Depends(get_materials_favorite_repository),
 ) -> MaterialsFavoriteService:
     """MaterialsFavoriteServiceのインスタンスを依存性注入で取得"""
     return MaterialsFavoriteService(materials_favorite_repository)

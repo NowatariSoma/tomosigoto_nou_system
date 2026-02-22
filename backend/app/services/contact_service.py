@@ -7,8 +7,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.exceptions import APIException
-from app.repositories.contact_repository import ContactRepository
-from app.repositories.user_profile_repository import UserProfileRepository
+from app.repositories.protocols import ContactRepositoryProtocol, UserProfileRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +17,8 @@ class ContactService:
 
     def __init__(
         self,
-        contact_repository: ContactRepository,
-        user_profile_repository: UserProfileRepository,
+        contact_repository: ContactRepositoryProtocol,
+        user_profile_repository: UserProfileRepositoryProtocol,
     ):
         self.repository = contact_repository
         self.user_profile_repository = user_profile_repository

@@ -12,13 +12,15 @@ import asyncio
 
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
-from app.repositories.practice_schedule_repository import PracticeScheduleRepository
-from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
-from app.repositories.session_repository import SessionRepository
-from app.repositories.part_repository import PartRepository
-from app.repositories.member_assignment_repository import MemberAssignmentRepository
-from app.repositories.user_repository import UserRepository
-from app.repositories.attendance_repository import AttendanceRepository
+from app.repositories.protocols import (
+    PracticeScheduleRepositoryProtocol,
+    ScheduleAvailableVenueRepositoryProtocol,
+    SessionRepositoryNewProtocol,
+    PartRepositoryProtocol,
+    MemberAssignmentRepositoryProtocol,
+    UserRepositoryProtocol,
+    AttendanceRepositoryProtocol,
+)
 from app.services.optimization.adapters import SchedulingDataAdapter
 from app.services.optimization.optimizer import SchedulingOptimizer
 from app.services.optimization.models import SchedulingProblem, SchedulingSolution
@@ -32,13 +34,13 @@ class SchedulingOptimizationService:
     
     def __init__(
         self,
-        practice_schedule_repository: PracticeScheduleRepository,
-        schedule_available_venue_repository: ScheduleAvailableVenueRepository,
-        session_repository: SessionRepository,
-        part_repository: PartRepository,
-        member_assignment_repository: MemberAssignmentRepository,
-        user_repository: UserRepository,
-        attendance_repository: AttendanceRepository,
+        practice_schedule_repository: PracticeScheduleRepositoryProtocol,
+        schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol,
+        session_repository: SessionRepositoryNewProtocol,
+        part_repository: PartRepositoryProtocol,
+        member_assignment_repository: MemberAssignmentRepositoryProtocol,
+        user_repository: UserRepositoryProtocol,
+        attendance_repository: AttendanceRepositoryProtocol,
         user_role_repository
     ):
         self.practice_schedule_repository = practice_schedule_repository

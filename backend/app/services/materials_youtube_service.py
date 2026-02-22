@@ -14,14 +14,19 @@ from supabase import Client
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.core.config import settings
-from app.repositories.materials_youtube_repository import MaterialsPlaylistRepository, MaterialsSubPlaylistRepository, MaterialsVideoRepository, MaterialsFavoriteRepository
+from app.repositories.protocols import (
+    MaterialsPlaylistRepositoryProtocol,
+    MaterialsSubPlaylistRepositoryProtocol,
+    MaterialsVideoRepositoryProtocol,
+    MaterialsFavoriteRepositoryProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
 class MaterialsPlaylistService:
     """プレイリストの関連の機能を実装するクラス"""
 
-    def __init__(self, materials_playlist_repository: MaterialsPlaylistRepository):
+    def __init__(self, materials_playlist_repository: MaterialsPlaylistRepositoryProtocol):
         self.materials_playlist_repository = materials_playlist_repository
 
     async def get_all_materials_playlists(self) -> list[dict[str, Any]]:
@@ -62,10 +67,10 @@ class MaterialsSubPlaylistService:
     """サブプレイリストの関連の機能を実装するクラス"""
 
     def __init__(
-        self, 
-        materials_sub_playlist_repository: MaterialsSubPlaylistRepository,
-        materials_video_repository: MaterialsVideoRepository,
-        materials_playlist_repository: MaterialsPlaylistRepository,
+        self,
+        materials_sub_playlist_repository: MaterialsSubPlaylistRepositoryProtocol,
+        materials_video_repository: MaterialsVideoRepositoryProtocol,
+        materials_playlist_repository: MaterialsPlaylistRepositoryProtocol,
         supabase_client: Client
     ):
         self.materials_sub_playlist_repository = materials_sub_playlist_repository
@@ -642,9 +647,9 @@ class MaterialsVideoService:
     """ビデオの関連の機能を実装するクラス"""
 
     def __init__(
-        self, 
-        materials_video_repository: MaterialsVideoRepository,
-        materials_sub_playlist_repository: MaterialsSubPlaylistRepository
+        self,
+        materials_video_repository: MaterialsVideoRepositoryProtocol,
+        materials_sub_playlist_repository: MaterialsSubPlaylistRepositoryProtocol
     ):
         self.materials_video_repository = materials_video_repository
         self.materials_sub_playlist_repository = materials_sub_playlist_repository
@@ -701,7 +706,7 @@ class MaterialsVideoService:
 class MaterialsFavoriteService:
     """お気に入りの関連の機能を実装するクラス"""
 
-    def __init__(self, materials_favorite_repository: MaterialsFavoriteRepository):
+    def __init__(self, materials_favorite_repository: MaterialsFavoriteRepositoryProtocol):
         self.materials_favorite_repository = materials_favorite_repository
 
     async def get_all_materials_favorites(self) -> list[dict[str, Any]]:

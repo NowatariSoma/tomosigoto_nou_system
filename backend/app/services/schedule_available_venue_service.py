@@ -9,13 +9,13 @@ from uuid import UUID
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from fastapi import HTTPException, status
-from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
+from app.repositories.protocols import ScheduleAvailableVenueRepositoryProtocol
 
 
 class ScheduleAvailableVenueService:
     """スケジュール利用可能会場のビジネスロジックを実装するクラス"""
 
-    def __init__(self, schedule_available_venue_repository: ScheduleAvailableVenueRepository):
+    def __init__(self, schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol):
         self.repository = schedule_available_venue_repository
 
     async def get_all_schedule_available_venues(
