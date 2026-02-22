@@ -1,11 +1,11 @@
 """
 youtubeプレイリストのAPIエンドポイント
 """
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 from datetime import date
 
 from app.api.deps import get_current_user, get_materials_playlist_service, get_materials_sub_playlist_service, get_materials_video_service, get_materials_favorite_service
+from app.schemas.current_user import CurrentUser
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from pydantic import ValidationError
@@ -29,12 +29,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 router = APIRouter()
 
 
-@router.get("", response_model=List[MaterialsPlaylistResponse])
-@router.get("/", response_model=List[MaterialsPlaylistResponse])
+@router.get("", response_model=list[MaterialsPlaylistResponse])
+@router.get("/", response_model=list[MaterialsPlaylistResponse])
 async def get_materials_playlists(
-    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
-    name: Optional[str] = Query(None, description="舞台名（部分一致）"),
-    year: Optional[int] = Query(None, description="年度"),
+    title: str | None = Query(None, description="タイトル（部分一致）"),
+    name: str | None = Query(None, description="舞台名（部分一致）"),
+    year: int | None = Query(None, description="年度"),
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
 ):
     """
@@ -51,9 +51,9 @@ async def get_materials_playlists(
 
 
 # お気に入りのAPIエンドポイント（動的パスより前に定義する必要あり）
-@router.get("/favorites", response_model=List[MaterialsFavoritesResponse])
+@router.get("/favorites", response_model=list[MaterialsFavoritesResponse])
 async def get_user_favorites(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -90,9 +90,9 @@ async def get_user_favorites(
     return result
 
 
-@router.get("/favorites/videos", response_model=List[FavoriteVideoDetailResponse])
+@router.get("/favorites/videos", response_model=list[FavoriteVideoDetailResponse])
 async def get_user_favorite_videos_with_details(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -174,7 +174,7 @@ async def get_user_favorite_videos_with_details(
 @router.get("/videos/{video_id}/favorites/status")
 async def get_favorite_status(
     video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -188,7 +188,7 @@ async def get_favorite_status(
 @router.post("/videos/{video_id}/favorites", response_model=MaterialsFavoritesResponse)
 async def create_favorite(
     video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -214,7 +214,7 @@ async def create_favorite(
 @router.delete("/videos/{video_id}/favorites")
 async def delete_favorite(
     video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -235,7 +235,7 @@ async def delete_favorite(
 @router.post("/videos/{video_id}/favorites/toggle")
 async def toggle_favorite(
     video_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
     """
@@ -321,13 +321,13 @@ async def delete_materials_playlist(
 
 
 # サブプレイリストのAPIエンドポイント
-@router.get("/{playlist_id}/sub-playlists", response_model=List[MaterialsSubPlaylistResponse])
+@router.get("/{playlist_id}/sub-playlists", response_model=list[MaterialsSubPlaylistResponse])
 async def get_materials_sub_playlists(
     playlist_id: UUID,
-    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
-    phase: Optional[str] = Query(None, description="フェーズ"),
-    recorded_date_from: Optional[date] = Query(None, description="録画日（開始日）"),
-    recorded_date_to: Optional[date] = Query(None, description="録画日（終了日）"),
+    title: str | None = Query(None, description="タイトル（部分一致）"),
+    phase: str | None = Query(None, description="フェーズ"),
+    recorded_date_from: date | None = Query(None, description="録画日（開始日）"),
+    recorded_date_to: date | None = Query(None, description="録画日（終了日）"),
     materials_sub_playlist_service: MaterialsSubPlaylistService = Depends(get_materials_sub_playlist_service),
 ):
     """
@@ -430,13 +430,13 @@ async def delete_materials_sub_playlist(
     
 
 # ビデオのAPIエンドポイント
-@router.get("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos", response_model=List[MaterialsVideoResponse])
+@router.get("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos", response_model=list[MaterialsVideoResponse])
 async def get_materials_videos(
     playlist_id: UUID,
     sub_playlist_id: UUID,
-    title: Optional[str] = Query(None, description="タイトル（部分一致）"),
-    recorded_date_from: Optional[date] = Query(None, description="録画日（開始日）"),
-    recorded_date_to: Optional[date] = Query(None, description="録画日（終了日）"),
+    title: str | None = Query(None, description="タイトル（部分一致）"),
+    recorded_date_from: date | None = Query(None, description="録画日（開始日）"),
+    recorded_date_to: date | None = Query(None, description="録画日（終了日）"),
     materials_video_service: MaterialsVideoService = Depends(get_materials_video_service),
 ):
     """

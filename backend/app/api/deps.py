@@ -1,8 +1,7 @@
-from typing import Any, Dict, Optional
-
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.core.supabase import get_supabase
+from app.schemas.current_user import CurrentUser
 from app.repositories.member_assignment_repository import MemberAssignmentRepository
 from app.repositories.part_repository import PartRepository
 from app.repositories.stage_repository import StageRepository
@@ -77,7 +76,7 @@ def get_user_service(
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     user_service: UserService = Depends(get_user_service),
-) -> Dict[str, Any]:
+) -> CurrentUser:
     """JWTトークンから現在のユーザー情報を取得"""
     if not credentials:
         raise APIException(
@@ -96,9 +95,9 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     user_service: UserService = Depends(get_user_service),
-) -> Optional[Dict[str, Any]]:
+) -> CurrentUser | None:
     """JWTトークンから現在のユーザー情報を取得（オプショナル）"""
     if not credentials:
         return None
@@ -112,8 +111,8 @@ async def get_current_user_optional(
 
 
 async def get_current_active_user(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
+    current_user: CurrentUser = Depends(get_current_user),
+) -> CurrentUser:
     """現在のアクティブなユーザーを取得"""
     # ユーザーのアクティブ状態をチェック（必要に応じて有効化）
     # if not current_user.get("active", True):
@@ -322,9 +321,9 @@ def get_practice_schedule_service(
 
 
 async def require_admin(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
-) -> Dict[str, Any]:
+) -> CurrentUser:
     """管理者権限チェック"""
     user_id = current_user.get("id")
     role = await user_role_repository.get_role_by_user_id(user_id)
@@ -339,9 +338,9 @@ async def require_admin(
 
 
 async def require_instructor_or_admin(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
-) -> Dict[str, Any]:
+) -> CurrentUser:
     """指導者または管理者権限チェック（is_instructorフラグを使用）"""
     user_id = current_user.get("id")
     role = await user_role_repository.get_role_by_user_id(user_id)
@@ -366,9 +365,9 @@ async def require_instructor_or_admin(
 
 
 async def require_member_or_above(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     user_role_repository: UserRoleRepository = Depends(get_user_role_repository),
-) -> Dict[str, Any]:
+) -> CurrentUser:
     """メンバー以上の権限チェック（閲覧者を除く）"""
     user_id = current_user.get("id")
     role = await user_role_repository.get_role_by_user_id(user_id)

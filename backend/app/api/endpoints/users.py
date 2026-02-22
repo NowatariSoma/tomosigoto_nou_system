@@ -1,5 +1,3 @@
-from typing import Any, Dict, List
-
 from app.api.deps import (
     get_current_user,
     get_user_service,
@@ -7,6 +5,7 @@ from app.api.deps import (
     require_admin,
     require_member_or_above,
 )
+from app.schemas.current_user import CurrentUser
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -16,10 +15,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 router = APIRouter()
 
 
-@router.get("/", response_model=List[UserResponse])
+@router.get("/", response_model=list[UserResponse])
 async def get_users(
     user_service: UserService = Depends(get_user_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     すべてのユーザーを取得
@@ -29,7 +28,7 @@ async def get_users(
 
 @router.get("/me")
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     現在認証されているユーザーの情報を取得
@@ -38,7 +37,7 @@ async def get_current_user_info(
 
 @router.get("/me/role")
 async def get_current_user_role(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     user_role_repository = Depends(get_user_role_repository),
 ):
     """
@@ -60,7 +59,7 @@ async def get_current_user_role(
 async def get_user(
     user_id: str,
     user_service: UserService = Depends(get_user_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     特定のユーザー情報を取得
@@ -83,7 +82,7 @@ async def register_user(
 async def create_user(
     user_data: UserCreate,
     user_service: UserService = Depends(get_user_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     新しいユーザーを作成（管理者用・認証必要）
@@ -96,7 +95,7 @@ async def update_user(
     user_id: str,
     user_data: UserUpdate,
     user_service: UserService = Depends(get_user_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     ユーザー情報を更新
@@ -114,7 +113,7 @@ async def update_user(
 async def delete_user(
     user_id: str,
     user_service: UserService = Depends(get_user_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     ユーザーを削除

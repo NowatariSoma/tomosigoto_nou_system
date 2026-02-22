@@ -12,7 +12,7 @@ YouTube OAuth認証用エンドポイント（リファクタリング版）
 import os
 import secrets
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -60,7 +60,7 @@ def _validate_oauth_config() -> str:
     return redirect_uri
 
 
-def _create_oauth_flow(redirect_uri: str, state: Optional[str] = None) -> Flow:
+def _create_oauth_flow(redirect_uri: str, state: str | None = None) -> Flow:
     """
     OAuth Flowインスタンスを作成
 
@@ -288,9 +288,9 @@ async def authorize_youtube(
 
 @router.get("/youtube/oauth/callback")
 async def youtube_oauth_callback(
-    code: Optional[str] = Query(None, description="OAuth認証コード"),
-    state: Optional[str] = Query(None, description="OAuth state（必須）"),
-    error: Optional[str] = Query(None, description="OAuthエラー"),
+    code: str | None = Query(None, description="OAuth認証コード"),
+    state: str | None = Query(None, description="OAuth state（必須）"),
+    error: str | None = Query(None, description="OAuthエラー"),
     supabase_client: Client = Depends(get_supabase),
 ):
     """

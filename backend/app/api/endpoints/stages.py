@@ -2,7 +2,6 @@
 Stages API endpoints - 舞台情報の管理
 """
 
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.api.deps import (
@@ -13,6 +12,7 @@ from app.api.deps import (
     require_instructor_or_admin,
     require_member_or_above,
 )
+from app.schemas.current_user import CurrentUser
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.schemas.member_assignment import MemberAssignmentWithDetails
@@ -26,11 +26,11 @@ from fastapi import APIRouter, Depends, Query, status
 router = APIRouter()
 
 
-@router.get("/", response_model=List[StageResponse])
+@router.get("/", response_model=list[StageResponse])
 async def get_stages(
-    status_filter: Optional[str] = Query(None, description="ステータスでフィルタリング (active/inactive)"),
+    status_filter: str | None = Query(None, description="ステータスでフィルタリング (active/inactive)"),
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     舞台一覧を取得
@@ -45,7 +45,7 @@ async def get_stages(
 async def get_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     特定の舞台情報を取得
@@ -57,7 +57,7 @@ async def get_stage(
 async def create_stage(
     stage_data: StageCreate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     新しい舞台を作成
@@ -70,7 +70,7 @@ async def update_stage(
     stage_id: str,
     stage_data: StageUpdate,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     舞台情報を更新
@@ -88,7 +88,7 @@ async def update_stage(
 async def delete_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     舞台を削除
@@ -96,12 +96,12 @@ async def delete_stage(
     await stage_service.delete_stage(stage_id)
 
 
-@router.get("/{stage_id}/parts", response_model=List[PartResponse])
+@router.get("/{stage_id}/parts", response_model=list[PartResponse])
 async def get_stage_parts(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
     part_service: PartService = Depends(get_part_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定された舞台に紐づくパート一覧を取得
@@ -114,14 +114,14 @@ async def get_stage_parts(
     return parts
 
 
-@router.get("/{stage_id}/members", response_model=List[MemberAssignmentWithDetails])
+@router.get("/{stage_id}/members", response_model=list[MemberAssignmentWithDetails])
 async def get_stage_members(
     stage_id: str,
-    category: Optional[str] = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
+    category: str | None = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
     stage_service: StageService = Depends(get_stage_service),
     part_service: PartService = Depends(get_part_service),
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定された舞台に所属するメンバー一覧を取得

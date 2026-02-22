@@ -40,12 +40,12 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # ヘルスチェック用エンドポイント
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": f"{settings.PROJECT_NAME} is running"}
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict[str, str]:
     return {"status": "healthy"}
 
 

@@ -1,9 +1,8 @@
 """
 認証関連のAPIエンドポイント
 """
-from typing import Any, Dict
-
 from app.api.deps import get_current_user
+from app.schemas.current_user import CurrentUser
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
 from app.core.supabase import get_supabase
@@ -182,9 +181,9 @@ async def update_password(
         )
 
 
-@router.get("/me", response_model=Dict[str, Any])
+@router.get("/me")
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     現在のユーザー情報を取得

@@ -1,7 +1,7 @@
-from typing import Any, Dict, List
 from uuid import UUID
 
 from app.api.deps import get_member_admin_service, require_admin
+from app.schemas.current_user import CurrentUser
 from app.schemas.member_admin import (
     MemberRoleUpdateRequest,
     MemberSummaryResponse,
@@ -13,11 +13,11 @@ from fastapi import APIRouter, Depends, status
 router = APIRouter()
 
 
-@router.get("/", response_model=List[MemberSummaryResponse])
+@router.get("/", response_model=list[MemberSummaryResponse])
 async def list_members(
-    _: Dict[str, Any] = Depends(require_admin),
+    _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
-) -> List[MemberSummaryResponse]:
+) -> list[MemberSummaryResponse]:
     """メンバー一覧を取得"""
     return await member_admin_service.list_members()
 
@@ -26,7 +26,7 @@ async def list_members(
 async def update_member_role(
     user_id: UUID,
     payload: MemberRoleUpdateRequest,
-    _: Dict[str, Any] = Depends(require_admin),
+    _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> MemberSummaryResponse:
     """メンバーの管理者権限を更新"""
@@ -37,7 +37,7 @@ async def update_member_role(
 async def update_instructor_flag(
     user_id: UUID,
     payload: MemberInstructorUpdateRequest,
-    _: Dict[str, Any] = Depends(require_admin),
+    _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> MemberSummaryResponse:
     """メンバーの指導者フラグを更新"""

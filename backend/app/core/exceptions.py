@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
 from functools import wraps
 from supabase import PostgrestAPIError, AuthError
 from fastapi import HTTPException, status
@@ -84,7 +84,7 @@ def handle_supabase_errors(operation_name: str = "operation"):
     return decorator
 
 
-def create_error_response(message: str, error: Exception) -> Dict[str, Any]:
+def create_error_response(message: str, error: Exception) -> dict[str, Any]:
     """
     Create a consistent error response format for debug endpoints.
     """
@@ -95,7 +95,7 @@ def create_error_response(message: str, error: Exception) -> Dict[str, Any]:
     }
 
 
-def create_success_response(data: Any, message: Optional[str] = None) -> Dict[str, Any]:
+def create_success_response(data: Any, message: str | None = None) -> dict[str, Any]:
     """
     Create a consistent success response format for debug endpoints.
     """
