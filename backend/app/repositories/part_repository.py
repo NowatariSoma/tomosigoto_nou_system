@@ -4,7 +4,7 @@ Supabaseのpartsテーブルに対するCRUD操作を提供
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.exceptions import handle_supabase_errors
@@ -30,7 +30,7 @@ class PartRepository:
         self.member_assignments_table = "member_assignments"
 
     @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    async def find_all(self) -> list[dict[str, Any]]:
         """
         すべてのパートを取得
 
@@ -43,7 +43,7 @@ class PartRepository:
         return data
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, part_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, part_id: UUID) -> dict[str, Any] | None:
         """
         IDでパートを取得
 
@@ -64,7 +64,7 @@ class PartRepository:
         return None
 
     @handle_supabase_errors("find_by_name")
-    async def find_by_name(self, part_name: str) -> Optional[Dict[str, Any]]:
+    async def find_by_name(self, part_name: str) -> dict[str, Any] | None:
         """
         パート名でパートを取得
 
@@ -85,7 +85,7 @@ class PartRepository:
         return None
 
     @handle_supabase_errors("create")
-    async def create(self, part_data: dict) -> Dict[str, Any]:
+    async def create(self, part_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいパートをデータベースに作成
 
@@ -106,7 +106,7 @@ class PartRepository:
         return {}
 
     @handle_supabase_errors("update")
-    async def update(self, part_id: UUID, part_data: dict) -> Optional[Dict[str, Any]]:
+    async def update(self, part_id: UUID, part_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         パート情報を更新
 
@@ -161,7 +161,7 @@ class PartRepository:
         return count
 
     @handle_supabase_errors("find_active")
-    async def find_active(self) -> List[Dict[str, Any]]:
+    async def find_active(self) -> list[dict[str, Any]]:
         """
         アクティブなパートのみを取得
 
@@ -179,7 +179,7 @@ class PartRepository:
         return data
 
     @handle_supabase_errors("find_by_stage_id")
-    async def find_by_stage_id(self, stage_id: str) -> List[Dict[str, Any]]:
+    async def find_by_stage_id(self, stage_id: str) -> list[dict[str, Any]]:
         """
         指定されたstage_idに紐づくパートを取得
 

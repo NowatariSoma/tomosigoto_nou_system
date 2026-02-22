@@ -4,7 +4,7 @@ account_setting_historyテーブルに対するCRUD操作を提供
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -27,7 +27,7 @@ class AccountSettingHistoryRepository:
         self.table_name = "account_setting_history"
 
     @handle_supabase_errors("create_history_record")
-    async def create_history_record(self, history_data: dict) -> Dict[str, Any]:
+    async def create_history_record(self, history_data: dict[str, Any]) -> dict[str, Any]:
         """
         アカウント設定変更履歴を作成
 
@@ -46,7 +46,7 @@ class AccountSettingHistoryRepository:
         return {}
 
     @handle_supabase_errors("get_history_by_user_id")
-    async def get_history_by_user_id(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_history_by_user_id(self, user_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         ユーザーIDでアカウント設定変更履歴を取得
 
@@ -70,7 +70,7 @@ class AccountSettingHistoryRepository:
         return data
 
     @handle_supabase_errors("get_history_by_field")
-    async def get_history_by_field(self, user_id: str, field_name: str, limit: int = 20) -> List[Dict[str, Any]]:
+    async def get_history_by_field(self, user_id: str, field_name: str, limit: int = 20) -> list[dict[str, Any]]:
         """
         特定フィールドの変更履歴を取得
 
@@ -96,7 +96,7 @@ class AccountSettingHistoryRepository:
         return data
 
     @handle_supabase_errors("get_history_by_id")
-    async def get_history_by_id(self, history_id: str) -> Optional[Dict[str, Any]]:
+    async def get_history_by_id(self, history_id: str) -> dict[str, Any] | None:
         """
         履歴IDで変更履歴を取得
 
@@ -120,7 +120,7 @@ class AccountSettingHistoryRepository:
         return None
 
     @handle_supabase_errors("update_history_record")
-    async def update_history_record(self, history_id: str, history_data: dict) -> Optional[Dict[str, Any]]:
+    async def update_history_record(self, history_id: str, history_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         変更履歴を更新
 
@@ -192,7 +192,7 @@ class AccountSettingHistoryRepository:
         return count
 
     @handle_supabase_errors("get_recent_changes")
-    async def get_recent_changes(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def get_recent_changes(self, limit: int = 100) -> list[dict[str, Any]]:
         """
         最近の変更履歴を取得
 

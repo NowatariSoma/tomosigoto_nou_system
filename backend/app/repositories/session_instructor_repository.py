@@ -1,7 +1,7 @@
 """
 セッション指導者のデータアクセス層
 """
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 from enum import Enum
 
@@ -16,7 +16,7 @@ class SessionInstructorRepository:
         self.client = client
         self.table_name = "session_instructors"
     
-    def _serialize_uuid_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _serialize_uuid_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """UUID型とEnum型を文字列に変換"""
         serialized_data = {}
         for key, value in data.items():
@@ -29,7 +29,7 @@ class SessionInstructorRepository:
         return serialized_data
 
     @handle_supabase_errors("find_all")
-    async def find_all(self) -> List[Dict[str, Any]]:
+    async def find_all(self) -> list[dict[str, Any]]:
         """すべてのセッション指導者を取得"""
         response = self.client.table(self.table_name).select("*").execute()
         return response.data
@@ -39,9 +39,9 @@ class SessionInstructorRepository:
         self, 
         limit: int = 20, 
         offset: int = 0,
-        schedule_id: Optional[UUID] = None,
-        slot_order: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        schedule_id: UUID | None = None,
+        slot_order: int | None = None
+    ) -> list[dict[str, Any]]:
         """詳細情報付きでセッション指導者を取得（JOINクエリでN+1問題を解決）"""
         # JOINクエリで一度に全ての関連データを取得
         select_query = """
@@ -205,8 +205,8 @@ class SessionInstructorRepository:
     @handle_supabase_errors("count_all")
     async def count_all(
         self,
-        schedule_id: Optional[UUID] = None,
-        slot_order: Optional[int] = None
+        schedule_id: UUID | None = None,
+        slot_order: int | None = None
     ) -> int:
         """セッション指導者の総件数を取得"""
         query = self.client.table(self.table_name).select("id", count="exact")
@@ -221,13 +221,13 @@ class SessionInstructorRepository:
         return response.count
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, session_instructor_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, session_instructor_id: UUID) -> dict[str, Any] | None:
         """指定したIDのセッション指導者を取得"""
         response = self.client.table(self.table_name).select("*").eq("id", str(session_instructor_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの指導者一覧を取得"""
         response = (
             self.client.table(self.table_name)
@@ -238,7 +238,7 @@ class SessionInstructorRepository:
         return response.data
 
     @handle_supabase_errors("find_by_schedule_and_slot")
-    async def find_by_schedule_and_slot(self, schedule_id: UUID, slot_order: int) -> List[Dict[str, Any]]:
+    async def find_by_schedule_and_slot(self, schedule_id: UUID, slot_order: int) -> list[dict[str, Any]]:
         """指定したスケジュールとコマの指導者一覧を取得（詳細情報付き）"""
         response = (
             self.client.table(self.table_name)
@@ -322,7 +322,7 @@ class SessionInstructorRepository:
         return formatted_data
 
     @handle_supabase_errors("find_by_attendance_id")
-    async def find_by_attendance_id(self, attendance_id: UUID) -> List[Dict[str, Any]]:
+    async def find_by_attendance_id(self, attendance_id: UUID) -> list[dict[str, Any]]:
         """指定した出席IDの指導者割り当て一覧を取得"""
         response = (
             self.client.table(self.table_name)
@@ -338,7 +338,7 @@ class SessionInstructorRepository:
         schedule_id: UUID,
         slot_order: int,
         attendance_id: UUID
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """指定したスケジュール、コマ、出席IDの組み合わせを取得"""
         response = (
             self.client.table(self.table_name)
@@ -351,7 +351,7 @@ class SessionInstructorRepository:
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("create")
-    async def create(self, session_instructor_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, session_instructor_data: dict[str, Any]) -> dict[str, Any]:
         """セッション指導者を作成"""
         serialized_data = self._serialize_uuid_fields(session_instructor_data)
         response = self.client.table(self.table_name).insert(serialized_data).execute()
@@ -361,8 +361,8 @@ class SessionInstructorRepository:
     async def update(
         self, 
         session_instructor_id: UUID, 
-        update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        update_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """セッション指導者を更新"""
         serialized_data = self._serialize_uuid_fields(update_data)
         response = (
@@ -409,25 +409,25 @@ class SessionInstructorRepository:
 
     # 関連テーブルの存在確認用メソッド
     @handle_supabase_errors("find_schedule_by_id")
-    async def find_schedule_by_id(self, schedule_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールの存在確認"""
         response = self.client.table("practice_schedules").select("*").eq("id", str(schedule_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_schedule_available_venue_by_id")
-    async def find_schedule_available_venue_by_id(self, venue_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_schedule_available_venue_by_id(self, venue_id: UUID) -> dict[str, Any] | None:
         """利用可能会場の存在確認"""
         response = self.client.table("schedule_available_venues").select("*").eq("id", str(venue_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_attendance_by_id")
-    async def find_attendance_by_id(self, attendance_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_attendance_by_id(self, attendance_id: UUID) -> dict[str, Any] | None:
         """出席記録の存在確認"""
         response = self.client.table("practice_user_attendance").select("*").eq("id", str(attendance_id)).execute()
         return response.data[0] if response.data else None
 
     @handle_supabase_errors("find_instructor_candidates")
-    async def find_instructor_candidates(self, practice_schedule_id: UUID) -> List[Dict[str, Any]]:
+    async def find_instructor_candidates(self, practice_schedule_id: UUID) -> list[dict[str, Any]]:
         """インストラクター候補を取得（出席記録ありかつis_instructorがtrueのユーザー）"""
         # 指定された練習スケジュールに出席記録があり、かつis_instructor=trueのユーザーを取得
         # まず出席記録を取得

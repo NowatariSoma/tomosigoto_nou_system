@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from app.core.supabase import handle_supabase_errors
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class UserRepository:
         self.table_name = "users"
 
     @handle_supabase_errors("get_user_by_id")
-    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザーを取得
 
@@ -44,7 +44,7 @@ class UserRepository:
         return None
 
     @handle_supabase_errors("get_user_by_email")
-    async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         """
         メールアドレスでユーザーを取得
 
@@ -69,7 +69,7 @@ class UserRepository:
         return None
 
     @handle_supabase_errors("create_user")
-    async def create_user(self, user_data: dict) -> Dict[str, Any]:
+    async def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
         """
         ユーザーを作成
 
@@ -88,7 +88,7 @@ class UserRepository:
         return {}
 
     @handle_supabase_errors("update_user")
-    async def update_user(self, user_id: str, user_data: dict) -> Optional[Dict[str, Any]]:
+    async def update_user(self, user_id: str, user_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザーを更新
 
@@ -138,7 +138,7 @@ class UserRepository:
         return False
 
     @handle_supabase_errors("get_all_users")
-    async def get_all_users(self) -> List[Dict[str, Any]]:
+    async def get_all_users(self) -> list[dict[str, Any]]:
         """
         すべてのユーザーを取得
 

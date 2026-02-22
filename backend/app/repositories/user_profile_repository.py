@@ -4,7 +4,7 @@ user_profilesテーブルに対するCRUD操作を提供
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.exceptions import handle_supabase_errors
 from supabase import Client
@@ -27,7 +27,7 @@ class UserProfileRepository:
         self.table_name = "user_profiles"
 
     @handle_supabase_errors("get_profile_by_user_id")
-    async def get_profile_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_profile_by_user_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザープロフィールを取得
 
@@ -70,7 +70,7 @@ class UserProfileRepository:
         return None
 
     @handle_supabase_errors("get_profiles_by_user_ids")
-    async def get_profiles_by_user_ids(self, user_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_profiles_by_user_ids(self, user_ids: list[str]) -> list[dict[str, Any]]:
         """
         複数ユーザーIDのプロフィールをまとめて取得
         """
@@ -87,7 +87,7 @@ class UserProfileRepository:
         return response.data or []
 
     @handle_supabase_errors("get_profile_by_student_id")
-    async def get_profile_by_student_id(self, student_id: str) -> Optional[Dict[str, Any]]:
+    async def get_profile_by_student_id(self, student_id: str) -> dict[str, Any] | None:
         """
         学籍番号でユーザープロフィールを取得
 
@@ -111,7 +111,7 @@ class UserProfileRepository:
         return None
 
     @handle_supabase_errors("create_profile")
-    async def create_profile(self, profile_data: dict) -> Dict[str, Any]:
+    async def create_profile(self, profile_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいユーザープロフィールを作成
 
@@ -134,7 +134,7 @@ class UserProfileRepository:
         return {}
 
     @handle_supabase_errors("update_profile")
-    async def update_profile(self, user_id: str, profile_data: dict) -> Optional[Dict[str, Any]]:
+    async def update_profile(self, user_id: str, profile_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザープロフィールを更新
 
@@ -181,7 +181,7 @@ class UserProfileRepository:
         return True
 
     @handle_supabase_errors("check_student_id_exists")
-    async def check_student_id_exists(self, student_id: str, exclude_user_id: Optional[str] = None) -> bool:
+    async def check_student_id_exists(self, student_id: str, exclude_user_id: str | None = None) -> bool:
         """
         学籍番号の重複チェック
 
@@ -220,7 +220,7 @@ class UserProfileRepository:
         return count
 
     @handle_supabase_errors("get_profiles_by_department")
-    async def get_profiles_by_department(self, department_id: str) -> List[Dict[str, Any]]:
+    async def get_profiles_by_department(self, department_id: str) -> list[dict[str, Any]]:
         """
         学部IDでプロフィール一覧を取得
 
@@ -242,7 +242,7 @@ class UserProfileRepository:
         return data
 
     @handle_supabase_errors("check_email_exists")
-    async def check_email_exists(self, email: str, exclude_user_id: Optional[str] = None) -> bool:
+    async def check_email_exists(self, email: str, exclude_user_id: str | None = None) -> bool:
         """
         メールアドレスの重複チェック
 
@@ -265,7 +265,7 @@ class UserProfileRepository:
         return exists
 
     @handle_supabase_errors("get_all_profiles_basic")
-    async def get_all_profiles_basic(self) -> List[Dict[str, Any]]:
+    async def get_all_profiles_basic(self) -> list[dict[str, Any]]:
         """
         account_setting_profileビューから基本情報（氏名・メール）を取得
         """

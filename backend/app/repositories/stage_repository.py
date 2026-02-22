@@ -4,7 +4,7 @@ Supabaseのstagesテーブルに対する基本的な操作を提供
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.exceptions import handle_supabase_errors
@@ -28,7 +28,7 @@ class StageRepository:
         self.table_name = "stages"
 
     @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, stage_id: UUID) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, stage_id: UUID) -> dict[str, Any] | None:
         """
         IDでステージを取得
 
