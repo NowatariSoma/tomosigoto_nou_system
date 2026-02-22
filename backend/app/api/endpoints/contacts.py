@@ -1,4 +1,5 @@
 from app.api.deps import get_contact_service, get_current_user
+from app.schemas.current_user import CurrentUser
 from app.schemas.contacts import ContactCreate, ContactResponse
 from app.services.contact_service import ContactService
 from fastapi import APIRouter, Depends
@@ -9,7 +10,7 @@ router = APIRouter()
 @router.post("/", response_model=ContactResponse)
 async def create_contact(
     contact_data: ContactCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
     contact_service: ContactService = Depends(get_contact_service),
 ):
     """

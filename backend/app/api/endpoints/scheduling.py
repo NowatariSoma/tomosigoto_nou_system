@@ -1,7 +1,6 @@
 """
 スケジューリング最適化APIエンドポイント
 """
-from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from uuid import UUID
 
@@ -14,6 +13,7 @@ from app.api.deps import (
     get_current_user,
     require_instructor_or_admin,
 )
+from app.schemas.current_user import CurrentUser
 from app.core.exceptions import APIException
 
 router = APIRouter()
@@ -28,7 +28,7 @@ router = APIRouter()
 )
 async def optimize_schedule(
     request: OptimizationRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user),  # 認証が必要
+    current_user: CurrentUser = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
 ) -> OptimizationResponse:
     """スケジュールを最適化"""
@@ -75,7 +75,7 @@ async def optimize_schedule(
 )
 async def preview_optimization(
     request: PreviewRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user),  # 認証が必要
+    current_user: CurrentUser = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
 ) -> PreviewResponse:
     """最適化結果をプレビュー"""
@@ -119,7 +119,7 @@ async def preview_optimization(
     summary="ヘルスチェック",
     description="スケジューリング最適化サービスのヘルスチェック"
 )
-async def health_check() -> Dict[str, str]:
+async def health_check() -> dict[str, str]:
     """ヘルスチェック"""
     return {
         "status": "healthy",

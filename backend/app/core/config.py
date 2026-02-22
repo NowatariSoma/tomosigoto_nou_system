@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import Optional, List
 import os
 import json
 
@@ -23,11 +22,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Tomosigoto API"
 
     # CORS設定
-    BACKEND_CORS_ORIGINS: List[str] = []
+    BACKEND_CORS_ORIGINS: list[str] = []
 
     # スケジュール表示設定
-    DEFAULT_VENUE_COLORS: List[str] = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"]
-    DEFAULT_PART_COLORS: List[str] = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F", "#BB8FCE"]
+    DEFAULT_VENUE_COLORS: list[str] = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"]
+    DEFAULT_PART_COLORS: list[str] = ["#FFD700", "#87CEEB", "#98FB98", "#DDA0DD", "#F7DC6F", "#BB8FCE"]
 
     # 時間スケジュール設定
     SCHEDULE_START_HOUR: int = 9
@@ -38,15 +37,15 @@ class Settings(BaseSettings):
     SCHEDULE_SLOT_MINUTES: int = 30
 
     # YouTube API設定
-    YOUTUBE_API_KEY: Optional[str] = None
-    GOOGLE_CLIENT_SECRETS_FILE: Optional[str] = None
-    YOUTUBE_OAUTH_REDIRECT_URI: Optional[str] = None
+    YOUTUBE_API_KEY: str | None = None
+    GOOGLE_CLIENT_SECRETS_FILE: str | None = None
+    YOUTUBE_OAUTH_REDIRECT_URI: str | None = None
     # 環境変数から直接OAuth設定を読む場合
-    GOOGLE_CLIENT_ID: Optional[str] = None
-    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
 
     # Discord Webhook設定
-    DISCORD_WEBHOOK_URL: Optional[str] = None
+    DISCORD_WEBHOOK_URL: str | None = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

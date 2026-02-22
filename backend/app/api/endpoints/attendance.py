@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.api.deps import (
@@ -9,6 +8,7 @@ from app.api.deps import (
     require_instructor_or_admin,
     require_member_or_above,
 )
+from app.schemas.current_user import CurrentUser
 from app.schemas.attendance import (
     AttendanceBase, 
     AttendanceCreate, 
@@ -23,10 +23,10 @@ from fastapi import APIRouter, Depends, HTTPException
 router = APIRouter()
 
 
-@router.get("/", response_model=List[AttendanceResponse])
+@router.get("/", response_model=list[AttendanceResponse])
 async def get_attendances(
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     すべての出欠記録を取得
@@ -51,7 +51,7 @@ async def get_attendances(
 async def get_attendance(
     attendance_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定したIDの出欠記録を取得
@@ -74,11 +74,11 @@ async def get_attendance(
     return AttendanceResponse(**attendance_data)
 
 
-@router.get("/practice/{practice_schedule_id}", response_model=List[AttendanceResponse])
+@router.get("/practice/{practice_schedule_id}", response_model=list[AttendanceResponse])
 async def get_attendances_by_practice(
     practice_schedule_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     指定した練習スケジュールの出欠記録を取得
@@ -100,11 +100,11 @@ async def get_attendances_by_practice(
     return [AttendanceResponse(**attendance) for attendance in filtered_attendances]
 
 
-@router.get("/user/{user_id}", response_model=List[AttendanceResponse])
+@router.get("/user/{user_id}", response_model=list[AttendanceResponse])
 async def get_attendances_by_user(
     user_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定したユーザーの出欠記録を取得
@@ -130,7 +130,7 @@ async def get_attendances_by_user(
 async def create_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     新しい出欠記録を作成
@@ -155,7 +155,7 @@ async def update_attendance(
     attendance_id: UUID,
     attendance_data: AttendanceUpdate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     指定した出欠記録を更新
@@ -181,7 +181,7 @@ async def update_attendance(
 async def upsert_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     出欠記録を作成または更新（practice_schedule_id + user_idの組み合わせで）
@@ -211,7 +211,7 @@ async def upsert_attendance(
 async def delete_attendance(
     attendance_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     指定した出欠記録を削除
@@ -227,10 +227,10 @@ async def delete_attendance(
     return {"message": "出欠記録が正常に削除されました"}
 
 
-@router.get("/summary/practice", response_model=List[AttendanceSummary])
+@router.get("/summary/practice", response_model=list[AttendanceSummary])
 async def get_attendance_summary(
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     練習別の出欠サマリーを取得
@@ -245,10 +245,10 @@ async def get_attendance_summary(
     return [AttendanceSummary(**summary) for summary in summary_data]
 
 
-@router.get("/summary/user", response_model=List[UserAttendanceHistory])
+@router.get("/summary/user", response_model=list[UserAttendanceHistory])
 async def get_user_attendance_history(
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     ユーザー別の出欠履歴を取得
@@ -266,9 +266,9 @@ async def get_user_attendance_history(
 @router.post("/bulk/{practice_schedule_id}")
 async def bulk_update_attendances(
     practice_schedule_id: UUID,
-    attendances: List[AttendanceCreate],
+    attendances: list[AttendanceCreate],
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     複数の出欠記録を一括更新
@@ -298,13 +298,13 @@ async def bulk_update_attendances(
 
 @router.get("/admin/list")
 async def get_users_with_attendance_for_admin(
-    practice_schedule_id: Optional[UUID] = None,
-    status: Optional[str] = None,
-    user_name: Optional[str] = None,
+    practice_schedule_id: UUID | None = None,
+    status: str | None = None,
+    user_name: str | None = None,
     page: int = 1,
     limit: int = 100,
     attendance_service: AttendanceService = Depends(get_attendance_service),
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
 ):
     """
     管理者用：ユーザー情報と出席記録を結合して取得

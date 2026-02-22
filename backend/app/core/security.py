@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any
 import jwt
 from passlib.context import CryptContext
 
@@ -9,7 +9,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_access_token(
-    subject: str, expires_delta: Optional[timedelta] = None
+    subject: str, expires_delta: timedelta | None = None
 ) -> str:
     """JWTアクセストークンを生成"""
     if expires_delta:
@@ -34,7 +34,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
+def verify_jwt_token(token: str) -> dict[str, Any] | None:
     """JWTトークンを検証してペイロードを返す"""
     try:
         payload = jwt.decode(

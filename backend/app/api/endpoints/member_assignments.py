@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.api.deps import (
@@ -7,6 +6,7 @@ from app.api.deps import (
     require_instructor_or_admin,
     require_member_or_above,
 )
+from app.schemas.current_user import CurrentUser
 from app.schemas.member_assignment import (
     MemberAssignmentCreate,
     MemberAssignmentResponse,
@@ -20,10 +20,10 @@ from fastapi import APIRouter, Depends, Query
 router = APIRouter()
 
 
-@router.get("/", response_model=List[MemberAssignmentResponse])
+@router.get("/", response_model=list[MemberAssignmentResponse])
 async def get_member_assignments(
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     すべてのメンバー所属を取得
@@ -40,11 +40,11 @@ async def get_member_assignments(
 
 
 
-@router.get("/by-user/{user_id}", response_model=List[MemberAssignmentResponse])
+@router.get("/by-user/{user_id}", response_model=list[MemberAssignmentResponse])
 async def get_member_assignments_by_user(
     user_id: str,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定したユーザーのメンバー所属を取得
@@ -65,7 +65,7 @@ async def get_member_assignments_by_user(
 async def get_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_member_or_above),
+    current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     指定したメンバー所属を取得
@@ -86,7 +86,7 @@ async def get_member_assignment(
 async def create_member_assignment(
     assignment_data: MemberAssignmentCreate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     新しいメンバー所属を作成
@@ -109,12 +109,12 @@ async def create_member_assignment(
     return MemberAssignmentResponse(**created_assignment)
 
 
-@router.post("/bulk/{part_id}", response_model=List[MemberAssignmentResponse])
+@router.post("/bulk/{part_id}", response_model=list[MemberAssignmentResponse])
 async def bulk_assign_to_part(
     part_id: UUID,
     request: BulkAssignmentRequest,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     パートに複数のユーザーを一括所属させる
@@ -164,7 +164,7 @@ async def update_member_assignment(
     assignment_id: UUID,
     assignment_data: MemberAssignmentUpdate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     指定したメンバー所属を更新
@@ -194,7 +194,7 @@ async def update_member_assignment(
 async def delete_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     指定したメンバー所属を削除
@@ -216,7 +216,7 @@ async def delete_member_assignment_by_user_and_part(
     user_id: str,
     part_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
-    current_user: Dict[str, Any] = Depends(require_instructor_or_admin),
+    current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """
     ユーザーIDとパートIDでメンバー所属を削除
