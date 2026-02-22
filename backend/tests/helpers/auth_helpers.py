@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+from fastapi import HTTPException, status
+
 from app.api.deps import (
     get_current_user,
     require_admin,
@@ -27,6 +29,14 @@ from app.api.deps import (
 from app.main import app
 from app.schemas.current_user import CurrentUser
 from tests.helpers.factories import make_current_user
+
+
+def _raise_forbidden() -> None:
+    """403 Forbidden を発生させるヘルパー。"""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="権限が不足しています",
+    )
 
 
 def override_auth(user: CurrentUser | None = None) -> None:
@@ -67,7 +77,8 @@ def override_auth_as_member(**overrides: object) -> CurrentUser:
     """
     一般メンバーとして認証をオーバーライドする。
 
-    require_admin はオーバーライドしない（403 を返すように）。
+    require_admin / require_instructor_or_admin は 403 を返すようオーバーライドする。
+    これにより、ユニットテストで Supabase 接続なしでも正しく 403 が返される。
 
     Returns:
         使用された CurrentUser インスタンス
@@ -79,8 +90,10 @@ def override_auth_as_member(**overrides: object) -> CurrentUser:
     )
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[require_member_or_above] = lambda: user
-    # require_admin はオーバーライドしない → 管理者専用エンドポイントは 403
-    # require_instructor_or_admin もオーバーライドしない → 指導者専用エンドポイントは 403
+    # require_admin → 403 Forbidden
+    app.dependency_overrides[require_admin] = _raise_forbidden
+    # require_instructor_or_admin → 403 Forbidden
+    app.dependency_overrides[require_instructor_or_admin] = _raise_forbidden
     return user
 
 
@@ -88,7 +101,7 @@ def override_auth_as_instructor(**overrides: object) -> CurrentUser:
     """
     指導者ユーザーとして認証をオーバーライドする。
 
-    require_admin はオーバーライドしない（403 を返すように）。
+    require_admin は 403 を返すようオーバーライドする。
 
     Returns:
         使用された CurrentUser インスタンス
@@ -101,7 +114,8 @@ def override_auth_as_instructor(**overrides: object) -> CurrentUser:
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[require_instructor_or_admin] = lambda: user
     app.dependency_overrides[require_member_or_above] = lambda: user
-    # require_admin はオーバーライドしない → 管理者専用エンドポイントは 403
+    # require_admin → 403 Forbidden
+    app.dependency_overrides[require_admin] = _raise_forbidden
     return user
 
 
