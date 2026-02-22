@@ -79,11 +79,8 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
         )}
         <div className="flex-1 min-w-0">
           <div className="text-base text-black font-semibold">
-            {(() => {
-              console.log('DEBUG InstructorCard: sessionInstructor =', sessionInstructor);
-              return sessionInstructor.user_name || 
-                     (sessionInstructor.user_email ? sessionInstructor.user_email.split('@')[0] : `指導者${sessionInstructor.id.slice(-4)}`);
-            })()}
+            {sessionInstructor.user_name ||
+             (sessionInstructor.user_email ? sessionInstructor.user_email.split('@')[0] : `指導者${sessionInstructor.id.slice(-4)}`)}
           </div>
         </div>
         {edit_mode === 'edit' && onDelete && (

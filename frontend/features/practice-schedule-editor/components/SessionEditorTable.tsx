@@ -128,7 +128,6 @@ export const SessionEditorTable: React.FC<SessionEditorTableProps> = ({
                       className="px-2 py-2 border-r border-gray-200 last:border-r-0 min-h-[80px] align-top cursor-pointer transition-colors bg-white"
                       onClick={() => {
                         if (edit_mode === 'edit' && venueSessions.length === 0) {
-                          console.log('Empty cell clicked:', { venue: venue.id, timeSlot: timeSlot.time });
                         }
                       }}
                     >

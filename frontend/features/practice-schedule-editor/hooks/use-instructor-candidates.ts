@@ -22,21 +22,15 @@ export const useInstructorCandidates = () => {
    * インストラクター候補を取得
    */
   const fetchCandidates = useCallback(async (practiceScheduleId: string) => {
-    console.log('useInstructorCandidates.fetchCandidates called with:', { practiceScheduleId });
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const candidates = await sessionInstructorService.getInstructorCandidates(practiceScheduleId);
-      console.log('useInstructorCandidates.fetchCandidates success:', { 
-        practiceScheduleId, 
-        candidatesCount: Array.isArray(candidates) ? candidates.length : 'not array',
-        candidates 
-      });
-      
-      setState(prev => ({ 
-        ...prev, 
-        candidates, 
-        loading: false 
+
+      setState(prev => ({
+        ...prev,
+        candidates,
+        loading: false
       }));
     } catch (error: any) {
       console.error('useInstructorCandidates.fetchCandidates error:', {

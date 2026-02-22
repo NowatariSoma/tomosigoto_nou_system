@@ -43,10 +43,7 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
 
   // セッション情報でフォームを初期化
   useEffect(() => {
-    console.log('SessionEditorModal useEffect:', { session, is_creating, session_parts: session?.part_id });
-    
     if (session && !is_creating) {
-      console.log('Setting form data with session:', session);
       const initialFormData = {
         part_id: session.part_id || '',
         instructor_id: '', // TODO: セッションからインストラクター情報を取得
@@ -55,7 +52,6 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
         priority: session.priority,
         notes: '',
       };
-      console.log('Initial form data:', initialFormData);
       setFormData(initialFormData);
     } else {
       setFormData(INITIAL_SESSION_FORM);
@@ -71,19 +67,14 @@ export const SessionEditorModal: React.FC<SessionEditorModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
-    console.log('フォーム送信:', formData);
     if (validateForm()) {
-      console.log('バリデーションOK、API呼び出し開始');
       try {
         await onSubmit(formData);
-        console.log('セッション保存成功');
       } catch (error) {
         console.error('セッション保存エラー:', error);
         const errorMessage = error instanceof Error ? error.message : 'セッションの保存に失敗しました';
         setApiError(errorMessage);
       }
-    } else {
-      console.log('バリデーションエラー:', errors);
     }
   };
 

@@ -19,21 +19,10 @@ export class AttendanceService {
   async getAttendancesByPractice(practiceScheduleId: string): Promise<AttendanceInfo[]> {
     try {
       const url = `${this.basePath}/practice/${practiceScheduleId}`;
-      console.log('AttendanceService.getAttendancesByPractice called with:', {
-        practiceScheduleId,
-        url
-      });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('AttendanceService.getAttendancesByPractice response:', {
-        url,
-        status: response.status,
-        dataLength: Array.isArray(data) ? data.length : 'not array',
-        data
-      });
-      
+
       return data;
     } catch (error) {
       console.error('AttendanceService.getAttendancesByPractice error:', {
@@ -52,17 +41,10 @@ export class AttendanceService {
   async getAttendances(): Promise<AttendanceInfo[]> {
     try {
       const url = `${this.basePath}/`;
-      console.log('AttendanceService.getAttendances called with:', { url });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('AttendanceService.getAttendances response:', {
-        url,
-        status: response.status,
-        dataLength: Array.isArray(data) ? data.length : 'not array'
-      });
-      
+
       return data;
     } catch (error) {
       console.error('AttendanceService.getAttendances error:', {
@@ -81,17 +63,10 @@ export class AttendanceService {
   async getAttendance(attendanceId: string): Promise<AttendanceInfo> {
     try {
       const url = `${this.basePath}/${attendanceId}`;
-      console.log('AttendanceService.getAttendance called with:', { attendanceId, url });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('AttendanceService.getAttendance response:', {
-        url,
-        status: response.status,
-        data
-      });
-      
+
       return data;
     } catch (error) {
       console.error('AttendanceService.getAttendance error:', {
@@ -111,17 +86,10 @@ export class AttendanceService {
   async getAttendancesByUser(userId: string): Promise<AttendanceInfo[]> {
     try {
       const url = `${this.basePath}/user/${userId}`;
-      console.log('AttendanceService.getAttendancesByUser called with:', { userId, url });
-      
+
       const response = await fetchApi(url);
       const data = await response.json();
-      
-      console.log('AttendanceService.getAttendancesByUser response:', {
-        url,
-        status: response.status,
-        dataLength: Array.isArray(data) ? data.length : 'not array'
-      });
-      
+
       return data;
     } catch (error) {
       console.error('AttendanceService.getAttendancesByUser error:', {

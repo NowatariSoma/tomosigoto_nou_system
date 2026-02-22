@@ -28,14 +28,6 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   const [isScheduleSelected, setIsScheduleSelected] = useState(!!initialScheduleId);
   const [availableRooms, setAvailableRooms] = useState<VenueInfo[]>([]);
   
-  console.log('PracticeScheduleEditorPage初期化:', {
-    initialScheduleId,
-    initialScheduleDate,
-    currentScheduleId,
-    isScheduleSelected,
-    currentScheduleIdLength: currentScheduleId?.length,
-    currentScheduleIdTrim: currentScheduleId?.trim()
-  });
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('17:00');
 
@@ -83,9 +75,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   useEffect(() => {
     const fetchAvailableRooms = async () => {
       try {
-        console.log('部屋データを取得開始...');
         const venues = await practiceScheduleEditorService.getVenues();
-        console.log('取得した会場データ:', venues);
         setAvailableRooms(venues);
       } catch (error) {
         console.error('会場データの取得に失敗しました:', error);
@@ -168,10 +158,7 @@ export const PracticeScheduleEditorPage: React.FC<PracticeScheduleEditorPageProp
   };
 
   const handleEditSession = (sessionId: string) => {
-    console.log('handleEditSession called with sessionId:', sessionId);
-    console.log('Available sessions:', sessions);
     const session = sessions.find(s => s.id === sessionId);
-    console.log('Found session:', session);
     if (session) {
       setIsCreating(false);
       selectSession(session);

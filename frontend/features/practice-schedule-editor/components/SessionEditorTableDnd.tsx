@@ -264,13 +264,6 @@ export const SessionEditorTableDnd: React.FC<SessionEditorTableDndProps> = ({
         const cellSessions = groupedSessions[venueId]?.[timeSlot] || [];
         const slotOrder = cellSessions.length;
 
-        console.log('Moving session:', {
-          sessionId: activeSessionId,
-          venueId,
-          timeSlot,
-          slotOrder
-        });
-
         onMoveSession(activeSessionId, venueId, timeSlot, slotOrder);
       }
     }

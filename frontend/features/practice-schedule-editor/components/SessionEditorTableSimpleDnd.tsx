@@ -206,21 +206,9 @@ export const SessionEditorTableSimpleDnd: React.FC<SessionEditorTableSimpleDndPr
 
       if (draggedItem.type === 'session') {
         const session = draggedItem.data as Session;
-        console.log('Moving session:', {
-          sessionId: session.id,
-          venueId,
-          timeSlot,
-          slotIndex,
-          slotOrder
-        });
         onMoveSession(session.id, venueId, timeSlot, slotOrder);
       } else if (draggedItem.type === 'instructor') {
         const instructor = draggedItem.data as SessionInstructorWithDetails;
-        console.log('Moving instructor:', {
-          instructorId: instructor.id,
-          venueId,
-          slotOrder
-        });
         onMoveInstructor(instructor.id, venueId, slotOrder);
       }
       

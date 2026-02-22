@@ -31,7 +31,6 @@ export const SessionCell: React.FC<SessionCellProps> = ({
   const handleCellClick = () => {
     if (edit_mode === 'edit' && sessions.length === 0) {
       // 空のセルをクリックした場合の処理（新しいセッション作成など）
-      console.log('Empty cell clicked:', { venue: venue.id, timeSlot: timeSlot.time });
     }
   };
 
