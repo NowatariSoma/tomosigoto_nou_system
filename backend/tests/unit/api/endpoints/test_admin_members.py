@@ -171,3 +171,20 @@ class TestUpdateInstructorFlag:
         payload = {"is_instructor": True}
         response = client.patch(f"/api/v1/admin/members/{user_id}/instructor", json=payload)
         assert response.status_code in [401, 403]
+
+
+class TestDeleteMemberSecurity:
+    """DELETE /api/v1/admin/members/{user_id} のセキュリティテスト"""
+
+    def test_service_has_remove_member_method(self):
+        from app.services.member_admin_service import MemberAdminService
+        assert hasattr(MemberAdminService, 'remove_member')
+
+    def test_admin_deletion_endpoint_exists(self):
+        from app.api.endpoints import admin_members
+        assert hasattr(admin_members, 'delete_member')
+
+    def test_repository_has_admin_methods(self):
+        from app.repositories.user_role_repository import UserRoleRepository
+        assert hasattr(UserRoleRepository, 'get_admin_users')
+        assert hasattr(UserRoleRepository, 'delete_role')

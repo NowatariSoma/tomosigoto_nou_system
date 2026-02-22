@@ -289,3 +289,25 @@ class UserRoleRepository:
             return response.data[0].get("is_instructor", False)
         
         return False
+
+    @handle_supabase_errors("get_admin_users")
+    async def get_admin_users(self) -> List[Dict[str, Any]]:
+        """
+        管理者ロールを持つユーザーを取得
+
+        Returns:
+            管理者ロールの情報のリスト
+        """
+        response = (
+            self.client.table(self.table_name)
+            .select("*")
+            .eq("role_type", "admin")
+            .execute()
+        )
+        
+        if response.data:
+            logger.info(f"Found {len(response.data)} admin users")
+            return response.data
+        
+        logger.info("No admin users found")
+        return []
