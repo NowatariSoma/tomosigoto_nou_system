@@ -8,7 +8,7 @@ from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.user_repository import UserRepository
+from app.repositories.protocols import UserRepositoryProtocol
 from app.schemas.auth import AuthResponse, SignoutResponse, TokenResponse
 from fastapi import HTTPException, status
 
@@ -20,7 +20,7 @@ class AuthService:
     認証関連のビジネスロジックを処理するサービスクラス
     """
 
-    def __init__(self, user_repository: UserRepository, auth_client):
+    def __init__(self, user_repository: UserRepositoryProtocol, auth_client):
         """
         Args:
             user_repository: UserRepositoryインスタンス

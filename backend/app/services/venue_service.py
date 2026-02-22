@@ -5,13 +5,13 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.venue_repository import VenueRepository
+from app.repositories.protocols import VenueRepositoryProtocol
 
 
 class VenueService:
     """会場についての機能を実装するクラス"""
 
-    def __init__(self, venue_repository: VenueRepository, auth_client) -> None:
+    def __init__(self, venue_repository: VenueRepositoryProtocol, auth_client) -> None:
         self.repository = venue_repository
         self.auth_client = auth_client
 

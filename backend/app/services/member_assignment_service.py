@@ -6,9 +6,11 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.member_assignment_repository import MemberAssignmentRepository
-from app.repositories.part_repository import PartRepository
-from app.repositories.user_repository import UserRepository
+from app.repositories.protocols import (
+    MemberAssignmentRepositoryProtocol,
+    PartRepositoryProtocol,
+    UserRepositoryProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +23,16 @@ class MemberAssignmentService:
 
     def __init__(
         self,
-        member_assignment_repository: MemberAssignmentRepository,
-        part_repository: PartRepository,
-        user_repository: UserRepository,
+        member_assignment_repository: MemberAssignmentRepositoryProtocol,
+        part_repository: PartRepositoryProtocol,
+        user_repository: UserRepositoryProtocol,
         auth_client
     ):
         """
         Args:
-            member_assignment_repository: MemberAssignmentRepositoryインスタンス
-            part_repository: PartRepositoryインスタンス
-            user_repository: UserRepositoryインスタンス
+            member_assignment_repository: MemberAssignmentRepositoryProtocolインスタンス
+            part_repository: PartRepositoryProtocolインスタンス
+            user_repository: UserRepositoryProtocolインスタンス
             auth_client: Supabase認証クライアント
         """
         self.repository = member_assignment_repository

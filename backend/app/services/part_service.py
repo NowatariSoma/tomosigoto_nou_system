@@ -6,8 +6,7 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.part_repository import PartRepository
-from app.repositories.stage_repository import StageRepository
+from app.repositories.protocols import PartRepositoryProtocol, StageRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +17,11 @@ class PartService:
     リポジトリパターンと依存性注入に対応
     """
 
-    def __init__(self, part_repository: PartRepository, stage_repository: StageRepository, auth_client) -> None:
+    def __init__(self, part_repository: PartRepositoryProtocol, stage_repository: StageRepositoryProtocol, auth_client) -> None:
         """
         Args:
-            part_repository: PartRepositoryインスタンス
-            stage_repository: StageRepositoryインスタンス
+            part_repository: PartRepositoryProtocolインスタンス
+            stage_repository: StageRepositoryProtocolインスタンス
             auth_client: Supabase認証クライアント
         """
         self.repository = part_repository

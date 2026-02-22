@@ -4,8 +4,7 @@ from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.user_profile_repository import UserProfileRepository
-from app.repositories.user_role_repository import UserRoleRepository
+from app.repositories.protocols import UserProfileRepositoryProtocol, UserRoleRepositoryProtocol
 from app.services.user_service import UserService
 
 
@@ -15,8 +14,8 @@ class MemberAdminService:
     def __init__(
         self,
         user_service: UserService,
-        user_role_repository: UserRoleRepository,
-        user_profile_repository: UserProfileRepository,
+        user_role_repository: UserRoleRepositoryProtocol,
+        user_profile_repository: UserProfileRepositoryProtocol,
     ) -> None:
         self.user_service = user_service
         self.user_role_repository = user_role_repository
