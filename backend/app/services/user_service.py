@@ -5,7 +5,7 @@ from typing import Any
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.user_repository import UserRepository
+from app.repositories.protocols import UserRepositoryProtocol
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class UserService:
     リポジトリパターンと依存性注入に対応
     """
 
-    def __init__(self, user_repository: UserRepository, auth_client) -> None:
+    def __init__(self, user_repository: UserRepositoryProtocol, auth_client) -> None:
         """
         Args:
             user_repository: UserRepositoryインスタンス

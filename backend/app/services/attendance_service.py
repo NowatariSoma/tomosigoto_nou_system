@@ -5,19 +5,21 @@ from uuid import UUID
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.attendance_repository import AttendanceRepository
-from app.repositories.user_repository import UserRepository
-from app.repositories.user_profile_repository import UserProfileRepository
+from app.repositories.protocols import (
+    AttendanceRepositoryProtocol,
+    UserRepositoryProtocol,
+    UserProfileRepositoryProtocol,
+)
 
 
 class AttendanceService:
     """出欠管理のビジネスロジックを実装するクラス"""
 
     def __init__(
-        self, 
-        attendance_repository: AttendanceRepository,
-        user_repository: UserRepository | None = None,
-        user_profile_repository: UserProfileRepository | None = None
+        self,
+        attendance_repository: AttendanceRepositoryProtocol,
+        user_repository: UserRepositoryProtocol | None = None,
+        user_profile_repository: UserProfileRepositoryProtocol | None = None
     ):
         self.repository = attendance_repository
         self.user_repository = user_repository

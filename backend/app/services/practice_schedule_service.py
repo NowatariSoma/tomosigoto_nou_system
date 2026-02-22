@@ -9,15 +9,17 @@ from datetime import datetime
 
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.repositories.practice_schedule_repository import PracticeScheduleRepository
-from app.repositories.session_repository import SessionRepository
-from app.repositories.schedule_available_venue_repository import ScheduleAvailableVenueRepository
-from app.repositories.schedule_time_slot_repository import ScheduleTimeSlotRepository
-from app.repositories.venue_repository import VenueRepository
-from app.repositories.session_instructor_repository import SessionInstructorRepository
-from app.repositories.member_assignment_repository import MemberAssignmentRepository
-from app.repositories.attendance_repository import AttendanceRepository
-from app.repositories.user_profile_repository import UserProfileRepository
+from app.repositories.protocols import (
+    PracticeScheduleRepositoryProtocol,
+    ScheduleAvailableVenueRepositoryProtocol,
+    SessionRepositoryProtocol,
+    ScheduleTimeSlotRepositoryProtocol,
+    VenueRepositoryProtocol,
+    SessionInstructorRepositoryProtocol,
+    MemberAssignmentRepositoryProtocol,
+    AttendanceRepositoryProtocol,
+    UserProfileRepositoryProtocol,
+)
 from app.core.config import settings
 
 
@@ -26,15 +28,15 @@ class PracticeScheduleService:
 
     def __init__(
         self,
-        practice_schedule_repository: PracticeScheduleRepository,
-        schedule_available_venue_repository: ScheduleAvailableVenueRepository,
-        session_repository: SessionRepository,
-        session_instructor_repository: SessionInstructorRepository,
-        venue_repository: VenueRepository,
-        member_assignment_repository: MemberAssignmentRepository,
-        attendance_repository: AttendanceRepository,
-        user_profile_repository: UserProfileRepository,
-        schedule_time_slot_repository: ScheduleTimeSlotRepository,
+        practice_schedule_repository: PracticeScheduleRepositoryProtocol,
+        schedule_available_venue_repository: ScheduleAvailableVenueRepositoryProtocol,
+        session_repository: SessionRepositoryProtocol,
+        session_instructor_repository: SessionInstructorRepositoryProtocol,
+        venue_repository: VenueRepositoryProtocol,
+        member_assignment_repository: MemberAssignmentRepositoryProtocol,
+        attendance_repository: AttendanceRepositoryProtocol,
+        user_profile_repository: UserProfileRepositoryProtocol,
+        schedule_time_slot_repository: ScheduleTimeSlotRepositoryProtocol,
         auth_client,
     ):
         self.practice_schedule_repository = practice_schedule_repository
