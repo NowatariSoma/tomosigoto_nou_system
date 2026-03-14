@@ -94,3 +94,18 @@ export interface FavoriteVideoDetail {
   subPlaylist: SubPlaylist;
   playlist: Playlist;
 }
+
+/** YouTube OAuth 認証開始APIのレスポンス */
+export interface YouTubeOAuthAuthorizeResponse {
+  authorization_url: string;
+  message?: string;
+}
+
+/** YouTube OAuth 状態APIのレスポンス */
+export interface YouTubeOAuthStatusResponse {
+  authenticated: boolean;
+  is_expired?: boolean;
+  redirect_uri?: string | null;
+  redirect_uri_error?: string | null;
+  message?: string;
+}

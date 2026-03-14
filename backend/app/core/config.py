@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_CLIENT_SECRET: str | None = None
 
+    # YouTube OAuth 認証完了後のリダイレクト先（フロントのオリジン。未設定の場合はJSONレスポンスのまま）
+    FRONTEND_ORIGIN: str | None = None
+
     # Discord Webhook設定
     DISCORD_WEBHOOK_URL: str | None = None
 

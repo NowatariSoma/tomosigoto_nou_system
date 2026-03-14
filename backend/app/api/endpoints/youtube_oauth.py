@@ -15,6 +15,8 @@ import logging
 from typing import Any
 from datetime import datetime, timedelta, timezone
 
+import urllib.parse
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
@@ -322,20 +324,30 @@ async def youtube_oauth_callback(
             detail="OAuth stateが提供されていません。認証を開始するには /youtube/oauth/authorize にアクセスしてください。"
         )
     
-    # OAuthエラーチェック
+    # OAuthエラーチェック（フロントへリダイレクト可能ならリダイレクト）
     if error:
         logger.error(f"OAuth error from Google: {error}")
+        err_msg = f"OAuth認証が拒否されました: {error}"
+        if settings.FRONTEND_ORIGIN:
+            encoded = urllib.parse.quote(err_msg, safe="")
+            redirect_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/materials/edit?youtube_auth=error&message={encoded}"
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"OAuth認証が拒否されました: {error}"
+            detail=err_msg
         )
-    
+
     # stateの検証（CSRF対策）
     if not await _verify_oauth_state(supabase_client, state):
         logger.warning(f"Invalid or expired OAuth state: {state[:8]}...")
+        err_msg = "無効または期限切れのOAuth stateです"
+        if settings.FRONTEND_ORIGIN:
+            encoded = urllib.parse.quote(err_msg, safe="")
+            redirect_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/materials/edit?youtube_auth=error&message={encoded}"
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="無効または期限切れのOAuth stateです"
+            detail=err_msg
         )
     
     try:
@@ -355,6 +367,10 @@ async def youtube_oauth_callback(
         # トークンをDBに保存（client_secretは保存しない）
         _save_oauth_token(supabase_client, credentials)
 
+        if settings.FRONTEND_ORIGIN:
+            redirect_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/materials/edit?youtube_auth=success"
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+
         return {
             "message": "YouTube認証が完了しました",
             "status": "success",
@@ -365,12 +381,21 @@ async def youtube_oauth_callback(
         raise
     except APIException as e:
         error_msg = e.detail.get("error_msg", str(e.detail)) if isinstance(e.detail, dict) else str(e.detail)
+        if settings.FRONTEND_ORIGIN:
+            encoded = urllib.parse.quote(error_msg, safe="")
+            redirect_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/materials/edit?youtube_auth=error&message={encoded}"
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_msg
         )
     except Exception as e:
         logger.error(f"Failed to process OAuth callback: {str(e)}")
+        if settings.FRONTEND_ORIGIN:
+            err_msg = "OAuth認証の処理に失敗しました"
+            encoded = urllib.parse.quote(err_msg, safe="")
+            redirect_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/materials/edit?youtube_auth=error&message={encoded}"
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"OAuth認証の処理に失敗しました: {str(e)}"
