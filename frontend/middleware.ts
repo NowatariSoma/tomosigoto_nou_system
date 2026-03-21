@@ -55,29 +55,39 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const isLoginPage = request.nextUrl.pathname === '/login';
-  const isSignUpPage = request.nextUrl.pathname === '/signup';
   const isSettingsPage = request.nextUrl.pathname === '/settings';
   const isPublicRoute = request.nextUrl.pathname === '/login' ||
-                       request.nextUrl.pathname === '/signup' ||
-                       request.nextUrl.pathname.startsWith('/api/') ||
-                       request.nextUrl.pathname.startsWith('/_next/') ||
-                       request.nextUrl.pathname === '/favicon.ico' ||
-                       request.nextUrl.pathname === '/favicon.png' ||
-                       request.nextUrl.pathname.startsWith('/images/') ||
-                       request.nextUrl.pathname.startsWith('/icons/');
+                       request.nextUrl.pathname === '/signup';
 
-  // セッションを取得
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // 公開ルートではSupabase接続不要 - そのまま返す
+  if (isPublicRoute) {
+    return response;
+  }
 
-  // If user  is not authenticated and trying to access protected route
-  if (!user && !isPublicRoute) {
+  // セッションを取得（タイムアウト付き）
+  let user = null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    clearTimeout(timeoutId);
+    user = authUser;
+  } catch (error) {
+    console.error('Supabase auth check failed:', error);
+    // 認証チェック失敗時はログインページへリダイレクト
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (user && !isSettingsPage) {
+  // 未認証ユーザーはログインページへ
+  if (!user) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // プロフィール存在チェック（設定ページ以外）
+  if (!isSettingsPage) {
     try {
       const {
         data: { session },
@@ -87,11 +97,11 @@ export async function middleware(request: NextRequest) {
       if (accessToken) {
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-        // プロフィール存在チェック
         const profileResponse = await fetch(`${apiBaseUrl}/account-setting/profile/exists`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
+          signal: AbortSignal.timeout(5000),
         });
 
         if (profileResponse.ok) {
@@ -101,12 +111,8 @@ export async function middleware(request: NextRequest) {
           }
         }
       }
-      // NOTE: ページ単位の権限チェックはクライアントサイド (AuthContext) で実施
-      // Next.js Edge Runtime環境ではバックエンドAPIへのfetchに制約があるため、
-      // ここでは基本的な認証チェックのみを行い、
-      // 詳細な権限チェックはクライアントサイドとバックエンドAPIで実施する
     } catch (error) {
-      console.error('Failed to verify profile existence in middleware:', error);
+      console.error('Profile check failed in middleware:', error);
     }
   }
 
