@@ -72,11 +72,33 @@ class SchedulingObjectives:
     def create_player_penalty(self, model: cp_model.CpModel):
         """パート×個人優先度に基づくペナルティを作成"""
         total_penalty = []
-        
+
         for player in self.problem.players:
             if player.is_instructor:
                 continue
-            
+
+            # 遅刻・途中退席ペナルティ: 参加不可スロットにパートが配置された場合
+            if player.available_slot_ids is not None:
+                for time_slot in self.problem.time_slots:
+                    if player.is_available_at(time_slot.id):
+                        continue  # 参加可能スロットはスキップ
+                    for assignment in player.part_assignments:
+                        part_id = assignment.part_id
+                        for room in self.problem.rooms:
+                            for instructor in self.problem.players:
+                                if not instructor.is_instructor:
+                                    continue
+                                var = self.session_vars.get((part_id, room.id, time_slot.id, instructor.id))
+                                if var is None:
+                                    continue
+                                # このスロットにパートが配置 → ペナルティ
+                                penalty_var = model.NewIntVar(
+                                    0, assignment.priority,
+                                    f"late_penalty_{player.id}_{part_id[:8]}_{time_slot.id}"
+                                )
+                                model.Add(penalty_var >= assignment.priority * var)
+                                total_penalty.append(penalty_var)
+
             for time_slot in self.problem.time_slots:
                 # 1. この時間にスケジュールされた所属パートを列挙
                 scheduled_assignments = []

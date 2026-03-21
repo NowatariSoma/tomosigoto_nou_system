@@ -27,6 +27,9 @@ class SchedulingConstraints:
                 for time_slot in self.problem.time_slots:
                     for instructor in self.problem.players:
                         if instructor.is_instructor:
+                            # 遅刻・途中退席: 指導者が参加不可のスロットは変数を作成しない（ハード制約）
+                            if not instructor.is_available_at(time_slot.id):
+                                continue
                             var_name = f"session_{part_id[:8]}_{room.id}_{time_slot.id}_{instructor.id}"
                             self.session_vars[(part_id, room.id, time_slot.id, instructor.id)] = \
                                 self.model.NewBoolVar(var_name)
@@ -42,14 +45,14 @@ class SchedulingConstraints:
                 for time_slot in self.problem.time_slots:
                     for instructor in self.problem.players:
                         if instructor.is_instructor:
-                            all_sessions_for_part.append(
-                                self.session_vars[(part_id, room.id, time_slot.id, instructor.id)]
-                            )
-            
+                            key = (part_id, room.id, time_slot.id, instructor.id)
+                            if key in self.session_vars:
+                                all_sessions_for_part.append(self.session_vars[key])
+
             # 各パートは1日に1回だけ練習する
             if all_sessions_for_part:
                 self.model.Add(sum(all_sessions_for_part) == 1)
-        
+
         # 2. 各部屋は各時間コマに最大1つのセッション（1つのパートのみ練習可能）
         for room in self.problem.rooms:
             for time_slot in self.problem.time_slots:
@@ -58,9 +61,9 @@ class SchedulingConstraints:
                     part_id = part["id"]
                     for instructor in self.problem.players:
                         if instructor.is_instructor:
-                            sessions_in_room.append(
-                                self.session_vars[(part_id, room.id, time_slot.id, instructor.id)]
-                            )
+                            key = (part_id, room.id, time_slot.id, instructor.id)
+                            if key in self.session_vars:
+                                sessions_in_room.append(self.session_vars[key])
                 if sessions_in_room:
                     self.model.Add(sum(sessions_in_room) <= 1)
     

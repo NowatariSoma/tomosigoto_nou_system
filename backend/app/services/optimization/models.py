@@ -24,11 +24,18 @@ class Player:
     part_assignments: list[PartAssignment]  # パート割り当てと優先度
     is_instructor: bool = False  # 指導者かどうか
     user_id: str | None = None  # ユーザーID（UUID）- データベース保存時に使用
-    
+    available_slot_ids: list[int] | None = None  # 参加可能なスロットIDリスト。Noneは全スロット参加可能
+
     @property
     def part_ids(self) -> list[str]:
         """所属パートIDのリスト"""
         return [pa.part_id for pa in self.part_assignments]
+
+    def is_available_at(self, slot_id: int) -> bool:
+        """指定されたスロットに参加可能かどうか"""
+        if self.available_slot_ids is None:
+            return True
+        return slot_id in self.available_slot_ids
 
 
 @dataclass

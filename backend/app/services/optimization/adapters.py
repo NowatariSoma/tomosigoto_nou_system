@@ -178,15 +178,19 @@ class SchedulingDataAdapter:
                                 ))
                         
                         if part_assignments:  # パートが割り当てられている場合のみ追加
+                            available_slot_ids = SchedulingDataAdapter._compute_available_slot_ids(
+                                user_attendance, time_slots
+                            )
                             player = Player(
                                 id=len(players) + 1,
                                 name=user_info.get('name') or f'指導者{len(players) + 1}',
                                 part_assignments=part_assignments,
                                 is_instructor=True,
-                                user_id=str(user_id)
+                                user_id=str(user_id),
+                                available_slot_ids=available_slot_ids
                             )
                             players.append(player)
-        
+
         # user_rolesから指導者を追加（session_instructors_dataが空の場合のフォールバック）
         # is_instructorフラグを確認
         if (not session_instructors_data or len(session_instructors_data) == 0) and user_roles_data:
@@ -230,12 +234,19 @@ class SchedulingDataAdapter:
                                     ))
                             
                             if part_assignments:  # パートが割り当てられている場合のみ追加
+                                user_attendance_for_slot = next(
+                                    (a for a in attendance_data if a.get('user_id') == user_id), {}
+                                ) if attendance_data else {}
+                                available_slot_ids = SchedulingDataAdapter._compute_available_slot_ids(
+                                    user_attendance_for_slot, time_slots
+                                )
                                 player = Player(
                                     id=len(players) + 1,
                                     name=user_info.get('name') or user_info.get('email') or f'指導者{len(players) + 1}',
                                     part_assignments=part_assignments,
                                     is_instructor=True,
-                                    user_id=str(user_id)
+                                    user_id=str(user_id),
+                                    available_slot_ids=available_slot_ids
                                 )
                                 players.append(player)
         
@@ -281,12 +292,16 @@ class SchedulingDataAdapter:
                     ))
             
             if part_assignments:
+                available_slot_ids = SchedulingDataAdapter._compute_available_slot_ids(
+                    user_attendance, time_slots
+                ) if attendance_data and user_attendance else None
                 player = Player(
                     id=len(players) + 1,
                     name=user_info.get('name') or f'プレイヤー{len(players) + 1}',
                     part_assignments=part_assignments,
                     is_instructor=False,
-                    user_id=str(user_id)
+                    user_id=str(user_id),
+                    available_slot_ids=available_slot_ids
                 )
                 players.append(player)
         
@@ -297,6 +312,59 @@ class SchedulingDataAdapter:
             parts=parts
         )
     
+    @staticmethod
+    def _parse_time_value(value: Any) -> 'time | None':
+        """attendance の available_from/available_to を time オブジェクトに変換"""
+        from datetime import time as time_type
+        if value is None:
+            return None
+        if isinstance(value, time_type):
+            return value
+        if isinstance(value, str):
+            try:
+                parts = value.split(':')
+                return time_type(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def _compute_available_slot_ids(
+        attendance: dict[str, Any],
+        time_slots: list[TimeSlot]
+    ) -> list[int] | None:
+        """
+        出席データの available_from / available_to から参加可能なスロットIDを計算する。
+        - available_from: 参加開始時刻（遅刻）。スロット開始時刻がこれ以降のスロットのみ参加可能。
+        - available_to: 参加終了時刻（途中退席）。スロット終了時刻がこれ以前のスロットのみ参加可能。
+        - どちらも未設定の場合は None（全スロット参加可能）を返す。
+        """
+        available_from = SchedulingDataAdapter._parse_time_value(attendance.get('available_from'))
+        available_to = SchedulingDataAdapter._parse_time_value(attendance.get('available_to'))
+
+        if available_from is None and available_to is None:
+            return None  # 全スロット参加可能
+
+        available_ids = []
+        for slot in time_slots:
+            # start_time/end_time が不明なスロットは参加可能と仮定
+            if slot.start_time is None or slot.end_time is None:
+                available_ids.append(slot.id)
+                continue
+
+            # 遅刻チェック: スロット開始がプレイヤーの参加開始時刻より早い場合は不可
+            if available_from is not None and slot.start_time < available_from:
+                continue
+
+            # 途中退席チェック: スロット終了がプレイヤーの参加終了時刻より遅い場合は不可
+            if available_to is not None and slot.end_time > available_to:
+                continue
+
+            available_ids.append(slot.id)
+
+        # 全スロット参加可能であれば None を返す（制約不要）
+        return available_ids if len(available_ids) < len(time_slots) else None
+
     @staticmethod
     def solution_to_db_sessions(
         solution: SchedulingSolution,
