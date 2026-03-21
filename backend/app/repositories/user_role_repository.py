@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Dict, List
 from app.core.supabase import handle_supabase_errors
 
 logger = logging.getLogger(__name__)
