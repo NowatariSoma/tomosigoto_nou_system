@@ -367,7 +367,6 @@ export function BottomSheetSchedule({ date, onClose }: BottomSheetScheduleProps)
               onSubmit={handleAttendanceSubmit}
               loading={formLoading}
               existingAttendance={myAttendance}
-              timeSlotCount={bundleData?.schedule?.division_count}
             />
           ) : (
             <div className="flex items-center justify-center p-8 text-black">

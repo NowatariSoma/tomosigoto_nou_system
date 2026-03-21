@@ -341,40 +341,6 @@ class TestLateArrivalSupport:
         result = SchedulingDataAdapter._compute_available_slot_ids(attendance, time_slots)
         assert result == [2]
 
-    def test_compute_available_slot_ids_sentinel_from(self):
-        """センチネルモード: 全スロット時刻なし + available_from=2限目以降"""
-        time_slots = [
-            TimeSlot(id=1, name="1限目"),
-            TimeSlot(id=2, name="2限目"),
-            TimeSlot(id=3, name="3限目"),
-        ]
-        attendance = {"available_from": "02:00:00", "available_to": None}
-        result = SchedulingDataAdapter._compute_available_slot_ids(attendance, time_slots)
-        assert result == [2, 3]
-
-    def test_compute_available_slot_ids_sentinel_to(self):
-        """センチネルモード: 全スロット時刻なし + available_to=2限目まで"""
-        time_slots = [
-            TimeSlot(id=1, name="1限目"),
-            TimeSlot(id=2, name="2限目"),
-            TimeSlot(id=3, name="3限目"),
-        ]
-        attendance = {"available_from": None, "available_to": "02:00:00"}
-        result = SchedulingDataAdapter._compute_available_slot_ids(attendance, time_slots)
-        assert result == [1, 2]
-
-    def test_compute_available_slot_ids_sentinel_both(self):
-        """センチネルモード: 全スロット時刻なし + from=2, to=3"""
-        time_slots = [
-            TimeSlot(id=10, name="1限目"),  # IDは任意
-            TimeSlot(id=20, name="2限目"),
-            TimeSlot(id=30, name="3限目"),
-            TimeSlot(id=40, name="4限目"),
-        ]
-        attendance = {"available_from": "02:00:00", "available_to": "03:00:00"}
-        result = SchedulingDataAdapter._compute_available_slot_ids(attendance, time_slots)
-        assert result == [20, 30]
-
     def test_solve_with_late_instructor(self):
         """遅刻した指導者は参加不可スロットを指導しない"""
         # part 1つ・room 2つ・slot 2つ

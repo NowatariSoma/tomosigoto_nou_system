@@ -16,24 +16,7 @@ interface SimpleAttendanceFormProps {
   onSubmit: (data: { status: string; notes: string; userId: string; practiceScheduleId: string; availableFrom?: string; availableTo?: string }) => Promise<void>;
   loading?: boolean;
   existingAttendance?: any;
-  timeSlotCount?: number; // コマ数が分かる場合はスロット順序UIを表示
 }
-
-/** スロット順序 N (1始まり) を "0N:00" センチネル文字列にエンコード */
-const encodeSlotOrder = (order: number): string =>
-  String(order).padStart(2, '0') + ':00';
-
-/** "0N:00" センチネル文字列を "N限目" に変換（デコード失敗時はそのまま返す） */
-const decodeSlotSentinel = (value: string, slotCount: number): string => {
-  const match = value.match(/^(\d{2}):00$/);
-  if (match) {
-    const order = parseInt(match[1], 10);
-    if (order >= 1 && order <= slotCount) {
-      return `${order}限目`;
-    }
-  }
-  return value;
-};
 
 export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   practiceScheduleId,
@@ -43,7 +26,6 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
   onSubmit,
   loading = false,
   existingAttendance,
-  timeSlotCount,
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>(currentUserId || '');
   const [status, setStatus] = useState<string>('');
@@ -67,8 +49,8 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
 
     if (status === ATTENDANCE_STATUS.LATE) {
       if (!availableFrom && !availableTo) {
-        newErrors.availableFrom = timeSlotCount ? '参加開始コマを選択してください' : '参加可能時間を入力してください';
-      } else if (!timeSlotCount && availableFrom && availableTo && availableFrom >= availableTo) {
+        newErrors.availableFrom = '参加可能時間を入力してください';
+      } else if (availableFrom && availableTo && availableFrom >= availableTo) {
         newErrors.availableFrom = '開始時刻は終了時刻より前にしてください';
       }
     }
@@ -187,17 +169,9 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
                 <span className="text-xs text-slate-600 font-medium">({statusLabel})</span>
                 {isLate && hasTimeRange && (
                   <span className="text-xs text-slate-600">
-                    {existingAttendance.available_from && (
-                      timeSlotCount
-                        ? decodeSlotSentinel(existingAttendance.available_from, timeSlotCount)
-                        : existingAttendance.available_from
-                    )}
+                    {existingAttendance.available_from && `${existingAttendance.available_from}`}
                     {existingAttendance.available_from && existingAttendance.available_to && ' 〜 '}
-                    {existingAttendance.available_to && (
-                      timeSlotCount
-                        ? decodeSlotSentinel(existingAttendance.available_to, timeSlotCount)
-                        : existingAttendance.available_to
-                    )}
+                    {existingAttendance.available_to && `${existingAttendance.available_to}`}
                   </span>
                 )}
               </div>
@@ -347,90 +321,41 @@ export const SimpleAttendanceForm: React.FC<SimpleAttendanceFormProps> = ({
               {errors.status && <p className="mt-3 text-xs text-red-600">{errors.status}</p>}
             </div>
 
-            {/* 参加可能コマ / 時間（遅刻の場合のみ表示） */}
+            {/* 参加可能時間（遅刻の場合のみ表示） */}
             {status === ATTENDANCE_STATUS.LATE && (
               <div>
                 <label className="block text-sm font-medium text-[#1E293B] mb-3">
-                  参加可能{timeSlotCount ? 'コマ' : '時間'}
+                  参加可能時間
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {timeSlotCount ? (
-                    /* スロット順序ドロップダウン */
-                    <>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          何限目から
-                        </label>
-                        <Select
-                          value={availableFrom}
-                          onValueChange={(v) => handleAvailableFromChange(v)}
-                        >
-                          <SelectTrigger className={`w-full h-11 px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] shadow-sm ${errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''}`}>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: timeSlotCount }, (_, i) => i + 1).map((n) => (
-                              <SelectItem key={n} value={encodeSlotOrder(n)}>
-                                {n}限目から
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          何限目まで
-                        </label>
-                        <Select
-                          value={availableTo}
-                          onValueChange={(v) => handleAvailableToChange(v)}
-                        >
-                          <SelectTrigger className={`w-full h-11 px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] shadow-sm ${errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''}`}>
-                            <SelectValue placeholder="（最後まで）" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: timeSlotCount }, (_, i) => i + 1).map((n) => (
-                              <SelectItem key={n} value={encodeSlotOrder(n)}>
-                                {n}限目まで
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  ) : (
-                    /* 時刻入力（スロット数不明の場合） */
-                    <>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          何時から
-                        </label>
-                        <Input
-                          type="time"
-                          value={availableFrom}
-                          onChange={(e) => handleAvailableFromChange(e.target.value)}
-                          placeholder="何時から"
-                          className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
-                            errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          何時まで
-                        </label>
-                        <Input
-                          type="time"
-                          value={availableTo}
-                          onChange={(e) => handleAvailableToChange(e.target.value)}
-                          placeholder="何時まで"
-                          className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
-                            errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''
-                          }`}
-                        />
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      何時から
+                    </label>
+                    <Input
+                      type="time"
+                      value={availableFrom}
+                      onChange={(e) => handleAvailableFromChange(e.target.value)}
+                      placeholder="何時から"
+                      className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                        errors.availableFrom ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      何時まで
+                    </label>
+                    <Input
+                      type="time"
+                      value={availableTo}
+                      onChange={(e) => handleAvailableToChange(e.target.value)}
+                      placeholder="何時まで"
+                      className={`w-full px-3 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#1E293B] transition-all focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-transparent shadow-sm ${
+                        errors.availableTo ? 'ring-2 ring-red-500/30 border-red-300' : ''
+                      }`}
+                    />
+                  </div>
                 </div>
                 {errors.availableFrom && (
                   <p className="mt-2 text-xs text-red-600">{errors.availableFrom}</p>
