@@ -133,7 +133,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname() || '';
   const router = useRouter();
-  const { canEdit, canManage } = useAuth();
+  const { canEdit, canManage, isMember } = useAuth();
 
   // パスに基づいて初期展開状態を決定
   const getInitialExpandedState = () => {
@@ -223,14 +223,18 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             </div>
 
             <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto bg-blue-100">
-              <NavTitle label="練習管理" />
+              {isMember && (
+                <>
+                  <NavTitle label="練習管理" />
 
-              <NavItem
-                icon={<CalendarDays className="w-4 h-4" />}
-                label="スケジュール"
-                active={pathname === '/schedule'}
-                onClick={() => handleNavigateAndClose('/schedule')}
-              />
+                  <NavItem
+                    icon={<CalendarDays className="w-4 h-4" />}
+                    label="スケジュール"
+                    active={pathname === '/schedule'}
+                    onClick={() => handleNavigateAndClose('/schedule')}
+                  />
+                </>
+              )}
 
               {/* 指導者以上のみ表示 */}
               {canEdit && (
@@ -313,14 +317,18 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 </>
               )}
 
-              <NavTitle label="資料庫" />
+              {isMember && (
+                <>
+                  <NavTitle label="資料庫" />
 
-              <NavItem
-                icon={<Youtube className="w-4 h-4" />}
-                label="youtube"
-                active={pathname === '/materials'}
-                onClick={() => handleNavigateAndClose('/materials')}
-              />
+                  <NavItem
+                    icon={<Youtube className="w-4 h-4" />}
+                    label="youtube"
+                    active={pathname === '/materials'}
+                    onClick={() => handleNavigateAndClose('/materials')}
+                  />
+                </>
+              )}
 
               <NavTitle label="その他" />
 
@@ -384,15 +392,19 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
         {/* Navigation */}
         <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto bg-blue-100">
-          {!isCollapsed && <NavTitle label="練習管理" />}
+          {isMember && (
+            <>
+              {!isCollapsed && <NavTitle label="練習管理" />}
 
-          <NavItem
-            icon={<CalendarDays className="w-4 h-4" />}
-            label={isCollapsed ? "" : "スケジュール"}
-            active={pathname === '/schedule'}
-            href="/schedule"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
+              <NavItem
+                icon={<CalendarDays className="w-4 h-4" />}
+                label={isCollapsed ? "" : "スケジュール"}
+                active={pathname === '/schedule'}
+                href="/schedule"
+                className={isCollapsed ? "justify-center px-2" : ""}
+              />
+            </>
+          )}
 
           {/* 指導者以上のみ表示 */}
           {canEdit && (
@@ -477,15 +489,19 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             </>
           )}
 
-          {!isCollapsed && <NavTitle label="資料庫" />}
+          {isMember && (
+            <>
+              {!isCollapsed && <NavTitle label="資料庫" />}
 
-          <NavItem
-            icon={<Youtube className="w-4 h-4" />}
-            label={isCollapsed ? "" : "youtube"}
-            active={pathname === '/materials'}
-            href="/materials"
-            className={isCollapsed ? "justify-center px-2" : ""}
-          />
+              <NavItem
+                icon={<Youtube className="w-4 h-4" />}
+                label={isCollapsed ? "" : "youtube"}
+                active={pathname === '/materials'}
+                href="/materials"
+                className={isCollapsed ? "justify-center px-2" : ""}
+              />
+            </>
+          )}
 
           {!isCollapsed && <NavTitle label="その他" />}
 
