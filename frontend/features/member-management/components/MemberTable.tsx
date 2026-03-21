@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { MemberSummary } from '@/features/member-management/types';
 import {
   ROLE_LABELS,
@@ -20,6 +20,7 @@ type MemberTableProps = {
   resolveDraftRole: (member: MemberSummary) => MemberSummary['role'];
   resolveDraftInstructor: (member: MemberSummary) => boolean;
   updateDraft: (memberId: string, updates: { role?: MemberSummary['role']; is_instructor?: boolean }) => void;
+  onRemoveMember: (memberId: string) => void;
 };
 
 export function MemberTable({
@@ -29,6 +30,7 @@ export function MemberTable({
   resolveDraftRole,
   resolveDraftInstructor,
   updateDraft,
+  onRemoveMember,
 }: MemberTableProps) {
   const renderRoleCell = (member: MemberSummary) => {
     const currentRole = resolveDraftRole(member);
@@ -105,12 +107,13 @@ export function MemberTable({
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">ロール</TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-1/4">指導者</TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">最終アクティブ</TableHead>
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-16">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white divide-y divide-blue-100">
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={4} className="px-6 py-16 text-center text-black">
+              <TableCell colSpan={5} className="px-6 py-16 text-center text-black">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="h-6 w-6 animate-spin text-black" />
                   <p>読み込み中...</p>
@@ -119,7 +122,7 @@ export function MemberTable({
             </TableRow>
           ) : members.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="px-6 py-16 text-center text-black">
+              <TableCell colSpan={5} className="px-6 py-16 text-center text-black">
                 条件に一致するメンバーがいません
               </TableCell>
             </TableRow>
@@ -140,6 +143,21 @@ export function MemberTable({
                 </TableCell>
                 <TableCell className="px-6 py-4 align-top">
                   <span className="text-sm text-black">{formatRelativeLastActive(member.last_active_at)}</span>
+                </TableCell>
+                <TableCell className="px-6 py-4 align-top">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(`${member.name}のアカウントを削除しますか？この操作は取り消せません。`)) {
+                        onRemoveMember(member.id);
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
