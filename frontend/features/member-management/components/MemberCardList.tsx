@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { MemberSummary } from '@/features/member-management/types';
 import {
   ROLE_LABELS,
@@ -19,6 +19,7 @@ type MemberCardListProps = {
   resolveDraftRole: (member: MemberSummary) => MemberSummary['role'];
   resolveDraftInstructor: (member: MemberSummary) => boolean;
   updateDraft: (memberId: string, updates: { role?: MemberSummary['role']; is_instructor?: boolean }) => void;
+  onRemoveMember: (memberId: string) => void;
 };
 
 export function MemberCardList({
@@ -28,6 +29,7 @@ export function MemberCardList({
   resolveDraftRole,
   resolveDraftInstructor,
   updateDraft,
+  onRemoveMember,
 }: MemberCardListProps) {
   return (
     <div className="md:hidden divide-y divide-blue-200">
@@ -49,7 +51,22 @@ export function MemberCardList({
               {isEditMode ? (
                 // 編集モード：縦レイアウト
                 <div className="space-y-3">
-                  <div className="text-sm font-semibold text-black">{member.name}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-black">{member.name}</div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`${member.name}のアカウントを削除しますか？この操作は取り消せません。`)) {
+                          onRemoveMember(member.id);
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div>
                     <p className="text-xs font-medium text-black mb-1">ロール</p>
                     <div className="grid grid-cols-3 gap-2">
@@ -94,18 +111,36 @@ export function MemberCardList({
                 </div>
               ) : (
                 // 通常モード：横一列レイアウト
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 truncate flex-shrink min-w-0">
-                    <span className="text-sm font-semibold text-black truncate">{member.name}</span>
-                    <span className="text-xs text-black whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 truncate flex-shrink min-w-0">
+                      <span className="text-sm font-semibold text-black truncate">{member.name}</span>
+                      <span className="text-xs text-black whitespace-nowrap">({formatRelativeLastActive(member.last_active_at)})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className={ROLE_BADGE_STYLES[currentRole]}>
+                        {ROLE_LABELS[currentRole]}
+                      </span>
+                      <span className={INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}>
+                        {currentInstructor ? '指導者' : '一般'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className={ROLE_BADGE_STYLES[currentRole]}>
-                      {ROLE_LABELS[currentRole]}
-                    </span>
-                    <span className={INSTRUCTOR_BADGE_STYLES[currentInstructor ? 'instructor' : 'member']}>
-                      {currentInstructor ? '指導者' : '一般'}
-                    </span>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`${member.name}のアカウントを削除しますか？この操作は取り消せません。`)) {
+                          onRemoveMember(member.id);
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      削除
+                    </Button>
                   </div>
                 </div>
               )}
