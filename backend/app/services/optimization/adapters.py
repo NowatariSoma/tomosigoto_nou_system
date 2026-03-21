@@ -335,9 +335,17 @@ class SchedulingDataAdapter:
     ) -> list[int] | None:
         """
         出席データの available_from / available_to から参加可能なスロットIDを計算する。
-        - available_from: 参加開始時刻（遅刻）。スロット開始時刻がこれ以降のスロットのみ参加可能。
-        - available_to: 参加終了時刻（途中退席）。スロット終了時刻がこれ以前のスロットのみ参加可能。
-        - どちらも未設定の場合は None（全スロット参加可能）を返す。
+
+        【時刻モード】スロットに start_time/end_time が設定されている場合:
+        - available_from: 参加開始時刻。スロット開始がこれ以降のスロットのみ参加可能。
+        - available_to: 参加終了時刻。スロット終了がこれ以前のスロットのみ参加可能。
+
+        【センチネルモード】全スロットに start_time/end_time が未設定の場合:
+        - available_from の hour 値 = 1始まりのスロット順序（例: hour=2 → 2限目以降）
+        - available_to の hour 値 = 1始まりのスロット順序（例: hour=2 → 2限目まで）
+        - フロントエンドが "0N:00" 形式でエンコードして DB に保存する
+
+        どちらも未設定の場合は None（全スロット参加可能）を返す。
         """
         available_from = SchedulingDataAdapter._parse_time_value(attendance.get('available_from'))
         available_to = SchedulingDataAdapter._parse_time_value(attendance.get('available_to'))
@@ -346,21 +354,37 @@ class SchedulingDataAdapter:
             return None  # 全スロット参加可能
 
         available_ids = []
-        for slot in time_slots:
-            # start_time/end_time が不明なスロットは参加可能と仮定
-            if slot.start_time is None or slot.end_time is None:
+
+        # 全スロットが時刻未設定かどうか確認
+        has_any_time = any(
+            slot.start_time is not None and slot.end_time is not None
+            for slot in time_slots
+        )
+
+        if not has_any_time:
+            # センチネルモード: hour = 1始まりスロット順序
+            from_pos = available_from.hour if available_from is not None else 1
+            to_pos = available_to.hour if available_to is not None else len(time_slots)
+            for i, slot in enumerate(time_slots, start=1):
+                if from_pos <= i <= to_pos:
+                    available_ids.append(slot.id)
+        else:
+            # 時刻モード: slot の start_time/end_time と比較
+            for slot in time_slots:
+                # start_time/end_time が不明なスロットは参加可能と仮定
+                if slot.start_time is None or slot.end_time is None:
+                    available_ids.append(slot.id)
+                    continue
+
+                # 遅刻チェック: スロット開始がプレイヤーの参加開始時刻より早い場合は不可
+                if available_from is not None and slot.start_time < available_from:
+                    continue
+
+                # 途中退席チェック: スロット終了がプレイヤーの参加終了時刻より遅い場合は不可
+                if available_to is not None and slot.end_time > available_to:
+                    continue
+
                 available_ids.append(slot.id)
-                continue
-
-            # 遅刻チェック: スロット開始がプレイヤーの参加開始時刻より早い場合は不可
-            if available_from is not None and slot.start_time < available_from:
-                continue
-
-            # 途中退席チェック: スロット終了がプレイヤーの参加終了時刻より遅い場合は不可
-            if available_to is not None and slot.end_time > available_to:
-                continue
-
-            available_ids.append(slot.id)
 
         # 全スロット参加可能であれば None を返す（制約不要）
         return available_ids if len(available_ids) < len(time_slots) else None
