@@ -47,7 +47,7 @@ async def update_instructor_flag(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_member(
     user_id: UUID,
-    current_user: Dict[str, Any] = Depends(require_admin),
+    current_user: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> None:
     """メンバーを削除"""
