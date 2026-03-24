@@ -4,3 +4,6 @@ venv
 .venv
 .next
 .pytest_cache
+# バックアップ
+backups/
+.backup_remotes
