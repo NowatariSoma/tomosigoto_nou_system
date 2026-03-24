@@ -1,15 +1,13 @@
 """
 StageRepository - データアクセス層の実装
-Supabaseのstagesテーブルに対する基本的な操作を提供
+stagesテーブルに対する基本的な操作を提供
 """
 
 import logging
 from typing import Any
 from uuid import UUID
 
-from app.core.exceptions import handle_supabase_errors
-
-from supabase import Client
+from app.core.database import Conn
 
 logger = logging.getLogger(__name__)
 
@@ -19,16 +17,15 @@ class StageRepository:
     ステージデータへのアクセスを管理するリポジトリクラス
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, conn: Conn):
         """
         Args:
-            client: Supabaseクライアントインスタンス
+            conn: psycopg2接続
         """
-        self.client = client
+        self.conn = conn
         self.table_name = "stages"
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, stage_id: UUID) -> dict[str, Any] | None:
+    def find_by_id(self, stage_id: UUID) -> dict[str, Any] | None:
         """
         IDでステージを取得
 
@@ -38,36 +35,32 @@ class StageRepository:
         Returns:
             ステージ情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name).select("*").eq("id", str(stage_id)).execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM stages WHERE id = %s",
+            (str(stage_id),),
+        ).fetchone()
+        if row:
             logger.info(f"Found stage with id: {stage_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"Stage not found with id: {stage_id}")
         return None
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> list[dict[str, Any]]:
+    def find_all(self) -> list[dict[str, Any]]:
         """
         すべてのステージを取得（作成日時の降順）
 
         Returns:
             ステージ情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .order("created_at", desc=True)
-            .execute()
-        )
-        data = response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM stages ORDER BY created_at DESC"
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} stages")
         return data
 
-    @handle_supabase_errors("create")
-    async def create(self, stage_data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, stage_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいステージを作成
 
@@ -77,16 +70,24 @@ class StageRepository:
         Returns:
             作成されたステージ情報
         """
-        response = self.client.table(self.table_name).insert(stage_data).execute()
-        if response.data and len(response.data) > 0:
-            logger.info(f"Stage created successfully: {response.data[0].get('id', 'unknown')}")
-            return response.data[0]
+        columns = list(stage_data.keys())
+        values = [stage_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO stages ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
+            logger.info(f"Stage created successfully: {dict(row).get('id', 'unknown')}")
+            return dict(row)
 
         logger.error("Failed to create stage")
         return {}
 
-    @handle_supabase_errors("update")
-    async def update(self, stage_id: UUID, stage_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update(self, stage_id: UUID, stage_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ステージ情報を更新
 
@@ -97,21 +98,24 @@ class StageRepository:
         Returns:
             更新されたステージ情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .update(stage_data)
-            .eq("id", str(stage_id))
-            .execute()
+        if not stage_data:
+            return self.find_by_id(stage_id)
+        set_clause = ", ".join([f"{k} = %s" for k in stage_data.keys()])
+        values = list(stage_data.values()) + [str(stage_id)]
+        cur = self.conn.execute(
+            f"UPDATE stages SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if response.data and len(response.data) > 0:
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"Stage updated successfully: {stage_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.warning(f"Stage not found for update: {stage_id}")
         return None
 
-    @handle_supabase_errors("delete")
-    async def delete(self, stage_id: UUID) -> bool:
+    def delete(self, stage_id: UUID) -> bool:
         """
         ステージを削除
 
@@ -121,12 +125,12 @@ class StageRepository:
         Returns:
             削除成功時True
         """
-        self.client.table(self.table_name).delete().eq("id", str(stage_id)).execute()
+        self.conn.execute("DELETE FROM stages WHERE id = %s", (str(stage_id),))
+        self.conn.commit()
         logger.info(f"Stage deleted successfully: {stage_id}")
         return True
 
-    @handle_supabase_errors("find_by_status")
-    async def find_by_status(self, status: str) -> list[dict[str, Any]]:
+    def find_by_status(self, status: str) -> list[dict[str, Any]]:
         """
         ステータスでステージを絞り込み取得
 
@@ -136,19 +140,15 @@ class StageRepository:
         Returns:
             ステージ情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("status", status)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        data = response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM stages WHERE status = %s ORDER BY created_at DESC",
+            (status,),
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} stages with status: {status}")
         return data
 
-    @handle_supabase_errors("exists")
-    async def exists(self, stage_id: UUID) -> bool:
+    def exists(self, stage_id: UUID) -> bool:
         """
         ステージの存在確認
 
@@ -158,13 +158,10 @@ class StageRepository:
         Returns:
             存在する場合True
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("id")
-            .eq("id", str(stage_id))
-            .limit(1)
-            .execute()
-        )
-        exists = response.data and len(response.data) > 0
+        row = self.conn.execute(
+            "SELECT id FROM stages WHERE id = %s LIMIT 1",
+            (str(stage_id),),
+        ).fetchone()
+        exists = row is not None
         logger.info(f"Stage {stage_id} exists: {exists}")
         return exists

@@ -53,9 +53,29 @@ class PasswordResetResponse(BaseModel):
 class PasswordUpdateRequest(BaseModel):
     """パスワード更新リクエスト用スキーマ"""
     password: str
-    access_token: str
+    reset_token: str
 
 
 class PasswordUpdateResponse(BaseModel):
     """パスワード更新レスポンス用スキーマ"""
     message: str
+
+
+class SignupRequest(BaseModel):
+    """サインアップリクエスト用スキーマ"""
+    email: str
+    password: str
+
+
+class SignupResponse(BaseModel):
+    """サインアップレスポンス用スキーマ"""
+    message: str
+
+
+class VerifyEmailResponse(BaseModel):
+    """メール確認レスポンス用スキーマ"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    refresh_token: str
+    user: dict

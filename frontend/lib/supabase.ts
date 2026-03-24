@@ -1,10 +1,3 @@
-import { createBrowserClient } from '@supabase/ssr';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase環境変数が設定されていません');
-}
-
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Supabase は廃止。このファイルは後方互換性のため残しています。
+// 新規コードでは直接 fetch API を使用してください。
+export {};

@@ -2,231 +2,121 @@
 認証関連のAPIエンドポイント
 """
 from app.api.deps import get_current_user
-from app.schemas.current_user import CurrentUser
+from app.core.database import Conn, get_db
 from app.core.error_messages import ErrorMessage
 from app.core.exceptions import APIException
-from app.core.supabase import get_supabase
-from app.repositories.user_repository import UserRepository
 from app.schemas.auth import (
     AuthRequest,
     AuthResponse,
-    RefreshTokenRequest,
-    TokenResponse,
-    SignoutResponse,
     PasswordResetRequest,
     PasswordResetResponse,
     PasswordUpdateRequest,
-    PasswordUpdateResponse
+    PasswordUpdateResponse,
+    RefreshTokenRequest,
+    SignoutResponse,
+    SignupRequest,
+    SignupResponse,
+    TokenResponse,
+    VerifyEmailResponse,
 )
+from app.schemas.current_user import CurrentUser
 from app.services.auth_service import AuthService
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from supabase import Client
 
 router = APIRouter()
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
-def get_auth_service(
-    supabase_client: Client = Depends(get_supabase),
-) -> AuthService:
-    """AuthServiceのインスタンスを依存性注入で取得"""
-    user_repository = UserRepository(supabase_client)
-    return AuthService(user_repository, supabase_client.auth)
+def get_auth_service(conn: Conn = Depends(get_db)) -> AuthService:
+    return AuthService(conn)
+
+
+@router.post("/signup", response_model=SignupResponse)
+def signup(
+    auth_data: SignupRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return auth_service.signup(auth_data.email, auth_data.password)
+
+
+@router.get("/verify-email", response_model=VerifyEmailResponse)
+def verify_email(
+    token: str = Query(...),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return auth_service.verify_email(token)
 
 
 @router.post("/signin", response_model=AuthResponse)
-async def signin(
+def signin(
     auth_data: AuthRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """
-    ユーザーサインイン
-    
-    Args:
-        auth_data: 認証情報（email, password）
-        
-    Returns:
-        認証レスポンス（access_token, user情報）
-        
-    Raises:
-        HTTPException: 認証失敗時
-    """
     try:
-        result = await auth_service.signin(auth_data.email, auth_data.password)
-        return result
+        return auth_service.signin(auth_data.email, auth_data.password)
     except APIException as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
+            status_code=e.status_code,
+            detail=e.message,
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
         )
 
 
 @router.post("/signout", response_model=SignoutResponse)
-async def signout(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+def signout(
+    refresh_data: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """
-    ユーザーサインアウト
-    
-    Args:
-        credentials: Bearerトークン
-        
-    Returns:
-        サインアウト結果
-    """
     try:
-        result = await auth_service.signout(credentials.credentials)
-        return result
-    except Exception as e:
-        # サインアウトは失敗しても成功扱い
+        return auth_service.signout(refresh_data.refresh_token)
+    except Exception:
         return {"message": "Signed out"}
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(
+def refresh_token(
     refresh_data: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """
-    トークンリフレッシュ
-    
-    Args:
-        refresh_data: リフレッシュトークン情報
-        
-    Returns:
-        新しいトークン情報
-        
-    Raises:
-        HTTPException: リフレッシュ失敗時
-    """
     try:
-        result = await auth_service.refresh_token(refresh_data.refresh_token)
-        return result
+        return auth_service.refresh_token(refresh_data.refresh_token)
     except APIException as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
+            status_code=e.status_code,
+            detail=e.message,
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
         )
 
 
 @router.post("/reset-password", response_model=PasswordResetResponse)
-async def reset_password(
+def reset_password(
     reset_data: PasswordResetRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """
-    パスワードリセット
-    
-    Args:
-        reset_data: パスワードリセット情報（email）
-        
-    Returns:
-        リセット結果
-    """
-    try:
-        result = await auth_service.reset_password(reset_data.email)
-        return result
-    except Exception as e:
-        # セキュリティのため、常に成功として返す
-        return {"message": "Password reset email sent"}
+    return auth_service.reset_password(reset_data.email)
 
 
 @router.post("/update-password", response_model=PasswordUpdateResponse)
-async def update_password(
+def update_password(
     password_data: PasswordUpdateRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """
-    パスワード更新
-    
-    Args:
-        password_data: 新しいパスワード情報
-        
-    Returns:
-        更新結果
-        
-    Raises:
-        HTTPException: 更新失敗時
-    """
     try:
-        result = await auth_service.update_password(
-            password_data.access_token,
-            password_data.password
+        return auth_service.update_password(
+            password_data.reset_token,
+            password_data.password,
         )
-        return result
     except APIException as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
+            status_code=e.status_code,
+            detail=e.message,
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
         )
 
 
 @router.get("/me")
-async def get_current_user_info(
+def get_current_user_info(
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    """
-    現在のユーザー情報を取得
-    
-    Args:
-        current_user: 認証済みユーザー情報
-        
-    Returns:
-        ユーザー情報
-    """
     return current_user
-
-
-@router.get("/verify")
-async def verify_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    トークン検証
-    
-    Args:
-        credentials: Bearerトークン
-        
-    Returns:
-        検証結果
-        
-    Raises:
-        HTTPException: トークンが無効時
-    """
-    try:
-        user = await auth_service.verify_token(credentials.credentials)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return {"valid": True, "user": user}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )

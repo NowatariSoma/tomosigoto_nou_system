@@ -24,7 +24,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[AttendanceResponse])
-async def get_attendances(
+def get_attendances(
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
@@ -37,7 +37,7 @@ async def get_attendances(
     Returns:
         すべての出欠記録のリスト
     """
-    all_attendance_data = await attendance_service.get_all_attendances()
+    all_attendance_data = attendance_service.get_all_attendances()
     # undecidedステータスを除外（古いデータの互換性のため）
     valid_statuses = {'present', 'absent', 'late', 'no_show'}
     filtered_data = [
@@ -48,7 +48,7 @@ async def get_attendances(
 
 
 @router.get("/{attendance_id}", response_model=AttendanceResponse)
-async def get_attendance(
+def get_attendance(
     attendance_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -63,7 +63,7 @@ async def get_attendance(
     Returns:
         指定したIDの出欠記録
     """
-    attendance_data = await attendance_service.get_attendance(attendance_id)
+    attendance_data = attendance_service.get_attendance(attendance_id)
     # undecidedステータスの場合はエラーを返す
     valid_statuses = {'present', 'absent', 'late', 'no_show'}
     if attendance_data.get('status') not in valid_statuses:
@@ -75,7 +75,7 @@ async def get_attendance(
 
 
 @router.get("/practice/{practice_schedule_id}", response_model=list[AttendanceResponse])
-async def get_attendances_by_practice(
+def get_attendances_by_practice(
     practice_schedule_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -90,7 +90,7 @@ async def get_attendances_by_practice(
     Returns:
         指定した練習の出欠記録のリスト
     """
-    attendances = await attendance_service.get_attendances_by_practice(practice_schedule_id)
+    attendances = attendance_service.get_attendances_by_practice(practice_schedule_id)
     # undecidedステータスを除外（古いデータの互換性のため）
     valid_statuses = {'present', 'absent', 'late', 'no_show'}
     filtered_attendances = [
@@ -101,7 +101,7 @@ async def get_attendances_by_practice(
 
 
 @router.get("/user/{user_id}", response_model=list[AttendanceResponse])
-async def get_attendances_by_user(
+def get_attendances_by_user(
     user_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -116,7 +116,7 @@ async def get_attendances_by_user(
     Returns:
         指定したユーザーの出欠記録のリスト
     """
-    attendances = await attendance_service.get_attendances_by_user(user_id)
+    attendances = attendance_service.get_attendances_by_user(user_id)
     # undecidedステータスを除外（古いデータの互換性のため）
     valid_statuses = {'present', 'absent', 'late', 'no_show'}
     filtered_attendances = [
@@ -127,7 +127,7 @@ async def get_attendances_by_user(
 
 
 @router.post("/", response_model=AttendanceResponse)
-async def create_attendance(
+def create_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -146,12 +146,12 @@ async def create_attendance(
     attendance_dict["created_by"] = str(attendance_dict["user_id"])
     attendance_dict["updated_by"] = str(attendance_dict["user_id"])
     
-    created_attendance = await attendance_service.create_attendance(attendance_dict)
+    created_attendance = attendance_service.create_attendance(attendance_dict)
     return AttendanceResponse(**created_attendance)
 
 
 @router.put("/{attendance_id}", response_model=AttendanceResponse)
-async def update_attendance(
+def update_attendance(
     attendance_id: UUID,
     attendance_data: AttendanceUpdate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
@@ -173,12 +173,12 @@ async def update_attendance(
     attendance_dict = attendance_data.model_dump(exclude_unset=True)
     attendance_dict["updated_by"] = str(current_user["id"])
     
-    updated_attendance = await attendance_service.update_attendance(attendance_id, attendance_dict)
+    updated_attendance = attendance_service.update_attendance(attendance_id, attendance_dict)
     return AttendanceResponse(**updated_attendance)
 
 
 @router.post("/upsert", response_model=AttendanceResponse)
-async def upsert_attendance(
+def upsert_attendance(
     attendance_data: AttendanceCreate,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -203,12 +203,12 @@ async def upsert_attendance(
         attendance_dict["created_by"] = attendance_dict["user_id"]
         attendance_dict["updated_by"] = attendance_dict["user_id"]
     
-    upserted_attendance = await attendance_service.upsert_attendance(attendance_dict)
+    upserted_attendance = attendance_service.upsert_attendance(attendance_dict)
     return AttendanceResponse(**upserted_attendance)
 
 
 @router.delete("/{attendance_id}")
-async def delete_attendance(
+def delete_attendance(
     attendance_id: UUID,
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_admin),
@@ -223,12 +223,12 @@ async def delete_attendance(
     Returns:
         削除成功のメッセージ
     """
-    await attendance_service.remove_attendance(attendance_id)
+    attendance_service.remove_attendance(attendance_id)
     return {"message": "出欠記録が正常に削除されました"}
 
 
 @router.get("/summary/practice", response_model=list[AttendanceSummary])
-async def get_attendance_summary(
+def get_attendance_summary(
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
@@ -241,12 +241,12 @@ async def get_attendance_summary(
     Returns:
         練習別の出欠サマリーのリスト
     """
-    summary_data = await attendance_service.get_attendance_summary()
+    summary_data = attendance_service.get_attendance_summary()
     return [AttendanceSummary(**summary) for summary in summary_data]
 
 
 @router.get("/summary/user", response_model=list[UserAttendanceHistory])
-async def get_user_attendance_history(
+def get_user_attendance_history(
     attendance_service: AttendanceService = Depends(get_attendance_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
@@ -259,12 +259,12 @@ async def get_user_attendance_history(
     Returns:
         ユーザー別の出欠履歴のリスト
     """
-    history_data = await attendance_service.get_user_attendance_history()
+    history_data = attendance_service.get_user_attendance_history()
     return [UserAttendanceHistory(**history) for history in history_data]
 
 
 @router.post("/bulk/{practice_schedule_id}")
-async def bulk_update_attendances(
+def bulk_update_attendances(
     practice_schedule_id: UUID,
     attendances: list[AttendanceCreate],
     attendance_service: AttendanceService = Depends(get_attendance_service),
@@ -290,14 +290,14 @@ async def bulk_update_attendances(
         attendance_dict["updated_by"] = str(current_user["id"])
         attendance_dicts.append(attendance_dict)
     
-    updated_attendances = await attendance_service.bulk_update_attendances(
+    updated_attendances = attendance_service.bulk_update_attendances(
         practice_schedule_id, attendance_dicts
     )
     return [AttendanceResponse(**attendance) for attendance in updated_attendances]
 
 
 @router.get("/admin/list")
-async def get_users_with_attendance_for_admin(
+def get_users_with_attendance_for_admin(
     practice_schedule_id: UUID | None = None,
     status: str | None = None,
     user_name: str | None = None,
@@ -324,7 +324,7 @@ async def get_users_with_attendance_for_admin(
     # limitの最大値を100に制限
     limit = min(limit, 100)
     
-    result = await attendance_service.get_users_with_attendance_for_admin(
+    result = attendance_service.get_users_with_attendance_for_admin(
         practice_schedule_id=practice_schedule_id,
         status=status,
         user_name=user_name,

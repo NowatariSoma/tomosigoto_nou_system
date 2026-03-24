@@ -1,21 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mockSupabaseClient, createMockSupabaseQuery } from '@/__mocks__/supabase';
-
-vi.mock('@/lib/supabase', () => ({
-  supabase: mockSupabaseClient,
-}));
-
+import { describe, it, expect, beforeEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/__mocks__/msw/server';
 import { UserService } from '@/features/member_assignments-setting/services/user-service';
+
+const API_BASE = 'http://localhost:8000/api/v1';
 
 describe('UserService', () => {
   let service: UserService;
 
   beforeEach(() => {
     service = new UserService();
-    vi.clearAllMocks();
   });
 
-  // テスト用プロフィールデータ
   const mockProfileResponse1 = {
     user_id: 'user-1',
     first_name_katakana: 'タロウ',
@@ -40,16 +36,14 @@ describe('UserService', () => {
 
   describe('getUsers', () => {
     it('ユーザー一覧を正常に取得しマッピングする', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1, mockProfileResponse2],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1, mockProfileResponse2]);
+        })
+      );
 
       const result = await service.getUsers();
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('account_setting_profile');
-      expect(query.select).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('user-1');
       expect(result[0].name).toBe('タナカ タロウ');
@@ -63,23 +57,21 @@ describe('UserService', () => {
     });
 
     it('エラー時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Database error' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.getUsers()).rejects.toThrow(
-        'Failed to fetch users: Database error'
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json({ detail: 'Database error' }, { status: 500 });
+        })
       );
+
+      await expect(service.getUsers()).rejects.toThrow();
     });
 
     it('データが空の場合は空配列を返す', async () => {
-      const query = createMockSupabaseQuery({
-        data: [],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([]);
+        })
+      );
 
       const result = await service.getUsers();
       expect(result).toEqual([]);
@@ -88,27 +80,25 @@ describe('UserService', () => {
 
   describe('searchUsersByName', () => {
     it('姓と名の両方で検索する', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1]);
+        })
+      );
 
       const result = await service.searchUsersByName('タロウ', 'タナカ');
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('account_setting_profile');
-      expect(query.ilike).toHaveBeenCalled();
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('user-1');
       expect(result[0].name).toBe('タナカ タロウ');
     });
 
     it('姓のみで検索する', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1]);
+        })
+      );
 
       const result = await service.searchUsersByName('', 'タナカ');
 
@@ -117,11 +107,11 @@ describe('UserService', () => {
     });
 
     it('名のみで検索する', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1]);
+        })
+      );
 
       const result = await service.searchUsersByName('タロウ', '');
 
@@ -130,50 +120,45 @@ describe('UserService', () => {
     });
 
     it('両方空の場合はgetUsersを呼び出す', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1, mockProfileResponse2],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1, mockProfileResponse2]);
+        })
+      );
 
       const result = await service.searchUsersByName('', '');
 
-      // getUsers が呼ばれるため、account_setting_profile へのクエリが実行される
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('account_setting_profile');
       expect(result).toHaveLength(2);
     });
 
     it('空白文字のみの場合もgetUsersを呼び出す', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockProfileResponse1],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([mockProfileResponse1]);
+        })
+      );
 
       const result = await service.searchUsersByName('  ', '  ');
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('account_setting_profile');
       expect(result).toHaveLength(1);
     });
 
     it('エラー時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Search failed' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.searchUsersByName('タロウ', 'タナカ')).rejects.toThrow(
-        'Failed to search users: Search failed'
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json({ detail: 'Search failed' }, { status: 500 });
+        })
       );
+
+      await expect(service.searchUsersByName('タロウ', 'タナカ')).rejects.toThrow();
     });
 
     it('検索結果が空の場合は空配列を返す', async () => {
-      const query = createMockSupabaseQuery({
-        data: [],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles`, () => {
+          return HttpResponse.json([]);
+        })
+      );
 
       const result = await service.searchUsersByName('存在しない', '名前');
       expect(result).toEqual([]);
@@ -182,16 +167,14 @@ describe('UserService', () => {
 
   describe('getUser', () => {
     it('指定IDのユーザーを正常に取得する', async () => {
-      const query = createMockSupabaseQuery({
-        data: mockProfileResponse1,
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/users/profiles/user-1`, () => {
+          return HttpResponse.json(mockProfileResponse1);
+        })
+      );
 
       const result = await service.getUser('user-1');
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('account_setting_profile');
-      expect(query.select).toHaveBeenCalled();
       expect(result.id).toBe('user-1');
       expect(result.name).toBe('タナカ タロウ');
       expect(result.email).toBe('tanaka@example.com');
@@ -204,15 +187,13 @@ describe('UserService', () => {
     });
 
     it('エラー時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'User not found' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.getUser('invalid-id')).rejects.toThrow(
-        'Failed to fetch user: User not found'
+      server.use(
+        http.get(`${API_BASE}/users/profiles/invalid-id`, () => {
+          return HttpResponse.json({ detail: 'User not found' }, { status: 404 });
+        })
       );
+
+      await expect(service.getUser('invalid-id')).rejects.toThrow();
     });
   });
 });

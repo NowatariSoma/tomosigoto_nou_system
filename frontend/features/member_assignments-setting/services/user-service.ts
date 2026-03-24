@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { fetchApi } from '../../../lib/api';
 
 export interface User {
   id: string;
@@ -14,26 +14,10 @@ export interface User {
 
 export class UserService {
   async getUsers(): Promise<User[]> {
-    const { data, error } = await supabase
-      .from('account_setting_profile')
-      .select(`
-        user_id,
-        first_name_katakana,
-        last_name_katakana,
-        first_name_kanji,
-        last_name_kanji,
-        email,
-        created_at,
-        updated_at
-      `)
-      .order('last_name_katakana', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to fetch users: ${error.message}`);
-    }
-
+    const response = await fetchApi('/users/profiles');
+    const data = await response.json();
     return (data || []).map((profile: any) => ({
-      id: profile.user_id,
+      id: profile.user_id || profile.id,
       name: `${profile.last_name_katakana} ${profile.first_name_katakana}`,
       email: profile.email,
       first_name_katakana: profile.first_name_katakana,
@@ -46,42 +30,20 @@ export class UserService {
   }
 
   async searchUsersByName(firstName: string, lastName: string): Promise<User[]> {
-    let query = supabase
-      .from('account_setting_profile')
-      .select(`
-        user_id,
-        first_name_katakana,
-        last_name_katakana,
-        first_name_kanji,
-        last_name_kanji,
-        email,
-        created_at,
-        updated_at
-      `);
-
-    // 姓が入力されている場合のみ姓で検索
-    if (lastName.trim()) {
-      query = query.ilike('last_name_katakana', `%${lastName.trim()}%`);
-    }
-
-    // 名が入力されている場合のみ名で検索
-    if (firstName.trim()) {
-      query = query.ilike('first_name_katakana', `%${firstName.trim()}%`);
-    }
-
     // どちらも入力されていない場合は全件取得
     if (!firstName.trim() && !lastName.trim()) {
       return this.getUsers();
     }
 
-    const { data, error } = await query.order('last_name_katakana', { ascending: true });
+    const params = new URLSearchParams();
+    if (lastName.trim()) params.set('last_name', lastName.trim());
+    if (firstName.trim()) params.set('first_name', firstName.trim());
 
-    if (error) {
-      throw new Error(`Failed to search users: ${error.message}`);
-    }
+    const response = await fetchApi(`/users/profiles?${params.toString()}`);
+    const data = await response.json();
 
-    const mappedUsers = (data || []).map((profile: any) => ({
-      id: profile.user_id,
+    return (data || []).map((profile: any) => ({
+      id: profile.user_id || profile.id,
       name: `${profile.last_name_katakana} ${profile.first_name_katakana}`,
       email: profile.email,
       first_name_katakana: profile.first_name_katakana,
@@ -91,40 +53,21 @@ export class UserService {
       created_at: profile.created_at,
       updated_at: profile.updated_at
     }));
-
-    return mappedUsers;
   }
 
   async getUser(id: string): Promise<User> {
-    const { data, error } = await supabase
-      .from('account_setting_profile')
-      .select(`
-        user_id,
-        first_name_katakana,
-        last_name_katakana,
-        first_name_kanji,
-        last_name_kanji,
-        email,
-        created_at,
-        updated_at
-      `)
-      .eq('user_id', id)
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to fetch user: ${error.message}`);
-    }
-
+    const response = await fetchApi(`/users/profiles/${id}`);
+    const data = await response.json();
     return {
-      id: (data as any).user_id,
-      name: `${(data as any).last_name_katakana} ${(data as any).first_name_katakana}`,
-      email: (data as any).email,
-      first_name_katakana: (data as any).first_name_katakana,
-      last_name_katakana: (data as any).last_name_katakana,
-      first_name_kanji: (data as any).first_name_kanji,
-      last_name_kanji: (data as any).last_name_kanji,
-      created_at: (data as any).created_at,
-      updated_at: (data as any).updated_at
+      id: data.user_id || data.id,
+      name: `${data.last_name_katakana} ${data.first_name_katakana}`,
+      email: data.email,
+      first_name_katakana: data.first_name_katakana,
+      last_name_katakana: data.last_name_katakana,
+      first_name_kanji: data.first_name_kanji,
+      last_name_kanji: data.last_name_kanji,
+      created_at: data.created_at,
+      updated_at: data.updated_at
     };
   }
 }

@@ -7,10 +7,13 @@ class Settings(BaseSettings):
     # 環境設定
     ENVIRONMENT: str = "development"
 
-    # Supabase設定
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
-    SUPABASE_ANON_KEY: str = ""
+    # データベース設定
+    DATABASE_URL: str = ""
+
+    # メール送信 (Cloudflare Workers email-worker)
+    EMAIL_WORKER_URL: str = ""
+    EMAIL_WORKER_SECRET: str = ""
+    APP_BASE_URL: str = "http://localhost"
 
     # JWT設定
     SECRET_KEY: str = "your-secret-key-here"

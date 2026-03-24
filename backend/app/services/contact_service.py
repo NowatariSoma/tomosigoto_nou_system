@@ -23,10 +23,10 @@ class ContactService:
         self.repository = contact_repository
         self.user_profile_repository = user_profile_repository
 
-    async def _get_user_name(self, user_id: str) -> str:
+    def _get_user_name(self, user_id: str) -> str:
         """ユーザーIDからユーザー名を取得"""
         try:
-            profile = await self.user_profile_repository.get_profile_by_user_id(user_id)
+            profile = self.user_profile_repository.get_profile_by_user_id(user_id)
             if profile:
                 first_name = profile.get("first_name_kanji", "")
                 last_name = profile.get("last_name_kanji", "")
@@ -38,11 +38,11 @@ class ContactService:
                     return last_name
         except Exception as e:
             logger.warning(f"ユーザープロフィールの取得に失敗しました: {str(e)}")
-        
+
         # プロフィールが見つからない場合はデフォルト値を返す
         return "不明"
 
-    async def create_contact(self, contact_data: dict[str, Any]) -> dict[str, Any]:
+    def create_contact(self, contact_data: dict[str, Any]) -> dict[str, Any]:
         """お問い合わせを作成し、Discordに通知を送信"""
         # user_idからユーザー名を取得して自動設定
         user_id = contact_data.get("user_id")
@@ -50,22 +50,22 @@ class ContactService:
             # UUID型の場合は文字列に変換
             user_id_str = str(user_id) if user_id else ""
             if user_id_str:
-                user_name = await self._get_user_name(user_id_str)
+                user_name = self._get_user_name(user_id_str)
                 contact_data["name"] = user_name
-        
+
         # データベースに保存
-        contact = await self.repository.create(contact_data)
+        contact = self.repository.create(contact_data)
 
         # Discord通知を送信（失敗してもDB保存は成功させる）
         try:
-            await self._send_discord_notification(contact)
+            self._send_discord_notification(contact)
         except Exception as e:
             logger.error(f"Discord通知の送信に失敗しました: {str(e)}")
             # エラーをログに記録するが、例外は投げない（DB保存は成功しているため）
 
         return contact
 
-    async def _send_discord_notification(self, contact: dict[str, Any]) -> None:
+    def _send_discord_notification(self, contact: dict[str, Any]) -> None:
         """Discord Webhookに通知を送信"""
         if not settings.DISCORD_WEBHOOK_URL:
             logger.warning("DISCORD_WEBHOOK_URLが設定されていません。通知をスキップします。")
@@ -113,37 +113,36 @@ class ContactService:
             "embeds": [embed],
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
+        with httpx.Client() as client:
+            response = client.post(
                 settings.DISCORD_WEBHOOK_URL,
                 json=payload,
                 timeout=10.0,
             )
             response.raise_for_status()
 
-    async def get_contact(self, contact_id: str) -> dict[str, Any]:
+    def get_contact(self, contact_id: str) -> dict[str, Any]:
         """指定したお問い合わせ情報を取得"""
-        return await self.repository.find_by_id(contact_id)
+        return self.repository.find_by_id(contact_id)
 
-    async def get_all_contacts(
+    def get_all_contacts(
         self, user_id: str | None = None
     ) -> list[dict[str, Any]]:
         """お問い合わせ一覧を取得（user_idが指定された場合はそのユーザーのみ）"""
-        return await self.repository.find_all(user_id=user_id)
+        return self.repository.find_all(user_id=user_id)
 
-    async def update_contact(
+    def update_contact(
         self, contact_id: str, contact_data: dict[str, Any]
     ) -> dict[str, Any]:
         """指定したお問い合わせ情報を更新"""
-        return await self.repository.update(contact_id, contact_data)
+        return self.repository.update(contact_id, contact_data)
 
-    async def remove_contact(self, contact_id: str) -> bool:
+    def remove_contact(self, contact_id: str) -> bool:
         """指定したお問い合わせを削除"""
-        contact = await self.repository.find_by_id(contact_id)
+        contact = self.repository.find_by_id(contact_id)
 
         if not contact:
             raise APIException("お問い合わせが見つかりませんでした")
 
-        await self.repository.delete(contact_id)
+        self.repository.delete(contact_id)
         return True
-

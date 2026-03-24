@@ -31,7 +31,7 @@ router = APIRouter()
 
 @router.get("", response_model=list[MaterialsPlaylistResponse])
 @router.get("/", response_model=list[MaterialsPlaylistResponse])
-async def get_materials_playlists(
+def get_materials_playlists(
     title: str | None = Query(None, description="タイトル（部分一致）"),
     name: str | None = Query(None, description="舞台名（部分一致）"),
     year: int | None = Query(None, description="年度"),
@@ -42,17 +42,17 @@ async def get_materials_playlists(
     """
     # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
     if title or name or year is not None:
-        return await materials_playlist_service.search_materials_playlists(
+        return materials_playlist_service.search_materials_playlists(
             title=title,
             name=name,
             year=year
         )
-    return await materials_playlist_service.get_all_materials_playlists()
+    return materials_playlist_service.get_all_materials_playlists()
 
 
 # お気に入りのAPIエンドポイント（動的パスより前に定義する必要あり）
 @router.get("/favorites", response_model=list[MaterialsFavoritesResponse])
-async def get_user_favorites(
+def get_user_favorites(
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
@@ -60,7 +60,7 @@ async def get_user_favorites(
     現在のユーザーのお気に入り一覧を取得
     """
     user_id = UUID(current_user["id"])
-    favorites = await materials_favorite_service.get_favorites_by_user_id(user_id)
+    favorites = materials_favorite_service.get_favorites_by_user_id(user_id)
 
     if not favorites:
         return []
@@ -91,7 +91,7 @@ async def get_user_favorites(
 
 
 @router.get("/favorites/videos", response_model=list[FavoriteVideoDetailResponse])
-async def get_user_favorite_videos_with_details(
+def get_user_favorite_videos_with_details(
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
 ):
@@ -99,7 +99,7 @@ async def get_user_favorite_videos_with_details(
     現在のユーザーのお気に入り動画とその関連情報（プレイリスト、サブプレイリスト）を取得
     """
     user_id = UUID(current_user["id"])
-    favorites_data = await materials_favorite_service.get_favorite_videos_with_details(user_id)
+    favorites_data = materials_favorite_service.get_favorite_videos_with_details(user_id)
 
     if not favorites_data:
         return []
@@ -172,7 +172,7 @@ async def get_user_favorite_videos_with_details(
 
 
 @router.get("/videos/{video_id}/favorites/status")
-async def get_favorite_status(
+def get_favorite_status(
     video_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
@@ -181,12 +181,12 @@ async def get_favorite_status(
     指定したビデオが現在のユーザーにお気に入り登録されているかチェック
     """
     user_id = UUID(current_user["id"])
-    is_favorited = await materials_favorite_service.is_favorited(user_id, video_id)
+    is_favorited = materials_favorite_service.is_favorited(user_id, video_id)
     return {"is_favorited": is_favorited, "video_id": str(video_id), "user_id": str(user_id)}
 
 
 @router.post("/videos/{video_id}/favorites", response_model=MaterialsFavoritesResponse)
-async def create_favorite(
+def create_favorite(
     video_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
@@ -200,7 +200,7 @@ async def create_favorite(
         "video_id": str(video_id)
     }
     try:
-        favorite = await materials_favorite_service.create_materials_favorite(favorite_data)
+        favorite = materials_favorite_service.create_materials_favorite(favorite_data)
         return favorite
     except APIException as e:
         if e.error_code == "FAVORITE_ALREADY_EXISTS":
@@ -212,7 +212,7 @@ async def create_favorite(
 
 
 @router.delete("/videos/{video_id}/favorites")
-async def delete_favorite(
+def delete_favorite(
     video_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
@@ -221,7 +221,7 @@ async def delete_favorite(
     指定したビデオのお気に入りを削除
     """
     user_id = UUID(current_user["id"])
-    success = await materials_favorite_service.delete_materials_favorite(user_id, video_id)
+    success = materials_favorite_service.delete_materials_favorite(user_id, video_id)
 
     if not success:
         raise HTTPException(
@@ -233,7 +233,7 @@ async def delete_favorite(
 
 
 @router.post("/videos/{video_id}/favorites/toggle")
-async def toggle_favorite(
+def toggle_favorite(
     video_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
     materials_favorite_service: MaterialsFavoriteService = Depends(get_materials_favorite_service),
@@ -242,19 +242,19 @@ async def toggle_favorite(
     指定したビデオのお気に入りを追加/削除を切り替え
     """
     user_id = UUID(current_user["id"])
-    result = await materials_favorite_service.toggle_favorite(user_id, video_id)
+    result = materials_favorite_service.toggle_favorite(user_id, video_id)
     return result
 
 
 @router.get("/{playlist_id}", response_model=MaterialsPlaylistResponse)
-async def get_materials_playlist_by_id(
+def get_materials_playlist_by_id(
     playlist_id: UUID,
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
 ):
     """
     youtubeプレイリストを指定したIDで取得
     """
-    playlist = await materials_playlist_service.get_materials_playlist_by_id(playlist_id)
+    playlist = materials_playlist_service.get_materials_playlist_by_id(playlist_id)
     if not playlist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -265,20 +265,20 @@ async def get_materials_playlist_by_id(
 
 @router.post("", response_model=MaterialsPlaylistResponse)
 @router.post("/", response_model=MaterialsPlaylistResponse)
-async def create_materials_playlist(
+def create_materials_playlist(
     materials_playlist_data: MaterialsPlaylistCreate,
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
 ):
     """
     youtubeプレイリストを作成
     """
-    return await materials_playlist_service.create_materials_playlist(
+    return materials_playlist_service.create_materials_playlist(
         materials_playlist_data.model_dump()
     )
 
 
 @router.put("/{playlist_id}", response_model=MaterialsPlaylistResponse)
-async def update_materials_playlist(
+def update_materials_playlist(
     playlist_id: UUID,
     materials_playlist_data: MaterialsPlaylistUpdate,
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
@@ -295,21 +295,21 @@ async def update_materials_playlist(
             detail="更新するデータが指定されていません"
         )
     
-    playlist = await materials_playlist_service.update_materials_playlist(
+    playlist = materials_playlist_service.update_materials_playlist(
         playlist_id, update_dict
     )
     return playlist
 
 
 @router.delete("/{playlist_id}")
-async def delete_materials_playlist(
+def delete_materials_playlist(
     playlist_id: UUID,
     materials_playlist_service: MaterialsPlaylistService = Depends(get_materials_playlist_service),
 ):
     """
     youtubeプレイリストを削除
     """
-    success = await materials_playlist_service.delete_materials_playlist(playlist_id)
+    success = materials_playlist_service.delete_materials_playlist(playlist_id)
     
     if not success:
         raise HTTPException(
@@ -322,7 +322,7 @@ async def delete_materials_playlist(
 
 # サブプレイリストのAPIエンドポイント
 @router.get("/{playlist_id}/sub-playlists", response_model=list[MaterialsSubPlaylistResponse])
-async def get_materials_sub_playlists(
+def get_materials_sub_playlists(
     playlist_id: UUID,
     title: str | None = Query(None, description="タイトル（部分一致）"),
     phase: str | None = Query(None, description="フェーズ"),
@@ -335,18 +335,18 @@ async def get_materials_sub_playlists(
     """
     # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
     if title or phase or recorded_date_from or recorded_date_to:
-        return await materials_sub_playlist_service.search_materials_sub_playlists(
+        return materials_sub_playlist_service.search_materials_sub_playlists(
             playlist_id=playlist_id,
             title=title,
             phase=phase,
             recorded_date_from=recorded_date_from,
             recorded_date_to=recorded_date_to
         )
-    return await materials_sub_playlist_service.get_all_materials_sub_playlists(playlist_id)
+    return materials_sub_playlist_service.get_all_materials_sub_playlists(playlist_id)
     
 
 @router.get("/{playlist_id}/sub-playlists/{sub_playlist_id}", response_model=MaterialsSubPlaylistResponse)
-async def get_materials_sub_playlist_by_id(
+def get_materials_sub_playlist_by_id(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     materials_sub_playlist_service: MaterialsSubPlaylistService = Depends(get_materials_sub_playlist_service),
@@ -354,7 +354,7 @@ async def get_materials_sub_playlist_by_id(
     """
     youtubeプレイリストのサブプレイリストを指定したIDで取得
     """
-    sub_playlist = await materials_sub_playlist_service.get_materials_sub_playlist_by_id(playlist_id, sub_playlist_id)
+    sub_playlist = materials_sub_playlist_service.get_materials_sub_playlist_by_id(playlist_id, sub_playlist_id)
     if not sub_playlist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -364,7 +364,7 @@ async def get_materials_sub_playlist_by_id(
     
 
 @router.post("/{playlist_id}/sub-playlists", response_model=MaterialsSubPlaylistResponse)
-async def create_materials_sub_playlist(
+def create_materials_sub_playlist(
     playlist_id: UUID,
     materials_sub_playlist_data: MaterialsSubPlaylistCreate,
     materials_sub_playlist_service: MaterialsSubPlaylistService = Depends(get_materials_sub_playlist_service),
@@ -375,7 +375,7 @@ async def create_materials_sub_playlist(
     playlist_urlが指定されている場合、自動的に動画をインポートします。
     限定公開動画を含む場合は、システム管理者のOAuth認証が必要です。
     """
-    return await materials_sub_playlist_service.create_materials_sub_playlist(
+    return materials_sub_playlist_service.create_materials_sub_playlist(
         playlist_id, 
         materials_sub_playlist_data.model_dump(mode='json'),
         auto_import_videos=True
@@ -383,7 +383,7 @@ async def create_materials_sub_playlist(
 
 
 @router.put("/{playlist_id}/sub-playlists/{sub_playlist_id}", response_model=MaterialsSubPlaylistResponse)
-async def update_materials_sub_playlist(
+def update_materials_sub_playlist(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     materials_sub_playlist_data: MaterialsSubPlaylistUpdate,
@@ -404,13 +404,13 @@ async def update_materials_sub_playlist(
             detail="更新するデータが指定されていません"
         )
     
-    return await materials_sub_playlist_service.update_materials_sub_playlist(
+    return materials_sub_playlist_service.update_materials_sub_playlist(
         playlist_id, sub_playlist_id, update_dict, auto_import_videos=True
     )
 
 
 @router.delete("/{playlist_id}/sub-playlists/{sub_playlist_id}")
-async def delete_materials_sub_playlist(
+def delete_materials_sub_playlist(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     materials_sub_playlist_service: MaterialsSubPlaylistService = Depends(get_materials_sub_playlist_service),
@@ -418,7 +418,7 @@ async def delete_materials_sub_playlist(
     """
     youtubeプレイリストのサブプレイリストを削除
     """
-    success = await materials_sub_playlist_service.delete_materials_sub_playlist(playlist_id, sub_playlist_id)
+    success = materials_sub_playlist_service.delete_materials_sub_playlist(playlist_id, sub_playlist_id)
     
     if not success:
         raise HTTPException(
@@ -431,7 +431,7 @@ async def delete_materials_sub_playlist(
 
 # ビデオのAPIエンドポイント
 @router.get("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos", response_model=list[MaterialsVideoResponse])
-async def get_materials_videos(
+def get_materials_videos(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     title: str | None = Query(None, description="タイトル（部分一致）"),
@@ -444,18 +444,18 @@ async def get_materials_videos(
     """
     # 検索パラメータが指定されている場合は検索、そうでなければ全件取得
     if title or recorded_date_from or recorded_date_to:
-        return await materials_video_service.search_materials_videos(
+        return materials_video_service.search_materials_videos(
             playlist_id=playlist_id,
             sub_playlist_id=sub_playlist_id,
             title=title,
             recorded_date_from=recorded_date_from,
             recorded_date_to=recorded_date_to
         )
-    return await materials_video_service.get_all_materials_videos(playlist_id, sub_playlist_id)
+    return materials_video_service.get_all_materials_videos(playlist_id, sub_playlist_id)
 
 
 @router.get("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos/{video_id}", response_model=MaterialsVideoResponse)
-async def get_materials_video_by_id(
+def get_materials_video_by_id(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     video_id: UUID,
@@ -464,7 +464,7 @@ async def get_materials_video_by_id(
     """
     youtubeプレイリストのサブプレイリストのビデオを指定したIDで取得
     """
-    video = await materials_video_service.get_materials_video_by_id(playlist_id, sub_playlist_id, video_id)
+    video = materials_video_service.get_materials_video_by_id(playlist_id, sub_playlist_id, video_id)
     if not video:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -474,7 +474,7 @@ async def get_materials_video_by_id(
     
 
 @router.post("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos", response_model=MaterialsVideoResponse)
-async def create_materials_video(
+def create_materials_video(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     materials_video_data: MaterialsVideoCreate,
@@ -483,11 +483,11 @@ async def create_materials_video(
     """
     youtubeプレイリストのサブプレイリストのビデオを作成
     """
-    return await materials_video_service.create_materials_video(playlist_id, sub_playlist_id, materials_video_data.model_dump(mode='json'))
+    return materials_video_service.create_materials_video(playlist_id, sub_playlist_id, materials_video_data.model_dump(mode='json'))
     
 
 @router.put("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos/{video_id}", response_model=MaterialsVideoResponse)
-async def update_materials_video(
+def update_materials_video(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     video_id: UUID,
@@ -506,13 +506,13 @@ async def update_materials_video(
             detail="更新するデータが指定されていません"
         )
     
-    return await materials_video_service.update_materials_video(
+    return materials_video_service.update_materials_video(
         playlist_id, sub_playlist_id, video_id, update_dict
     )
     
 
 @router.delete("/{playlist_id}/sub-playlists/{sub_playlist_id}/videos/{video_id}")
-async def delete_materials_video(
+def delete_materials_video(
     playlist_id: UUID,
     sub_playlist_id: UUID,
     video_id: UUID,
@@ -521,7 +521,7 @@ async def delete_materials_video(
     """
     youtubeプレイリストのサブプレイリストのビデオを削除
     """
-    success = await materials_video_service.delete_materials_video(playlist_id, sub_playlist_id, video_id)
+    success = materials_video_service.delete_materials_video(playlist_id, sub_playlist_id, video_id)
     
     if not success:
         raise HTTPException(

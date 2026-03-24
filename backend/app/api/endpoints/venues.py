@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[VenueResponse])
-async def get_venues(
+def get_venues(
     venue_service: VenueService = Depends(get_venue_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
@@ -29,12 +29,12 @@ async def get_venues(
     Returns:
         listですべての会場情報
     """
-    all_venue_data = await venue_service.get_all_venues()
+    all_venue_data = venue_service.get_all_venues()
     return all_venue_data
 
 
 @router.get("/{venue_id}", response_model=VenueResponse)
-async def get_venue(
+def get_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -50,12 +50,12 @@ async def get_venue(
         スキーマを通して辞書型とした会場情報
     """
 
-    venue_data = await venue_service.get_venue(venue_id)
+    venue_data = venue_service.get_venue(venue_id)
     return VenueResponse(**venue_data)
 
 
 @router.post("/", response_model=VenueResponse)
-async def create_venue(
+def create_venue(
     venue_data: VenueCreate,
     venue_service: VenueService = Depends(get_venue_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -70,13 +70,13 @@ async def create_venue(
     Returns
         スキーマを通して辞書型とした会場情報
     """
-    created_venue = await venue_service.create_venue(venue_data.dict())
+    created_venue = venue_service.create_venue(venue_data.dict())
     return VenueResponse(**created_venue)
 
 
 
 @router.patch("/{venue_id}", response_model=VenueResponse)
-async def patch_venue(
+def patch_venue(
     venue_id: UUID,
     venue_data: VenueUpdate,
     venue_service: VenueService = Depends(get_venue_service),
@@ -93,12 +93,12 @@ async def patch_venue(
     Returns
         スキーマを通して辞書型とした会場情報
     """
-    updated_venue = await venue_service.update_venue(venue_id, venue_data.dict(exclude_unset=True))
+    updated_venue = venue_service.update_venue(venue_id, venue_data.dict(exclude_unset=True))
     return VenueResponse(**updated_venue)
 
 
 @router.delete("/{venue_id}")
-async def delete_venue(
+def delete_venue(
     venue_id: UUID,
     venue_service: VenueService = Depends(get_venue_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -113,4 +113,4 @@ async def delete_venue(
     Returns
         確認メッセージ
     """
-    await venue_service.remove_venue(venue_id)
+    venue_service.remove_venue(venue_id)

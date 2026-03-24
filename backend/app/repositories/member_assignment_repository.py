@@ -1,15 +1,13 @@
 """
 MemberAssignmentRepository - データアクセス層の実装
-Supabaseのmember_assignmentsテーブルに対するCRUD操作を提供
+member_assignmentsテーブルに対するCRUD操作を提供
 """
 
 import logging
 from typing import Any
 from uuid import UUID
 
-from app.core.exceptions import handle_supabase_errors
-
-from supabase import Client
+from app.core.database import Conn
 
 logger = logging.getLogger(__name__)
 
@@ -20,29 +18,27 @@ class MemberAssignmentRepository:
     すべてのデータベース操作をカプセル化
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, conn: Conn):
         """
         Args:
-            client: Supabaseクライアントインスタンス
+            conn: psycopg2接続
         """
-        self.client = client
+        self.conn = conn
         self.table_name = "member_assignments"
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> list[dict[str, Any]]:
+    def find_all(self) -> list[dict[str, Any]]:
         """
         すべてのメンバー所属を取得
 
         Returns:
             メンバー所属情報のリスト
         """
-        response = self.client.table(self.table_name).select("*").execute()
-        data = response.data or []
+        rows = self.conn.execute("SELECT * FROM member_assignments").fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} member assignments in {self.table_name} table")
         return data
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, assignment_id: UUID) -> dict[str, Any] | None:
+    def find_by_id(self, assignment_id: UUID) -> dict[str, Any] | None:
         """
         IDでメンバー所属を取得
 
@@ -52,18 +48,18 @@ class MemberAssignmentRepository:
         Returns:
             メンバー所属情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name).select("*").eq("id", str(assignment_id)).execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM member_assignments WHERE id = %s",
+            (str(assignment_id),),
+        ).fetchone()
+        if row:
             logger.info(f"Found member assignment with id: {assignment_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"Member assignment not found with id: {assignment_id}")
         return None
 
-    @handle_supabase_errors("find_by_part_id")
-    async def find_by_part_id(self, part_id: UUID) -> list[dict[str, Any]]:
+    def find_by_part_id(self, part_id: UUID) -> list[dict[str, Any]]:
         """
         パートIDでメンバー所属を取得
 
@@ -73,19 +69,15 @@ class MemberAssignmentRepository:
         Returns:
             メンバー所属情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("part_id", str(part_id))
-            .order("display_order")
-            .execute()
-        )
-        data = response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM member_assignments WHERE part_id = %s ORDER BY display_order",
+            (str(part_id),),
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} member assignments for part: {part_id}")
         return data
 
-    @handle_supabase_errors("find_by_user_id")
-    async def find_by_user_id(self, user_id: UUID) -> list[dict[str, Any]]:
+    def find_by_user_id(self, user_id: UUID) -> list[dict[str, Any]]:
         """
         ユーザーIDでメンバー所属を取得
 
@@ -95,19 +87,15 @@ class MemberAssignmentRepository:
         Returns:
             メンバー所属情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("user_id", str(user_id))
-            .order("created_at")
-            .execute()
-        )
-        data = response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM member_assignments WHERE user_id = %s ORDER BY created_at",
+            (str(user_id),),
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} member assignments for user: {user_id}")
         return data
 
-    @handle_supabase_errors("find_by_user_and_part")
-    async def find_by_user_and_part(self, user_id: UUID, part_id: UUID) -> dict[str, Any] | None:
+    def find_by_user_and_part(self, user_id: UUID, part_id: UUID) -> dict[str, Any] | None:
         """
         ユーザーIDとパートIDでメンバー所属を取得
 
@@ -118,22 +106,23 @@ class MemberAssignmentRepository:
         Returns:
             メンバー所属情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("user_id", str(user_id))
-            .eq("part_id", str(part_id))
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM member_assignments WHERE user_id = %s AND part_id = %s",
+            (str(user_id), str(part_id)),
+        ).fetchone()
+        if row:
             logger.info(f"Found member assignment for user: {user_id}, part: {part_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"Member assignment not found for user: {user_id}, part: {part_id}")
         return None
 
-    @handle_supabase_errors("find_with_details")
-    async def find_with_details(self, assignment_id: UUID | None = None, part_id: UUID | None = None, user_id: UUID | None = None) -> list[dict[str, Any]]:
+    def find_with_details(
+        self,
+        assignment_id: UUID | None = None,
+        part_id: UUID | None = None,
+        user_id: UUID | None = None,
+    ) -> list[dict[str, Any]]:
         """
         詳細情報付きでメンバー所属を取得
 
@@ -145,33 +134,41 @@ class MemberAssignmentRepository:
         Returns:
             詳細情報付きメンバー所属情報のリスト
         """
-        # JOINクエリを構築
-        query = (
-            self.client.table(self.table_name)
-            .select("""
-                *,
-                users!inner(name, email),
-                parts!inner(name, description, stages!inner(name, description))
-            """)
-        )
-        
-        # 条件を追加
+        conditions = []
+        params: list[Any] = []
+
         if assignment_id:
-            query = query.eq("id", str(assignment_id))
+            conditions.append("ma.id = %s")
+            params.append(str(assignment_id))
         if part_id:
-            query = query.eq("part_id", str(part_id))
+            conditions.append("ma.part_id = %s")
+            params.append(str(part_id))
         if user_id:
-            query = query.eq("user_id", str(user_id))
-        
-        query = query.order("display_order")
-        response = query.execute()
-        
-        data = response.data or []
+            conditions.append("ma.user_id = %s")
+            params.append(str(user_id))
+
+        where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+        rows = self.conn.execute(
+            f"""
+            SELECT ma.*,
+                   u.email AS user_email,
+                   p.name AS part_name, p.description AS part_description,
+                   s.name AS stage_name, s.description AS stage_description
+            FROM member_assignments ma
+            LEFT JOIN users u ON ma.user_id = u.id
+            LEFT JOIN parts p ON ma.part_id = p.id
+            LEFT JOIN stages s ON p.stage_id = s.id
+            {where_clause}
+            ORDER BY ma.display_order
+            """,
+            params,
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} detailed member assignments")
         return data
 
-    @handle_supabase_errors("create")
-    async def create(self, assignment_data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, assignment_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいメンバー所属をデータベースに作成
 
@@ -181,18 +178,26 @@ class MemberAssignmentRepository:
         Returns:
             作成されたメンバー所属情報
         """
-        response = self.client.table(self.table_name).insert(assignment_data).execute()
-        if response.data:
+        columns = list(assignment_data.keys())
+        values = [assignment_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO member_assignments ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(
                 f"Member assignment created successfully: user_id={assignment_data.get('user_id', 'unknown')}, part_id={assignment_data.get('part_id', 'unknown')}"
             )
-            return response.data[0]
+            return dict(row)
 
         logger.error(f"Failed to create member assignment: {assignment_data}")
         return {}
 
-    @handle_supabase_errors("update")
-    async def update(self, assignment_id: UUID, assignment_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update(self, assignment_id: UUID, assignment_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         メンバー所属情報を更新
 
@@ -203,21 +208,24 @@ class MemberAssignmentRepository:
         Returns:
             更新されたメンバー所属情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .update(assignment_data)
-            .eq("id", str(assignment_id))
-            .execute()
+        if not assignment_data:
+            return self.find_by_id(assignment_id)
+        set_clause = ", ".join([f"{k} = %s" for k in assignment_data.keys()])
+        values = list(assignment_data.values()) + [str(assignment_id)]
+        cur = self.conn.execute(
+            f"UPDATE member_assignments SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if response.data and len(response.data) > 0:
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"Member assignment updated successfully: {assignment_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.warning(f"Member assignment not found for update: {assignment_id}")
         return None
 
-    @handle_supabase_errors("delete")
-    async def delete(self, assignment_id: UUID) -> bool:
+    def delete(self, assignment_id: UUID) -> bool:
         """
         メンバー所属を削除
 
@@ -227,12 +235,15 @@ class MemberAssignmentRepository:
         Returns:
             削除成功時True
         """
-        self.client.table(self.table_name).delete().eq("id", str(assignment_id)).execute()
+        self.conn.execute(
+            "DELETE FROM member_assignments WHERE id = %s",
+            (str(assignment_id),),
+        )
+        self.conn.commit()
         logger.info(f"Member assignment deleted successfully: {assignment_id}")
         return True
 
-    @handle_supabase_errors("delete_by_user_and_part")
-    async def delete_by_user_and_part(self, user_id: UUID, part_id: UUID) -> bool:
+    def delete_by_user_and_part(self, user_id: UUID, part_id: UUID) -> bool:
         """
         ユーザーIDとパートIDでメンバー所属を削除
 
@@ -243,21 +254,22 @@ class MemberAssignmentRepository:
         Returns:
             削除成功時True
         """
-        self.client.table(self.table_name).delete().eq("user_id", str(user_id)).eq("part_id", str(part_id)).execute()
+        self.conn.execute(
+            "DELETE FROM member_assignments WHERE user_id = %s AND part_id = %s",
+            (str(user_id), str(part_id)),
+        )
+        self.conn.commit()
         logger.info(f"Member assignment deleted successfully: user_id={user_id}, part_id={part_id}")
         return True
 
-    @handle_supabase_errors("count")
-    async def count(self) -> int:
+    def count(self) -> int:
         """
         メンバー所属数を取得
 
         Returns:
             メンバー所属数
         """
-        response = (
-            self.client.table(self.table_name).select("id", count="exact").execute()
-        )
-        count = response.count if hasattr(response, "count") else 0
+        row = self.conn.execute("SELECT COUNT(*) AS cnt FROM member_assignments").fetchone()
+        count = row["cnt"] if row else 0
         logger.info(f"Total member assignments count: {count}")
         return count

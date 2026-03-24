@@ -16,18 +16,18 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[UserResponse])
-async def get_users(
+def get_users(
     user_service: UserService = Depends(get_user_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """
     すべてのユーザーを取得
     """
-    return await user_service.get_all_users()
+    return user_service.get_all_users()
 
 
 @router.get("/me")
-async def get_current_user_info(
+def get_current_user_info(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """
@@ -36,7 +36,7 @@ async def get_current_user_info(
     return current_user
 
 @router.get("/me/role")
-async def get_current_user_role(
+def get_current_user_role(
     current_user: CurrentUser = Depends(get_current_user),
     user_role_repository = Depends(get_user_role_repository),
 ):
@@ -44,7 +44,7 @@ async def get_current_user_role(
     現在認証されているユーザーのロール情報を取得
     """
     user_id = current_user.get("id")
-    role = await user_role_repository.get_role_by_user_id(user_id)
+    role = user_role_repository.get_role_by_user_id(user_id)
 
     if not role:
         return {
@@ -56,7 +56,7 @@ async def get_current_user_role(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-async def get_user(
+def get_user(
     user_id: str,
     user_service: UserService = Depends(get_user_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -64,22 +64,22 @@ async def get_user(
     """
     特定のユーザー情報を取得
     """
-    return await user_service.get_user_by_id(user_id)
+    return user_service.get_user_by_id(user_id)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(
+def register_user(
     user_data: UserCreate,
     user_service: UserService = Depends(get_user_service),
 ):
     """
     新規ユーザー登録（認証不要）
     """
-    return await user_service.create_user(user_data.dict())
+    return user_service.create_user(user_data.dict())
 
 
 @router.post("/", response_model=UserResponse)
-async def create_user(
+def create_user(
     user_data: UserCreate,
     user_service: UserService = Depends(get_user_service),
     current_user: CurrentUser = Depends(require_admin),
@@ -87,11 +87,11 @@ async def create_user(
     """
     新しいユーザーを作成（管理者用・認証必要）
     """
-    return await user_service.create_user(user_data.dict())
+    return user_service.create_user(user_data.dict())
 
 
 @router.put("/{user_id}", response_model=UserResponse)
-async def update_user(
+def update_user(
     user_id: str,
     user_data: UserUpdate,
     user_service: UserService = Depends(get_user_service),
@@ -106,11 +106,11 @@ async def update_user(
     if not update_data:
         raise APIException(ErrorMessage.BAD_REQUEST)
 
-    return await user_service.update_user(user_id, update_data)
+    return user_service.update_user(user_id, update_data)
 
 
 @router.delete("/{user_id}")
-async def delete_user(
+def delete_user(
     user_id: str,
     user_service: UserService = Depends(get_user_service),
     current_user: CurrentUser = Depends(require_admin),
@@ -118,5 +118,5 @@ async def delete_user(
     """
     ユーザーを削除
     """
-    await user_service.delete_user(user_id)
+    user_service.delete_user(user_id)
     return {"message": "User deleted successfully"}

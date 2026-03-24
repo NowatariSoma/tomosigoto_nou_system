@@ -24,45 +24,45 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ScheduleTimeSlotResponse])
-async def get_schedule_time_slots(
+def get_schedule_time_slots(
     schedule_id: UUID | None = Query(None, description="練習スケジュールIDでフィルタ"),
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """スケジュール時間スロット一覧を取得"""
-    result = await time_slot_service.get_all_schedule_time_slots(
+    result = time_slot_service.get_all_schedule_time_slots(
         schedule_id=schedule_id
     )
     return result
 
 
 @router.get("/{time_slot_id}", response_model=ScheduleTimeSlotResponse)
-async def get_schedule_time_slot(
+def get_schedule_time_slot(
     time_slot_id: UUID,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """指定したIDのスケジュール時間スロットを取得"""
-    time_slot = await time_slot_service.get_schedule_time_slot(time_slot_id)
+    time_slot = time_slot_service.get_schedule_time_slot(time_slot_id)
     return time_slot
 
 
 @router.get("/schedule/{schedule_id}", response_model=list[ScheduleTimeSlotResponse])
-async def get_schedule_time_slots_by_schedule(
+def get_schedule_time_slots_by_schedule(
     schedule_id: UUID,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
     """指定したスケジュールの時間スロット一覧を取得"""
-    time_slots = await time_slot_service.get_schedule_time_slots_by_schedule(schedule_id)
+    time_slots = time_slot_service.get_schedule_time_slots_by_schedule(schedule_id)
     return time_slots
 
 
 @router.post("/", response_model=ScheduleTimeSlotResponse)
-async def create_schedule_time_slot(
+def create_schedule_time_slot(
     time_slot_data: ScheduleTimeSlotCreate,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
@@ -83,21 +83,21 @@ async def create_schedule_time_slot(
             detail="開始時刻は終了時刻より前である必要があります"
         )
     
-    time_slot = await time_slot_service.create_schedule_time_slot(
+    time_slot = time_slot_service.create_schedule_time_slot(
         time_slot_data.model_dump()
     )
     return time_slot
 
 
 @router.post("/bulk", response_model=ScheduleTimeSlotBulkResponse)
-async def create_schedule_time_slots_bulk(
+def create_schedule_time_slots_bulk(
     bulk_data: ScheduleTimeSlotBulkCreate,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """スケジュール時間スロットを一括作成"""
-    result = await time_slot_service.create_schedule_time_slots_bulk(
+    result = time_slot_service.create_schedule_time_slots_bulk(
         schedule_id=bulk_data.schedule_id,
         time_slots=bulk_data.time_slots
     )
@@ -105,7 +105,7 @@ async def create_schedule_time_slots_bulk(
 
 
 @router.put("/{time_slot_id}", response_model=ScheduleTimeSlotResponse)
-async def update_schedule_time_slot(
+def update_schedule_time_slot(
     time_slot_id: UUID,
     update_data: ScheduleTimeSlotUpdate,
     #current_user: CurrentUser = Depends(get_current_user),
@@ -122,21 +122,21 @@ async def update_schedule_time_slot(
             detail="更新するデータが指定されていません"
         )
     
-    time_slot = await time_slot_service.update_schedule_time_slot(
+    time_slot = time_slot_service.update_schedule_time_slot(
         time_slot_id, update_dict
     )
     return time_slot
 
 
 @router.delete("/{time_slot_id}")
-async def delete_schedule_time_slot(
+def delete_schedule_time_slot(
     time_slot_id: UUID,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """スケジュール時間スロットを削除"""
-    success = await time_slot_service.delete_schedule_time_slot(time_slot_id)
+    success = time_slot_service.delete_schedule_time_slot(time_slot_id)
     
     if not success:
         raise HTTPException(
@@ -148,14 +148,14 @@ async def delete_schedule_time_slot(
 
 
 @router.delete("/schedule/{schedule_id}")
-async def delete_schedule_time_slots_by_schedule(
+def delete_schedule_time_slots_by_schedule(
     schedule_id: UUID,
     #current_user: CurrentUser = Depends(get_current_user),
     time_slot_service: ScheduleTimeSlotService = Depends(get_schedule_time_slot_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
 ):
     """指定したスケジュールの時間スロットをすべて削除"""
-    deleted_count = await time_slot_service.delete_schedule_time_slots_by_schedule(schedule_id)
+    deleted_count = time_slot_service.delete_schedule_time_slots_by_schedule(schedule_id)
     
     return {
         "message": f"スケジュール {schedule_id} の時間スロット {deleted_count} 件を削除しました",

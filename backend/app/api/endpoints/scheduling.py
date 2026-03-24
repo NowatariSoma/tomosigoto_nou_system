@@ -26,7 +26,7 @@ router = APIRouter()
     summary="スケジュール最適化",
     description="指定されたスケジュールを最適化し、結果をデータベースに保存します。"
 )
-async def optimize_schedule(
+def optimize_schedule(
     request: OptimizationRequest,
     current_user: CurrentUser = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
@@ -39,7 +39,7 @@ async def optimize_schedule(
             optimization_params = request.optimization_params.dict()
         
         # 最適化を実行
-        result = await service.optimize_schedule(
+        result = service.optimize_schedule(
             schedule_id=request.schedule_id,
             optimization_params=optimization_params
         )
@@ -73,7 +73,7 @@ async def optimize_schedule(
     summary="最適化プレビュー",
     description="最適化結果をプレビューします（データベースに保存されません）。"
 )
-async def preview_optimization(
+def preview_optimization(
     request: PreviewRequest,
     current_user: CurrentUser = Depends(get_current_user),  # 認証が必要
     service: SchedulingOptimizationService = Depends(get_scheduling_optimization_service)
@@ -86,7 +86,7 @@ async def preview_optimization(
             optimization_params = request.optimization_params.dict()
         
         # プレビューを実行
-        result = await service.preview_optimization(
+        result = service.preview_optimization(
             schedule_id=request.schedule_id,
             optimization_params=optimization_params
         )
@@ -119,7 +119,7 @@ async def preview_optimization(
     summary="ヘルスチェック",
     description="スケジューリング最適化サービスのヘルスチェック"
 )
-async def health_check() -> dict[str, str]:
+def health_check() -> dict[str, str]:
     """ヘルスチェック"""
     return {
         "status": "healthy",

@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=ContactResponse)
-async def create_contact(
+def create_contact(
     contact_data: ContactCreate,
     current_user: CurrentUser = Depends(get_current_user),
     contact_service: ContactService = Depends(get_contact_service),
@@ -27,6 +27,6 @@ async def create_contact(
     contact_dict = contact_data.model_dump()
     # 認証済みユーザーのIDを設定（リクエストボディのuser_idは無視）
     contact_dict["user_id"] = current_user["id"]
-    created_contact = await contact_service.create_contact(contact_dict)
+    created_contact = contact_service.create_contact(contact_dict)
     return ContactResponse(**created_contact)
 

@@ -1,35 +1,13 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
+  const requestUrl = new URL(request.url);
+  const token = requestUrl.searchParams.get('token');
 
-  if (code) {
-    const cookieStore = await cookies()
-
-    const supabase = createServerClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
-
-    await supabase.auth.exchangeCodeForSession(code)
+  if (!token) {
+    return NextResponse.redirect(new URL('/login?error=invalid_token', requestUrl.origin));
   }
 
-  // メール確認後はホームページにリダイレクト
-  return NextResponse.redirect(new URL('/', requestUrl.origin))
+  // バックエンドに検証を委譲してリダイレクト
+  return NextResponse.redirect(new URL(`/verify-email?token=${token}`, requestUrl.origin));
 }

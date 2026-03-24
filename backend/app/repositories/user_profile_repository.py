@@ -6,8 +6,7 @@ user_profilesテーブルに対するCRUD操作を提供
 import logging
 from typing import Any
 
-from app.core.exceptions import handle_supabase_errors
-from supabase import Client
+from app.core.database import Conn
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +17,15 @@ class UserProfileRepository:
     user_profilesテーブルのすべてのデータベース操作をカプセル化
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, conn: Conn):
         """
         Args:
-            client: Supabaseクライアントインスタンス
+            conn: psycopg2接続
         """
-        self.client = client
+        self.conn = conn
         self.table_name = "user_profiles"
 
-    @handle_supabase_errors("get_profile_by_user_id")
-    async def get_profile_by_user_id(self, user_id: str) -> dict[str, Any] | None:
+    def get_profile_by_user_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザープロフィールを取得
 
@@ -37,57 +35,44 @@ class UserProfileRepository:
         Returns:
             プロフィール情報、見つからない場合はNone
         """
-        print(f"Searching for profile with user_id: {user_id}")
-        response = (
-            self.client.table(self.table_name)
-            .select("""
-                *,
-                departments!inner(
-                    department_code,
-                    department_name
-                )
-            """)
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            """
+            SELECT up.*, d.department_code, d.department_name
+            FROM user_profiles up
+            LEFT JOIN departments d ON up.department_id = d.id
+            WHERE up.user_id = %s
+            ORDER BY up.created_at DESC
+            LIMIT 1
+            """,
+            (str(user_id),),
+        ).fetchone()
+        if row:
             logger.info(f"Found user profile for user: {user_id}")
-            profile = response.data[0]
-            
-            # レスポンス形式を統一（department_code, department_nameを追加）
-            if 'departments' in profile and profile['departments']:
-                profile['department_code'] = profile['departments']['department_code']
-                profile['department_name'] = profile['departments']['department_name']
-            else:
-                profile['department_code'] = 'LIT'  # デフォルト値
-                profile['department_name'] = '文学部'  # デフォルト値
-            
+            profile = dict(row)
+            if not profile.get("department_code"):
+                profile["department_code"] = "LIT"
+            if not profile.get("department_name"):
+                profile["department_name"] = "文学部"
             return profile
 
         logger.info(f"User profile not found for user: {user_id}")
         return None
 
-    @handle_supabase_errors("get_profiles_by_user_ids")
-    async def get_profiles_by_user_ids(self, user_ids: list[str]) -> list[dict[str, Any]]:
+    def get_profiles_by_user_ids(self, user_ids: list[str]) -> list[dict[str, Any]]:
         """
         複数ユーザーIDのプロフィールをまとめて取得
         """
         if not user_ids:
             return []
 
-        response = (
-            self.client.table(self.table_name)
-            .select("user_id, first_name_kanji, last_name_kanji")
-            .in_("user_id", user_ids)
-            .execute()
-        )
+        placeholders = ", ".join(["%s"] * len(user_ids))
+        rows = self.conn.execute(
+            f"SELECT user_id, first_name_kanji, last_name_kanji FROM user_profiles WHERE user_id IN ({placeholders})",
+            [str(uid) for uid in user_ids],
+        ).fetchall()
+        return [dict(r) for r in rows]
 
-        return response.data or []
-
-    @handle_supabase_errors("get_profile_by_student_id")
-    async def get_profile_by_student_id(self, student_id: str) -> dict[str, Any] | None:
+    def get_profile_by_student_id(self, student_id: str) -> dict[str, Any] | None:
         """
         学籍番号でユーザープロフィールを取得
 
@@ -97,21 +82,18 @@ class UserProfileRepository:
         Returns:
             プロフィール情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("student_id", student_id)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM user_profiles WHERE student_id = %s",
+            (student_id,),
+        ).fetchone()
+        if row:
             logger.info(f"Found user profile for student_id: {student_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"User profile not found for student_id: {student_id}")
         return None
 
-    @handle_supabase_errors("create_profile")
-    async def create_profile(self, profile_data: dict[str, Any]) -> dict[str, Any]:
+    def create_profile(self, profile_data: dict[str, Any]) -> dict[str, Any]:
         """
         新しいユーザープロフィールを作成
 
@@ -121,20 +103,27 @@ class UserProfileRepository:
         Returns:
             作成されたプロフィール情報
         """
-        response = self.client.table(self.table_name).insert(profile_data).execute()
-        if response.data:
+        columns = list(profile_data.keys())
+        values = [profile_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO user_profiles ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User profile created successfully for user: {profile_data.get('user_id', 'unknown')}")
-            # 作成後に学部情報を含めて再取得
-            user_id = profile_data.get('user_id')
+            user_id = profile_data.get("user_id")
             if user_id:
-                return await self.get_profile_by_user_id(user_id)
-            return response.data[0]
+                return self.get_profile_by_user_id(user_id)
+            return dict(row)
 
         logger.error(f"Failed to create user profile for user: {profile_data.get('user_id', 'unknown')}")
         return {}
 
-    @handle_supabase_errors("update_profile")
-    async def update_profile(self, user_id: str, profile_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update_profile(self, user_id: str, profile_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザープロフィールを更新
 
@@ -146,27 +135,29 @@ class UserProfileRepository:
             更新されたプロフィール情報、見つからない場合はNone
         """
         # 既存のプロフィールを取得して、そのIDで更新
-        existing_profile = await self.get_profile_by_user_id(user_id)
+        existing_profile = self.get_profile_by_user_id(user_id)
         if not existing_profile:
             logger.warning(f"Profile not found for user: {user_id}")
             return None
-        
-        response = (
-            self.client.table(self.table_name)
-            .update(profile_data)
-            .eq("id", existing_profile["id"])
-            .execute()
+
+        if not profile_data:
+            return existing_profile
+        set_clause = ", ".join([f"{k} = %s" for k in profile_data.keys()])
+        values = list(profile_data.values()) + [str(existing_profile["id"])]
+        cur = self.conn.execute(
+            f"UPDATE user_profiles SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if response.data and len(response.data) > 0:
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User profile updated successfully for user: {user_id}")
-            # 更新後に学部情報を含めて再取得
-            return await self.get_profile_by_user_id(user_id)
+            return self.get_profile_by_user_id(user_id)
 
         logger.warning(f"User profile not found for update: {user_id}")
         return None
 
-    @handle_supabase_errors("delete_profile")
-    async def delete_profile(self, user_id: str) -> bool:
+    def delete_profile(self, user_id: str) -> bool:
         """
         ユーザープロフィールを削除
 
@@ -176,12 +167,12 @@ class UserProfileRepository:
         Returns:
             削除成功時True
         """
-        self.client.table(self.table_name).delete().eq("user_id", user_id).execute()
+        self.conn.execute("DELETE FROM user_profiles WHERE user_id = %s", (str(user_id),))
+        self.conn.commit()
         logger.info(f"User profile deleted successfully for user: {user_id}")
         return True
 
-    @handle_supabase_errors("check_student_id_exists")
-    async def check_student_id_exists(self, student_id: str, exclude_user_id: str | None = None) -> bool:
+    def check_student_id_exists(self, student_id: str, exclude_user_id: str | None = None) -> bool:
         """
         学籍番号の重複チェック
 
@@ -192,35 +183,33 @@ class UserProfileRepository:
         Returns:
             重複している場合True
         """
-        query = self.client.table(self.table_name).select("id").eq("student_id", student_id)
-        
         if exclude_user_id:
-            query = query.neq("user_id", exclude_user_id)
-        
-        response = query.execute()
-        exists = len(response.data or []) > 0
+            row = self.conn.execute(
+                "SELECT id FROM user_profiles WHERE student_id = %s AND user_id != %s LIMIT 1",
+                (student_id, str(exclude_user_id)),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT id FROM user_profiles WHERE student_id = %s LIMIT 1",
+                (student_id,),
+            ).fetchone()
+        exists = row is not None
         logger.info(f"Student ID {student_id} exists: {exists}")
         return exists
 
-    @handle_supabase_errors("get_profile_count")
-    async def get_profile_count(self) -> int:
+    def get_profile_count(self) -> int:
         """
         プロフィール数を取得
 
         Returns:
             プロフィール数
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("id", count="exact")
-            .execute()
-        )
-        count = response.count if hasattr(response, "count") else 0
+        row = self.conn.execute("SELECT COUNT(*) AS cnt FROM user_profiles").fetchone()
+        count = row["cnt"] if row else 0
         logger.info(f"Total user profiles count: {count}")
         return count
 
-    @handle_supabase_errors("get_profiles_by_department")
-    async def get_profiles_by_department(self, department_id: str) -> list[dict[str, Any]]:
+    def get_profiles_by_department(self, department_id: str) -> list[dict[str, Any]]:
         """
         学部IDでプロフィール一覧を取得
 
@@ -230,19 +219,15 @@ class UserProfileRepository:
         Returns:
             プロフィール情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("department_id", department_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        data = response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM user_profiles WHERE department_id = %s ORDER BY created_at DESC",
+            (str(department_id),),
+        ).fetchall()
+        data = [dict(r) for r in rows]
         logger.info(f"Found {len(data)} profiles for department: {department_id}")
         return data
 
-    @handle_supabase_errors("check_email_exists")
-    async def check_email_exists(self, email: str, exclude_user_id: str | None = None) -> bool:
+    def check_email_exists(self, email: str, exclude_user_id: str | None = None) -> bool:
         """
         メールアドレスの重複チェック
 
@@ -253,27 +238,30 @@ class UserProfileRepository:
         Returns:
             メールアドレスが既に存在する場合はTrue
         """
-        query = self.client.table(self.table_name).select("id").eq("email", email)
-
         if exclude_user_id:
-            query = query.neq("user_id", exclude_user_id)
-
-        response = query.execute()
-        exists = len(response.data or []) > 0
+            row = self.conn.execute(
+                "SELECT id FROM user_profiles WHERE email = %s AND user_id != %s LIMIT 1",
+                (email, str(exclude_user_id)),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT id FROM user_profiles WHERE email = %s LIMIT 1",
+                (email,),
+            ).fetchone()
+        exists = row is not None
         if exists:
             logger.info(f"Email {email} exists: {exists}")
         return exists
 
-    @handle_supabase_errors("get_all_profiles_basic")
-    async def get_all_profiles_basic(self) -> list[dict[str, Any]]:
+    def get_all_profiles_basic(self) -> list[dict[str, Any]]:
         """
         account_setting_profileビューから基本情報（氏名・メール）を取得
         """
-        response = (
-            self.client.table("account_setting_profile")
-            .select("user_id, first_name_kanji, last_name_kanji, email")
-            .order("last_name_kanji", desc=False)
-            .order("first_name_kanji", desc=False)
-            .execute()
-        )
-        return response.data or []
+        rows = self.conn.execute(
+            """
+            SELECT user_id, first_name_kanji, last_name_kanji, email
+            FROM account_setting_profile
+            ORDER BY last_name_kanji ASC, first_name_kanji ASC
+            """
+        ).fetchall()
+        return [dict(r) for r in rows]

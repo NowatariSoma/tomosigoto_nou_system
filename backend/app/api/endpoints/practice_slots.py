@@ -29,7 +29,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[PracticeScheduleResponse])
-async def get_practice_schedules(
+def get_practice_schedules(
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
@@ -42,12 +42,12 @@ async def get_practice_schedules(
     Returns:
         すべての練習スケジュールのリスト
     """
-    all_schedules = await practice_schedule_service.get_all_practice_schedules()
+    all_schedules = practice_schedule_service.get_all_practice_schedules()
     return [PracticeScheduleResponse(**schedule) for schedule in all_schedules]
 
 
 @router.get("/date/{target_date}", response_model=PracticeScheduleResponse)
-async def get_practice_schedule_by_date(
+def get_practice_schedule_by_date(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -62,14 +62,14 @@ async def get_practice_schedule_by_date(
     Returns:
         指定した日付の練習スケジュール
     """
-    schedule = await practice_schedule_service.get_practice_schedule_by_date(target_date)
+    schedule = practice_schedule_service.get_practice_schedule_by_date(target_date)
     if not schedule:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return PracticeScheduleResponse(**schedule)
 
 
 @router.get("/{schedule_id}", response_model=PracticeScheduleResponse)
-async def get_practice_schedule(
+def get_practice_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -84,12 +84,12 @@ async def get_practice_schedule(
     Returns:
         指定したIDの練習スケジュール
     """
-    schedule = await practice_schedule_service.get_practice_schedule(schedule_id)
+    schedule = practice_schedule_service.get_practice_schedule(schedule_id)
     return PracticeScheduleResponse(**schedule)
 
 
 @router.get("/{schedule_id}/details", response_model=dict[str, Any])
-async def get_practice_schedule_with_details(
+def get_practice_schedule_with_details(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -104,14 +104,14 @@ async def get_practice_schedule_with_details(
     Returns:
         理想的な形式の練習スケジュール詳細情報
     """
-    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_id(schedule_id)
+    details_data = practice_schedule_service.get_practice_schedule_ideal_format_by_id(schedule_id)
     if not details_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return details_data
 
 
 @router.get("/{schedule_id}/display", response_model=PracticeScheduleDisplayResponse)
-async def get_practice_schedule_for_display(
+def get_practice_schedule_for_display(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -126,12 +126,12 @@ async def get_practice_schedule_for_display(
     Returns:
         練習表表示用の練習スケジュール情報
     """
-    schedule_display = await practice_schedule_service.get_practice_schedule_for_display(schedule_id)
+    schedule_display = practice_schedule_service.get_practice_schedule_for_display(schedule_id)
     return PracticeScheduleDisplayResponse(**schedule_display)
 
 
 @router.get("/date/{target_date}/details", response_model=dict[str, Any])
-async def get_practice_schedule_details_by_date(
+def get_practice_schedule_details_by_date(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -146,14 +146,14 @@ async def get_practice_schedule_details_by_date(
     Returns:
         理想的な形式の練習スケジュール詳細情報
     """
-    details_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
+    details_data = practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
     if not details_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return details_data
 
 
 @router.get("/date/{target_date}/ideal", response_model=dict[str, Any])
-async def get_practice_schedule_ideal_format(
+def get_practice_schedule_ideal_format(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -168,14 +168,14 @@ async def get_practice_schedule_ideal_format(
     Returns:
         理想的な形式の練習スケジュール情報
     """
-    ideal_data = await practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
+    ideal_data = practice_schedule_service.get_practice_schedule_ideal_format_by_date(target_date)
     if not ideal_data:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return ideal_data
 
 
 @router.get("/date/{target_date}/bundle", response_model=PracticeScheduleBundleResponse)
-async def get_practice_schedule_bundle(
+def get_practice_schedule_bundle(
     target_date: str,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -183,14 +183,14 @@ async def get_practice_schedule_bundle(
     """
     指定日のボトムシート表示用 bundle データを取得
     """
-    bundle = await practice_schedule_service.get_practice_schedule_bundle(target_date, current_user)
+    bundle = practice_schedule_service.get_practice_schedule_bundle(target_date, current_user)
     if not bundle:
         raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
     return PracticeScheduleBundleResponse(**bundle)
 
 
 @router.post("/", response_model=PracticeScheduleResponse)
-async def create_practice_schedule(
+def create_practice_schedule(
     schedule_data: PracticeScheduleCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -212,14 +212,14 @@ async def create_practice_schedule(
         schedule_dict["created_by"] = str(current_user["id"])
         schedule_dict["updated_by"] = str(current_user["id"])
 
-        created_schedule = await practice_schedule_service.create_practice_schedule(schedule_dict)
+        created_schedule = practice_schedule_service.create_practice_schedule(schedule_dict)
         return PracticeScheduleResponse(**created_schedule)
     except Exception as e:
         raise
 
 
 @router.put("/{schedule_id}", response_model=PracticeScheduleResponse)
-async def update_practice_schedule(
+def update_practice_schedule(
     schedule_id: UUID,
     schedule_data: PracticeScheduleUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -242,7 +242,7 @@ async def update_practice_schedule(
         schedule_dict = schedule_data.model_dump(exclude_unset=True)
         schedule_dict["updated_by"] = str(current_user["id"])
 
-        updated_schedule = await practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
+        updated_schedule = practice_schedule_service.update_practice_schedule(schedule_id, schedule_dict)
 
         return PracticeScheduleResponse(**updated_schedule)
     except Exception as e:
@@ -250,7 +250,7 @@ async def update_practice_schedule(
 
 
 @router.put("/{schedule_id}/with-details", response_model=PracticeScheduleWithDetailsResponse)
-async def update_practice_schedule_with_details(
+def update_practice_schedule_with_details(
     schedule_id: UUID,
     schedule_data: dict[str, Any],
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -271,12 +271,12 @@ async def update_practice_schedule_with_details(
     # 更新者を設定
     schedule_data["updated_by"] = str(current_user["id"])
 
-    updated_schedule = await practice_schedule_service.update_practice_schedule_with_details(schedule_id, schedule_data)
+    updated_schedule = practice_schedule_service.update_practice_schedule_with_details(schedule_id, schedule_data)
     return PracticeScheduleWithDetailsResponse(**updated_schedule)
 
 
 @router.delete("/{schedule_id}")
-async def delete_practice_schedule(
+def delete_practice_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -291,14 +291,14 @@ async def delete_practice_schedule(
     Returns:
         削除成功のメッセージ
     """
-    await practice_schedule_service.remove_practice_schedule(schedule_id)
+    practice_schedule_service.remove_practice_schedule(schedule_id)
     return {"message": "練習スケジュールが正常に削除されました"}
 
 
 # ===== セッション関連エンドポイント =====
 
 @router.get("/{schedule_id}/sessions", response_model=list[SessionResponse])
-async def get_sessions_by_schedule(
+def get_sessions_by_schedule(
     schedule_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -313,12 +313,12 @@ async def get_sessions_by_schedule(
     Returns:
         指定した練習スケジュールのセッション一覧
     """
-    sessions = await practice_schedule_service.get_sessions_by_schedule(schedule_id)
+    sessions = practice_schedule_service.get_sessions_by_schedule(schedule_id)
     return [SessionResponse(**session) for session in sessions]
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
-async def get_session(
+def get_session(
     session_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -333,12 +333,12 @@ async def get_session(
     Returns:
         指定したIDのセッション
     """
-    session = await practice_schedule_service.get_session(session_id)
+    session = practice_schedule_service.get_session(session_id)
     return SessionResponse.model_validate(session)
 
 
 @router.post("/sessions", response_model=SessionResponse)
-async def create_session(
+def create_session(
     session_data: SessionCreate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -363,7 +363,7 @@ async def create_session(
     # venue_idが指定されている場合は、schedule_available_venue_idに変換
     if session_dict.get("venue_id") and not session_dict.get("schedule_available_venue_id"):
         # まず、venue_idとして検索
-        schedule_available_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+        schedule_available_venue = practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
             session_dict["schedule_id"], session_dict["venue_id"]
         )
         
@@ -382,7 +382,7 @@ async def create_session(
                 else:
                     search_id = UUID(venue_id_value)
                     
-                schedule_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_id(search_id)
+                schedule_venue = practice_schedule_service.schedule_available_venue_repository.find_by_id(search_id)
                 if schedule_venue:
                     session_dict["schedule_available_venue_id"] = str(schedule_venue.get("id"))
                     print(f"DEBUG create_session endpoint: schedule_available_venue_idを直接使用 = {session_dict['schedule_available_venue_id']}")
@@ -395,13 +395,13 @@ async def create_session(
     # venue_idを削除（sessionsテーブルには存在しない）
     session_dict.pop("venue_id", None)
 
-    created_session = await practice_schedule_service.create_session(session_dict)
+    created_session = practice_schedule_service.create_session(session_dict)
     print(f"DEBUG create_session endpoint: created_session = {created_session}")
     return SessionResponse.model_validate(created_session)
 
 
 @router.put("/sessions/{session_id}", response_model=SessionResponse)
-async def update_session(
+def update_session(
     session_id: UUID,
     session_data: SessionUpdate,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -424,12 +424,12 @@ async def update_session(
     # venue_idが指定されている場合は、schedule_available_venue_idに変換
     if session_dict.get("venue_id"):
         # まず、schedule_idを取得
-        session = await practice_schedule_service.session_repository.find_by_id(session_id)
+        session = practice_schedule_service.session_repository.find_by_id(session_id)
         if session:
             schedule_id = session.get("schedule_id")
             
             # venue_idとして検索
-            schedule_available_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+            schedule_available_venue = practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
                 schedule_id, session_dict["venue_id"]
             )
             
@@ -445,12 +445,12 @@ async def update_session(
     # venue_idを削除（sessionsテーブルには存在しない）
     session_dict.pop("venue_id", None)
 
-    updated_session = await practice_schedule_service.update_session(session_id, session_dict)
+    updated_session = practice_schedule_service.update_session(session_id, session_dict)
     return SessionResponse.model_validate(updated_session)
 
 
 @router.put("/sessions/{session_id}/move", response_model=SessionResponse)
-async def move_session(
+def move_session(
     session_id: UUID,
     target_venue_id: UUID = Query(..., description="移動先会場ID"),
     target_slot_order: int = Query(..., description="移動先時限番号"),
@@ -472,7 +472,7 @@ async def move_session(
     print(f"DEBUG move_session: 開始 - session_id={session_id}, target_venue_id={target_venue_id}, target_slot_order={target_slot_order}")
     
     # セッション情報を取得
-    session = await practice_schedule_service.session_repository.find_by_id(session_id)
+    session = practice_schedule_service.session_repository.find_by_id(session_id)
     print(f"DEBUG move_session: セッション情報取得 - session={session}")
     if not session:
         raise APIException(ErrorMessage.SESSION_NOT_FOUND)
@@ -482,7 +482,7 @@ async def move_session(
     # target_venue_idがvenue_idの場合はschedule_available_venue_idに変換
     # target_venue_idが既にschedule_available_venue_idの場合はそのまま使用
     # まず、schedule_available_venuesテーブルでIDを検索
-    schedule_venue = await practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
+    schedule_venue = practice_schedule_service.schedule_available_venue_repository.find_by_schedule_and_venue(
         schedule_id, target_venue_id
     )
     
@@ -495,7 +495,7 @@ async def move_session(
         actual_target_venue_id = target_venue_id
         print(f"DEBUG move_session: schedule_available_venue_idを直接使用 = {actual_target_venue_id}")
     
-    updated_session = await practice_schedule_service.move_session(
+    updated_session = practice_schedule_service.move_session(
         session_id, actual_target_venue_id, target_slot_order
     )
     # Pydantic v2では、dictからモデルを作成する際にmodel_validate()を使用
@@ -503,7 +503,7 @@ async def move_session(
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_session(
+def delete_session(
     session_id: UUID,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -518,14 +518,14 @@ async def delete_session(
     Returns:
         削除成功のメッセージ
     """
-    await practice_schedule_service.remove_session(session_id)
+    practice_schedule_service.remove_session(session_id)
     return {"message": "セッションが正常に削除されました"}
 
 
 # ===== Monthカレンダー表示用エンドポイント =====
 
 @router.get("/calendar/month/{year}/{month}")
-async def get_practice_schedules_for_month_calendar(
+def get_practice_schedules_for_month_calendar(
     year: int,
     month: int,
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -545,7 +545,7 @@ async def get_practice_schedules_for_month_calendar(
     if not (1 <= month <= 12):
         raise APIException(ErrorMessage.INVALID_MONTH)
     
-    calendar_events = await practice_schedule_service.get_practice_schedules_for_month_calendar(year, month)
+    calendar_events = practice_schedule_service.get_practice_schedules_for_month_calendar(year, month)
     return {
         "year": year,
         "month": month,
@@ -555,7 +555,7 @@ async def get_practice_schedules_for_month_calendar(
 
 
 @router.get("/calendar/range")
-async def get_practice_schedules_for_date_range(
+def get_practice_schedules_for_date_range(
     start_date: str = Query(..., description="開始日 (YYYY-MM-DD形式)"),
     end_date: str = Query(..., description="終了日 (YYYY-MM-DD形式)"),
     practice_schedule_service: PracticeScheduleService = Depends(get_practice_schedule_service),
@@ -580,7 +580,7 @@ async def get_practice_schedules_for_date_range(
     except ValueError:
         raise APIException(ErrorMessage.INVALID_DATE_FORMAT)
     
-    calendar_events = await practice_schedule_service.get_practice_schedules_for_date_range(start_date, end_date)
+    calendar_events = practice_schedule_service.get_practice_schedules_for_date_range(start_date, end_date)
     return {
         "start_date": start_date,
         "end_date": end_date,

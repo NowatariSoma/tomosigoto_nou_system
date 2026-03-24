@@ -21,18 +21,18 @@ class MemberAdminService:
         self.user_role_repository = user_role_repository
         self.user_profile_repository = user_profile_repository
 
-    async def list_members(self) -> list[dict[str, Any]]:
+    def list_members(self) -> list[dict[str, Any]]:
         """全メンバーの一覧を取得"""
-        users = await self.user_service.get_all_users()
+        users = self.user_service.get_all_users()
         if not users:
             return []
 
         user_ids = [user["id"] for user in users if user.get("id")]
-        profiles = await self.user_profile_repository.get_profiles_by_user_ids(user_ids)
+        profiles = self.user_profile_repository.get_profiles_by_user_ids(user_ids)
         profile_map = {profile["user_id"]: profile for profile in profiles}
 
         # user_rolesテーブルからロール & is_instructorを取得
-        user_roles_with_instructor = await self.user_role_repository.get_user_roles_with_instructor()
+        user_roles_with_instructor = self.user_role_repository.get_user_roles_with_instructor()
         role_map: dict[str, str] = {}
         instructor_map: dict[str, bool] = {}
         for record in user_roles_with_instructor:
@@ -52,16 +52,16 @@ class MemberAdminService:
             for user in users
         ]
 
-    async def get_member(self, user_id: str) -> dict[str, Any]:
+    def get_member(self, user_id: str) -> dict[str, Any]:
         """単一メンバーの情報を取得"""
-        user = await self.user_service.get_user_by_id(user_id)
+        user = self.user_service.get_user_by_id(user_id)
         if not user:
             raise APIException(ErrorMessage.USER_NOT_FOUND)
 
-        profile = await self.user_profile_repository.get_profile_by_user_id(user_id)
-        role_record = await self.user_role_repository.get_role_by_user_id(user_id)
+        profile = self.user_profile_repository.get_profile_by_user_id(user_id)
+        role_record = self.user_role_repository.get_role_by_user_id(user_id)
         normalized_role = self._normalize_role_type(role_record.get("role_type") if role_record else None)
-        is_instructor = await self.user_role_repository.get_instructor_flag(user_id)
+        is_instructor = self.user_role_repository.get_instructor_flag(user_id)
         return self._serialize_member(
             user,
             profile,
@@ -69,33 +69,33 @@ class MemberAdminService:
             bool(is_instructor) if is_instructor is not None else False,
         )
 
-    async def update_member_role(self, user_id: str, role: str) -> dict[str, Any]:
+    def update_member_role(self, user_id: str, role: str) -> dict[str, Any]:
         """管理者権限の付与/剥奪（user_roleテーブルで）"""
-        await self.user_service.get_user_by_id(user_id)  # ensure user exists
+        self.user_service.get_user_by_id(user_id)  # ensure user exists
 
         role_type_value = self._to_role_type_value(role)
 
-        existing_role = await self.user_role_repository.get_role_by_user_id(user_id)
+        existing_role = self.user_role_repository.get_role_by_user_id(user_id)
         if existing_role:
-            await self.user_role_repository.update_role(user_id, {"role_type": role_type_value})
+            self.user_role_repository.update_role(user_id, {"role_type": role_type_value})
         else:
-            await self.user_role_repository.create_role({
+            self.user_role_repository.create_role({
                 "user_id": user_id,
                 "role_type": role_type_value,
             })
 
-        return await self.get_member(user_id)
+        return self.get_member(user_id)
 
-    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any]:
+    def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any]:
         """指導者フラグの更新（user_rolesテーブルで）"""
-        await self.user_service.get_user_by_id(user_id)  # ensure user exists
-        await self.user_role_repository.update_instructor_flag(user_id, is_instructor)
-        return await self.get_member(user_id)
+        self.user_service.get_user_by_id(user_id)  # ensure user exists
+        self.user_role_repository.update_instructor_flag(user_id, is_instructor)
+        return self.get_member(user_id)
 
-    async def remove_member(self, user_id: str) -> None:
+    def remove_member(self, user_id: str) -> None:
         """ユーザーアカウント削除（ロール情報も合わせて削除）"""
-        await self.user_role_repository.delete_role(user_id)
-        await self.user_service.delete_user(user_id)
+        self.user_role_repository.delete_role(user_id)
+        self.user_service.delete_user(user_id)
 
     def _serialize_member(
         self,
@@ -140,4 +140,3 @@ class MemberAdminService:
             if full_name:
                 return full_name
         return user.get("email") or "不明なユーザー"
-

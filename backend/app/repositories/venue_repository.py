@@ -1,44 +1,51 @@
 from typing import Any
 
-from app.core.exceptions import handle_supabase_errors
-
-from supabase import Client
+from app.core.database import Conn
 
 
 class VenueRepository:
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, conn: Conn):
+        self.conn = conn
         self.table_name = "venues"
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> list[dict[str, Any]]:
-        response = self.client.table(self.table_name).select("*").execute()
+    def find_all(self) -> list[dict[str, Any]]:
+        rows = self.conn.execute("SELECT * FROM venues").fetchall()
+        return [dict(r) for r in rows]
 
-        return response.data
+    def find_by_id(self, venue_id) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM venues WHERE id = %s",
+            (str(venue_id),),
+        ).fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, venue_id) -> dict[str, Any]:
-        response = self.client.table("venues").select("*").eq("id", venue_id).execute()
-
-        return response.data[0]
-
-    @handle_supabase_errors("create")
-    async def create(self, venue_data) -> dict[str, Any]:
-        response = self.client.table("venues").insert(venue_data).execute()
-
-        return response.data[0]
-
-    @handle_supabase_errors("update")
-    async def update(self, venue_id, venue_data) -> dict[str, Any]:
-        response = (
-            self.client.table("venues").update(venue_data).eq("id", venue_id).execute()
+    def create(self, venue_data) -> dict[str, Any]:
+        columns = list(venue_data.keys())
+        values = [venue_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO venues ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
         )
+        self.conn.commit()
+        return dict(cur.fetchone())
 
-        return response.data[0]
+    def update(self, venue_id, venue_data) -> dict[str, Any] | None:
+        if not venue_data:
+            return self.find_by_id(venue_id)
+        set_clause = ", ".join([f"{k} = %s" for k in venue_data.keys()])
+        values = list(venue_data.values()) + [str(venue_id)]
+        cur = self.conn.execute(
+            f"UPDATE venues SET {set_clause} WHERE id = %s RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("delete")
-    async def delete(self, venue_id) -> bool:
-        self.client.table("venues").delete().eq("id", venue_id).execute()
-
+    def delete(self, venue_id) -> bool:
+        self.conn.execute("DELETE FROM venues WHERE id = %s", (str(venue_id),))
+        self.conn.commit()
         return True

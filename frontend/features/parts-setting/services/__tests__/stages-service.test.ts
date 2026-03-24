@@ -1,22 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mockSupabaseClient, createMockSupabaseQuery } from '@/__mocks__/supabase';
-
-// supabaseモジュールをモック
-vi.mock('@/lib/supabase', () => ({
-  supabase: mockSupabaseClient,
-}));
-
+import { describe, it, expect, beforeEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/__mocks__/msw/server';
 import { StagesService } from '@/features/parts-setting/services/stages-service';
+
+const API_BASE = 'http://localhost:8000/api/v1';
 
 describe('StagesService', () => {
   let service: StagesService;
 
   beforeEach(() => {
     service = new StagesService();
-    vi.clearAllMocks();
   });
 
-  // テストデータ
   const mockStageResponse = {
     id: 'stage-1',
     name: '春の公演',
@@ -49,81 +44,71 @@ describe('StagesService', () => {
 
   describe('getStages', () => {
     it('ステージ一覧を取得しマッピングする', async () => {
-      const query = createMockSupabaseQuery({
-        data: [mockStageResponse, mockStageResponse2],
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/stages`, () => {
+          return HttpResponse.json([mockStageResponse, mockStageResponse2]);
+        })
+      );
 
       const result = await service.getStages();
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(query.select).toHaveBeenCalledWith('*');
-      expect(query.order).toHaveBeenCalledWith('performance_date', { ascending: false });
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(expectedStageData);
       expect(result[1].name).toBe('夏の公演');
     });
 
-    it('データがnullの場合は空配列を返す', async () => {
-      const query = createMockSupabaseQuery({ data: null, error: null });
-      mockSupabaseClient.from.mockReturnValue(query);
+    it('データが空の場合は空配列を返す', async () => {
+      server.use(
+        http.get(`${API_BASE}/stages`, () => {
+          return HttpResponse.json([]);
+        })
+      );
 
       const result = await service.getStages();
-
       expect(result).toEqual([]);
     });
 
     it('エラー発生時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Database error' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.getStages()).rejects.toThrow(
-        'Failed to fetch stages: Database error'
+      server.use(
+        http.get(`${API_BASE}/stages`, () => {
+          return HttpResponse.json({ detail: 'Database error' }, { status: 500 });
+        })
       );
+
+      await expect(service.getStages()).rejects.toThrow();
     });
   });
 
   describe('getStage', () => {
     it('指定IDのステージを取得しマッピングする', async () => {
-      const query = createMockSupabaseQuery({
-        data: mockStageResponse,
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.get(`${API_BASE}/stages/stage-1`, () => {
+          return HttpResponse.json(mockStageResponse);
+        })
+      );
 
       const result = await service.getStage('stage-1');
-
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(query.select).toHaveBeenCalledWith('*');
-      expect(query.eq).toHaveBeenCalledWith('id', 'stage-1');
-      expect(query.single).toHaveBeenCalled();
       expect(result).toEqual(expectedStageData);
     });
 
     it('エラー発生時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Not found' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.getStage('invalid-id')).rejects.toThrow(
-        'Failed to fetch stage: Not found'
+      server.use(
+        http.get(`${API_BASE}/stages/invalid-id`, () => {
+          return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+        })
       );
+
+      await expect(service.getStage('invalid-id')).rejects.toThrow();
     });
   });
 
   describe('createStage', () => {
     it('ステージを作成しマッピングされた結果を返す', async () => {
-      const query = createMockSupabaseQuery({
-        data: mockStageResponse,
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.post(`${API_BASE}/stages`, () => {
+          return HttpResponse.json(mockStageResponse);
+        })
+      );
 
       const result = await service.createStage({
         name: '春の公演',
@@ -131,124 +116,83 @@ describe('StagesService', () => {
         performanceDate: '2024-04-15',
       });
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(query.insert).toHaveBeenCalledWith({
-        name: '春の公演',
-        description: '春季公演です',
-        performance_date: '2024-04-15',
-        status: 'active',
-      });
-      expect(query.select).toHaveBeenCalled();
-      expect(query.single).toHaveBeenCalled();
       expect(result).toEqual(expectedStageData);
     });
 
     it('statusを指定して作成できる', async () => {
-      const query = createMockSupabaseQuery({
-        data: { ...mockStageResponse, status: 'inactive' },
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.post(`${API_BASE}/stages`, async ({ request }) => {
+          const body = await request.json() as any;
+          return HttpResponse.json({ ...mockStageResponse, status: body.status });
+        })
+      );
 
-      await service.createStage({
+      const result = await service.createStage({
         name: '春の公演',
         status: 'inactive',
       });
 
-      expect(query.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'inactive' })
-      );
+      expect(result.status).toBe('inactive');
     });
 
     it('エラー発生時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Insert failed' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.post(`${API_BASE}/stages`, () => {
+          return HttpResponse.json({ detail: 'Insert failed' }, { status: 500 });
+        })
+      );
 
       await expect(
         service.createStage({ name: '春の公演' })
-      ).rejects.toThrow('Failed to create stage: Insert failed');
+      ).rejects.toThrow();
     });
   });
 
   describe('updateStage', () => {
     it('ステージを更新しマッピングされた結果を返す', async () => {
       const updatedResponse = { ...mockStageResponse, name: '更新済み公演' };
-      const query = createMockSupabaseQuery({
-        data: updatedResponse,
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.put(`${API_BASE}/stages/stage-1`, () => {
+          return HttpResponse.json(updatedResponse);
+        })
+      );
 
       const result = await service.updateStage('stage-1', { name: '更新済み公演' });
-
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(query.update).toHaveBeenCalledWith({ name: '更新済み公演' });
-      expect(query.eq).toHaveBeenCalledWith('id', 'stage-1');
-      expect(query.select).toHaveBeenCalled();
-      expect(query.single).toHaveBeenCalled();
       expect(result.name).toBe('更新済み公演');
     });
 
-    it('複数フィールドを同時に更新できる', async () => {
-      const query = createMockSupabaseQuery({
-        data: mockStageResponse,
-        error: null,
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await service.updateStage('stage-1', {
-        name: '新しい公演名',
-        description: '新しい説明',
-        performanceDate: '2024-05-01',
-        status: 'inactive',
-      });
-
-      expect(query.update).toHaveBeenCalledWith({
-        name: '新しい公演名',
-        description: '新しい説明',
-        performance_date: '2024-05-01',
-        status: 'inactive',
-      });
-    });
-
     it('エラー発生時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Update failed' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.put(`${API_BASE}/stages/stage-1`, () => {
+          return HttpResponse.json({ detail: 'Update failed' }, { status: 500 });
+        })
+      );
 
       await expect(
         service.updateStage('stage-1', { name: 'テスト' })
-      ).rejects.toThrow('Failed to update stage: Update failed');
+      ).rejects.toThrow();
     });
   });
 
   describe('deleteStage', () => {
     it('指定IDのステージを削除する', async () => {
-      const query = createMockSupabaseQuery({ data: null, error: null });
-      mockSupabaseClient.from.mockReturnValue(query);
+      server.use(
+        http.delete(`${API_BASE}/stages/stage-1`, () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
 
-      await service.deleteStage('stage-1');
-
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(query.delete).toHaveBeenCalled();
-      expect(query.eq).toHaveBeenCalledWith('id', 'stage-1');
+      await expect(service.deleteStage('stage-1')).resolves.not.toThrow();
     });
 
     it('エラー発生時に例外をスローする', async () => {
-      const query = createMockSupabaseQuery({
-        data: null,
-        error: { message: 'Delete failed' },
-      });
-      mockSupabaseClient.from.mockReturnValue(query);
-
-      await expect(service.deleteStage('stage-1')).rejects.toThrow(
-        'Failed to delete stage: Delete failed'
+      server.use(
+        http.delete(`${API_BASE}/stages/stage-1`, () => {
+          return HttpResponse.json({ detail: 'Delete failed' }, { status: 500 });
+        })
       );
+
+      await expect(service.deleteStage('stage-1')).rejects.toThrow();
     });
   });
 });

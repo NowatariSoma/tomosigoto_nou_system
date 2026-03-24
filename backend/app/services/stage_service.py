@@ -29,7 +29,7 @@ class StageService:
         """
         self.repository = stage_repository
 
-    async def get_all_stages(self) -> list[StageResponse]:
+    def get_all_stages(self) -> list[StageResponse]:
         """
         全ての舞台情報を取得
 
@@ -37,7 +37,7 @@ class StageService:
             舞台情報のリスト
         """
         try:
-            data = await self.repository.find_all()
+            data = self.repository.find_all()
 
             if not data:
                 logger.info("No stages found")
@@ -51,7 +51,7 @@ class StageService:
             logger.error(f"Failed to get all stages: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def get_stage_by_id(self, stage_id: str) -> StageResponse:
+    def get_stage_by_id(self, stage_id: str) -> StageResponse:
         """
         IDで舞台情報を取得
 
@@ -70,7 +70,7 @@ class StageService:
             logger.error(f"Invalid stage ID format: {stage_id}")
             raise APIException(ErrorMessage.BAD_REQUEST)
 
-        stage_data = await self.repository.find_by_id(uuid_stage_id)
+        stage_data = self.repository.find_by_id(uuid_stage_id)
 
         if not stage_data:
             logger.error(f"Stage not found: {stage_id}")
@@ -78,7 +78,7 @@ class StageService:
 
         return StageResponse(**stage_data)
 
-    async def create_stage(self, stage_data: dict[str, Any]) -> StageResponse:
+    def create_stage(self, stage_data: dict[str, Any]) -> StageResponse:
         """
         新しい舞台を作成
 
@@ -95,7 +95,7 @@ class StageService:
             # 日付型をISO文字列形式に変換
             processed_data = self._serialize_dates(stage_data)
 
-            created_stage = await self.repository.create(processed_data)
+            created_stage = self.repository.create(processed_data)
 
             if not created_stage:
                 logger.error("Failed to create stage")
@@ -110,7 +110,7 @@ class StageService:
             logger.error(f"Failed to create stage: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def update_stage(self, stage_id: str, update_data: dict[str, Any]) -> StageResponse:
+    def update_stage(self, stage_id: str, update_data: dict[str, Any]) -> StageResponse:
         """
         舞台情報を更新
 
@@ -131,7 +131,7 @@ class StageService:
             raise APIException(ErrorMessage.BAD_REQUEST)
 
         # 舞台の存在確認
-        if not await self.repository.exists(uuid_stage_id):
+        if not self.repository.exists(uuid_stage_id):
             logger.error(f"Stage not found for update: {stage_id}")
             raise APIException(ErrorMessage.STAGE_NOT_FOUND)
 
@@ -139,7 +139,7 @@ class StageService:
             # 日付型をISO文字列形式に変換
             processed_data = self._serialize_dates(update_data)
 
-            updated_stage = await self.repository.update(uuid_stage_id, processed_data)
+            updated_stage = self.repository.update(uuid_stage_id, processed_data)
 
             if not updated_stage:
                 logger.error(f"Failed to update stage: {stage_id}")
@@ -154,7 +154,7 @@ class StageService:
             logger.error(f"Failed to update stage {stage_id}: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def delete_stage(self, stage_id: str) -> None:
+    def delete_stage(self, stage_id: str) -> None:
         """
         舞台を削除
 
@@ -171,19 +171,19 @@ class StageService:
             raise APIException(ErrorMessage.BAD_REQUEST)
 
         # 舞台の存在確認
-        if not await self.repository.exists(uuid_stage_id):
+        if not self.repository.exists(uuid_stage_id):
             logger.error(f"Stage not found for deletion: {stage_id}")
             raise APIException(ErrorMessage.STAGE_NOT_FOUND)
 
         try:
-            await self.repository.delete(uuid_stage_id)
+            self.repository.delete(uuid_stage_id)
             logger.info(f"Deleted stage with id: {stage_id}")
 
         except Exception as e:
             logger.error(f"Failed to delete stage {stage_id}: {str(e)}")
             raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
 
-    async def get_stages_by_status(self, status: str) -> list[StageResponse]:
+    def get_stages_by_status(self, status: str) -> list[StageResponse]:
         """
         ステータスで舞台を絞り込み取得
 
@@ -198,7 +198,7 @@ class StageService:
             raise APIException(ErrorMessage.BAD_REQUEST)
 
         try:
-            data = await self.repository.find_by_status(status)
+            data = self.repository.find_by_status(status)
 
             if not data:
                 logger.info(f"No stages found with status: {status}")

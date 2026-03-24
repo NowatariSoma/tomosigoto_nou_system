@@ -1,6 +1,7 @@
 import logging
 from typing import Any
-from app.core.supabase import handle_supabase_errors
+
+from app.core.database import Conn
 
 logger = logging.getLogger(__name__)
 
@@ -10,16 +11,15 @@ class UserRepository:
     ユーザー関連のデータアクセスを処理するリポジトリクラス
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, conn: Conn):
         """
         Args:
-            supabase_client: Supabaseクライアント
+            conn: psycopg2接続
         """
-        self.client = supabase_client
+        self.conn = conn
         self.table_name = "users"
 
-    @handle_supabase_errors("get_user_by_id")
-    async def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
+    def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザーを取得
 
@@ -29,22 +29,18 @@ class UserRepository:
         Returns:
             ユーザー情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("id", user_id)
-            .limit(1)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM users WHERE id = %s LIMIT 1",
+            (str(user_id),),
+        ).fetchone()
+        if row:
             logger.info(f"Found user: {user_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"User not found: {user_id}")
         return None
 
-    @handle_supabase_errors("get_user_by_email")
-    async def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+    def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         """
         メールアドレスでユーザーを取得
 
@@ -54,22 +50,18 @@ class UserRepository:
         Returns:
             ユーザー情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("email", email)
-            .limit(1)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM users WHERE email = %s LIMIT 1",
+            (email,),
+        ).fetchone()
+        if row:
             logger.info(f"Found user by email: {email}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"User not found by email: {email}")
         return None
 
-    @handle_supabase_errors("create_user")
-    async def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
+    def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
         """
         ユーザーを作成
 
@@ -79,16 +71,24 @@ class UserRepository:
         Returns:
             作成されたユーザー情報
         """
-        response = self.client.table(self.table_name).insert(user_data).execute()
-        if response.data:
+        columns = list(user_data.keys())
+        values = [user_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO users ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User created successfully: {user_data.get('id', 'unknown')}")
-            return response.data[0]
+            return dict(row)
 
         logger.error(f"Failed to create user: {user_data.get('id', 'unknown')}")
         return {}
 
-    @handle_supabase_errors("update_user")
-    async def update_user(self, user_id: str, user_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update_user(self, user_id: str, user_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザーを更新
 
@@ -99,21 +99,24 @@ class UserRepository:
         Returns:
             更新されたユーザー情報、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .update(user_data)
-            .eq("id", user_id)
-            .execute()
+        if not user_data:
+            return self.get_user_by_id(user_id)
+        set_clause = ", ".join([f"{k} = %s" for k in user_data.keys()])
+        values = list(user_data.values()) + [str(user_id)]
+        cur = self.conn.execute(
+            f"UPDATE users SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if response.data:
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User updated successfully: {user_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.error(f"Failed to update user: {user_id}")
         return None
 
-    @handle_supabase_errors("delete_user")
-    async def delete_user(self, user_id: str) -> bool:
+    def delete_user(self, user_id: str) -> bool:
         """
         ユーザーを削除
 
@@ -123,44 +126,30 @@ class UserRepository:
         Returns:
             削除成功の場合はTrue
         """
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("id", user_id)
-            .execute()
-        )
-        
-        if response.data:
-            logger.info(f"User deleted successfully: {user_id}")
-            return True
-        
-        logger.warning(f"No user found to delete: {user_id}")
-        return False
+        self.conn.execute("DELETE FROM users WHERE id = %s", (str(user_id),))
+        self.conn.commit()
+        logger.info(f"User deleted successfully: {user_id}")
+        return True
 
-    @handle_supabase_errors("get_all_users")
-    async def get_all_users(self) -> list[dict[str, Any]]:
+    def get_all_users(self) -> list[dict[str, Any]]:
         """
         すべてのユーザーを取得
 
         Returns:
             ユーザー情報のリスト
         """
-        response = self.client.table(self.table_name).select("*").execute()
-        
-        if response.data:
-            logger.info(f"Found {len(response.data)} total users")
-            return response.data
-        
-        logger.info("No users found")
-        return []
+        rows = self.conn.execute("SELECT * FROM users").fetchall()
+        data = [dict(r) for r in rows]
+        logger.info(f"Found {len(data)} total users")
+        return data
 
-    @handle_supabase_errors("get_user_count")
-    async def get_user_count(self) -> int:
+    def get_user_count(self) -> int:
         """
         ユーザー数を取得
 
         Returns:
             ユーザー数
         """
-        response = self.client.table(self.table_name).select("id", count="exact").execute()
-        return response.count or 0
+        row = self.conn.execute("SELECT COUNT(*) AS cnt FROM users").fetchone()
+        count = row["cnt"] if row else 0
+        return count

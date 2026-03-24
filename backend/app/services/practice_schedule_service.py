@@ -4,7 +4,6 @@ from typing import Any
 
 from app.schemas.current_user import CurrentUser
 from uuid import UUID
-import asyncio
 from datetime import datetime
 
 from app.core.error_messages import ErrorMessage
@@ -37,7 +36,6 @@ class PracticeScheduleService:
         attendance_repository: AttendanceRepositoryProtocol,
         user_profile_repository: UserProfileRepositoryProtocol,
         schedule_time_slot_repository: ScheduleTimeSlotRepositoryProtocol,
-        auth_client,
     ):
         self.practice_schedule_repository = practice_schedule_repository
         self.schedule_available_venue_repository = schedule_available_venue_repository
@@ -48,13 +46,11 @@ class PracticeScheduleService:
         self.attendance_repository = attendance_repository
         self.user_profile_repository = user_profile_repository
         self.schedule_time_slot_repository = schedule_time_slot_repository
-        self.auth_client = auth_client
-
     # ===== 練習スケジュール CRUD =====
 
-    async def get_all_practice_schedules(self) -> list[dict[str, Any]]:
+    def get_all_practice_schedules(self) -> list[dict[str, Any]]:
         """すべての練習スケジュールを取得（関連データ付き最適化版）"""
-        schedules = await self.practice_schedule_repository.find_all_with_relations()
+        schedules = self.practice_schedule_repository.find_all_with_relations()
 
         for schedule in schedules:
             schedule_venues = schedule.pop("schedule_available_venues", []) or []
@@ -64,7 +60,7 @@ class PracticeScheduleService:
             # リレーションクエリが失敗した場合のフォールバック
             if not schedule_venues and schedule.get("id"):
                 try:
-                    schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+                    schedule_venues = self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
                 except Exception as e:
                     print(f"Warning: Failed to fetch venues for schedule {schedule['id']}: {e}")
                     schedule_venues = []
@@ -99,17 +95,17 @@ class PracticeScheduleService:
 
         return schedules
 
-    async def get_practice_schedule(self, schedule_id: UUID) -> dict[str, Any]:
+    def get_practice_schedule(self, schedule_id: UUID) -> dict[str, Any]:
         """指定した練習スケジュール情報を取得"""
         print(f"DEBUG get_practice_schedule: schedule_id={schedule_id}, type={type(schedule_id)}")
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        schedule = self.practice_schedule_repository.find_by_id(schedule_id)
         print(f"DEBUG get_practice_schedule: schedule={schedule}")
         if not schedule:
             print(f"DEBUG get_practice_schedule: Schedule not found for id={schedule_id}")
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         
         # 複数部屋選択対応: 会場情報を追加（JOIN済みデータを使用してN+1問題を回避）
-        venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+        venues = self.schedule_available_venue_repository.find_by_schedule(schedule_id)
         schedule["venue_ids"] = [v["venue_id"] for v in venues]
         
         # 会場詳細情報を取得（find_by_scheduleで既に平坦化済み）
@@ -137,35 +133,28 @@ class PracticeScheduleService:
         
         return schedule
 
-    async def get_practice_schedule_by_date(self, target_date: str) -> dict[str, Any]:
+    def get_practice_schedule_by_date(self, target_date: str) -> dict[str, Any]:
         """指定した日付の練習スケジュール情報を取得"""
-        schedule = await self.practice_schedule_repository.find_by_date(target_date)
+        schedule = self.practice_schedule_repository.find_by_date(target_date)
         return schedule  # None を返すことで、エンドポイント側で404を返す
 
-    async def get_practice_schedule_bundle(self, target_date: str, current_user: CurrentUser | None = None) -> dict[str, Any] | None:
+    def get_practice_schedule_bundle(self, target_date: str, current_user: CurrentUser | None = None) -> dict[str, Any] | None:
         """指定日付のボトムシート用 bundle データをまとめて取得"""
-        schedule = await self.practice_schedule_repository.find_by_date(target_date)
+        schedule = self.practice_schedule_repository.find_by_date(target_date)
         if not schedule:
             return None
 
         schedule_id = schedule["id"]
 
-        ideal_task = asyncio.create_task(self.get_practice_schedule_ideal_format_by_id(schedule_id))
-        attendance_task = asyncio.create_task(self.attendance_repository.find_by_practice_schedule(schedule_id))
-        users_task = asyncio.create_task(self._get_bundle_users())
-        instructors_task = asyncio.create_task(
-            self.session_instructor_repository.find_all_with_details(
-                limit=1000,
-                offset=0,
-                schedule_id=schedule_id
-            )
+        ideal_data = self.get_practice_schedule_ideal_format_by_id(schedule_id)
+        attendance_entries = self.attendance_repository.find_by_practice_schedule(schedule_id)
+        bundle_users = self._get_bundle_users()
+        instructors = self.session_instructor_repository.find_all_with_details(
+            limit=1000,
+            offset=0,
+            schedule_id=schedule_id
         )
-
-        venues_task = asyncio.create_task(self._get_venues_with_colors(schedule_id))
-
-        ideal_data, attendance_entries, bundle_users, instructors, venues = await asyncio.gather(
-            ideal_task, attendance_task, users_task, instructors_task, venues_task, return_exceptions=False
-        )
+        venues = self._get_venues_with_colors(schedule_id)
 
         current_user_id = str(current_user["id"]) if current_user and current_user.get("id") else None
         my_attendance = None
@@ -232,21 +221,21 @@ class PracticeScheduleService:
 
         return bundle_response
 
-    async def get_practice_schedule_with_details(self, schedule_id: UUID) -> dict[str, Any]:
+    def get_practice_schedule_with_details(self, schedule_id: UUID) -> dict[str, Any]:
         """練習スケジュールの詳細情報（利用可能会場、セッション含む）を取得"""
-        schedule = await self.practice_schedule_repository.find_with_details(schedule_id)
+        schedule = self.practice_schedule_repository.find_with_details(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         return schedule
 
-    async def get_practice_schedule_for_display(self, schedule_id: UUID) -> dict[str, Any]:
+    def get_practice_schedule_for_display(self, schedule_id: UUID) -> dict[str, Any]:
         """練習表表示用の練習スケジュール情報を取得（名前情報含む）"""
-        schedule = await self.practice_schedule_repository.find_for_display(schedule_id)
+        schedule = self.practice_schedule_repository.find_for_display(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
         return schedule
 
-    async def create_practice_schedule(self, schedule_data: dict[str, Any]) -> dict[str, Any]:
+    def create_practice_schedule(self, schedule_data: dict[str, Any]) -> dict[str, Any]:
         """練習スケジュールを作成"""
         # created_byとupdated_byを除外（データベースで自動設定される）
         schedule_data.pop("created_by", None)
@@ -260,7 +249,7 @@ class PracticeScheduleService:
             schedule_data["stage_id"] = None
 
         # 練習スケジュールを作成
-        created_schedule = await self.practice_schedule_repository.create(schedule_data)
+        created_schedule = self.practice_schedule_repository.create(schedule_data)
         
         # 複数部屋選択対応: schedule_available_venuesテーブルに会場情報を保存
         if venue_ids:
@@ -274,7 +263,7 @@ class PracticeScheduleService:
                     "priority": i,
                     "notes": None
                 }
-                await self.schedule_available_venue_repository.create(venue_data)
+                self.schedule_available_venue_repository.create(venue_data)
         
         # 作成されたスケジュールに会場情報を追加
         created_schedule["venue_ids"] = venue_ids or []
@@ -282,14 +271,14 @@ class PracticeScheduleService:
         
         return created_schedule
 
-    async def update_practice_schedule(
+    def update_practice_schedule(
         self, schedule_id: UUID, schedule_data: dict[str, Any]
     ) -> dict[str, Any]:
         """指定した練習スケジュール情報を更新"""
         try:
             print(f"DEBUG update_practice_schedule: schedule_id={schedule_id}, schedule_data={schedule_data}")
             
-            schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+            schedule = self.practice_schedule_repository.find_by_id(schedule_id)
             if not schedule:
                 raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
 
@@ -322,7 +311,7 @@ class PracticeScheduleService:
                 print(f"DEBUG update_practice_schedule: 時間スロットの再生成が必要です")
             
             # 練習スケジュールを更新
-            updated_schedule = await self.practice_schedule_repository.update(schedule_id, schedule_data)
+            updated_schedule = self.practice_schedule_repository.update(schedule_id, schedule_data)
             print(f"DEBUG update_practice_schedule: updated_schedule={updated_schedule}")
             
             # 時間スロットを再生成
@@ -354,7 +343,7 @@ class PracticeScheduleService:
                         end_time_obj = final_end_time
                     
                     # 既存の時間スロットを取得（division_countが増えた場合に既存スロットを保持するため）
-                    existing_time_slots = await time_slot_repo.find_by_schedule(schedule_id)
+                    existing_time_slots = time_slot_repo.find_by_schedule(schedule_id)
                     existing_time_slots.sort(key=lambda x: x.get("slot_order", 0))
                     
                     # division_countのみが変更された場合（時間スロットの追加・削除）
@@ -460,11 +449,11 @@ class PracticeScheduleService:
                                     "start_time": last_end_time_obj,
                                     "end_time": end_time_obj
                                 }
-                                await time_slot_repo.create(new_slot_data)
+                                time_slot_repo.create(new_slot_data)
                                 print(f"DEBUG update_practice_schedule: 時間スロットを追加しました（slot_order={new_slot_order}）")
                             else:
                                 # 既存のスロットがない場合は均等分割で生成
-                                await time_slot_repo.delete_by_schedule(schedule_id)
+                                time_slot_repo.delete_by_schedule(schedule_id)
                                 start_datetime = datetime.combine(datetime.today(), start_time_obj)
                                 end_datetime = datetime.combine(datetime.today(), end_time_obj)
                                 total_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
@@ -486,7 +475,7 @@ class PracticeScheduleService:
                                         "start_time": slot_start_datetime.time(),
                                         "end_time": slot_end_datetime.time()
                                     }
-                                    await time_slot_repo.create(time_slot_data)
+                                    time_slot_repo.create(time_slot_data)
                                 print(f"DEBUG update_practice_schedule: {final_division_count}個の時間スロットを作成しました")
                     elif can_preserve_slots_on_remove:
                         # 時間スロットを削除：最後のスロットを削除（他のスロットの時間は変更しない）
@@ -498,11 +487,11 @@ class PracticeScheduleService:
                             last_slot_order = last_slot.get("slot_order")
                             print(f"DEBUG update_practice_schedule: 削除対象スロット: id={last_slot_id}, slot_order={last_slot_order}")
                             if last_slot_id:
-                                await time_slot_repo.delete(UUID(last_slot_id))
+                                time_slot_repo.delete(UUID(last_slot_id))
                                 print(f"DEBUG update_practice_schedule: 最後の時間スロットを削除しました（slot_order={last_slot_order}）。他のスロットの時間は変更していません。")
                                 
                                 # 削除後の確認
-                                remaining_slots = await time_slot_repo.find_by_schedule(schedule_id)
+                                remaining_slots = time_slot_repo.find_by_schedule(schedule_id)
                                 print(f"DEBUG update_practice_schedule: 削除後のスロット数={len(remaining_slots)}")
                             else:
                                 print(f"DEBUG update_practice_schedule: 警告: 最後のスロットのIDが見つかりませんでした")
@@ -510,7 +499,7 @@ class PracticeScheduleService:
                             print(f"DEBUG update_practice_schedule: 警告: 既存の時間スロットが見つかりませんでした")
                     else:
                         # 開始時間または終了時間が変更された場合は、既存のスロットを削除して均等分割で再生成
-                        await time_slot_repo.delete_by_schedule(schedule_id)
+                        time_slot_repo.delete_by_schedule(schedule_id)
                         print(f"DEBUG update_practice_schedule: 既存の時間スロットを削除しました")
                         
                         # division_countに基づいて時間スロットを生成
@@ -541,7 +530,7 @@ class PracticeScheduleService:
                         # 時間スロットを一括作成
                         if time_slots_to_create:
                             for time_slot_data in time_slots_to_create:
-                                await time_slot_repo.create(time_slot_data)
+                                time_slot_repo.create(time_slot_data)
                             print(f"DEBUG update_practice_schedule: {len(time_slots_to_create)}個の時間スロットを作成しました")
                 except Exception as e:
                     print(f"DEBUG update_practice_schedule: 時間スロット再生成エラー: {e}")
@@ -553,7 +542,7 @@ class PracticeScheduleService:
             if venue_ids is not None:
                 print(f"DEBUG update_practice_schedule: 会場情報を更新開始")
                 # 既存の会場情報を削除
-                await self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
+                self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
                 print(f"DEBUG update_practice_schedule: 既存会場情報を削除完了")
                 
                 # 新しい会場情報を追加
@@ -568,16 +557,16 @@ class PracticeScheduleService:
                         "notes": None
                     }
                     print(f"DEBUG update_practice_schedule: 会場データ作成 venue_data={venue_data}")
-                    await self.schedule_available_venue_repository.create(venue_data)
+                    self.schedule_available_venue_repository.create(venue_data)
                     print(f"DEBUG update_practice_schedule: 会場データ作成完了 venue_id={venue_id}")
                 
                 updated_schedule["venue_ids"] = venue_ids
                 print(f"DEBUG update_practice_schedule: 会場情報更新完了")
                 # 更新された会場情報を取得
-                venues_for_details = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                venues_for_details = self.schedule_available_venue_repository.find_by_schedule(schedule_id)
             else:
                 # venue_idsが指定されていない場合は既存の情報を保持
-                venues_for_details = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                venues_for_details = self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 updated_schedule["venue_ids"] = [v["venue_id"] for v in venues_for_details]
                 print(f"DEBUG update_practice_schedule: 既存会場情報を保持")
             
@@ -612,51 +601,51 @@ class PracticeScheduleService:
             print(f"DEBUG update_practice_schedule: スタックトレース: {traceback.format_exc()}")
             raise
 
-    async def remove_practice_schedule(self, schedule_id: UUID) -> bool:
+    def remove_practice_schedule(self, schedule_id: UUID) -> bool:
         """指定した練習スケジュールを削除"""
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        schedule = self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
 
         # 関連データを削除
-        await self.session_instructor_repository.delete_by_schedule(schedule_id)
-        await self.session_repository.delete_by_schedule(schedule_id)
-        await self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
+        self.session_instructor_repository.delete_by_schedule(schedule_id)
+        self.session_repository.delete_by_schedule(schedule_id)
+        self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
 
         # 練習スケジュール本体を削除
-        await self.practice_schedule_repository.delete(schedule_id)
+        self.practice_schedule_repository.delete(schedule_id)
 
         return True
 
     # ===== スケジュール利用可能会場 CRUD =====
 
-    async def get_schedule_available_venues(self, schedule_id: UUID) -> list[dict[str, Any]]:
+    def get_schedule_available_venues(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの利用可能会場を取得"""
-        return await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+        return self.schedule_available_venue_repository.find_by_schedule(schedule_id)
 
-    async def add_schedule_available_venue(
+    def add_schedule_available_venue(
         self, venue_data: dict[str, Any]
     ) -> dict[str, Any]:
         """スケジュールに利用可能会場を追加"""
-        return await self.schedule_available_venue_repository.create(venue_data)
+        return self.schedule_available_venue_repository.create(venue_data)
 
-    async def update_schedule_available_venue(
+    def update_schedule_available_venue(
         self, venue_id: UUID, venue_data: dict[str, Any]
     ) -> dict[str, Any]:
         """スケジュール利用可能会場を更新"""
-        return await self.schedule_available_venue_repository.update(venue_id, venue_data)
+        return self.schedule_available_venue_repository.update(venue_id, venue_data)
 
-    async def remove_schedule_available_venue(self, venue_id: UUID) -> bool:
+    def remove_schedule_available_venue(self, venue_id: UUID) -> bool:
         """スケジュール利用可能会場を削除"""
-        await self.schedule_available_venue_repository.delete(venue_id)
+        self.schedule_available_venue_repository.delete(venue_id)
         return True
 
     # ===== セッション CRUD =====
 
-    async def get_sessions_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
+    def get_sessions_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールのセッション一覧を取得"""
         try:
-            sessions = await self.session_repository.find_by_schedule(schedule_id)
+            sessions = self.session_repository.find_by_schedule(schedule_id)
 
             # 各セッションに指導者情報を追加
             for session in sessions:
@@ -668,10 +657,10 @@ class PracticeScheduleService:
             print(f"Error fetching sessions for schedule {schedule_id}: {e}")
             raise APIException(ErrorMessage.DATABASE_ERROR)
 
-    async def get_session(self, session_id: UUID) -> dict[str, Any]:
+    def get_session(self, session_id: UUID) -> dict[str, Any]:
         """指定したセッション情報を取得"""
         try:
-            session = await self.session_repository.find_by_id(session_id)
+            session = self.session_repository.find_by_id(session_id)
             if not session:
                 raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
@@ -685,7 +674,7 @@ class PracticeScheduleService:
             print(f"Error fetching session {session_id}: {e}")
             raise APIException(ErrorMessage.DATABASE_ERROR)
 
-    async def create_session(self, session_data: dict[str, Any]) -> dict[str, Any]:
+    def create_session(self, session_data: dict[str, Any]) -> dict[str, Any]:
         """セッションを作成"""
         print(f"DEBUG create_session: 受信データ = {session_data}")
 
@@ -702,25 +691,25 @@ class PracticeScheduleService:
 
         print(f"DEBUG create_session: 変換後データ = {session_data}")
 
-        result = await self.session_repository.create(session_data)
+        result = self.session_repository.create(session_data)
         print(f"DEBUG create_session: 作成成功 = {result}")
         return result
 
-    async def update_session(
+    def update_session(
         self, session_id: UUID, session_data: dict[str, Any]
     ) -> dict[str, Any]:
         """指定したセッション情報を更新"""
-        session = await self.session_repository.find_by_id(session_id)
+        session = self.session_repository.find_by_id(session_id)
         if not session:
             raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
-        return await self.session_repository.update(session_id, session_data)
+        return self.session_repository.update(session_id, session_data)
 
-    async def move_session(
+    def move_session(
         self, session_id: UUID, target_venue_id: UUID, target_slot_order: int
     ) -> dict[str, Any]:
         """セッションを別の会場・時限に移動"""
-        session = await self.session_repository.find_by_id(session_id)
+        session = self.session_repository.find_by_id(session_id)
         if not session:
             raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
@@ -737,7 +726,7 @@ class PracticeScheduleService:
             else:
                 search_id = UUID(target_venue_id)
                 
-            schedule_available_venue = await self.schedule_available_venue_repository.find_by_id(search_id)
+            schedule_available_venue = self.schedule_available_venue_repository.find_by_id(search_id)
         except Exception as e:
             print(f"DEBUG move_session: find_by_idエラー: {e}")
         
@@ -745,7 +734,7 @@ class PracticeScheduleService:
             target_schedule_available_venue_id = schedule_available_venue.get("id")
         else:
             # find_by_idで見つからない場合は、venue_idから変換を試みる
-            schedule_available_venue = await self.schedule_available_venue_repository.find_by_schedule_and_venue(
+            schedule_available_venue = self.schedule_available_venue_repository.find_by_schedule_and_venue(
                 schedule_id, target_venue_id
             )
             if schedule_available_venue:
@@ -756,7 +745,7 @@ class PracticeScheduleService:
         if str(old_schedule_available_venue_id) == str(target_schedule_available_venue_id) and old_slot_order == target_slot_order:
             return session
 
-        sessions_in_old_venue = await self.session_repository.find_by_schedule(schedule_id)
+        sessions_in_old_venue = self.session_repository.find_by_schedule(schedule_id)
         sessions_in_old_venue = [
             s for s in sessions_in_old_venue
             if str(s.get("schedule_available_venue_id")) == str(old_schedule_available_venue_id)
@@ -764,7 +753,7 @@ class PracticeScheduleService:
         ]
 
         # 新しいvenue側のセッションを取得
-        sessions_in_new_venue = await self.session_repository.find_by_schedule(schedule_id)
+        sessions_in_new_venue = self.session_repository.find_by_schedule(schedule_id)
         sessions_in_new_venue = [
             s for s in sessions_in_new_venue
             if str(s.get("schedule_available_venue_id")) == str(target_schedule_available_venue_id)
@@ -774,13 +763,13 @@ class PracticeScheduleService:
         # 新しいvenue側で、target_slot_order以上のセッションのslot_orderを+1
         for s in sessions_in_new_venue:
             if s.get("slot_order", 0) >= target_slot_order:
-                await self.session_repository.update(
+                self.session_repository.update(
                     s["id"],
                     {"slot_order": s["slot_order"] + 1}
                 )
 
         # セッションを更新
-        updated_session = await self.session_repository.update(
+        updated_session = self.session_repository.update(
             session_id,
             {
                 "schedule_available_venue_id": str(target_schedule_available_venue_id),
@@ -791,27 +780,27 @@ class PracticeScheduleService:
         # 古いvenue側で、old_slot_orderより後のセッションのslot_orderを-1
         for s in sessions_in_old_venue:
             if s.get("slot_order", 0) > old_slot_order:
-                await self.session_repository.update(
+                self.session_repository.update(
                     s["id"],
                     {"slot_order": s["slot_order"] - 1}
                 )
 
         # 更新後のセッションを取得し、パート名を含む詳細情報を追加
         # session_repository.find_by_idはpart_nameを含めて返すため、そのまま使用
-        detailed_session = await self.session_repository.find_by_id(session_id)
+        detailed_session = self.session_repository.find_by_id(session_id)
         return detailed_session if detailed_session else updated_session
 
-    async def remove_session(self, session_id: UUID) -> bool:
+    def remove_session(self, session_id: UUID) -> bool:
         """指定したセッションを削除"""
-        session = await self.session_repository.find_by_id(session_id)
+        session = self.session_repository.find_by_id(session_id)
         if not session:
             raise APIException(ErrorMessage.SESSION_NOT_FOUND)
 
         # 関連する指導者情報を削除（新しい構造では不要）
-        # await self.session_instructor_repository.delete_by_session(session_id)
+        # self.session_instructor_repository.delete_by_session(session_id)
 
         # セッション本体を削除
-        await self.session_repository.delete(session_id)
+        self.session_repository.delete(session_id)
 
         return True
 
@@ -819,30 +808,30 @@ class PracticeScheduleService:
     # 注意: これらの機能は新しいSessionInstructorServiceに移行されました
     # 新しいテーブル構造では session_id ではなく schedule_id + slot_order を使用します
 
-    # async def get_session_instructors(self, session_id: UUID) -> list[dict[str, Any]]:
+    # def get_session_instructors(self, session_id: UUID) -> list[dict[str, Any]]:
     #     """指定したセッションの指導者一覧を取得"""
-    #     return await self.session_instructor_repository.find_by_session(session_id)
+    #     return self.session_instructor_repository.find_by_session(session_id)
 
-    # async def add_session_instructor(
+    # def add_session_instructor(
     #     self, instructor_data: dict[str, Any]
     # ) -> dict[str, Any]:
     #     """セッションに指導者を追加"""
-    #     return await self.session_instructor_repository.create(instructor_data)
+    #     return self.session_instructor_repository.create(instructor_data)
 
-    # async def remove_session_instructor(self, instructor_id: UUID) -> bool:
+    # def remove_session_instructor(self, instructor_id: UUID) -> bool:
     #     """セッション指導者を削除"""
-    #     await self.session_instructor_repository.delete(instructor_id)
+    #     self.session_instructor_repository.delete(instructor_id)
     #     return True
 
     # ===== 複合操作 =====
 
 
-    async def update_practice_schedule_with_details(
+    def update_practice_schedule_with_details(
         self, schedule_id: UUID, schedule_data: dict[str, Any]
     ) -> dict[str, Any]:
         """練習スケジュールを関連データと一緒に更新"""
         # 練習スケジュール存在確認
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        schedule = self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             raise APIException(ErrorMessage.PRACTICE_SCHEDULE_NOT_FOUND)
 
@@ -854,46 +843,46 @@ class PracticeScheduleService:
         }
 
         if base_schedule_data:
-            await self.practice_schedule_repository.update(schedule_id, base_schedule_data)
+            self.practice_schedule_repository.update(schedule_id, base_schedule_data)
 
         # 利用可能会場を更新（既存を削除して再作成）
         if "available_venues" in schedule_data:
-            await self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
+            self.schedule_available_venue_repository.delete_by_schedule(schedule_id)
             for venue_data in schedule_data["available_venues"]:
                 venue_data["schedule_id"] = schedule_id
-                await self.schedule_available_venue_repository.create(venue_data)
+                self.schedule_available_venue_repository.create(venue_data)
 
         # セッションを更新（既存を削除して再作成）
         # 注意: 新しいテーブル構造に対応するため、一時的にコメントアウト
         # if "sessions" in schedule_data:
-        #     await self.session_instructor_repository.delete_by_schedule(schedule_id)
-        #     await self.session_repository.delete_by_schedule(schedule_id)
+        #     self.session_instructor_repository.delete_by_schedule(schedule_id)
+        #     self.session_repository.delete_by_schedule(schedule_id)
 
         #     for session_data in schedule_data["sessions"]:
         #         session_data["schedule_id"] = schedule_id
         #         instructors_data = session_data.pop("instructors", [])
 
-        #         created_session = await self.session_repository.create(session_data)
+        #         created_session = self.session_repository.create(session_data)
         #         session_id = created_session["id"]
 
         #         # 指導者を追加
         #         for instructor_data in instructors_data:
         #             instructor_data["session_id"] = session_id
-        #             await self.session_instructor_repository.create(instructor_data)
+        #             self.session_instructor_repository.create(instructor_data)
 
         # 更新された詳細情報を返す
-        return await self.get_practice_schedule_with_details(schedule_id)
+        return self.get_practice_schedule_with_details(schedule_id)
 
     # ===== ヘルパーメソッド =====
 
-    async def _get_venues_with_colors(self, schedule_id: UUID = None) -> list[dict[str, Any]]:
+    def _get_venues_with_colors(self, schedule_id: UUID = None) -> list[dict[str, Any]]:
         """会場情報を色情報とともに取得"""
         venues = []
 
         if schedule_id:
             # スケジュールに関連付けられた会場を取得
             try:
-                schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                schedule_venues = self.schedule_available_venue_repository.find_by_schedule(schedule_id)
                 for i, schedule_venue in enumerate(schedule_venues):
                     # 修正されたfind_by_scheduleメソッドから取得したデータを処理
                     venue_name = schedule_venue.get("name") or f"会場{i+1}"  # Noneの場合はデフォルト値を使用
@@ -917,16 +906,16 @@ class PracticeScheduleService:
 
         return venues
 
-    async def _get_session_instructors(self, session_id: UUID) -> list[str]:
+    def _get_session_instructors(self, session_id: UUID) -> list[str]:
         """セッションの指導者名を取得（一旦実装しない）"""
         return []
 
-    async def _get_session_participants_count(self, schedule_id: UUID) -> int:
+    def _get_session_participants_count(self, schedule_id: UUID) -> int:
         """セッションの参加者数を取得（估算値）"""
         # 現在のリポジトリでは出欠情報を直接取得できないので、
         # セッション数やスケジュール情報から推定
         try:
-            sessions = await self.session_repository.find_by_schedule(schedule_id)
+            sessions = self.session_repository.find_by_schedule(schedule_id)
             # セッション数に応じて估算値を計算
             base_participants = len(sessions) * 3 + 2  # セッション数 × 3 + 2
             return min(base_participants, 15)  # 最大15人まで
@@ -934,7 +923,7 @@ class PracticeScheduleService:
             print(f"Warning: Could not calculate participants for schedule {schedule_id}: {e}")
             return 0  # データなし
 
-    async def _get_time_slots_from_db(self, schedule_id: Any) -> list[dict[str, Any]]:
+    def _get_time_slots_from_db(self, schedule_id: Any) -> list[dict[str, Any]]:
         """データベースから時間スロットを取得"""
         try:
             # schedule_idが文字列の場合はUUIDに変換
@@ -943,7 +932,7 @@ class PracticeScheduleService:
             elif not isinstance(schedule_id, UUID):
                 # UUIDでも文字列でもない場合はNoneを返す
                 return []
-            time_slots = await self.schedule_time_slot_repository.find_by_schedule(schedule_id)
+            time_slots = self.schedule_time_slot_repository.find_by_schedule(schedule_id)
             return time_slots
         except (ValueError, TypeError) as e:
             print(f"Warning: Invalid schedule_id format: {schedule_id}, error: {e}")
@@ -978,7 +967,7 @@ class PracticeScheduleService:
         slot_time = start_time + timedelta(minutes=slot_start_minutes)
         return slot_time.strftime("%H:%M")
 
-    async def _generate_time_schedule(self, venues: list[dict[str, Any]], schedule: dict[str, Any], division_count: int) -> dict[str, dict[str, list]]:
+    def _generate_time_schedule(self, venues: list[dict[str, Any]], schedule: dict[str, Any], division_count: int) -> dict[str, dict[str, list]]:
         """時間スケジュールの枠を生成（データベースから時間スロットを取得）"""
         time_schedule = {}
         schedule_id = schedule.get("id")
@@ -986,7 +975,7 @@ class PracticeScheduleService:
         # データベースから時間スロットを取得
         time_slots = []
         if schedule_id:
-            time_slots = await self._get_time_slots_from_db(schedule_id)
+            time_slots = self._get_time_slots_from_db(schedule_id)
         
         # データベースに時間スロットがある場合はそれを使用
         if time_slots:
@@ -1015,12 +1004,12 @@ class PracticeScheduleService:
 
         return time_schedule
 
-    async def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> dict[str, Any]:
+    def get_practice_schedule_ideal_format_by_date(self, target_date: str) -> dict[str, Any]:
         """指定した日付の練習スケジュールを理想的な形式で取得"""
         debug_logs = [f"Searching for schedule with date: {target_date}"]
 
         # 基本スケジュール情報を取得
-        schedule = await self.practice_schedule_repository.find_by_date(target_date)
+        schedule = self.practice_schedule_repository.find_by_date(target_date)
         if not schedule:
             debug_logs.append("No schedule found for the specified date")
             return {
@@ -1038,7 +1027,7 @@ class PracticeScheduleService:
         # Sessions
         try:
             debug_logs.append("Attempting to fetch sessions...")
-            sessions = await self.session_repository.find_by_schedule(schedule["id"])
+            sessions = self.session_repository.find_by_schedule(schedule["id"])
             debug_logs.append(f"Sessions fetched: {len(sessions)} items")
         except Exception as e:
             debug_logs.append(f"ERROR fetching sessions: {e}")
@@ -1047,7 +1036,7 @@ class PracticeScheduleService:
         # Venues
         try:
             debug_logs.append("Attempting to fetch venues...")
-            venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            venues = self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
             print(f"Venues fetched: {venues}")
             debug_logs.append(f"Venues fetched: {len(venues)} items")
         except Exception as e:
@@ -1061,7 +1050,7 @@ class PracticeScheduleService:
         division_count = schedule.get("division_count", 6)
 
         # 基本スケジュール情報とセッション情報から理想形式を生成
-        result = await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, instructors, division_count)
+        result = self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, instructors, division_count)
 
         # デバッグログを追加
         if "debug_info" not in result:
@@ -1070,7 +1059,7 @@ class PracticeScheduleService:
 
         return result
 
-    async def _convert_to_ideal_format(self, display_data: dict[str, Any]) -> dict[str, Any]:
+    def _convert_to_ideal_format(self, display_data: dict[str, Any]) -> dict[str, Any]:
         """表示用データを理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -1095,13 +1084,13 @@ class PracticeScheduleService:
 
         # 時間スケジュールを生成（動的分割を使用）
         division_count = display_data.get("division_count", 6)
-        time_schedule = await self._generate_time_schedule(venues, display_data, division_count)
+        time_schedule = self._generate_time_schedule(venues, display_data, division_count)
 
         # データベースから時間スロットを取得
         schedule_id = display_data.get("id")
         time_slots = []
         if schedule_id:
-            time_slots = await self._get_time_slots_from_db(schedule_id)
+            time_slots = self._get_time_slots_from_db(schedule_id)
 
         # セッションを時間スロットに配置
         part_colors = settings.DEFAULT_PART_COLORS
@@ -1150,7 +1139,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _convert_to_ideal_format_simple(self, schedule: dict[str, Any], details_data: dict[str, Any]) -> dict[str, Any]:
+    def _convert_to_ideal_format_simple(self, schedule: dict[str, Any], details_data: dict[str, Any]) -> dict[str, Any]:
         """実データを理想的な形式に変換（シンプル版）"""
         # 基本情報
         schedule_info = {
@@ -1179,13 +1168,13 @@ class PracticeScheduleService:
 
         # 時間スケジュールを生成（動的分割を使用）
         division_count = schedule.get("division_count", 6)
-        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
         # データベースから時間スロットを取得
         schedule_id = schedule.get("id")
         time_slots = []
         if schedule_id:
-            time_slots = await self._get_time_slots_from_db(schedule_id)
+            time_slots = self._get_time_slots_from_db(schedule_id)
 
         # セッションを配置
         part_colors = settings.DEFAULT_PART_COLORS
@@ -1216,7 +1205,7 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _convert_basic_to_ideal_format(self, schedule: dict[str, Any], division_count: int = 6) -> dict[str, Any]:
+    def _convert_basic_to_ideal_format(self, schedule: dict[str, Any], division_count: int = 6) -> dict[str, Any]:
         """基本スケジュールデータから理想的な形式に変換（実データのみ使用）"""
         # 基本情報
         schedule_info = {
@@ -1229,16 +1218,16 @@ class PracticeScheduleService:
         }
 
         # 実際の会場データを取得
-        venues = await self._get_venues_with_colors(schedule["id"])
+        venues = self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
         # データベースから時間スロットを取得
-        time_slots = await self._get_time_slots_from_db(schedule["id"])
+        time_slots = self._get_time_slots_from_db(schedule["id"])
 
         # 実際のセッションデータのみを使用（推測データは生成しない）
-        sessions = await self.session_repository.find_by_schedule(schedule["id"])
+        sessions = self.session_repository.find_by_schedule(schedule["id"])
 
         # 実際のセッションデータがある場合のみ配置
         for session in sessions:
@@ -1253,8 +1242,8 @@ class PracticeScheduleService:
                     "part_name": session.get("title", ""),
                     "part_color": settings.DEFAULT_PART_COLORS[venue_index % len(settings.DEFAULT_PART_COLORS)],
                     "session_title": session.get("title", ""),
-                    "instructors": await self._get_session_instructors(session.get("id")),
-                    "participants": await self._get_session_participants_count(schedule["id"]),
+                    "instructors": self._get_session_instructors(session.get("id")),
+                    "participants": self._get_session_participants_count(schedule["id"]),
                     "status": "confirmed"
                 }
 
@@ -1266,16 +1255,16 @@ class PracticeScheduleService:
             "time_schedule": time_schedule
         }
 
-    async def _get_absent_members_for_session(self, schedule_id: UUID, part_id: UUID) -> list[dict[str, Any]]:
+    def _get_absent_members_for_session(self, schedule_id: UUID, part_id: UUID) -> list[dict[str, Any]]:
         """セッションの欠席メンバーを取得"""
         try:
             # パート所属メンバーを取得
-            part_members = await self.member_assignment_repository.find_by_part_id(part_id)
+            part_members = self.member_assignment_repository.find_by_part_id(part_id)
             if not part_members:
                 return []
             
             # 練習スケジュールの出欠記録を取得
-            attendance_records = await self.attendance_repository.find_by_practice_schedule(schedule_id)
+            attendance_records = self.attendance_repository.find_by_practice_schedule(schedule_id)
             if not attendance_records:
                 return []
             
@@ -1296,7 +1285,7 @@ class PracticeScheduleService:
                     # ユーザープロフィールから名前を取得
                     user_name = None
                     try:
-                        profile = await self.user_profile_repository.get_profile_by_user_id(str(user_id))
+                        profile = self.user_profile_repository.get_profile_by_user_id(str(user_id))
                         if profile:
                             first_name = profile.get("first_name_kanji", "")
                             last_name = profile.get("last_name_kanji", "")
@@ -1326,7 +1315,7 @@ class PracticeScheduleService:
             print(f"Error getting absent members for session: {e}")
             return []
 
-    async def _convert_basic_to_ideal_format_with_sessions(self, schedule: dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> dict[str, Any]:
+    def _convert_basic_to_ideal_format_with_sessions(self, schedule: dict[str, Any], sessions: list, venues: list = None, instructors: list = None, division_count: int = 6) -> dict[str, Any]:
         """基本スケジュールデータとセッション情報から理想的な形式に変換"""
         # 基本情報
         schedule_info = {
@@ -1339,13 +1328,13 @@ class PracticeScheduleService:
         }
 
         # 実際の会場データを取得
-        venues = await self._get_venues_with_colors(schedule["id"])
+        venues = self._get_venues_with_colors(schedule["id"])
 
         # 時間スケジュールを生成
-        time_schedule = await self._generate_time_schedule(venues, schedule, division_count)
+        time_schedule = self._generate_time_schedule(venues, schedule, division_count)
 
         # データベースから時間スロットを取得
-        time_slots = await self._get_time_slots_from_db(schedule["id"])
+        time_slots = self._get_time_slots_from_db(schedule["id"])
 
         # パフォーマンス最適化: 一度に全てのデータを取得
         # セッションのpart_idリストを取得（UUIDを文字列に変換）
@@ -1373,7 +1362,7 @@ class PracticeScheduleService:
                 
                 # 一度のクエリで全てのパートのメンバーを取得
                 if part_id_uuids:
-                    members_by_part = await self.member_assignment_repository.find_by_part_ids(part_id_uuids)
+                    members_by_part = self.member_assignment_repository.find_by_part_ids(part_id_uuids)
                     # 文字列キーに変換してマップに格納
                     for part_id_str in unique_part_ids:
                         part_members_map[part_id_str] = members_by_part.get(part_id_str, [])
@@ -1386,7 +1375,7 @@ class PracticeScheduleService:
         # 練習スケジュールの出欠記録を一度に取得
         attendance_records = []
         try:
-            attendance_records = await self.attendance_repository.find_by_practice_schedule(schedule["id"])
+            attendance_records = self.attendance_repository.find_by_practice_schedule(schedule["id"])
         except Exception as e:
             print(f"Error fetching attendance records: {e}")
         
@@ -1412,14 +1401,14 @@ class PracticeScheduleService:
         if user_ids_needed:
             try:
                 # IN句で一度に全てのプロフィールを取得
-                user_profiles_map = await self.user_profile_repository.get_profiles_by_user_ids(list(user_ids_needed))
+                user_profiles_map = self.user_profile_repository.get_profiles_by_user_ids(list(user_ids_needed))
             except Exception as e:
                 print(f"Error fetching profiles: {e}")
 
         # 実際のセッションデータを配置（slot_order順）
         part_colors = settings.DEFAULT_PART_COLORS
         processing_details = []
-        participants_count = await self._get_session_participants_count(schedule["id"])
+        participants_count = self._get_session_participants_count(schedule["id"])
 
         if sessions:
             # slot_orderでソート済みのセッションを処理
@@ -1513,7 +1502,7 @@ class PracticeScheduleService:
                             "part_name": session.get("part_name", session_title),  # パート名を優先、なければセッションタイトル
                             "part_color": part_colors[(slot_order - 1) % len(part_colors)],
                             "session_title": session_title,
-                            "instructors": await self._get_session_instructors(session.get("id")),
+                            "instructors": self._get_session_instructors(session.get("id")),
                             "participants": participants_count,
                             "status": "confirmed",
                             "slot_order": slot_order,
@@ -1544,10 +1533,10 @@ class PracticeScheduleService:
             }
         }
 
-    async def _get_bundle_users(self) -> list[dict[str, Any]]:
+    def _get_bundle_users(self) -> list[dict[str, Any]]:
         """bundle API 用にユーザー一覧を取得"""
         try:
-            profiles = await self.user_profile_repository.get_all_profiles_basic()
+            profiles = self.user_profile_repository.get_all_profiles_basic()
         except Exception as exc:
             print(f"Warning: failed to fetch basic user profiles: {exc}")
             return []
@@ -1571,51 +1560,51 @@ class PracticeScheduleService:
 
         return users
 
-    async def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> dict[str, Any]:
+    def get_practice_schedule_details_by_id(self, schedule_id: UUID) -> dict[str, Any]:
         """指定したIDの練習スケジュールの詳細情報を取得"""
         # 基本スケジュール情報を取得
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        schedule = self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             return None
 
         # セッション情報を安全に取得
         sessions = []
         try:
-            sessions = await self.session_repository.find_by_schedule(schedule_id)
+            sessions = self.session_repository.find_by_schedule(schedule_id)
         except Exception as e:
             print(f"Warning: Could not fetch sessions for schedule {schedule_id}: {e}")
             sessions = []
 
         # 詳細形式に変換
-        return await self._convert_to_details_format(schedule, sessions)
+        return self._convert_to_details_format(schedule, sessions)
 
-    async def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> dict[str, Any]:
+    def get_practice_schedule_ideal_format_by_id(self, schedule_id: UUID) -> dict[str, Any]:
         """指定したIDの練習スケジュールのidealフォーマット詳細情報を取得（並列化で高速化）"""
         import time
         ideal_start = time.time()
         
         # 基本スケジュール情報を取得（他のクエリに依存するため先に実行）
-        schedule = await self.practice_schedule_repository.find_by_id(schedule_id)
+        schedule = self.practice_schedule_repository.find_by_id(schedule_id)
         if not schedule:
             return None
 
         # セッション情報と会場情報を並列取得
-        async def get_sessions():
+        def get_sessions():
             try:
-                return await self.session_repository.find_by_schedule(schedule_id)
+                return self.session_repository.find_by_schedule(schedule_id)
             except Exception as e:
                 print(f"Warning: Could not fetch sessions for schedule {schedule_id}: {e}")
                 return []
 
-        async def get_venues():
+        def get_venues():
             try:
-                return await self.schedule_available_venue_repository.find_by_schedule(schedule_id)
+                return self.schedule_available_venue_repository.find_by_schedule(schedule_id)
             except Exception as e:
                 print(f"Warning: Could not fetch venues for schedule {schedule_id}: {e}")
                 return []
 
         gather_start = time.time()
-        sessions, venues = await asyncio.gather(get_sessions(), get_venues())
+        sessions, venues = (get_sessions(), get_venues())
         gather_elapsed = time.time() - gather_start
         print(f"DEBUG: ideal gather実行時間: {gather_elapsed:.3f}秒")
 
@@ -1624,13 +1613,13 @@ class PracticeScheduleService:
 
         # 理想形式を生成（日付指定と同じメソッドを使用）
         convert_start = time.time()
-        result = await self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, [], division_count)
+        result = self._convert_basic_to_ideal_format_with_sessions(schedule, sessions, venues, [], division_count)
         convert_elapsed = time.time() - convert_start
         ideal_total = time.time() - ideal_start
         print(f"DEBUG: ideal convert実行時間: {convert_elapsed:.3f}秒, ideal合計: {ideal_total:.3f}秒")
         return result
 
-    async def _convert_to_details_format(self, schedule: dict[str, Any], sessions: list) -> dict[str, Any]:
+    def _convert_to_details_format(self, schedule: dict[str, Any], sessions: list) -> dict[str, Any]:
         """基本スケジュールデータとセッション情報から詳細形式に変換"""
         # 基本情報
         result = {
@@ -1651,7 +1640,7 @@ class PracticeScheduleService:
         # 利用可能会場情報（実データから取得）
         result["available_venues"] = []
         try:
-            schedule_venues = await self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
+            schedule_venues = self.schedule_available_venue_repository.find_by_schedule(schedule["id"])
             for venue in schedule_venues:
                 venue_info = {
                     "id": str(venue.get("id", "")),
@@ -1678,7 +1667,7 @@ class PracticeScheduleService:
                 "priority": session.get("priority", 0),
                 "created_at": str(session.get("created_at", "")),
                 "updated_at": str(session.get("updated_at", "")),
-                "instructors": await self._get_session_instructors(session.get("id")) if session.get("id") else []
+                "instructors": self._get_session_instructors(session.get("id")) if session.get("id") else []
             }
             result["sessions"].append(session_info)
 
@@ -1686,7 +1675,7 @@ class PracticeScheduleService:
 
     # ===== Monthカレンダー表示用メソッド =====
 
-    async def get_practice_schedules_for_month_calendar(
+    def get_practice_schedules_for_month_calendar(
         self, year: int, month: int
     ) -> list[dict[str, Any]]:
         """Monthカレンダー表示用の練習スケジュール一覧を取得（最適化版 - N+1問題を解決）
@@ -1709,7 +1698,7 @@ class PracticeScheduleService:
             end_date = date(year, month + 1, 1)
 
         # 1回のクエリで全データを取得（N+1問題を解決）
-        schedules = await self.practice_schedule_repository.find_by_date_range_with_relations(
+        schedules = self.practice_schedule_repository.find_by_date_range_with_relations(
             start_date.isoformat(), end_date.isoformat()
         )
 
@@ -1776,7 +1765,7 @@ class PracticeScheduleService:
 
         return calendar_events
 
-    async def get_practice_schedules_for_date_range(
+    def get_practice_schedules_for_date_range(
         self, start_date: str, end_date: str
     ) -> list[dict[str, Any]]:
         """指定した日付範囲の練習スケジュール一覧を取得（カレンダー表示用・最適化版）
@@ -1785,7 +1774,7 @@ class PracticeScheduleService:
         get_practice_schedules_for_month_calendarと同じ最適化を適用しています。
         """
         # 1回のクエリで全データを取得（N+1問題を解決）
-        schedules = await self.practice_schedule_repository.find_by_date_range_with_relations(
+        schedules = self.practice_schedule_repository.find_by_date_range_with_relations(
             start_date, end_date
         )
 

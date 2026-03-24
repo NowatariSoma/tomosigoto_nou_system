@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { fetchApi } from '../../../lib/api';
 
 // Stagesテーブルの型定義
 export interface StageData {
@@ -21,86 +21,49 @@ export interface CreateStageRequest {
 export interface UpdateStageRequest extends Partial<CreateStageRequest> {}
 
 export class StagesService {
-  private readonly tableName = 'stages';
-
   async getStages(): Promise<StageData[]> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .order('performance_date', { ascending: false });
-
-    if (error) {
-      throw new Error(`Failed to fetch stages: ${error.message}`);
-    }
-
+    const response = await fetchApi('/stages');
+    const data = await response.json();
     return (data || []).map(this.mapStageResponseToStageData);
   }
 
   async getStage(id: string): Promise<StageData> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to fetch stage: ${error.message}`);
-    }
-
+    const response = await fetchApi(`/stages/${id}`);
+    const data = await response.json();
     return this.mapStageResponseToStageData(data);
   }
 
   async createStage(data: CreateStageRequest): Promise<StageData> {
-    const stageData = {
-      name: data.name,
-      description: data.description,
-      performance_date: data.performanceDate,
-      status: data.status || 'active',
-    };
-
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .insert(stageData)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create stage: ${error.message}`);
-    }
-
+    const response = await fetchApi('/stages', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: data.name,
+        description: data.description,
+        performance_date: data.performanceDate,
+        status: data.status || 'active',
+      }),
+    });
+    const result = await response.json();
     return this.mapStageResponseToStageData(result);
   }
 
   async updateStage(id: string, data: UpdateStageRequest): Promise<StageData> {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.performanceDate !== undefined) updateData.performance_date = data.performanceDate;
     if (data.status !== undefined) updateData.status = data.status;
 
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to update stage: ${error.message}`);
-    }
-
+    const response = await fetchApi(`/stages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+    const result = await response.json();
     return this.mapStageResponseToStageData(result);
   }
 
   async deleteStage(id: string): Promise<void> {
-    const { error } = await supabase
-      .from(this.tableName)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      throw new Error(`Failed to delete stage: ${error.message}`);
-    }
+    await fetchApi(`/stages/${id}`, { method: 'DELETE' });
   }
 
   private mapStageResponseToStageData(stage: any): StageData {

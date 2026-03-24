@@ -5,17 +5,16 @@ from typing import Any
 from uuid import UUID
 from enum import Enum
 
-from app.core.exceptions import handle_supabase_errors
-from supabase import Client
+from app.core.database import Conn
 
 
 class ScheduleAvailableVenueRepository:
     """スケジュール利用可能会場のデータアクセス層"""
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, conn: Conn):
+        self.conn = conn
         self.table_name = "schedule_available_venues"
-    
+
     def _serialize_uuid_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """UUID型とEnum型を文字列に変換"""
         serialized_data = {}
@@ -28,281 +27,196 @@ class ScheduleAvailableVenueRepository:
                 serialized_data[key] = value
         return serialized_data
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> list[dict[str, Any]]:
+    def find_all(self) -> list[dict[str, Any]]:
         """すべてのスケジュール利用可能会場を取得"""
-        response = self.client.table(self.table_name).select("*").execute()
-        return response.data
+        rows = self.conn.execute("SELECT * FROM schedule_available_venues").fetchall()
+        return [dict(r) for r in rows]
 
-    @handle_supabase_errors("find_all_with_details")
-    async def find_all_with_details(
-        self, 
-        limit: int = 100, 
+    def find_all_with_details(
+        self,
+        limit: int = 100,
         offset: int = 0,
         schedule_id: UUID | None = None,
-        venue_id: UUID | None = None
+        venue_id: UUID | None = None,
     ) -> list[dict[str, Any]]:
         """詳細情報付きでスケジュール利用可能会場を取得"""
-        # 基本データを取得
-        query = self.client.table(self.table_name).select("*")
-        
-        # フィルタリング
-        if schedule_id:
-            query = query.eq("schedule_id", str(schedule_id))
-        if venue_id:
-            query = query.eq("venue_id", str(venue_id))
-        
-        # 並び順（優先度の高い順、作成日時順）
-        query = query.order("priority", desc=True).order("created_at")
-        
-        # ページネーション
-        query = query.range(offset, offset + limit - 1)
-        
-        response = query.execute()
-        
-        # データを整形し、関連データを個別に取得
-        formatted_data = []
-        for item in response.data:
-            formatted_item = {
-                "id": item["id"],
-                "schedule_id": item["schedule_id"],
-                "venue_id": item["venue_id"],
-                "is_preferred": item.get("is_preferred", False),
-                "priority": item.get("priority", 0),
-                "notes": item.get("notes"),
-                "created_at": item["created_at"],
-                "updated_at": item["updated_at"],
-                # デフォルト値
-                "venue_name": None,
-                "venue_address": None,
-                "venue_capacity": None,
-                "venue_phone": None,
-                "venue_email": None,
-                "venue_website": None,
-                "schedule_date": None,
-                "schedule_title": None,
-                "schedule_start_time": None,
-                "schedule_end_time": None,
-            }
-            
-            # 会場情報を取得
-            try:
-                venue_response = self.client.table("venues").select("*").eq("id", item["venue_id"]).execute()
-                if venue_response.data:
-                    venue_data = venue_response.data[0]
-                    formatted_item["venue_name"] = venue_data.get("name")
-                    formatted_item["venue_address"] = venue_data.get("address")
-                    formatted_item["venue_capacity"] = venue_data.get("capacity")
-                    formatted_item["venue_phone"] = venue_data.get("phone")
-                    formatted_item["venue_email"] = venue_data.get("email")
-                    formatted_item["venue_website"] = venue_data.get("website")
-            except Exception:
-                pass  # エラーが発生した場合はデフォルト値のまま
-            
-            # スケジュール情報を取得
-            try:
-                schedule_response = self.client.table("practice_schedules").select("*").eq("id", item["schedule_id"]).execute()
-                if schedule_response.data:
-                    schedule_data = schedule_response.data[0]
-                    formatted_item["schedule_date"] = schedule_data.get("schedule_date")
-                    formatted_item["schedule_title"] = schedule_data.get("title")
-                    formatted_item["schedule_start_time"] = schedule_data.get("start_time")
-                    formatted_item["schedule_end_time"] = schedule_data.get("end_time")
-            except Exception:
-                pass  # エラーが発生した場合はデフォルト値のまま
-            
-            formatted_data.append(formatted_item)
-        
-        return formatted_data
+        conditions = []
+        params: list[Any] = []
 
-    @handle_supabase_errors("count_all")
-    async def count_all(
+        if schedule_id:
+            conditions.append("sav.schedule_id = %s")
+            params.append(str(schedule_id))
+        if venue_id:
+            conditions.append("sav.venue_id = %s")
+            params.append(str(venue_id))
+
+        where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        params.extend([limit, offset])
+
+        rows = self.conn.execute(
+            f"""
+            SELECT sav.*,
+                   v.name AS venue_name, v.address AS venue_address,
+                   v.capacity AS venue_capacity, v.phone AS venue_phone,
+                   v.email AS venue_email, v.website AS venue_website,
+                   ps.schedule_date, ps.title AS schedule_title,
+                   ps.start_time AS schedule_start_time, ps.end_time AS schedule_end_time
+            FROM schedule_available_venues sav
+            LEFT JOIN venues v ON sav.venue_id = v.id
+            LEFT JOIN practice_schedules ps ON sav.schedule_id = ps.id
+            {where_clause}
+            ORDER BY sav.priority DESC, sav.created_at
+            LIMIT %s OFFSET %s
+            """,
+            params,
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def count_all(
         self,
         schedule_id: UUID | None = None,
-        venue_id: UUID | None = None
+        venue_id: UUID | None = None,
     ) -> int:
         """スケジュール利用可能会場の総件数を取得"""
-        query = self.client.table(self.table_name).select("id", count="exact")
-        
-        # フィルタリング
+        conditions = []
+        params: list[Any] = []
+
         if schedule_id:
-            query = query.eq("schedule_id", str(schedule_id))
+            conditions.append("schedule_id = %s")
+            params.append(str(schedule_id))
         if venue_id:
-            query = query.eq("venue_id", str(venue_id))
-        
-        response = query.execute()
-        return response.count
+            conditions.append("venue_id = %s")
+            params.append(str(venue_id))
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, schedule_venue_id: UUID) -> dict[str, Any] | None:
+        where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        row = self.conn.execute(
+            f"SELECT COUNT(*) AS cnt FROM schedule_available_venues {where_clause}",
+            params,
+        ).fetchone()
+        return row["cnt"] if row else 0
+
+    def find_by_id(self, schedule_venue_id: UUID) -> dict[str, Any] | None:
         """指定したIDのスケジュール利用可能会場を取得"""
-        response = self.client.table(self.table_name).select("*").eq("id", str(schedule_venue_id)).execute()
-        return response.data[0] if response.data else None
+        row = self.conn.execute(
+            "SELECT * FROM schedule_available_venues WHERE id = %s",
+            (str(schedule_venue_id),),
+        ).fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
+    def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの利用可能会場一覧を取得"""
-        response = (
-            self.client.table(self.table_name)
-            .select(
-                """
-                *,
-                venues(
-                    id,
-                    name,
-                    campus,
-                    address
-                )
-                """
-            )
-            .eq("schedule_id", str(schedule_id))
-            .order("priority", desc=True)
-            .order("created_at")
-            .execute()
-        )
-
-        # JOINに失敗したvenue_idを収集
-        missing_venue_ids = []
-        for item in response.data:
-            if not item.get("venues") and item.get("venue_id"):
-                missing_venue_ids.append(item["venue_id"])
-
-        # JOINに失敗した会場情報を直接取得
-        venue_lookup = {}
-        if missing_venue_ids:
-            print(f"DEBUG find_by_schedule: JOINに失敗したvenue_ids={missing_venue_ids}")
-            try:
-                venues_response = (
-                    self.client.table("venues")
-                    .select("id, name, campus, address")
-                    .in_("id", missing_venue_ids)
-                    .execute()
-                )
-                for venue in venues_response.data:
-                    venue_lookup[venue["id"]] = venue
-                print(f"DEBUG find_by_schedule: 直接取得した会場情報={venue_lookup}")
-            except Exception as e:
-                print(f"WARNING find_by_schedule: 会場情報の直接取得に失敗: {e}")
-
-        # 会場名を含むようにデータを整形
+        rows = self.conn.execute(
+            """
+            SELECT sav.*,
+                   v.name AS venue_name_join, v.campus AS venue_campus_join, v.address AS venue_address_join
+            FROM schedule_available_venues sav
+            LEFT JOIN venues v ON sav.venue_id = v.id
+            WHERE sav.schedule_id = %s
+            ORDER BY sav.priority DESC, sav.created_at
+            """,
+            (str(schedule_id),),
+        ).fetchall()
         formatted_data = []
-        for item in response.data:
-            formatted_item = dict(item)
-            venue_info = item.get("venues")
-
-            # JOINデータがない場合は直接取得したデータを使用
-            if not venue_info and item.get("venue_id"):
-                venue_info = venue_lookup.get(item["venue_id"])
-                if venue_info:
-                    print(f"DEBUG find_by_schedule: venue_id={item['venue_id']}の会場情報を直接取得から補完")
-
-            venue_info = venue_info or {}
-
-            # venuesテーブルの情報を平坦化して格納
-            formatted_item["name"] = venue_info.get("name")
-            formatted_item["campus"] = venue_info.get("campus")
-            formatted_item["address"] = venue_info.get("address")
-
-            formatted_data.append(formatted_item)
-
+        for r in rows:
+            item = dict(r)
+            item["name"] = item.pop("venue_name_join", None)
+            item["campus"] = item.pop("venue_campus_join", None)
+            item["address"] = item.pop("venue_address_join", None)
+            formatted_data.append(item)
         return formatted_data
 
-    @handle_supabase_errors("find_by_venue")
-    async def find_by_venue(self, venue_id: UUID) -> list[dict[str, Any]]:
+    def find_by_venue(self, venue_id: UUID) -> list[dict[str, Any]]:
         """指定した会場のスケジュール利用可能性一覧を取得"""
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("venue_id", str(venue_id))
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return response.data
+        rows = self.conn.execute(
+            "SELECT * FROM schedule_available_venues WHERE venue_id = %s ORDER BY created_at DESC",
+            (str(venue_id),),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
-    @handle_supabase_errors("find_by_schedule_and_venue")
-    async def find_by_schedule_and_venue(
-        self, 
-        schedule_id: UUID, 
-        venue_id: UUID
+    def find_by_schedule_and_venue(
+        self,
+        schedule_id: UUID,
+        venue_id: UUID,
     ) -> dict[str, Any] | None:
         """指定したスケジュールと会場の組み合わせを取得"""
-        schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        venue_id_str = str(venue_id) if isinstance(venue_id, UUID) else venue_id
-        
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("schedule_id", schedule_id_str)
-            .eq("venue_id", venue_id_str)
-            .execute()
-        )
-        return response.data[0] if response.data else None
+        row = self.conn.execute(
+            "SELECT * FROM schedule_available_venues WHERE schedule_id = %s AND venue_id = %s",
+            (str(schedule_id), str(venue_id)),
+        ).fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("create")
-    async def create(self, schedule_venue_data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, schedule_venue_data: dict[str, Any]) -> dict[str, Any]:
         """スケジュール利用可能会場を作成"""
         serialized_data = self._serialize_uuid_fields(schedule_venue_data)
-        response = self.client.table(self.table_name).insert(serialized_data).execute()
-        return response.data[0]
+        columns = list(serialized_data.keys())
+        values = [serialized_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO schedule_available_venues ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        return dict(cur.fetchone())
 
-    @handle_supabase_errors("update")
-    async def update(
-        self, 
-        schedule_venue_id: UUID, 
-        update_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def update(
+        self,
+        schedule_venue_id: UUID,
+        update_data: dict[str, Any],
+    ) -> dict[str, Any] | None:
         """スケジュール利用可能会場を更新"""
         serialized_data = self._serialize_uuid_fields(update_data)
-        response = (
-            self.client.table(self.table_name)
-            .update(serialized_data)
-            .eq("id", str(schedule_venue_id))
-            .execute()
+        if not serialized_data:
+            return self.find_by_id(schedule_venue_id)
+        set_clause = ", ".join([f"{k} = %s" for k in serialized_data.keys()])
+        values = list(serialized_data.values()) + [str(schedule_venue_id)]
+        cur = self.conn.execute(
+            f"UPDATE schedule_available_venues SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        return response.data[0]
+        self.conn.commit()
+        row = cur.fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("delete")
-    async def delete(self, schedule_venue_id: UUID) -> bool:
+    def delete(self, schedule_venue_id: UUID) -> bool:
         """スケジュール利用可能会場を削除"""
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("id", str(schedule_venue_id))
-            .execute()
+        cur = self.conn.execute(
+            "DELETE FROM schedule_available_venues WHERE id = %s RETURNING id",
+            (str(schedule_venue_id),),
         )
-        return len(response.data) > 0
+        self.conn.commit()
+        return cur.fetchone() is not None
 
-    @handle_supabase_errors("delete_by_schedule")
-    async def delete_by_schedule(self, schedule_id: UUID) -> int:
+    def delete_by_schedule(self, schedule_id: UUID) -> int:
         """指定したスケジュールの利用可能会場をすべて削除"""
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("schedule_id", str(schedule_id))
-            .execute()
+        cur = self.conn.execute(
+            "DELETE FROM schedule_available_venues WHERE schedule_id = %s RETURNING id",
+            (str(schedule_id),),
         )
-        return len(response.data)
+        self.conn.commit()
+        return len(cur.fetchall())
 
-    @handle_supabase_errors("delete_by_venue")
-    async def delete_by_venue(self, venue_id: UUID) -> int:
+    def delete_by_venue(self, venue_id: UUID) -> int:
         """指定した会場の利用可能性をすべて削除"""
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("venue_id", str(venue_id))
-            .execute()
+        cur = self.conn.execute(
+            "DELETE FROM schedule_available_venues WHERE venue_id = %s RETURNING id",
+            (str(venue_id),),
         )
-        return len(response.data)
+        self.conn.commit()
+        return len(cur.fetchall())
 
-    # 関連テーブルの存在確認用メソッド
-    @handle_supabase_errors("find_schedule_by_id")
-    async def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
+    def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールの存在確認"""
-        response = self.client.table("practice_schedules").select("*").eq("id", str(schedule_id)).execute()
-        return response.data[0] if response.data else None
+        row = self.conn.execute(
+            "SELECT * FROM practice_schedules WHERE id = %s",
+            (str(schedule_id),),
+        ).fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("find_venue_by_id")
-    async def find_venue_by_id(self, venue_id: UUID) -> dict[str, Any] | None:
+    def find_venue_by_id(self, venue_id: UUID) -> dict[str, Any] | None:
         """会場の存在確認"""
-        response = self.client.table("venues").select("*").eq("id", str(venue_id)).execute()
-        return response.data[0] if response.data else None
+        row = self.conn.execute(
+            "SELECT * FROM venues WHERE id = %s",
+            (str(venue_id),),
+        ).fetchone()
+        return dict(row) if row else None

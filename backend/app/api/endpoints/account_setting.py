@@ -27,25 +27,25 @@ router = APIRouter()
 
 
 @router.get("/profile/exists")
-async def check_profile_exists(
+def check_profile_exists(
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのプロフィール存在確認"""
     user_id = current_user["id"]
-    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    profile = account_setting_service.get_profile_by_user_id(user_id)
     
     return {"exists": profile is not None}
 
 
 @router.get("/profile", response_model=AccountSettingProfileResponse)
-async def get_current_user_profile(
+def get_current_user_profile(
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを取得"""
     user_id = current_user["id"]
-    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    profile = account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:
         raise APIException(ErrorMessage.USER_NOT_FOUND)
@@ -54,13 +54,13 @@ async def get_current_user_profile(
 
 
 @router.get("/profile-public", response_model=AccountSettingProfileResponse)
-async def get_public_profile(
+def get_public_profile(
     user_id: str = Query(..., description="ユーザーID"),
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """認証不要でプロフィールを取得（テスト用）"""
-    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    profile = account_setting_service.get_profile_by_user_id(user_id)
 
     if not profile:
         raise APIException(ErrorMessage.USER_NOT_FOUND)
@@ -69,13 +69,13 @@ async def get_public_profile(
 
 
 @router.get("/profile/{user_id}", response_model=AccountSettingProfileResponse)
-async def get_user_profile(
+def get_user_profile(
     user_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """指定されたユーザーのアカウント設定プロフィールを取得"""
-    profile = await account_setting_service.get_profile_by_user_id(user_id)
+    profile = account_setting_service.get_profile_by_user_id(user_id)
     
     if not profile:
         raise APIException(ErrorMessage.USER_NOT_FOUND)
@@ -84,7 +84,7 @@ async def get_user_profile(
 
 
 @router.post("/profile", response_model=AccountSettingProfileResponse, status_code=status.HTTP_201_CREATED)
-async def create_user_profile(
+def create_user_profile(
     profile_data: AccountSettingProfileCreate,
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
@@ -93,21 +93,21 @@ async def create_user_profile(
     user_id = current_user["id"]
     
     # 既存プロフィールの確認
-    existing_profile = await account_setting_service.get_profile_by_user_id(user_id)
+    existing_profile = account_setting_service.get_profile_by_user_id(user_id)
     if existing_profile:
         raise APIException(ErrorMessage.BAD_REQUEST)
     
     # バリデーション
-    validation_result = await account_setting_service.validate_profile_data(profile_data.dict(), user_id)
+    validation_result = account_setting_service.validate_profile_data(profile_data.dict(), user_id)
     if not validation_result.is_valid:
         raise APIException(ErrorMessage.BAD_REQUEST)
     
-    profile = await account_setting_service.create_profile(user_id, profile_data)
+    profile = account_setting_service.create_profile(user_id, profile_data)
     return profile
 
 
 @router.post("/profile-public", response_model=AccountSettingProfileResponse, status_code=status.HTTP_201_CREATED)
-async def create_public_profile(
+def create_public_profile(
     profile_data: AccountSettingProfileCreate,
     user_id: str = Query(..., description="ユーザーID"),
     current_user: CurrentUser = Depends(get_current_user),
@@ -116,12 +116,12 @@ async def create_public_profile(
     """認証不要でプロフィールを作成（テスト用）"""
     try:
         # バリデーションは一時的に無効化
-        # validation_result = await account_setting_service.validate_profile_data(profile_data.dict(), user_id)
+        # validation_result = account_setting_service.validate_profile_data(profile_data.dict(), user_id)
         # if not validation_result.is_valid:
         #     raise APIException(ErrorMessage.BAD_REQUEST)
         
         # 実際にデータベースに保存を試行
-        profile = await account_setting_service.create_profile(user_id, profile_data)
+        profile = account_setting_service.create_profile(user_id, profile_data)
         
         return profile
     except Exception as e:
@@ -130,7 +130,7 @@ async def create_public_profile(
 
 
 @router.put("/profile", response_model=AccountSettingProfileResponse)
-async def update_user_profile(
+def update_user_profile(
     update_data: AccountSettingUpdateRequest,
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
@@ -145,7 +145,7 @@ async def update_user_profile(
         raise APIException(ErrorMessage.BAD_REQUEST)
 
     # バリデーション
-    validation_result = await account_setting_service.validate_profile_data(update_dict, user_id)
+    validation_result = account_setting_service.validate_profile_data(update_dict, user_id)
     if not validation_result.is_valid:
         import logging
         logger = logging.getLogger(__name__)
@@ -159,12 +159,12 @@ async def update_user_profile(
             }
         )
 
-    profile = await account_setting_service.update_profile(user_id, update_data)
+    profile = account_setting_service.update_profile(user_id, update_data)
     return profile
 
 
 @router.put("/profile-public", response_model=AccountSettingProfileResponse)
-async def update_public_profile(
+def update_public_profile(
     update_data: AccountSettingUpdateRequest,
     user_id: str = Query(..., description="ユーザーID"),
     current_user: CurrentUser = Depends(get_current_user),
@@ -179,12 +179,12 @@ async def update_public_profile(
             raise APIException(ErrorMessage.BAD_REQUEST)
         
         # バリデーションは一時的に無効化
-        # validation_result = await account_setting_service.validate_profile_data(update_dict, user_id)
+        # validation_result = account_setting_service.validate_profile_data(update_dict, user_id)
         # if not validation_result.is_valid:
         #     raise APIException(ErrorMessage.BAD_REQUEST)
         
         # 実際にデータベースに更新を試行
-        profile = await account_setting_service.update_profile(user_id, update_data)
+        profile = account_setting_service.update_profile(user_id, update_data)
         
         return profile
     except Exception as e:
@@ -193,14 +193,14 @@ async def update_public_profile(
 
 
 @router.delete("/profile")
-async def delete_user_profile(
+def delete_user_profile(
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定プロフィールを削除"""
     user_id = current_user["id"]
     
-    result = await account_setting_service.delete_profile(user_id)
+    result = account_setting_service.delete_profile(user_id)
     if not result:
         raise APIException(ErrorMessage.INTERNAL_SERVER_ERROR)
     
@@ -208,23 +208,23 @@ async def delete_user_profile(
 
 
 @router.get("/departments", response_model=list[DepartmentResponse])
-async def get_all_departments(
+def get_all_departments(
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """すべての学部を取得"""
-    departments = await account_setting_service.get_all_departments()
+    departments = account_setting_service.get_all_departments()
     return departments
 
 
 @router.get("/departments/{department_code}", response_model=DepartmentResponse)
-async def get_department_by_code(
+def get_department_by_code(
     department_code: str,
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """学部コードで学部を取得"""
-    department = await account_setting_service.get_department_by_code(department_code)
+    department = account_setting_service.get_department_by_code(department_code)
     
     if not department:
         raise APIException(ErrorMessage.USER_NOT_FOUND)
@@ -233,19 +233,19 @@ async def get_department_by_code(
 
 
 @router.get("/profile/history", response_model=list[AccountSettingHistoryResponse])
-async def get_profile_history(
+def get_profile_history(
     limit: int = Query(50, ge=1, le=100),
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """現在認証されているユーザーのアカウント設定変更履歴を取得"""
     user_id = current_user["id"]
-    history = await account_setting_service.get_profile_history(user_id, limit)
+    history = account_setting_service.get_profile_history(user_id, limit)
     return history
 
 
 @router.get("/profile/history/{field_name}", response_model=list[AccountSettingHistoryResponse])
-async def get_field_history(
+def get_field_history(
     field_name: str,
     limit: int = Query(20, ge=1, le=50),
     current_user: CurrentUser = Depends(get_current_user),
@@ -253,51 +253,51 @@ async def get_field_history(
 ):
     """現在認証されているユーザーの特定フィールドの変更履歴を取得"""
     user_id = current_user["id"]
-    history = await account_setting_service.get_field_history(user_id, field_name, limit)
+    history = account_setting_service.get_field_history(user_id, field_name, limit)
     return history
 
 
 @router.post("/validate", response_model=AccountSettingValidationResponse)
-async def validate_profile_data(
+def validate_profile_data(
     profile_data: dict[str, Any],
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィールデータのバリデーション"""
     user_id = current_user["id"]
-    validation_result = await account_setting_service.validate_profile_data(profile_data, user_id)
+    validation_result = account_setting_service.validate_profile_data(profile_data, user_id)
     return validation_result
 
 
 @router.post("/validate-public", response_model=AccountSettingValidationResponse)
-async def validate_profile_data_public(
+def validate_profile_data_public(
     profile_data: dict[str, Any],
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィールデータのバリデーション（認証不要）"""
-    validation_result = await account_setting_service.validate_profile_data(profile_data, None)
+    validation_result = account_setting_service.validate_profile_data(profile_data, None)
     return validation_result
 
 
 @router.get("/statistics")
-async def get_profile_statistics(
+def get_profile_statistics(
     current_user: CurrentUser = Depends(require_admin),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """プロフィール統計情報を取得（管理者用）"""
-    statistics = await account_setting_service.get_profile_statistics()
+    statistics = account_setting_service.get_profile_statistics()
     return statistics
 
 
 @router.get("/profile/student-id/{student_id}", response_model=AccountSettingProfileResponse)
-async def get_profile_by_student_id(
+def get_profile_by_student_id(
     student_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     account_setting_service: AccountSettingService = Depends(get_account_setting_service),
 ):
     """学籍番号でアカウント設定プロフィールを取得"""
-    profile = await account_setting_service.get_profile_by_student_id(student_id)
+    profile = account_setting_service.get_profile_by_student_id(student_id)
     
     if not profile:
         raise APIException(ErrorMessage.USER_NOT_FOUND)

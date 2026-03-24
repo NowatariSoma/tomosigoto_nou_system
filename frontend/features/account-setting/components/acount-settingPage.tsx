@@ -48,12 +48,8 @@ const AccountSettings: React.FC = () => {
   const departmentOptions = mapDepartmentsToOptions(departments);
 
   useEffect(() => {
-    const checkAuthAndLoad = async () => {
-      await (await import('@/lib/supabase')).supabase.auth.getSession();
-      loadProfile();
-      loadDepartments();
-    };
-    checkAuthAndLoad();
+    loadProfile();
+    loadDepartments();
   }, [loadProfile, loadDepartments]);
 
   return (

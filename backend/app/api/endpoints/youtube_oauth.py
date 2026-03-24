@@ -3,7 +3,7 @@ YouTube OAuth認証用エンドポイント（リファクタリング版）
 システム管理者用のYouTube OAuth認証フローを提供
 
 改善点:
-- state管理をSupabaseで実装（CSRF対策）
+- state管理をDBで実装（CSRF対策）
 - client_secretをDBに保存しない
 - エラー処理の改善
 - Flow生成の共通化
@@ -18,9 +18,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
-from supabase import Client
 
-from app.api.deps import get_supabase
+from app.api.deps import get_youtube_oauth_token_repository
 from app.core.config import settings
 from app.core.exceptions import APIException
 from app.core.error_messages import ErrorMessage
@@ -88,103 +87,89 @@ def _create_oauth_flow(redirect_uri: str, state: str | None = None) -> Flow:
     )
 
 
-async def _save_oauth_state(
-    supabase_client: Client,
+def _save_oauth_state(
+    token_repository,
     state: str
 ) -> None:
     """
-    OAuth stateをSupabaseに保存
-    
+    OAuth stateをDBに保存
+
     Args:
-        supabase_client: Supabaseクライアント
+        token_repository: YoutubeOauthTokenリポジトリ
         state: OAuth state
-        
+
     Raises:
         APIException: 保存に失敗した場合
     """
     try:
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=STATE_EXPIRY_MINUTES)
-        
-        response = supabase_client.table("youtube_oauth_states").insert({
-            "state": state,
-            "expires_at": expires_at.isoformat()
-        }).execute()
-        
-        if response.data is None:
-            raise APIException(ErrorMessage.STATE_SAVE_FAILED)
+
+        token_repository.save_oauth_state(state, expires_at.isoformat())
     except Exception as e:
         logger.error(f"Failed to save OAuth state: {str(e)}")
         raise APIException(ErrorMessage.STATE_SAVE_FAILED(str(e)))
 
 
-async def _verify_oauth_state(
-    supabase_client: Client,
+def _verify_oauth_state(
+    token_repository,
     state: str
 ) -> bool:
     """
     OAuth stateを検証し、使用後は削除
-    
+
     Args:
-        supabase_client: Supabaseクライアント
+        token_repository: YoutubeOauthTokenリポジトリ
         state: 検証するOAuth state
-        
+
     Returns:
         stateが有効な場合True、無効な場合False
     """
     try:
-        # stateを検索
-        response = supabase_client.table("youtube_oauth_states").select("*").eq(
-            "state", state
-        ).execute()
-        
-        if not response.data:
+        state_data = token_repository.find_oauth_state(state)
+
+        if not state_data:
             logger.warning(f"OAuth state not found: {state[:8]}...")
             return False
-        
-        state_data = response.data[0]
+
         expires_at_str = state_data["expires_at"]
-        
+
         # タイムゾーン情報を統一してパース
         if expires_at_str.endswith("Z"):
             expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
         else:
             expires_at = datetime.fromisoformat(expires_at_str)
-        
+
         # 現在時刻をUTCで取得（タイムゾーン情報付き）
         now_utc = datetime.now(timezone.utc)
-        
+
         # 期限切れチェック
         if expires_at < now_utc:
             logger.warning(f"OAuth state expired: {state[:8]}...")
             # 期限切れのstateを削除
-            supabase_client.table("youtube_oauth_states").delete().eq(
-                "id", state_data["id"]
-            ).execute()
+            token_repository.delete_oauth_state(state_data["id"])
             return False
-        
+
         # 使用済みのstateを削除（ワンタイム使用）
-        supabase_client.table("youtube_oauth_states").delete().eq(
-            "id", state_data["id"]
-        ).execute()
-        
+        token_repository.delete_oauth_state(state_data["id"])
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to verify OAuth state: {str(e)}")
         return False
 
 
 def _save_oauth_token(
-    supabase_client: Client,
+    token_repository,
     credentials: Any
 ) -> None:
     """
-    OAuthトークンをSupabaseに保存（client_secretは保存しない）
-    
+    OAuthトークンをDBに保存（client_secretは保存しない）
+
     Args:
-        supabase_client: Supabaseクライアント
+        token_repository: YoutubeOauthTokenリポジトリ
         credentials: Google認証情報
-        
+
     Raises:
         APIException: 保存に失敗した場合
     """
@@ -201,36 +186,18 @@ def _save_oauth_token(
             "scopes": list(credentials.scopes),
             "expiry": credentials.expiry.isoformat() if credentials.expiry else None
         }
-        
-        # 既存のシステム管理者トークンがあるか確認
-        existing = (
-            supabase_client.table("youtube_oauth_tokens")
-            .select("id")
-            .eq("account_type", "system")
-            .execute()
-        )
-        
-        if existing.data:
+
+        existing = token_repository.find_system_token()
+
+        if existing:
             # 更新
-            response = supabase_client.table("youtube_oauth_tokens").update(
-                token_data
-            ).eq("account_type", "system").execute()
-            
-            if response.data is None:
-                raise APIException(ErrorMessage.TOKEN_UPDATE_FAILED)
-            
+            token_repository.update_token(existing["id"], token_data)
             logger.info("YouTube OAuth token updated for system account")
         else:
             # 新規作成
-            response = supabase_client.table("youtube_oauth_tokens").insert(
-                token_data
-            ).execute()
-            
-            if response.data is None:
-                raise APIException(ErrorMessage.TOKEN_SAVE_FAILED)
-            
+            token_repository.create_token(token_data)
             logger.info("YouTube OAuth token created for system account")
-            
+
     except APIException:
         raise
     except Exception as e:
@@ -239,14 +206,14 @@ def _save_oauth_token(
 
 
 @router.get("/youtube/oauth/authorize")
-async def authorize_youtube(
-    supabase_client: Client = Depends(get_supabase),
+def authorize_youtube(
+    token_repository=Depends(get_youtube_oauth_token_repository),
 ):
     """
     YouTube OAuth認証を開始
 
     システム管理者用の認証フローを開始します。
-    stateはSupabaseに保存され、CSRF対策として使用されます。
+    stateはDBに保存され、CSRF対策として使用されます。
     """
     try:
         redirect_uri = _validate_oauth_config()
@@ -261,8 +228,8 @@ async def authorize_youtube(
             prompt='consent'  # リフレッシュトークンを確実に取得
         )
 
-        # stateをSupabaseに保存（CSRF対策）
-        await _save_oauth_state(supabase_client, state)
+        # stateをDBに保存（CSRF対策）
+        _save_oauth_state(token_repository, state)
 
         return {
             "authorization_url": authorization_url,
@@ -287,18 +254,18 @@ async def authorize_youtube(
 
 
 @router.get("/youtube/oauth/callback")
-async def youtube_oauth_callback(
+def youtube_oauth_callback(
     code: str | None = Query(None, description="OAuth認証コード"),
     state: str | None = Query(None, description="OAuth state（必須）"),
     error: str | None = Query(None, description="OAuthエラー"),
-    supabase_client: Client = Depends(get_supabase),
+    token_repository=Depends(get_youtube_oauth_token_repository),
 ):
     """
     YouTube OAuth認証のコールバック
-    
+
     認証成功後、トークンをDBに保存します。
     stateの検証によりCSRF攻撃を防ぎます。
-    
+
     注意: このエンドポイントはGoogle OAuth認証後のリダイレクト用です。
     直接アクセスする場合は、/youtube/oauth/authorize から認証を開始してください。
     """
@@ -308,20 +275,20 @@ async def youtube_oauth_callback(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="このエンドポイントはGoogle OAuth認証後のリダイレクト用です。認証を開始するには /youtube/oauth/authorize にアクセスしてください。"
         )
-    
+
     # 必須パラメータのチェック
     if not code and not error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OAuth認証コード（code）が提供されていません。認証を開始するには /youtube/oauth/authorize にアクセスしてください。"
         )
-    
+
     if not state and not error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OAuth stateが提供されていません。認証を開始するには /youtube/oauth/authorize にアクセスしてください。"
         )
-    
+
     # OAuthエラーチェック
     if error:
         logger.error(f"OAuth error from Google: {error}")
@@ -329,15 +296,15 @@ async def youtube_oauth_callback(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"OAuth認証が拒否されました: {error}"
         )
-    
+
     # stateの検証（CSRF対策）
-    if not await _verify_oauth_state(supabase_client, state):
+    if not _verify_oauth_state(token_repository, state):
         logger.warning(f"Invalid or expired OAuth state: {state[:8]}...")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="無効または期限切れのOAuth stateです"
         )
-    
+
     try:
         redirect_uri = _validate_oauth_config()
 
@@ -353,7 +320,7 @@ async def youtube_oauth_callback(
             logger.warning("Refresh token was not provided. User may need to revoke access and re-authenticate.")
 
         # トークンをDBに保存（client_secretは保存しない）
-        _save_oauth_token(supabase_client, credentials)
+        _save_oauth_token(token_repository, credentials)
 
         return {
             "message": "YouTube認証が完了しました",
@@ -378,12 +345,12 @@ async def youtube_oauth_callback(
 
 
 @router.get("/youtube/oauth/status")
-async def youtube_oauth_status(
-    supabase_client: Client = Depends(get_supabase),
+def youtube_oauth_status(
+    token_repository=Depends(get_youtube_oauth_token_repository),
 ):
     """
     YouTube OAuth認証の状態を確認
-    
+
     システム管理者のトークンが保存されているか、期限切れかを確認します。
     リダイレクトURIの設定も確認できます。
     """
@@ -395,14 +362,9 @@ async def youtube_oauth_status(
             redirect_uri = _validate_oauth_config()
         except Exception as e:
             redirect_uri_error = str(e)
-        
-        response = (
-            supabase_client.table("youtube_oauth_tokens")
-            .select("id, expiry, created_at, refresh_token")
-            .eq("account_type", "system")
-            .execute()
-        )
-        
+
+        token_data = token_repository.find_system_token()
+
         result = {
             "authenticated": False,
             "redirect_uri": redirect_uri,
@@ -410,13 +372,12 @@ async def youtube_oauth_status(
             "callback_url": f"{settings.API_V1_STR}/youtube/oauth/callback" if redirect_uri else None,
             "message": "OAuth認証が完了していません"
         }
-        
-        if not response.data:
+
+        if not token_data:
             return result
-        
-        token_data = response.data[0]
+
         expiry = token_data.get("expiry")
-        
+
         is_expired = False
         if expiry:
             try:
@@ -424,7 +385,7 @@ async def youtube_oauth_status(
                 is_expired = expiry_dt < datetime.now(expiry_dt.tzinfo)
             except Exception as e:
                 logger.warning(f"Failed to parse expiry date: {str(e)}")
-        
+
         result.update({
             "authenticated": True,
             "expired": is_expired,
@@ -432,9 +393,9 @@ async def youtube_oauth_status(
             "created_at": token_data.get("created_at"),
             "has_refresh_token": bool(token_data.get("refresh_token"))
         })
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Failed to check OAuth status: {str(e)}")
         return {

@@ -1,91 +1,54 @@
-import { supabase } from '../../../lib/supabase';
-import { 
-  MemberAssignmentData, 
-  CreateMemberAssignmentRequest, 
-  UpdateMemberAssignmentRequest 
+import { fetchApi } from '../../../lib/api';
+import {
+  MemberAssignmentData,
+  CreateMemberAssignmentRequest,
+  UpdateMemberAssignmentRequest
 } from '../types';
 
 export class MemberAssignmentsService {
-  private readonly tableName = 'member_assignments';
-
   async getMemberAssignments(): Promise<MemberAssignmentData[]> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .order('display_order', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to fetch member assignments: ${error.message}`);
-    }
-
+    const response = await fetchApi('/member-assignments');
+    const data = await response.json();
     return (data || []).map(this.mapMemberAssignmentResponseToMemberAssignmentData);
   }
 
   async getMemberAssignment(id: string): Promise<MemberAssignmentData> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to fetch member assignment: ${error.message}`);
-    }
-
+    const response = await fetchApi(`/member-assignments/${id}`);
+    const data = await response.json();
     return this.mapMemberAssignmentResponseToMemberAssignmentData(data);
   }
 
   async createMemberAssignment(data: CreateMemberAssignmentRequest): Promise<MemberAssignmentData> {
-    const assignmentData = {
-      user_id: data.user_id,
-      part_id: data.part_id,
-      category: data.category,
-      display_order: data.display_order || 0,
-    };
-
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .insert(assignmentData)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create member assignment: ${error.message}`);
-    }
-
+    const response = await fetchApi('/member-assignments', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: data.user_id,
+        part_id: data.part_id,
+        category: data.category,
+        display_order: data.display_order || 0,
+      }),
+    });
+    const result = await response.json();
     return this.mapMemberAssignmentResponseToMemberAssignmentData(result);
   }
 
   async updateMemberAssignment(id: string, data: UpdateMemberAssignmentRequest): Promise<MemberAssignmentData> {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.user_id !== undefined) updateData.user_id = data.user_id;
     if (data.part_id !== undefined) updateData.part_id = data.part_id;
     if (data.category !== undefined) updateData.category = data.category;
     if (data.display_order !== undefined) updateData.display_order = data.display_order;
 
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to update member assignment: ${error.message}`);
-    }
-
+    const response = await fetchApi(`/member-assignments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+    const result = await response.json();
     return this.mapMemberAssignmentResponseToMemberAssignmentData(result);
   }
 
   async deleteMemberAssignment(id: string): Promise<void> {
-    const { error } = await supabase
-      .from(this.tableName)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      throw new Error(`Failed to delete member assignment: ${error.message}`);
-    }
+    await fetchApi(`/member-assignments/${id}`, { method: 'DELETE' });
   }
 
   private mapMemberAssignmentResponseToMemberAssignmentData(assignment: any): MemberAssignmentData {

@@ -14,32 +14,32 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[MemberSummaryResponse])
-async def list_members(
+def list_members(
     _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> list[MemberSummaryResponse]:
     """メンバー一覧を取得"""
-    return await member_admin_service.list_members()
+    return member_admin_service.list_members()
 
 
 @router.patch("/{user_id}/role", response_model=MemberSummaryResponse)
-async def update_member_role(
+def update_member_role(
     user_id: UUID,
     payload: MemberRoleUpdateRequest,
     _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> MemberSummaryResponse:
     """メンバーの管理者権限を更新"""
-    return await member_admin_service.update_member_role(str(user_id), payload.role)
+    return member_admin_service.update_member_role(str(user_id), payload.role)
 
 
 @router.patch("/{user_id}/instructor", response_model=MemberSummaryResponse)
-async def update_instructor_flag(
+def update_instructor_flag(
     user_id: UUID,
     payload: MemberInstructorUpdateRequest,
     _: CurrentUser = Depends(require_admin),
     member_admin_service: MemberAdminService = Depends(get_member_admin_service),
 ) -> MemberSummaryResponse:
     """メンバーの指導者フラグを更新"""
-    return await member_admin_service.update_instructor_flag(str(user_id), payload.is_instructor)
+    return member_admin_service.update_instructor_flag(str(user_id), payload.is_instructor)
 

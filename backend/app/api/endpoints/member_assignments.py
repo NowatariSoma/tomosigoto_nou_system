@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[MemberAssignmentResponse])
-async def get_member_assignments(
+def get_member_assignments(
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
@@ -35,13 +35,13 @@ async def get_member_assignments(
     Returns:
         すべてのメンバー所属情報のリスト
     """
-    all_assignments = await member_assignment_service.get_all_assignments()
+    all_assignments = member_assignment_service.get_all_assignments()
     return all_assignments
 
 
 
 @router.get("/by-user/{user_id}", response_model=list[MemberAssignmentResponse])
-async def get_member_assignments_by_user(
+def get_member_assignments_by_user(
     user_id: str,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -57,12 +57,12 @@ async def get_member_assignments_by_user(
     Returns:
         指定ユーザーのメンバー所属情報のリスト
     """
-    assignments = await member_assignment_service.get_assignments_by_user(user_id)
+    assignments = member_assignment_service.get_assignments_by_user(user_id)
     return assignments
 
 
 @router.get("/{assignment_id}", response_model=MemberAssignmentResponse)
-async def get_member_assignment(
+def get_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -78,12 +78,12 @@ async def get_member_assignment(
     Returns:
         メンバー所属情報
     """
-    assignment = await member_assignment_service.get_assignment_by_id(assignment_id)
+    assignment = member_assignment_service.get_assignment_by_id(assignment_id)
     return MemberAssignmentResponse(**assignment)
 
 
 @router.post("/", response_model=MemberAssignmentResponse)
-async def create_member_assignment(
+def create_member_assignment(
     assignment_data: MemberAssignmentCreate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -105,12 +105,12 @@ async def create_member_assignment(
         if isinstance(value, UUID):
             assignment_dict[key] = str(value)
     
-    created_assignment = await member_assignment_service.create_assignment(assignment_dict)
+    created_assignment = member_assignment_service.create_assignment(assignment_dict)
     return MemberAssignmentResponse(**created_assignment)
 
 
 @router.post("/bulk/{part_id}", response_model=list[MemberAssignmentResponse])
-async def bulk_assign_to_part(
+def bulk_assign_to_part(
     part_id: UUID,
     request: BulkAssignmentRequest,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
@@ -153,14 +153,14 @@ async def bulk_assign_to_part(
         }
         processed_assignments.append(assignment_data)
     
-    created_assignments = await member_assignment_service.bulk_assign_to_part(
+    created_assignments = member_assignment_service.bulk_assign_to_part(
         part_id, processed_assignments
     )
     return [MemberAssignmentResponse(**assignment) for assignment in created_assignments]
 
 
 @router.put("/{assignment_id}", response_model=MemberAssignmentResponse)
-async def update_member_assignment(
+def update_member_assignment(
     assignment_id: UUID,
     assignment_data: MemberAssignmentUpdate,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
@@ -184,14 +184,14 @@ async def update_member_assignment(
         if isinstance(value, UUID):
             assignment_dict[key] = str(value)
     
-    updated_assignment = await member_assignment_service.update_assignment(
+    updated_assignment = member_assignment_service.update_assignment(
         assignment_id, assignment_dict
     )
     return MemberAssignmentResponse(**updated_assignment)
 
 
 @router.delete("/{assignment_id}")
-async def delete_member_assignment(
+def delete_member_assignment(
     assignment_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -207,12 +207,12 @@ async def delete_member_assignment(
     Returns:
         削除確認メッセージ
     """
-    await member_assignment_service.remove_assignment(assignment_id)
+    member_assignment_service.remove_assignment(assignment_id)
     return {"message": "Member assignment deleted successfully"}
 
 
 @router.delete("/by-user-and-part/{user_id}/{part_id}")
-async def delete_member_assignment_by_user_and_part(
+def delete_member_assignment_by_user_and_part(
     user_id: str,
     part_id: UUID,
     member_assignment_service: MemberAssignmentService = Depends(get_member_assignment_service),
@@ -230,5 +230,5 @@ async def delete_member_assignment_by_user_and_part(
     Returns:
         削除確認メッセージ
     """
-    await member_assignment_service.remove_assignment_by_user_and_part(user_id, part_id)
+    member_assignment_service.remove_assignment_by_user_and_part(user_id, part_id)
     return {"message": "Member assignment deleted successfully"}

@@ -5,17 +5,16 @@ from typing import Any
 from uuid import UUID
 from enum import Enum
 
-from app.core.exceptions import handle_supabase_errors
-from supabase import Client
+from app.core.database import Conn
 
 
 class ScheduleTimeSlotRepository:
     """スケジュール時間スロットのデータアクセス層"""
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, conn: Conn):
+        self.conn = conn
         self.table_name = "schedule_time_slots"
-    
+
     def _serialize_uuid_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """UUID型、Enum型、time型を文字列に変換"""
         from datetime import time
@@ -26,107 +25,113 @@ class ScheduleTimeSlotRepository:
             elif isinstance(value, Enum):
                 serialized_data[key] = value.value
             elif isinstance(value, time):
-                # time型を文字列（HH:MM:SS形式）に変換
                 serialized_data[key] = value.strftime("%H:%M:%S")
             else:
                 serialized_data[key] = value
         return serialized_data
 
-    @handle_supabase_errors("find_all")
-    async def find_all(self) -> list[dict[str, Any]]:
+    def find_all(self) -> list[dict[str, Any]]:
         """すべてのスケジュール時間スロットを取得"""
-        response = self.client.table(self.table_name).select("*").execute()
-        return response.data or []
+        rows = self.conn.execute("SELECT * FROM schedule_time_slots").fetchall()
+        return [dict(r) for r in rows]
 
-    @handle_supabase_errors("find_by_id")
-    async def find_by_id(self, time_slot_id: UUID) -> dict[str, Any] | None:
+    def find_by_id(self, time_slot_id: UUID) -> dict[str, Any] | None:
         """指定したIDのスケジュール時間スロットを取得"""
         time_slot_id_str = str(time_slot_id) if isinstance(time_slot_id, UUID) else time_slot_id
-        response = self.client.table(self.table_name).select("*").eq("id", time_slot_id_str).execute()
-        return response.data[0] if response.data else None
+        row = self.conn.execute(
+            "SELECT * FROM schedule_time_slots WHERE id = %s",
+            (time_slot_id_str,),
+        ).fetchone()
+        return dict(row) if row else None
 
-    @handle_supabase_errors("find_by_schedule")
-    async def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
+    def find_by_schedule(self, schedule_id: UUID) -> list[dict[str, Any]]:
         """指定したスケジュールの時間スロット一覧を取得（slot_order順）"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("schedule_id", schedule_id_str)
-            .order("slot_order", desc=False)
-            .execute()
-        )
-        return response.data or []
+        rows = self.conn.execute(
+            "SELECT * FROM schedule_time_slots WHERE schedule_id = %s ORDER BY slot_order",
+            (schedule_id_str,),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
-    @handle_supabase_errors("count_all")
-    async def count_all(
-        self,
-        schedule_id: UUID | None = None
-    ) -> int:
+    def count_all(self, schedule_id: UUID | None = None) -> int:
         """スケジュール時間スロットの総件数を取得"""
-        query = self.client.table(self.table_name).select("id", count="exact")
-        
-        # フィルタリング
         if schedule_id:
-            query = query.eq("schedule_id", str(schedule_id))
-        
-        response = query.execute()
-        return response.count
+            row = self.conn.execute(
+                "SELECT COUNT(*) AS cnt FROM schedule_time_slots WHERE schedule_id = %s",
+                (str(schedule_id),),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT COUNT(*) AS cnt FROM schedule_time_slots"
+            ).fetchone()
+        return row["cnt"] if row else 0
 
-    @handle_supabase_errors("create")
-    async def create(self, time_slot_data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, time_slot_data: dict[str, Any]) -> dict[str, Any]:
         """スケジュール時間スロットを作成"""
         serialized_data = self._serialize_uuid_fields(time_slot_data)
-        response = self.client.table(self.table_name).insert(serialized_data).execute()
-        return response.data[0]
+        columns = list(serialized_data.keys())
+        values = [serialized_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO schedule_time_slots ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        return dict(cur.fetchone())
 
-    @handle_supabase_errors("update")
-    async def update(
-        self, 
-        time_slot_id: UUID, 
-        update_data: dict[str, Any]
+    def update(
+        self,
+        time_slot_id: UUID,
+        update_data: dict[str, Any],
     ) -> dict[str, Any]:
         """スケジュール時間スロットを更新"""
         time_slot_id_str = str(time_slot_id) if isinstance(time_slot_id, UUID) else time_slot_id
         serialized_data = self._serialize_uuid_fields(update_data)
-        response = (
-            self.client.table(self.table_name)
-            .update(serialized_data)
-            .eq("id", time_slot_id_str)
-            .execute()
+        if not serialized_data:
+            row = self.conn.execute(
+                "SELECT * FROM schedule_time_slots WHERE id = %s",
+                (time_slot_id_str,),
+            ).fetchone()
+            if not row:
+                raise ValueError(f"時間スロット {time_slot_id} が見つかりません")
+            return dict(row)
+        set_clause = ", ".join([f"{k} = %s" for k in serialized_data.keys()])
+        values = list(serialized_data.values()) + [time_slot_id_str]
+        cur = self.conn.execute(
+            f"UPDATE schedule_time_slots SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if not response.data:
+        self.conn.commit()
+        row = cur.fetchone()
+        if not row:
             raise ValueError(f"時間スロット {time_slot_id} が見つかりません")
-        return response.data[0]
+        return dict(row)
 
-    @handle_supabase_errors("delete")
-    async def delete(self, time_slot_id: UUID) -> bool:
+    def delete(self, time_slot_id: UUID) -> bool:
         """スケジュール時間スロットを削除"""
         time_slot_id_str = str(time_slot_id) if isinstance(time_slot_id, UUID) else time_slot_id
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("id", time_slot_id_str)
-            .execute()
+        cur = self.conn.execute(
+            "DELETE FROM schedule_time_slots WHERE id = %s RETURNING id",
+            (time_slot_id_str,),
         )
-        return len(response.data) > 0
+        self.conn.commit()
+        return cur.fetchone() is not None
 
-    @handle_supabase_errors("delete_by_schedule")
-    async def delete_by_schedule(self, schedule_id: UUID) -> int:
+    def delete_by_schedule(self, schedule_id: UUID) -> int:
         """指定したスケジュールの時間スロットをすべて削除"""
         schedule_id_str = str(schedule_id) if isinstance(schedule_id, UUID) else schedule_id
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("schedule_id", schedule_id_str)
-            .execute()
+        cur = self.conn.execute(
+            "DELETE FROM schedule_time_slots WHERE schedule_id = %s RETURNING id",
+            (schedule_id_str,),
         )
-        return len(response.data)
+        self.conn.commit()
+        return len(cur.fetchall())
 
-    # 関連テーブルの存在確認用メソッド
-    @handle_supabase_errors("find_schedule_by_id")
-    async def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
+    def find_schedule_by_id(self, schedule_id: UUID) -> dict[str, Any] | None:
         """スケジュールの存在確認"""
-        response = self.client.table("practice_schedules").select("*").eq("id", str(schedule_id)).execute()
-        return response.data[0] if response.data else None
-
+        row = self.conn.execute(
+            "SELECT * FROM practice_schedules WHERE id = %s",
+            (str(schedule_id),),
+        ).fetchone()
+        return dict(row) if row else None

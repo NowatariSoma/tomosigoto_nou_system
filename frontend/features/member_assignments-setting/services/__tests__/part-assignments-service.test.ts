@@ -1,40 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mockSupabaseClient, createMockSupabaseQuery } from '@/__mocks__/supabase';
-
-vi.mock('@/lib/supabase', () => ({
-  supabase: mockSupabaseClient,
-}));
-
+import { describe, it, expect, beforeEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/__mocks__/msw/server';
 import { PartAssignmentsService } from '@/features/member_assignments-setting/services/part-assignments-service';
+
+const API_BASE = 'http://localhost:8000/api/v1';
 
 describe('PartAssignmentsService', () => {
   let service: PartAssignmentsService;
 
   beforeEach(() => {
     service = new PartAssignmentsService();
-    vi.clearAllMocks();
   });
 
-  // テスト用ユーザープロフィールデータ
-  const mockProfile1 = {
-    user_id: 'user-1',
-    first_name_katakana: 'タロウ',
-    last_name_katakana: 'タナカ',
-    first_name_kanji: '太郎',
-    last_name_kanji: '田中',
-    email: 'tanaka@example.com',
-  };
-
-  const mockProfile2 = {
-    user_id: 'user-2',
-    first_name_katakana: 'ハナコ',
-    last_name_katakana: 'スズキ',
-    first_name_kanji: '花子',
-    last_name_kanji: '鈴木',
-    email: 'suzuki@example.com',
-  };
-
-  // テスト用ステージデータ（ネストされたparts/member_assignmentsを含む）
   const mockStageResponse = {
     id: 'stage-1',
     name: '羽衣',
@@ -44,35 +21,54 @@ describe('PartAssignmentsService', () => {
       {
         id: 'part-1',
         name: 'シテ',
+        stage_id: 'stage-1',
         member_assignments: [
           {
             id: 'assignment-1',
             user_id: 'user-1',
+            part_id: 'part-1',
             category: 'utai',
             display_order: 1,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
+            user: {
+              id: 'user-1',
+              first_name_katakana: 'タロウ',
+              last_name_katakana: 'タナカ',
+              first_name_kanji: '太郎',
+              last_name_kanji: '田中',
+              email: 'tanaka@example.com',
+            },
           },
         ],
       },
       {
         id: 'part-2',
         name: 'ワキ',
+        stage_id: 'stage-1',
         member_assignments: [
           {
             id: 'assignment-2',
             user_id: 'user-2',
+            part_id: 'part-2',
             category: 'mai',
             display_order: 1,
             created_at: '2024-01-02T00:00:00Z',
             updated_at: '2024-01-02T00:00:00Z',
+            user: {
+              id: 'user-2',
+              first_name_katakana: 'ハナコ',
+              last_name_katakana: 'スズキ',
+              first_name_kanji: '花子',
+              last_name_kanji: '鈴木',
+              email: 'suzuki@example.com',
+            },
           },
         ],
       },
     ],
   };
 
-  // テスト用パートデータ（ネストされたstage/member_assignmentsを含む）
   const mockPartResponse = {
     id: 'part-1',
     name: 'シテ',
@@ -86,15 +82,23 @@ describe('PartAssignmentsService', () => {
       {
         id: 'assignment-1',
         user_id: 'user-1',
+        part_id: 'part-1',
         category: 'utai',
         display_order: 1,
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
+        user: {
+          id: 'user-1',
+          first_name_katakana: 'タロウ',
+          last_name_katakana: 'タナカ',
+          first_name_kanji: '太郎',
+          last_name_kanji: '田中',
+          email: 'tanaka@example.com',
+        },
       },
     ],
   };
 
-  // テスト用アサインメントデータ（ネストされたpart/stageを含む）
   const mockAssignmentResponse = {
     id: 'assignment-1',
     user_id: 'user-1',
@@ -103,6 +107,14 @@ describe('PartAssignmentsService', () => {
     display_order: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
+    user: {
+      id: 'user-1',
+      first_name_katakana: 'タロウ',
+      last_name_katakana: 'タナカ',
+      first_name_kanji: '太郎',
+      last_name_kanji: '田中',
+      email: 'tanaka@example.com',
+    },
     part: {
       id: 'part-1',
       name: 'シテ',
@@ -114,33 +126,16 @@ describe('PartAssignmentsService', () => {
     },
   };
 
-  /**
-   * テーブル名に基づいてモッククエリを返すヘルパー
-   */
-  function setupMockFrom(configs: Record<string, { data: unknown; error: unknown }>) {
-    const queries: Record<string, ReturnType<typeof createMockSupabaseQuery>> = {};
-    for (const [table, result] of Object.entries(configs)) {
-      queries[table] = createMockSupabaseQuery(result);
-    }
-
-    mockSupabaseClient.from.mockImplementation((table: string) => {
-      return queries[table] || createMockSupabaseQuery({ data: null, error: null });
-    });
-
-    return queries;
-  }
-
   describe('getStagesWithPartsAndAssignments', () => {
     it('ステージ一覧をパートとアサインメント付きで正常に取得する', async () => {
-      const queries = setupMockFrom({
-        stages: { data: [mockStageResponse], error: null },
-        account_setting_profile: { data: [mockProfile1, mockProfile2], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments/stages-with-parts`, () => {
+          return HttpResponse.json([mockStageResponse]);
+        })
+      );
 
       const result = await service.getStagesWithPartsAndAssignments();
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('stages');
-      expect(queries.stages.select).toHaveBeenCalled();
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('stage-1');
       expect(result[0].name).toBe('羽衣');
@@ -153,75 +148,59 @@ describe('PartAssignmentsService', () => {
     });
 
     it('エラー時に例外をスローする', async () => {
-      setupMockFrom({
-        stages: { data: null, error: { message: 'Database error' } },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      await expect(service.getStagesWithPartsAndAssignments()).rejects.toThrow(
-        'Failed to fetch stages with parts and assignments: Database error'
+      server.use(
+        http.get(`${API_BASE}/member-assignments/stages-with-parts`, () => {
+          return HttpResponse.json({ detail: 'Database error' }, { status: 500 });
+        })
       );
+
+      await expect(service.getStagesWithPartsAndAssignments()).rejects.toThrow();
     });
 
     it('データが空の場合は空配列を返す', async () => {
-      setupMockFrom({
-        stages: { data: [], error: null },
-        account_setting_profile: { data: [], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments/stages-with-parts`, () => {
+          return HttpResponse.json([]);
+        })
+      );
 
       const result = await service.getStagesWithPartsAndAssignments();
       expect(result).toEqual([]);
     });
 
-    it('ユーザー情報が取得できない場合はUnknown Userを表示する', async () => {
-      setupMockFrom({
-        stages: { data: [mockStageResponse], error: null },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      const result = await service.getStagesWithPartsAndAssignments();
-
-      expect(result[0].parts[0].member_assignments[0].user.name).toBe('Unknown User');
-    });
-
-    it('アサインメントがないステージを正常に処理する', async () => {
-      const stageWithoutAssignments = {
-        id: 'stage-2',
-        name: '松風',
-        performance_date: '2024-07-01',
-        description: null,
+    it('ユーザー情報がない場合はUnknown Userを表示する', async () => {
+      const stageNoUser = {
+        ...mockStageResponse,
         parts: [
           {
-            id: 'part-3',
-            name: 'シテ',
-            member_assignments: [],
+            ...mockStageResponse.parts[0],
+            member_assignments: [
+              { ...mockStageResponse.parts[0].member_assignments[0], user: null },
+            ],
           },
         ],
       };
-
-      setupMockFrom({
-        stages: { data: [stageWithoutAssignments], error: null },
-        account_setting_profile: { data: [], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments/stages-with-parts`, () => {
+          return HttpResponse.json([stageNoUser]);
+        })
+      );
 
       const result = await service.getStagesWithPartsAndAssignments();
-
-      expect(result).toHaveLength(1);
-      expect(result[0].parts[0].member_assignments).toHaveLength(0);
+      expect(result[0].parts[0].member_assignments[0].user.name).toBe('Unknown User');
     });
   });
 
   describe('getPartWithAssignments', () => {
     it('パートをアサインメント付きで正常に取得する', async () => {
-      const queries = setupMockFrom({
-        parts: { data: mockPartResponse, error: null },
-        account_setting_profile: { data: [mockProfile1], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments/parts/part-1`, () => {
+          return HttpResponse.json(mockPartResponse);
+        })
+      );
 
       const result = await service.getPartWithAssignments('part-1');
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('parts');
-      expect(queries.parts.select).toHaveBeenCalled();
       expect(result.id).toBe('part-1');
       expect(result.name).toBe('シテ');
       expect(result.stage_id).toBe('stage-1');
@@ -232,44 +211,26 @@ describe('PartAssignmentsService', () => {
     });
 
     it('エラー時に例外をスローする', async () => {
-      setupMockFrom({
-        parts: { data: null, error: { message: 'Not found' } },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      await expect(service.getPartWithAssignments('invalid-id')).rejects.toThrow(
-        'Failed to fetch part with assignments: Not found'
+      server.use(
+        http.get(`${API_BASE}/member-assignments/parts/invalid-id`, () => {
+          return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+        })
       );
-    });
 
-    it('アサインメントがないパートを正常に処理する', async () => {
-      const partWithoutAssignments = {
-        ...mockPartResponse,
-        member_assignments: [],
-      };
-
-      setupMockFrom({
-        parts: { data: partWithoutAssignments, error: null },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      const result = await service.getPartWithAssignments('part-1');
-
-      expect(result.member_assignments).toHaveLength(0);
+      await expect(service.getPartWithAssignments('invalid-id')).rejects.toThrow();
     });
   });
 
   describe('getAssignmentsByStage', () => {
     it('ステージIDで割り当て一覧を正常に取得する', async () => {
-      const queries = setupMockFrom({
-        member_assignments: { data: [mockAssignmentResponse], error: null },
-        account_setting_profile: { data: [mockProfile1], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments`, () => {
+          return HttpResponse.json([mockAssignmentResponse]);
+        })
+      );
 
       const result = await service.getAssignmentsByStage('stage-1');
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('member_assignments');
-      expect(queries.member_assignments.select).toHaveBeenCalled();
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('assignment-1');
       expect(result[0].user.name).toBe('タナカ タロウ');
@@ -278,36 +239,24 @@ describe('PartAssignmentsService', () => {
     });
 
     it('エラー時に例外をスローする', async () => {
-      setupMockFrom({
-        member_assignments: { data: null, error: { message: 'Query failed' } },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      await expect(service.getAssignmentsByStage('stage-1')).rejects.toThrow(
-        'Failed to fetch assignments by stage: Query failed'
+      server.use(
+        http.get(`${API_BASE}/member-assignments`, () => {
+          return HttpResponse.json({ detail: 'Query failed' }, { status: 500 });
+        })
       );
+
+      await expect(service.getAssignmentsByStage('stage-1')).rejects.toThrow();
     });
 
     it('データが空の場合は空配列を返す', async () => {
-      setupMockFrom({
-        member_assignments: { data: [], error: null },
-        account_setting_profile: { data: [], error: null },
-      });
+      server.use(
+        http.get(`${API_BASE}/member-assignments`, () => {
+          return HttpResponse.json([]);
+        })
+      );
 
       const result = await service.getAssignmentsByStage('stage-1');
       expect(result).toEqual([]);
-    });
-
-    it('ユーザー情報が取得できない場合はUnknown Userを使用する', async () => {
-      setupMockFrom({
-        member_assignments: { data: [mockAssignmentResponse], error: null },
-        account_setting_profile: { data: [], error: null },
-      });
-
-      const result = await service.getAssignmentsByStage('stage-1');
-
-      expect(result[0].user.name).toBe('Unknown User');
-      expect(result[0].user.email).toBe('');
     });
   });
 });

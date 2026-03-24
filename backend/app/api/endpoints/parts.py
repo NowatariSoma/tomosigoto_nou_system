@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[PartResponse])
-async def get_parts(
+def get_parts(
     part_service: PartService = Depends(get_part_service),
     current_user: CurrentUser = Depends(require_member_or_above),
 ):
@@ -32,12 +32,12 @@ async def get_parts(
     Returns:
         listですべてのパート情報
     """
-    all_part_data = await part_service.get_all_parts()
+    all_part_data = part_service.get_all_parts()
     return all_part_data
 
 
 @router.get("/{part_id}", response_model=PartResponse)
-async def get_part(
+def get_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -54,12 +54,12 @@ async def get_part(
         スキーマを通して辞書型としたパート情報
     """
 
-    part_data = await part_service.get_part(part_id)
+    part_data = part_service.get_part(part_id)
     return PartResponse(**part_data)
 
 
 @router.post("/", response_model=PartResponse)
-async def create_part(
+def create_part(
     part_data: PartCreate,
     part_service: PartService = Depends(get_part_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -81,12 +81,12 @@ async def create_part(
         if isinstance(value, UUID):
             part_dict[key] = str(value)
     
-    created_part = await part_service.create_part(part_dict)
+    created_part = part_service.create_part(part_dict)
     return PartResponse(**created_part)
 
 
 @router.put("/{part_id}", response_model=PartResponse)
-async def update_part(
+def update_part(
     part_id: UUID,
     part_data: PartUpdate,
     part_service: PartService = Depends(get_part_service),
@@ -110,12 +110,12 @@ async def update_part(
         if isinstance(value, UUID):
             part_dict[key] = str(value)
     
-    updated_part = await part_service.update_part(part_id, part_dict)
+    updated_part = part_service.update_part(part_id, part_dict)
     return PartResponse(**updated_part)
 
 
 @router.delete("/{part_id}")
-async def delete_part(
+def delete_part(
     part_id: UUID,
     part_service: PartService = Depends(get_part_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -131,11 +131,11 @@ async def delete_part(
     Returns
         確認メッセージ
     """
-    await part_service.remove_part(part_id)
+    part_service.remove_part(part_id)
 
 
 @router.get("/{part_id}/members", response_model=list[MemberAssignmentWithDetails])
-async def get_part_members(
+def get_part_members(
     part_id: UUID,
     category: str | None = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
     part_service: PartService = Depends(get_part_service),
@@ -159,10 +159,10 @@ async def get_part_members(
         HTTPException: パートが見つからない場合
     """
     # まずパートの存在確認
-    await part_service.get_part(part_id)
+    part_service.get_part(part_id)
     
     # 指定されたパートに所属するメンバーを取得
-    members = await member_assignment_service.get_assignments_with_details(
+    members = member_assignment_service.get_assignments_with_details(
         part_id=part_id, assignment_id=None, user_id=None
     )
     

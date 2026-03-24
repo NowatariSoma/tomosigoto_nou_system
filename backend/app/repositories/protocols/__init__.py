@@ -19,6 +19,7 @@ from app.repositories.protocols.materials_youtube_repository_protocol import (
     MaterialsSubPlaylistRepositoryProtocol,
     MaterialsVideoRepositoryProtocol,
     MaterialsFavoriteRepositoryProtocol,
+    YoutubeOauthTokenRepositoryProtocol,
 )
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "MaterialsSubPlaylistRepositoryProtocol",
     "MaterialsVideoRepositoryProtocol",
     "MaterialsFavoriteRepositoryProtocol",
+    "YoutubeOauthTokenRepositoryProtocol",
 ]

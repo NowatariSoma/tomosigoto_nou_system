@@ -27,7 +27,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[StageResponse])
-async def get_stages(
+def get_stages(
     status_filter: str | None = Query(None, description="ステータスでフィルタリング (active/inactive)"),
     stage_service: StageService = Depends(get_stage_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -36,13 +36,13 @@ async def get_stages(
     舞台一覧を取得
     """
     if status_filter:
-        return await stage_service.get_stages_by_status(status_filter)
+        return stage_service.get_stages_by_status(status_filter)
     else:
-        return await stage_service.get_all_stages()
+        return stage_service.get_all_stages()
 
 
 @router.get("/{stage_id}", response_model=StageResponse)
-async def get_stage(
+def get_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
     current_user: CurrentUser = Depends(require_member_or_above),
@@ -50,11 +50,11 @@ async def get_stage(
     """
     特定の舞台情報を取得
     """
-    return await stage_service.get_stage_by_id(stage_id)
+    return stage_service.get_stage_by_id(stage_id)
 
 
 @router.post("/", response_model=StageResponse, status_code=status.HTTP_201_CREATED)
-async def create_stage(
+def create_stage(
     stage_data: StageCreate,
     stage_service: StageService = Depends(get_stage_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -62,11 +62,11 @@ async def create_stage(
     """
     新しい舞台を作成
     """
-    return await stage_service.create_stage(stage_data.dict())
+    return stage_service.create_stage(stage_data.dict())
 
 
 @router.put("/{stage_id}", response_model=StageResponse)
-async def update_stage(
+def update_stage(
     stage_id: str,
     stage_data: StageUpdate,
     stage_service: StageService = Depends(get_stage_service),
@@ -81,11 +81,11 @@ async def update_stage(
     if not update_data:
         raise APIException(ErrorMessage.BAD_REQUEST)
 
-    return await stage_service.update_stage(stage_id, update_data)
+    return stage_service.update_stage(stage_id, update_data)
 
 
 @router.delete("/{stage_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_stage(
+def delete_stage(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
     current_user: CurrentUser = Depends(require_instructor_or_admin),
@@ -93,11 +93,11 @@ async def delete_stage(
     """
     舞台を削除
     """
-    await stage_service.delete_stage(stage_id)
+    stage_service.delete_stage(stage_id)
 
 
 @router.get("/{stage_id}/parts", response_model=list[PartResponse])
-async def get_stage_parts(
+def get_stage_parts(
     stage_id: str,
     stage_service: StageService = Depends(get_stage_service),
     part_service: PartService = Depends(get_part_service),
@@ -107,15 +107,15 @@ async def get_stage_parts(
     指定された舞台に紐づくパート一覧を取得
     """
     # まず舞台の存在確認
-    await stage_service.get_stage_by_id(stage_id)
+    stage_service.get_stage_by_id(stage_id)
     
     # 指定された舞台に紐づくパート一覧を取得
-    parts = await part_service.get_parts_by_stage_id(stage_id)
+    parts = part_service.get_parts_by_stage_id(stage_id)
     return parts
 
 
 @router.get("/{stage_id}/members", response_model=list[MemberAssignmentWithDetails])
-async def get_stage_members(
+def get_stage_members(
     stage_id: str,
     category: str | None = Query(None, description="カテゴリでフィルタリング (utai/mai)"),
     stage_service: StageService = Depends(get_stage_service),
@@ -127,10 +127,10 @@ async def get_stage_members(
     指定された舞台に所属するメンバー一覧を取得
     """
     # まず舞台の存在確認
-    await stage_service.get_stage_by_id(stage_id)
+    stage_service.get_stage_by_id(stage_id)
     
     # 指定された舞台に紐づくパート一覧を取得
-    parts = await part_service.get_parts_by_stage_id(stage_id)
+    parts = part_service.get_parts_by_stage_id(stage_id)
     
     if not parts:
         return []
@@ -141,7 +141,7 @@ async def get_stage_members(
         try:
             part_id = UUID(part["id"])
             # パートに所属するメンバーを取得
-            members = await member_assignment_service.get_assignments_with_details(
+            members = member_assignment_service.get_assignments_with_details(
                 part_id=part_id, assignment_id=None, user_id=None
             )
             

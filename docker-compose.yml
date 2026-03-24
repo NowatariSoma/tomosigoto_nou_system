@@ -1,4 +1,29 @@
 services:
+  # PostgreSQL データベース
+  postgres:
+    container_name: tomosigoto-postgres-dev
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tomosigoto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-tomosigoto}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tomosigoto}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "project=tomosigoto"
+      - "description=PostgreSQL database"
+
   # Nginx リバースプロキシ
   nginx:
     container_name: tomosigoto-nginx-dev
@@ -31,11 +56,15 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - ORTOOLS_ENGINE_URL=http://ortools-engine:8001
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-tomosigoto}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/${POSTGRES_DB:-tomosigoto}
     volumes:
       # バックエンドのソースコードをマウント
       - ./backend:/app
       - ./.env:/.env
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - default
     labels:
@@ -80,6 +109,9 @@ services:
     labels:
       - "project=tomosigoto-supabase"
       - "description=Next.js Frontend with Supabase integration"
+
+volumes:
+  postgres_data:
 
 networks:
   default:

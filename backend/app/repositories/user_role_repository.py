@@ -1,6 +1,7 @@
 import logging
 from typing import Any
-from app.core.supabase import handle_supabase_errors
+
+from app.core.database import Conn
 
 logger = logging.getLogger(__name__)
 
@@ -10,16 +11,15 @@ class UserRoleRepository:
     ユーザーロール関連のデータアクセスを処理するリポジトリクラス
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, conn: Conn):
         """
         Args:
-            supabase_client: Supabaseクライアント
+            conn: psycopg2接続
         """
-        self.client = supabase_client
-        self.table_name = "user_roles"  # リモートのSupabaseでは複数形
+        self.conn = conn
+        self.table_name = "user_roles"
 
-    @handle_supabase_errors("get_role_by_user_id")
-    async def get_role_by_user_id(self, user_id: str) -> dict[str, Any] | None:
+    def get_role_by_user_id(self, user_id: str) -> dict[str, Any] | None:
         """
         ユーザーIDでユーザーロールを取得（user_roleテーブルからrole_typeを取得）
 
@@ -29,41 +29,32 @@ class UserRoleRepository:
         Returns:
             ロール情報（role_type: basic/admin/viewer/general）、見つからない場合はNone
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
+        row = self.conn.execute(
+            "SELECT * FROM user_roles WHERE user_id = %s LIMIT 1",
+            (str(user_id),),
+        ).fetchone()
+        if row:
             logger.info(f"Found user role for user: {user_id}")
-            return response.data[0]
+            return dict(row)
 
         logger.info(f"User role not found for user: {user_id}")
         return None
 
-    @handle_supabase_errors("get_role_by_user_and_type")
-    async def get_role_by_user_and_type(self, user_id: str, role_type: str) -> dict[str, Any] | None:
+    def get_role_by_user_and_type(self, user_id: str, role_type: str) -> dict[str, Any] | None:
         """
         ユーザーIDとロール種別でロールを取得（user_roleテーブルから）
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("user_id", user_id)
-            .eq("role_type", role_type)
-            .limit(1)
-            .execute()
-        )
-        if response.data:
+        row = self.conn.execute(
+            "SELECT * FROM user_roles WHERE user_id = %s AND role_type = %s LIMIT 1",
+            (str(user_id), role_type),
+        ).fetchone()
+        if row:
             logger.info(f"Found {role_type} role for user: {user_id}")
-            return response.data[0]
+            return dict(row)
         logger.info(f"{role_type} role not found for user: {user_id}")
         return None
 
-    @handle_supabase_errors("create_role")
-    async def create_role(self, role_data: dict[str, Any]) -> dict[str, Any]:
+    def create_role(self, role_data: dict[str, Any]) -> dict[str, Any]:
         """
         ユーザーロールを作成（user_roleテーブルに）
 
@@ -73,16 +64,24 @@ class UserRoleRepository:
         Returns:
             作成されたロール情報
         """
-        response = self.client.table(self.table_name).insert(role_data).execute()
-        if response.data:
+        columns = list(role_data.keys())
+        values = [role_data[c] for c in columns]
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        cur = self.conn.execute(
+            f"INSERT INTO user_roles ({col_str}) VALUES ({placeholders}) RETURNING *",
+            values,
+        )
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User role created successfully for user: {role_data.get('user_id', 'unknown')}")
-            return response.data[0] if isinstance(response.data, list) and len(response.data) > 0 else response.data
+            return dict(row)
 
         logger.error(f"Failed to create user role for user: {role_data.get('user_id', 'unknown')}")
         return {}
 
-    @handle_supabase_errors("update_role")
-    async def update_role(self, user_id: str, role_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update_role(self, user_id: str, role_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         ユーザーロールを更新（user_roleテーブルで）
 
@@ -94,26 +93,29 @@ class UserRoleRepository:
             更新されたロール情報、見つからない場合はNone
         """
         # 既存のロールを取得して、そのIDで更新
-        existing_role = await self.get_role_by_user_id(user_id)
+        existing_role = self.get_role_by_user_id(user_id)
         if not existing_role:
             logger.warning(f"Role not found for user: {user_id}")
             return None
 
-        response = (
-            self.client.table(self.table_name)
-            .update(role_data)
-            .eq("id", existing_role["id"])
-            .execute()
+        if not role_data:
+            return existing_role
+        set_clause = ", ".join([f"{k} = %s" for k in role_data.keys()])
+        values = list(role_data.values()) + [str(existing_role["id"])]
+        cur = self.conn.execute(
+            f"UPDATE user_roles SET {set_clause} WHERE id = %s RETURNING *",
+            values,
         )
-        if response.data:
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"User role updated successfully for user: {user_id}")
-            return response.data[0] if isinstance(response.data, list) and len(response.data) > 0 else response.data
+            return dict(row)
 
         logger.error(f"Failed to update user role for user: {user_id}")
         return None
 
-    @handle_supabase_errors("delete_role")
-    async def delete_role(self, user_id: str) -> bool:
+    def delete_role(self, user_id: str) -> bool:
         """
         ユーザーロールを削除
 
@@ -123,40 +125,24 @@ class UserRoleRepository:
         Returns:
             削除成功の場合はTrue
         """
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("user_id", user_id)
-            .execute()
-        )
-        
-        if response.data:
-            logger.info(f"User role deleted successfully for user: {user_id}")
-            return True
-        
-        logger.warning(f"No role found to delete for user: {user_id}")
-        return False
+        self.conn.execute("DELETE FROM user_roles WHERE user_id = %s", (str(user_id),))
+        self.conn.commit()
+        logger.info(f"User role deleted successfully for user: {user_id}")
+        return True
 
-    @handle_supabase_errors("delete_role_by_type")
-    async def delete_role_by_type(self, user_id: str, role_type: str) -> bool:
+    def delete_role_by_type(self, user_id: str, role_type: str) -> bool:
         """
         指定したロールのみ削除
         """
-        response = (
-            self.client.table(self.table_name)
-            .delete()
-            .eq("user_id", user_id)
-            .eq("role_type", role_type)
-            .execute()
+        self.conn.execute(
+            "DELETE FROM user_roles WHERE user_id = %s AND role_type = %s",
+            (str(user_id), role_type),
         )
-        if response.data:
-            logger.info(f"{role_type} role deleted for user: {user_id}")
-            return True
-        logger.info(f"No {role_type} role found to delete for user: {user_id}")
-        return False
+        self.conn.commit()
+        logger.info(f"{role_type} role deleted for user: {user_id}")
+        return True
 
-    @handle_supabase_errors("get_roles_by_type")
-    async def get_roles_by_type(self, role_type: str, include_hidden: bool = False) -> list[dict[str, Any]]:
+    def get_roles_by_type(self, role_type: str, include_hidden: bool = False) -> list[dict[str, Any]]:
         """
         ロールタイプでユーザーロールを取得（user_roleテーブルから）
 
@@ -167,22 +153,15 @@ class UserRoleRepository:
         Returns:
             ロール情報のリスト
         """
-        response = (
-            self.client.table(self.table_name)
-            .select("*")
-            .eq("role_type", role_type)
-            .execute()
-        )
-        
-        if response.data:
-            logger.info(f"Found {len(response.data)} roles for type: {role_type}")
-            return response.data
-        
-        logger.info(f"No roles found for type: {role_type}")
-        return []
+        rows = self.conn.execute(
+            "SELECT * FROM user_roles WHERE role_type = %s",
+            (role_type,),
+        ).fetchall()
+        data = [dict(r) for r in rows]
+        logger.info(f"Found {len(data)} roles for type: {role_type}")
+        return data
 
-    @handle_supabase_errors("get_all_roles")
-    async def get_all_roles(self, include_hidden: bool = False) -> list[dict[str, Any]]:
+    def get_all_roles(self, include_hidden: bool = False) -> list[dict[str, Any]]:
         """
         すべてのユーザーロールを取得（user_roleテーブルから）
 
@@ -192,34 +171,24 @@ class UserRoleRepository:
         Returns:
             ロール情報のリスト
         """
-        response = self.client.table(self.table_name).select("*").execute()
-        
-        if response.data:
-            logger.info(f"Found {len(response.data)} total roles")
-            return response.data
-        
-        logger.info("No roles found")
-        return []
+        rows = self.conn.execute("SELECT * FROM user_roles").fetchall()
+        data = [dict(r) for r in rows]
+        logger.info(f"Found {len(data)} total roles")
+        return data
 
-    @handle_supabase_errors("get_user_roles_with_instructor")
-    async def get_user_roles_with_instructor(self) -> list[dict[str, Any]]:
+    def get_user_roles_with_instructor(self) -> list[dict[str, Any]]:
         """
         user_rolesテーブルからis_instructorフラグを含むロール情報を取得
 
         Returns:
             is_instructorフラグを含むロール情報のリスト
         """
-        response = self.client.table("user_roles").select("*").execute()
-        
-        if response.data:
-            logger.info(f"Found {len(response.data)} user roles with instructor flag")
-            return response.data
-        
-        logger.info("No user roles found")
-        return []
+        rows = self.conn.execute("SELECT * FROM user_roles").fetchall()
+        data = [dict(r) for r in rows]
+        logger.info(f"Found {len(data)} user roles with instructor flag")
+        return data
 
-    @handle_supabase_errors("update_instructor_flag")
-    async def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any] | None:
+    def update_instructor_flag(self, user_id: str, is_instructor: bool) -> dict[str, Any] | None:
         """
         user_rolesテーブルのis_instructorフラグを更新
 
@@ -231,43 +200,32 @@ class UserRoleRepository:
             更新されたロール情報、見つからない場合はNone
         """
         # 既存のレコードを確認
-        existing = (
-            self.client.table("user_roles")
-            .select("*")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-        
-        if existing.data and len(existing.data) > 0:
-            # 既存レコードを更新
-            response = (
-                self.client.table("user_roles")
-                .update({"is_instructor": is_instructor})
-                .eq("user_id", user_id)
-                .execute()
+        existing = self.conn.execute(
+            "SELECT * FROM user_roles WHERE user_id = %s LIMIT 1",
+            (str(user_id),),
+        ).fetchone()
+
+        if existing:
+            cur = self.conn.execute(
+                "UPDATE user_roles SET is_instructor = %s WHERE user_id = %s RETURNING *",
+                (is_instructor, str(user_id)),
             )
         else:
-            # 新規作成
-            response = (
-                self.client.table("user_roles")
-                .insert({
-                    "user_id": user_id,
-                    "is_instructor": is_instructor,
-                    "role_type": "basic",
-                })
-                .execute()
+            cur = self.conn.execute(
+                "INSERT INTO user_roles (user_id, is_instructor, role_type) VALUES (%s, %s, %s) RETURNING *",
+                (str(user_id), is_instructor, "basic"),
             )
-        
-        if response.data:
+
+        self.conn.commit()
+        row = cur.fetchone()
+        if row:
             logger.info(f"Instructor flag updated for user: {user_id}, is_instructor: {is_instructor}")
-            return response.data[0] if isinstance(response.data, list) and len(response.data) > 0 else response.data
-        
+            return dict(row)
+
         logger.error(f"Failed to update instructor flag for user: {user_id}")
         return None
 
-    @handle_supabase_errors("get_instructor_flag")
-    async def get_instructor_flag(self, user_id: str) -> bool:
+    def get_instructor_flag(self, user_id: str) -> bool:
         """
         user_rolesテーブルからis_instructorフラグを取得
 
@@ -277,15 +235,12 @@ class UserRoleRepository:
         Returns:
             is_instructorフラグ（デフォルトはFalse）
         """
-        response = (
-            self.client.table("user_roles")
-            .select("is_instructor")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-        
-        if response.data and len(response.data) > 0:
-            return response.data[0].get("is_instructor", False)
-        
+        row = self.conn.execute(
+            "SELECT is_instructor FROM user_roles WHERE user_id = %s LIMIT 1",
+            (str(user_id),),
+        ).fetchone()
+
+        if row:
+            return dict(row).get("is_instructor", False)
+
         return False
