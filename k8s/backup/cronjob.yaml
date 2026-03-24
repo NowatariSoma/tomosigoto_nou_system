@@ -1,0 +1,63 @@
+# CronJob = 定期的に実行するジョブ
+#
+# docker-compose の backup サービス (while true; do sleep 86400; done) を
+# k8s らしく CronJob で書き直したもの
+#
+# docker-compose の書き方は「コンテナが永続起動してsleepでループ」
+# k8s の書き方は「スケジュールに従って Pod を起動して終了」← こちらが正しい
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: tomosigoto
+spec:
+  schedule: "0 18 * * *"   # 毎日 18:00 UTC = 03:00 JST
+  concurrencyPolicy: Forbid  # 前のジョブが終わってなければスキップ
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: postgres:16-alpine
+              env:
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: tomosigoto-secret
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: tomosigoto-secret
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: tomosigoto-secret
+                      key: POSTGRES_DB
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: tomosigoto-secret
+                      key: POSTGRES_PASSWORD
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  FILENAME=/backups/tomosigoto_$(date +%Y%m%d_%H%M%S).sql.gz
+                  pg_dump -h postgres -U $POSTGRES_USER $POSTGRES_DB | gzip > $FILENAME
+                  echo "Backup created: $FILENAME"
+                  # 7日以上古いバックアップを削除
+                  find /backups -name '*.sql.gz' -mtime +7 -delete
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+          volumes:
+            - name: backup-storage
+              hostPath:
+                path: /var/lib/tomosigoto-backups   # ノードの実際のパス
+                type: DirectoryOrCreate

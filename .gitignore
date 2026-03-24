@@ -7,3 +7,4 @@ venv
 # バックアップ
 backups/
 .backup_remotes
+kubectl

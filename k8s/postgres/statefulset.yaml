@@ -1,0 +1,78 @@
+# StatefulSet = 状態を持つアプリ (DB など) 用の Deployment
+#
+# Deployment との違い:
+#   Deployment  → Pod が何番でも関係ない (stateless アプリ向け)
+#   StatefulSet → Pod に順番がある (postgres-0, postgres-1...)
+#                 Pod が再起動されても同じストレージを使い続ける
+#
+# PostgreSQL は状態 (データ) を持つので StatefulSet を使う
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: tomosigoto
+spec:
+  serviceName: postgres   # 後述の Headless Service 名と一致させる
+  replicas: 1             # PostgreSQL は基本1台 (レプリケーションは別途設定)
+  selector:
+    matchLabels:
+      app: postgres       # このラベルの Pod を管理する
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            # Secret から環境変数を読み込む
+            # docker-compose の environment: ${POSTGRES_USER} に相当
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_DB
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          # ヘルスチェック = docker-compose の healthcheck に相当
+          # Pod が「準備完了」かどうかを k8s が判断するために使う
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc   # 上で作った PVC を使う
+        - name: init-sql
+          configMap:
+            name: postgres-init-sql   # 初期化 SQL (別途 ConfigMap で定義)

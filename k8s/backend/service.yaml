@@ -1,0 +1,15 @@
+# backend の Service
+# ClusterIP (デフォルト) = クラスター内部からだけアクセス可能
+# nginx Pod から backend:8000 でアクセスできるようになる
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: tomosigoto
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP   # 外部には公開しない (nginx 経由でアクセス)

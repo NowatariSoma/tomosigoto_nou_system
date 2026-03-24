@@ -1,0 +1,9 @@
+# Namespace = プロジェクトの「部屋」
+# k8s は複数のプロジェクトを1つのクラスターで動かせる
+# Namespace で分離することで、他のプロジェクトと混ざらない
+#
+# docker-compose には相当するものがない (docker-compose のプロジェクト名に近い)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tomosigoto

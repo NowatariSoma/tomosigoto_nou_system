@@ -1,0 +1,59 @@
+# Deployment = ステートレスなアプリ用のリソース
+#
+# docker-compose の service: backend に相当
+# replicas を増やすだけで水平スケールできる (k8s の強み)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: tomosigoto
+spec:
+  replicas: 1   # 2以上にすれば自動で負荷分散される
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # docker-compose の build: context: ./backend に相当
+          # k8s はビルドしないので、事前にイメージを push しておく必要がある
+          # → ghcr.io/あなたのGitHubユーザー名/tomosigoto-backend:latest など
+          image: tomosigoto-backend:latest
+          imagePullPolicy: Never   # ローカルイメージを使う (レジストリから pull しない)
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: POSTGRES_DB
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tomosigoto-secret
+                  key: SECRET_KEY
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5

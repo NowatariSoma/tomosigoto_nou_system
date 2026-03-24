@@ -1,0 +1,43 @@
+# Ingress = ドメイン名でルーティングする仕組み
+#
+# k3s には Traefik が最初から入っているので、
+# この Ingress を apply するだけで HTTPS + ドメインルーティングが動く
+#
+# NodePort (nginx service) との違い:
+#   NodePort → http://VPSのIP:30080 (ポート番号が必要、見た目が悪い)
+#   Ingress  → https://nou.example.com (普通のURL、SSL自動取得も可能)
+#
+# 本番ではこちらを使う (NodePort は学習・動作確認用)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tomosigoto-ingress
+  namespace: tomosigoto
+  annotations:
+    # cert-manager を入れると Let's Encrypt で SSL 証明書を自動取得できる
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  rules:
+    - host: nou.example.com   # ← 実際のドメインに変える
+      http:
+        paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+  # SSL を使う場合 (cert-manager 必要)
+  # tls:
+  #   - hosts:
+  #       - nou.example.com
+  #     secretName: tomosigoto-tls

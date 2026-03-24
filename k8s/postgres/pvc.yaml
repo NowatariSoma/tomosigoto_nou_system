@@ -1,0 +1,19 @@
+# PersistentVolumeClaim (PVC) = 「ストレージ○GBください」という要求書
+#
+# docker-compose の volumes: postgres_data に相当するが、
+# k8s では明示的に「何GB必要か」を宣言する必要がある
+#
+# k3s はデフォルトで local-path-provisioner が入っているので、
+# この PVC を書くだけでノードのローカルディスクが自動的に割り当てられる
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: tomosigoto
+spec:
+  accessModes:
+    - ReadWriteOnce   # 1つのノードからだけ読み書き可能 (DBは通常これ)
+  resources:
+    requests:
+      storage: 10Gi   # 10GB 要求 (VPSの容量に合わせて変更)
+  # storageClassName を省略すると k3s のデフォルト (local-path) が使われる

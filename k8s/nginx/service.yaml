@@ -1,0 +1,23 @@
+# nginx の Service = 外部からアクセスできる唯一の入口
+#
+# Service の type:
+#   ClusterIP    → クラスター内部のみ (デフォルト)
+#   NodePort     → ノードのポートで外部公開 (http://VPSのIP:30080)
+#   LoadBalancer → クラウドのロードバランサーを使う (k3s では MetalLB が必要)
+#
+# k3s では Traefik Ingress が標準搭載なので、
+# 本来は Ingress リソースを使うのがベストプラクティス
+# ここでは学習用に NodePort で試す
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: tomosigoto
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080   # http://VPSのIP:30080 でアクセスできる
+  type: NodePort

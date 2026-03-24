@@ -1,0 +1,21 @@
+# Service = Pod への「入口」を作る仕組み
+#
+# k8s では Pod は起動するたびに IP が変わる
+# Service を作ると「postgres」という固定の名前でアクセスできるようになる
+#
+# docker-compose では同じネットワーク内のサービス名 (postgres) で
+# 通信できたが、k8s でもこの Service 名で通信できる
+# → backend の DATABASE_URL: postgresql://...@postgres:5432/... がそのまま使える
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres        # この名前で他の Pod からアクセスできる
+  namespace: tomosigoto
+spec:
+  selector:
+    app: postgres       # app: postgres ラベルの Pod に転送する
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None       # Headless Service: StatefulSet と組み合わせる場合は None にする
+                        # postgres-0.postgres.tomosigoto.svc.cluster.local でアクセス可能になる
