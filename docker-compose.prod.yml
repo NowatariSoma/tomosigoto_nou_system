@@ -73,6 +73,38 @@ services:
       - "project=tomosigoto-supabase"
       - "description=FastAPI Backend with Supabase integration"
 
+  # PostgreSQL 自動バックアップ (毎日 3:00 JST)
+  backup:
+    container_name: tomosigoto-backup-prod
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tomosigoto}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c "
+        while true; do
+          FILENAME=/backups/tomosigoto_$$(date +%Y%m%d_%H%M%S).sql.gz;
+          pg_dump -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | gzip > $$FILENAME;
+          echo \"Backup created: $$FILENAME\";
+          find /backups -name '*.sql.gz' -mtime +7 -delete;
+          sleep 86400;
+        done
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      tomosigoto-network:
+        ipv4_address: 172.23.0.6
+    restart: unless-stopped
+    labels:
+      - "project=tomosigoto"
+      - "description=PostgreSQL backup service"
+
   # Next.js フロントエンド
   frontend:
     container_name: tomosigoto-frontend-prod
@@ -82,8 +114,6 @@ services:
       target: production
       args:
         - NODE_ENV=production
-        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://umluawhesgtzalwarhtw.supabase.co}
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         - NEXT_PUBLIC_API_URL=/api/v1
         - NEXT_PUBLIC_AUTH_URL=/api/v1
     expose:
@@ -106,6 +136,10 @@ services:
 
 volumes:
   postgres_data:
+
+# backups/ ディレクトリは VPS 側で以下を設定推奨:
+#   - cron + rsync でオフサイト転送 (S3/R2/別サーバー)
+#   - 例: 0 4 * * * rsync -az /path/to/backups/ user@backup-server:/tomosigoto-backups/
 
 networks:
   tomosigoto-network:
