@@ -6,27 +6,24 @@ import { test, expect } from '@playwright/test';
 
 test.describe('スケジュールカレンダー - デバッグ', () => {
 
-  test('12日をクリックしたときのURLパラメータを確認', async ({ page }) => {
-    // コンソールログをキャプチャ
+  test('日付をクリックしたときのURLパラメータを確認', async ({ page }) => {
     page.on('console', msg => {
       console.log(`BROWSER LOG [${msg.type()}]:`, msg.text());
     });
 
-    // ページに移動
     await page.goto('/schedule');
-
-    // カレンダーが表示されるまで待機
     await page.waitForSelector('text=/\\d{4}年\\d{1,2}月/', { timeout: 10000 });
 
-    console.log('\n=== 12日をクリックする前のURL ===');
+    console.log('\n=== クリックする前のURL ===');
     console.log(page.url());
 
-    // 12日のセルを探してクリック
-    const dayCell = page.locator('.cursor-pointer').filter({ hasText: /^12$/ }).first();
+    // 任意のクリック可能な日付セルをクリック
+    const calendarGrid = page.locator('.grid-cols-7');
+    const dayCell = calendarGrid.locator('.cursor-pointer:not(.bg-transparent)').first();
     await dayCell.waitFor({ state: 'visible', timeout: 5000 });
 
-    // クリックする要素のテキストと属性を確認
     const cellText = await dayCell.textContent();
+    const dayNumber = cellText?.trim().match(/(\d+)/)?.[1];
     const cellHtml = await dayCell.innerHTML();
     console.log('\n=== クリック対象の要素 ===');
     console.log('Text:', cellText);
@@ -34,31 +31,29 @@ test.describe('スケジュールカレンダー - デバッグ', () => {
 
     await dayCell.click();
 
-    // URLが変わるまで待機
     await page.waitForURL(/date=/, { timeout: 5000 });
 
-    console.log('\n=== 12日をクリックした後のURL ===');
+    console.log('\n=== クリックした後のURL ===');
     const currentUrl = page.url();
     console.log(currentUrl);
 
-    // URLパラメータから日付を抽出
     const url = new URL(currentUrl);
     const dateParam = url.searchParams.get('date');
     console.log('\n=== URLパラメータの date 値 ===');
     console.log(dateParam);
 
-    // アニメーションを待機
     await page.waitForTimeout(500);
 
-    // ボトムシートの日付を確認
     const dateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
     console.log('\n=== ボトムシートに表示された日付 ===');
     console.log(dateText);
 
-    // URLパラメータが2025-11-12であることを確認
-    expect(dateParam).toBe('2025-11-12');
+    // URLにdateパラメータがあることを確認
+    expect(dateParam).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-    // ボトムシートに12日が表示されていることを確認
-    expect(dateText).toContain('12日');
+    // ボトムシートにクリックした日付が表示されていることを確認
+    if (dayNumber) {
+      expect(dateText).toContain(`${dayNumber}日`);
+    }
   });
 });

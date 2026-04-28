@@ -7,82 +7,83 @@ import { test, expect } from '@playwright/test';
 
 test.describe('スケジュールカレンダー - 基本テスト', () => {
 
-  test('カレンダーで12日をクリック → ボトムシートに12日が表示される', async ({ page }) => {
-    // ページに移動
+  test('カレンダーで日付をクリック → ボトムシートに日付が表示される', async ({ page }) => {
     await page.goto('/schedule');
-
-    // カレンダーが表示されるまで待機
     await page.waitForSelector('text=/\\d{4}年\\d{1,2}月/', { timeout: 10000 });
 
-    // カレンダーグリッド内の12日のセルを探してクリック
-    // 前月・翌月の日付はbg-transparentクラスを持つので除外
-    // 当月の日付のみを対象にする
     const calendarGrid = page.locator('.grid-cols-7');
     const dayCell = calendarGrid
       .locator('.cursor-pointer:not(.bg-transparent)')
-      .filter({ hasText: /^12$/ })
       .first();
     await dayCell.waitFor({ state: 'visible', timeout: 5000 });
+
+    const dayCellText = await dayCell.textContent();
+    const dayNumber = dayCellText?.trim().match(/(\d+)/)?.[1];
+    console.log('クリックする日付:', dayNumber);
+
     await dayCell.click();
+    await page.waitForURL(/date=/, { timeout: 5000 });
+    await page.waitForTimeout(300);
 
-    // アニメーションを待機
-    await page.waitForTimeout(500);
-
-    // ボトムシートのヘッダーの日付を確認（最初の見出し要素を取得）
     const dateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
     console.log('表示された日付:', dateText);
 
-    // 12日が表示されていることを確認
-    expect(dateText).toContain('12日');
+    expect(dateText).toMatch(/\d{4}年\d{1,2}月\d{1,2}日/);
+    if (dayNumber) {
+      expect(dateText).toContain(`${dayNumber}日`);
+    }
   });
 
-  test('ボトムシートで翌日ボタン → 13日に変わる', async ({ page }) => {
-    await page.goto('/schedule');
-    await page.waitForSelector('text=/\\d{4}年\\d{1,2}月/', { timeout: 10000 });
-
-    // カレンダーグリッド内の12日をクリック（当月のみ）
-    const calendarGrid = page.locator('.grid-cols-7');
-    const dayCell = calendarGrid
-      .locator('.cursor-pointer:not(.bg-transparent)')
-      .filter({ hasText: /^12$/ })
-      .first();
-    await dayCell.waitFor({ state: 'visible', timeout: 5000 });
-    await dayCell.click();
+  test('ボトムシートで翌日ボタン → 翌日の日付に変わる', async ({ page }) => {
+    // URLで直接日付を指定してボトムシートを開く
+    await page.goto('/schedule?date=2026-05-10');
     await page.waitForTimeout(500);
 
-    // 翌日ボタンをクリック
-    await page.locator('button').filter({ has: page.locator('svg') }).last().click();
-    await page.waitForTimeout(500);
+    // ボトムシートに日付が表示されることを確認
+    const heading = page.getByRole('heading', { name: /2026年5月10日/ }).first();
+    await heading.waitFor({ state: 'visible', timeout: 5000 });
 
-    // 13日が表示されることを確認
-    const dateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
-    console.log('翌日ボタン後の日付:', dateText);
+    const initialDateText = await heading.textContent();
+    console.log('初期日付:', initialDateText);
 
-    expect(dateText).toContain('13日');
+    // 翌日ボタン（flex gap-1 内の2番目のボタン）をクリック
+    const navContainer = page.locator('.flex.gap-1').filter({
+      has: page.locator('button.h-8')
+    }).first();
+    await navContainer.locator('button').last().click();
+
+    await page.waitForURL(/2026-05-11/, { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    const nextDateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
+    console.log('翌日ボタン後の日付:', nextDateText);
+
+    expect(nextDateText).toContain('11日');
   });
 
-  test('ボトムシートで前日ボタン → 11日に変わる', async ({ page }) => {
-    await page.goto('/schedule');
-    await page.waitForSelector('text=/\\d{4}年\\d{1,2}月/', { timeout: 10000 });
-
-    // カレンダーグリッド内の12日をクリック（当月のみ）
-    const calendarGrid = page.locator('.grid-cols-7');
-    const dayCell = calendarGrid
-      .locator('.cursor-pointer:not(.bg-transparent)')
-      .filter({ hasText: /^12$/ })
-      .first();
-    await dayCell.waitFor({ state: 'visible', timeout: 5000 });
-    await dayCell.click();
+  test('ボトムシートで前日ボタン → 前日の日付に変わる', async ({ page }) => {
+    // URLで直接日付を指定してボトムシートを開く
+    await page.goto('/schedule?date=2026-05-10');
     await page.waitForTimeout(500);
 
-    // 前日ボタンをクリック
-    await page.locator('button').filter({ has: page.locator('svg') }).first().click();
-    await page.waitForTimeout(500);
+    const heading = page.getByRole('heading', { name: /2026年5月10日/ }).first();
+    await heading.waitFor({ state: 'visible', timeout: 5000 });
 
-    // 11日が表示されることを確認
-    const dateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
-    console.log('前日ボタン後の日付:', dateText);
+    const initialDateText = await heading.textContent();
+    console.log('初期日付:', initialDateText);
 
-    expect(dateText).toContain('11日');
+    // 前日ボタン（flex gap-1 内の1番目のボタン）をクリック
+    const navContainer = page.locator('.flex.gap-1').filter({
+      has: page.locator('button.h-8')
+    }).first();
+    await navContainer.locator('button').first().click();
+
+    await page.waitForURL(/2026-05-09/, { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    const prevDateText = await page.getByRole('heading', { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first().textContent();
+    console.log('前日ボタン後の日付:', prevDateText);
+
+    expect(prevDateText).toContain('9日');
   });
 });

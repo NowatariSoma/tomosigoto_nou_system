@@ -11,10 +11,10 @@ setup('authenticate', async ({ page }) => {
   await page.goto('/login');
 
   // メールアドレスを入力
-  await page.fill('input[type="email"]', 'design.and.code.lab@gmail.com');
+  await page.fill('input[type="email"]', 'd0193480501@gmail.com');
 
   // パスワードを入力
-  await page.fill('input[type="password"]', 'designandcode');
+  await page.fill('input[type="password"]', 'm5CDzkM0');
 
   // ログインボタンをクリック
   await page.click('button[type="submit"]');

@@ -78,11 +78,11 @@ test.describe('メンバー管理ページ', () => {
     }
 
     // サマリーカードが表示される
-    await expect(page.locator('text=登録メンバー')).toBeVisible();
-    await expect(page.locator('text=管理者')).toBeVisible();
+    await expect(page.locator('text=登録メンバー').first()).toBeVisible();
+    await expect(page.locator('text=管理者').first()).toBeVisible();
 
     // 「名」を含むメンバー数が表示される
-    await expect(page.locator('text=/\\d+名/')).toBeVisible();
+    await expect(page.locator('text=/\\d+名/').first()).toBeVisible();
   });
 
   test('ロール情報がバッジで表示される', async ({ page }) => {
@@ -104,9 +104,9 @@ test.describe('メンバー管理ページ', () => {
     ).catch(() => {});
 
     // ロールバッジが表示されることを確認（管理者、基本権限、閲覧のみのいずれか）
-    const hasAdminBadge = await page.locator('text=管理者').isVisible().catch(() => false);
-    const hasBasicBadge = await page.locator('text=基本権限').isVisible().catch(() => false);
-    const hasViewerBadge = await page.locator('text=閲覧のみ').isVisible().catch(() => false);
+    const hasAdminBadge = await page.locator('text=管理者').first().isVisible().catch(() => false);
+    const hasBasicBadge = await page.locator('text=基本権限').first().isVisible().catch(() => false);
+    const hasViewerBadge = await page.locator('text=閲覧のみ').first().isVisible().catch(() => false);
 
     // 少なくとも1つのロールバッジが表示されている
     expect(hasAdminBadge || hasBasicBadge || hasViewerBadge).toBeTruthy();

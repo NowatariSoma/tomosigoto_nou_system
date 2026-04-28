@@ -17,7 +17,7 @@ test.describe('資料一覧ページ', () => {
     await navigateTo(page, '/materials');
 
     // ページタイトルが表示される
-    await expect(page.locator('text=youtubeプレイリスト')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1', { hasText: 'youtubeプレイリスト' })).toBeVisible({ timeout: 10000 });
   });
 
   test('ページヘッダーが正しく表示される', async ({ page }) => {

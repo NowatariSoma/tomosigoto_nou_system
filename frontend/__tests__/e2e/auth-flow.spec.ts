@@ -59,7 +59,7 @@ test.describe('認証フロー - 認証済みユーザー', () => {
     await navigateTo(page, '/settings');
 
     // 設定ページが表示される（プロフィール情報の見出しを確認）
-    await expect(page.locator('text=プロフィール情報')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=プロフィール情報').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('サイドバーのナビゲーションリンクが表示されている', async ({ page }) => {

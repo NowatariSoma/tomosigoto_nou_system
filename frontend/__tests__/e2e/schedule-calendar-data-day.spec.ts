@@ -6,37 +6,27 @@ import { test, expect } from '@playwright/test';
 
 test.describe('スケジュールカレンダー - data-day属性確認', () => {
 
-  test('12日のdata-day属性を確認', async ({ page }) => {
-    // コンソールログを監視
+  test('日付セルのdata-day属性を確認', async ({ page }) => {
     page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
 
-    // ページに移動
     await page.goto('/schedule');
-
-    // カレンダーが表示されるまで待機
     await page.waitForSelector('text=/\\d{4}年\\d{1,2}月/', { timeout: 10000 });
 
-    console.log('\n=== 12日の要素を探す ===');
+    console.log('\n=== 任意のクリック可能な日付セルを探す ===');
     const calendarGrid = page.locator('.grid-cols-7');
     const dayCell = calendarGrid
       .locator('.cursor-pointer:not(.bg-transparent)')
-      .filter({ hasText: /^12$/ })
       .first();
 
     await dayCell.waitFor({ state: 'visible', timeout: 5000 });
 
-    // data-day属性を取得
     const dataDay = await dayCell.getAttribute('data-day');
     console.log('data-day attribute:', dataDay);
 
-    // 表示されているテキストも取得
     const text = await dayCell.textContent();
+    const dayNumber = text?.trim().match(/(\d+)/)?.[1];
     console.log('Visible text:', text);
 
-    // data-day属性が12であることを確認（一旦スキップ）
-    // expect(dataDay).toBe('12');
-
-    // クリックしてURLを確認
     await dayCell.click();
     await page.waitForTimeout(500);
 
@@ -47,7 +37,13 @@ test.describe('スケジュールカレンダー - data-day属性確認', () => 
     const dateParam = urlObj.searchParams.get('date');
     console.log('date parameter:', dateParam);
 
-    // 期待: date=2025-11-12
-    expect(dateParam).toBe('2025-11-12');
+    // dateパラメータが正しい形式であることを確認
+    expect(dateParam).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // クリックした日番号とURLの末尾が一致することを確認
+    if (dayNumber) {
+      const paddedDay = dayNumber.padStart(2, '0');
+      expect(dateParam).toMatch(new RegExp(`-${paddedDay}$`));
+    }
   });
 });
