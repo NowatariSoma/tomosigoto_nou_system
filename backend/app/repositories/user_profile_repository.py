@@ -255,12 +255,12 @@ class UserProfileRepository:
 
     def get_all_profiles_basic(self) -> list[dict[str, Any]]:
         """
-        account_setting_profileビューから基本情報（氏名・メール）を取得
+        user_profilesテーブルから基本情報（氏名・メール）を取得
         """
         rows = self.conn.execute(
             """
             SELECT user_id, first_name_kanji, last_name_kanji, email
-            FROM account_setting_profile
+            FROM user_profiles
             ORDER BY last_name_kanji ASC, first_name_kanji ASC
             """
         ).fetchall()

@@ -134,13 +134,14 @@ class AttendanceService:
         filtered_user_ids = None
         if user_name:
             search_pattern = f"%{user_name}%"
-            response = (
-                self.user_profile_repository.client.table("user_profiles")
-                .select("user_id")
-                .or_(f"first_name_kanji.ilike.{search_pattern},last_name_kanji.ilike.{search_pattern}")
-                .execute()
-            )
-            filtered_user_ids = [str(p["user_id"]) for p in (response.data or [])]
+            rows = self.user_profile_repository.conn.execute(
+                """
+                SELECT user_id FROM user_profiles
+                WHERE first_name_kanji ILIKE %s OR last_name_kanji ILIKE %s
+                """,
+                (search_pattern, search_pattern),
+            ).fetchall()
+            filtered_user_ids = [str(r["user_id"]) for r in rows]
             if not filtered_user_ids:
                 # マッチするユーザーがいない場合は空の結果を返す
                 return []
@@ -172,13 +173,12 @@ class AttendanceService:
             chunk_size = 100
             for i in range(0, len(filtered_user_ids), chunk_size):
                 chunk = filtered_user_ids[i:i + chunk_size]
-                response = (
-                    self.user_repository.client.table("users")
-                    .select("id, email")
-                    .in_("id", chunk)
-                    .execute()
-                )
-                users.extend(response.data or [])
+                placeholders = ", ".join(["%s"] * len(chunk))
+                rows = self.user_repository.conn.execute(
+                    f"SELECT id, email FROM users WHERE id IN ({placeholders})",
+                    chunk,
+                ).fetchall()
+                users.extend([dict(r) for r in rows])
         else:
             # フィルタがない場合は全ユーザーを取得
             users = self.user_repository.get_all_users()
@@ -191,13 +191,8 @@ class AttendanceService:
             chunk_size = 100
             for i in range(0, len(user_ids), chunk_size):
                 chunk = user_ids[i:i + chunk_size]
-                response = (
-                    self.user_profile_repository.client.table("user_profiles")
-                    .select("user_id, first_name_kanji, last_name_kanji")
-                    .in_("user_id", chunk)
-                    .execute()
-                )
-                for profile in (response.data or []):
+                profiles = self.user_profile_repository.get_profiles_by_user_ids(chunk)
+                for profile in profiles:
                     profiles_dict[str(profile["user_id"])] = profile
 
         # ステップ5: データを結合
