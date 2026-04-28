@@ -27,7 +27,6 @@ export function middleware(request: NextRequest) {
   }
 
   // Edge Runtime では JWT デコードのみ（署名検証はバックエンドが担当）
-  // localStorage はサーバーサイドでは使えないため、クライアントサイドで認証確認
   return NextResponse.next();
 }
 

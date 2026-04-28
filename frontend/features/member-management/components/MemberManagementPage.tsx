@@ -19,6 +19,7 @@ export function MemberManagementPage() {
     adminCount,
     handleRoleChange,
     handleInstructorFlagChange,
+    handleRemoveMember,
   } = useMemberManagement();
 
   const {
@@ -124,6 +125,7 @@ export function MemberManagementPage() {
           resolveDraftRole={resolveDraftRole}
           resolveDraftInstructor={resolveDraftInstructor}
           updateDraft={updateDraft}
+          onRemoveMember={handleRemoveMember}
         />
         <MemberCardList
           members={filteredMembers}
@@ -132,6 +134,7 @@ export function MemberManagementPage() {
           resolveDraftRole={resolveDraftRole}
           resolveDraftInstructor={resolveDraftInstructor}
           updateDraft={updateDraft}
+          onRemoveMember={handleRemoveMember}
         />
       </div>
     </div>

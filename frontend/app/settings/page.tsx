@@ -10,10 +10,6 @@ export default function Settings() {
       title="設定"
       description="アカウントの基本情報を管理します"
       icon={<SettingsIcon className="h-8 w-8 text-black" />}
-      permissionBadge={{
-        level: 'basic',
-        text: '基本権限'
-      }}
       maxWidth="7xl"
     >
       <AccountSettingsPage />

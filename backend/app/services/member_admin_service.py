@@ -92,8 +92,17 @@ class MemberAdminService:
         self.user_role_repository.update_instructor_flag(user_id, is_instructor)
         return self.get_member(user_id)
 
-    def remove_member(self, user_id: str) -> None:
+    def remove_member(self, user_id: str, current_user_id: str) -> None:
         """ユーザーアカウント削除（ロール情報も合わせて削除）"""
+        if user_id == current_user_id:
+            raise APIException(ErrorMessage.BAD_REQUEST, "管理者は自分自身を削除できません")
+
+        admins = self.user_role_repository.get_admin_users()
+        admin_ids = [admin.get("user_id") for admin in admins if admin.get("user_id")]
+
+        if len(admin_ids) <= 1 and user_id in admin_ids:
+            raise APIException(ErrorMessage.BAD_REQUEST, "最後の管理者は削除できません")
+
         self.user_role_repository.delete_role(user_id)
         self.user_service.delete_user(user_id)
 

@@ -41,7 +41,7 @@ export function AppTemplate({
   className = ''
 }: AppTemplateProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { isAdmin, isInstructor, isMember, isLoading } = useAuth();
+  const { isAdmin, isInstructor, isMember, isLoading, userRole } = useAuth();
   const router = useRouter();
 
   // 自動アクセス制御：permissionBadge.level に応じた権限チェック
@@ -81,6 +81,12 @@ export function AppTemplate({
       default: return 'max-w-7xl';
     }
   };
+
+  // ロール未設定のユーザー（新規登録直後等）は設定ページへリダイレクト
+  if (!isLoading && userRole === null && requiresPermissionCheck) {
+    router.replace('/settings');
+    return null;
+  }
 
   // 権限が必要だが、権限がない場合はアクセス拒否画面を表示
   if (requiresPermissionCheck && !isLoading && !hasRequiredPermission()) {

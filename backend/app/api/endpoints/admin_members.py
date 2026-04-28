@@ -43,3 +43,14 @@ def update_instructor_flag(
     """メンバーの指導者フラグを更新"""
     return member_admin_service.update_instructor_flag(str(user_id), payload.is_instructor)
 
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_member(
+    user_id: UUID,
+    current_user: CurrentUser = Depends(require_admin),
+    member_admin_service: MemberAdminService = Depends(get_member_admin_service),
+) -> None:
+    """メンバーを削除"""
+    current_user_id = current_user.get("id")
+    member_admin_service.remove_member(str(user_id), current_user_id)
+

@@ -31,8 +31,8 @@ services:
   nginx:
     container_name: tomosigoto-nginx-prod
     image: nginx:alpine
-    expose:
-      - "80"
+    ports:
+      - "80:80"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped

@@ -244,3 +244,13 @@ class UserRoleRepository:
             return dict(row).get("is_instructor", False)
 
         return False
+
+    def get_admin_users(self) -> list[dict[str, Any]]:
+        """管理者ロールを持つユーザーを取得"""
+        rows = self.conn.execute(
+            "SELECT * FROM user_roles WHERE role_type = %s",
+            ("admin",),
+        ).fetchall()
+        data = [dict(r) for r in rows]
+        logger.info(f"Found {len(data)} admin users")
+        return data
