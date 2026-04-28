@@ -2,7 +2,7 @@
 メンバー所属エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetMemberAssignments:
     """GET /api/v1/member-assignments/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -62,7 +62,7 @@ class TestGetMemberAssignmentsByUser:
     """GET /api/v1/member-assignments/by-user/{user_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -83,7 +83,7 @@ class TestGetMemberAssignmentById:
     """GET /api/v1/member-assignments/{assignment_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -105,7 +105,7 @@ class TestCreateMemberAssignment:
     """POST /api/v1/member-assignments/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -143,7 +143,7 @@ class TestBulkAssignToPart:
     """POST /api/v1/member-assignments/bulk/{part_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -189,7 +189,7 @@ class TestUpdateMemberAssignment:
     """PUT /api/v1/member-assignments/{assignment_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -229,7 +229,7 @@ class TestDeleteMemberAssignment:
     """DELETE /api/v1/member-assignments/{assignment_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -265,7 +265,7 @@ class TestDeleteMemberAssignmentByUserAndPart:
     """DELETE /api/v1/member-assignments/by-user-and-part/{user_id}/{part_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

@@ -1,141 +1,148 @@
-"""MemberAssignmentRepositoryのユニットテスト"""
+"""MemberAssignmentRepositoryのユニットテスト（psycopg2ベース）"""
 
 import pytest
+from unittest.mock import Mock
+from uuid import uuid4
 
 from app.repositories.member_assignment_repository import MemberAssignmentRepository
 from tests.helpers.factories import make_member_assignment
-from tests.helpers.supabase_mock import SupabaseMockBuilder
+
+
+def _make_conn(rows_one=None, rows_all=None):
+    conn = Mock()
+    cursor = Mock()
+    cursor.fetchone.return_value = rows_one
+    cursor.fetchall.return_value = rows_all if rows_all is not None else []
+    conn.execute.return_value = cursor
+    return conn
 
 
 class TestMemberAssignmentRepository:
     """MemberAssignmentRepositoryのユニットテスト"""
 
     def setup_method(self):
-        """各テスト前にモッククライアントとリポジトリを初期化"""
         self.data = make_member_assignment(
             id="assign-1", user_id="user-1", part_id="part-1"
         )
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
 
     # --- find_all ---
 
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all()
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_all()
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("member_assignments")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.find_all()
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_all()
         assert result == []
 
     # --- find_by_id ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("assign-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.find_by_id("nonexistent")
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result is None
 
     # --- find_by_part_id ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_part_id(self):
-        result = await self.repo.find_by_part_id("part-1")
+    def test_find_by_part_id(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_part_id(uuid4())
         assert result == [self.data]
 
-    @pytest.mark.asyncio
-    async def test_find_by_part_id_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.find_by_part_id("part-1")
+    def test_find_by_part_id_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_part_id(uuid4())
         assert result == []
 
     # --- find_by_user_id ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_id(self):
-        result = await self.repo.find_by_user_id("user-1")
+    def test_find_by_user_id(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_user_id(uuid4())
         assert result == [self.data]
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_id_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.find_by_user_id("user-1")
+    def test_find_by_user_id_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_user_id(uuid4())
         assert result == []
 
     # --- find_by_user_and_part ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_and_part(self):
-        result = await self.repo.find_by_user_and_part("user-1", "part-1")
+    def test_find_by_user_and_part(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_user_and_part(uuid4(), uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_and_part_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.find_by_user_and_part("user-1", "part-1")
+    def test_find_by_user_and_part_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.find_by_user_and_part(uuid4(), uuid4())
         assert result is None
 
     # --- create ---
 
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create(self.data)
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.create(self.data)
         assert result == self.data
+        conn.commit.assert_called()
 
-    @pytest.mark.asyncio
-    async def test_create_empty_response(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.create(self.data)
+    def test_create_empty_response(self):
+        conn = _make_conn(rows_one=None)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.create(self.data)
         assert result == {}
 
     # --- update ---
 
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("assign-1", {"display_order": 5})
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.update(uuid4(), {"display_order": 5})
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_update_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.update("nonexistent", {"display_order": 5})
+    def test_update_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MemberAssignmentRepository(conn)
+        result = repo.update(uuid4(), {"display_order": 5})
         assert result is None
 
     # --- delete ---
 
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("assign-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = MemberAssignmentRepository(conn)
+        result = repo.delete(uuid4())
         assert result is True
+        conn.commit.assert_called()
 
     # --- count ---
 
-    @pytest.mark.asyncio
-    async def test_count(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[], count=7).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.count()
+    def test_count(self):
+        conn = _make_conn(rows_one={"cnt": 7})
+        repo = MemberAssignmentRepository(conn)
+        result = repo.count()
         assert result == 7
 
-    @pytest.mark.asyncio
-    async def test_count_zero(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[], count=None).build()
-        self.repo = MemberAssignmentRepository(self.mock_client)
-        result = await self.repo.count()
-        assert result is None
+    def test_count_zero(self):
+        conn = _make_conn(rows_one={"cnt": 0})
+        repo = MemberAssignmentRepository(conn)
+        result = repo.count()
+        assert result == 0

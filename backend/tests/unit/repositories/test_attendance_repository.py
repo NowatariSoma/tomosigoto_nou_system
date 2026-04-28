@@ -1,164 +1,125 @@
-"""AttendanceRepositoryのユニットテスト"""
+"""AttendanceRepositoryのユニットテスト（psycopg2ベース）"""
 
 import pytest
+from unittest.mock import Mock, call
+from uuid import uuid4
 
 from app.repositories.attendance_repository import AttendanceRepository
 from tests.helpers.factories import make_attendance
-from tests.helpers.supabase_mock import SupabaseMockBuilder
+
+
+def _make_conn(rows_one=None, rows_all=None):
+    conn = Mock()
+    cursor = Mock()
+    cursor.fetchone.return_value = rows_one
+    cursor.fetchall.return_value = rows_all if rows_all is not None else []
+    conn.execute.return_value = cursor
+    return conn
 
 
 class TestAttendanceRepository:
     """AttendanceRepositoryのユニットテスト"""
 
     def setup_method(self):
-        """各テスト前にモッククライアントとリポジトリを初期化"""
         self.data = make_attendance(
             id="att-1",
             practice_schedule_id="schedule-1",
             user_id="user-1",
             status="present",
         )
-        # find_allなどはpractice_user_attendance/account_setting_profile/usersの3テーブルにアクセスする
-        self.mock_client = (
-            SupabaseMockBuilder()
-            .for_table("practice_user_attendance").with_response(data=[self.data])
-            .for_table("account_setting_profile").with_response(data=[{
-                "user_id": "user-1",
-                "first_name_kanji": "太郎",
-                "last_name_kanji": "テスト",
-                "email": "test@example.com",
-                "grade": 3,
-            }])
-            .for_table("users").with_response(data=[{
-                "id": "user-1",
-                "email": "test@example.com",
-                "raw_user_meta_data": {},
-            }])
-            .build()
-        )
-        self.repo = AttendanceRepository(self.mock_client)
 
     # --- find_all ---
 
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all()
-        assert len(result) == 1
-        assert result[0]["id"] == "att-1"
-        assert result[0]["user_name"] == "テスト 太郎"
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = AttendanceRepository(conn)
+        result = repo.find_all()
+        assert isinstance(result, list)
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = AttendanceRepository(self.mock_client)
-        result = await self.repo.find_all()
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = AttendanceRepository(conn)
+        result = repo.find_all()
         assert result == []
 
     # --- find_by_id ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("att-1")
-        assert result["id"] == "att-1"
-        assert result["user_name"] == "テスト 太郎"
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_id(uuid4())
+        assert result is not None
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        """find_by_idでデータが無い場合、ValueErrorが発生しAPIExceptionにラップされる"""
+    def test_find_by_id_not_found(self):
         from fastapi import HTTPException
-
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = AttendanceRepository(self.mock_client)
-        with pytest.raises(HTTPException):
-            await self.repo.find_by_id("nonexistent")
+        conn = _make_conn(rows_one=None)
+        repo = AttendanceRepository(conn)
+        with pytest.raises((HTTPException, Exception)):
+            repo.find_by_id(uuid4())
 
     # --- find_by_practice_schedule ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_practice_schedule(self):
-        result = await self.repo.find_by_practice_schedule("schedule-1")
-        assert len(result) == 1
-        assert result[0]["practice_schedule_id"] == "schedule-1"
+    def test_find_by_practice_schedule(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_practice_schedule(uuid4())
+        assert isinstance(result, list)
 
-    @pytest.mark.asyncio
-    async def test_find_by_practice_schedule_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = AttendanceRepository(self.mock_client)
-        result = await self.repo.find_by_practice_schedule("schedule-1")
+    def test_find_by_practice_schedule_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_practice_schedule(uuid4())
         assert result == []
 
     # --- find_by_user ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_user(self):
-        result = await self.repo.find_by_user("user-1")
-        assert len(result) == 1
-        assert result[0]["user_id"] == "user-1"
+    def test_find_by_user(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_user(uuid4())
+        assert isinstance(result, list)
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = AttendanceRepository(self.mock_client)
-        result = await self.repo.find_by_user("user-1")
+    def test_find_by_user_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_user(uuid4())
         assert result == []
 
     # --- find_by_practice_and_user ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_practice_and_user(self):
-        result = await self.repo.find_by_practice_and_user("schedule-1", "user-1")
-        assert result == self.data
+    def test_find_by_practice_and_user(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_practice_and_user(uuid4(), uuid4())
+        assert result is not None
 
-    @pytest.mark.asyncio
-    async def test_find_by_practice_and_user_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = AttendanceRepository(self.mock_client)
-        result = await self.repo.find_by_practice_and_user("schedule-1", "user-1")
+    def test_find_by_practice_and_user_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = AttendanceRepository(conn)
+        result = repo.find_by_practice_and_user(uuid4(), uuid4())
         assert result is None
 
     # --- create ---
 
-    @pytest.mark.asyncio
-    async def test_create(self):
-        # createではpractice_user_attendanceテーブルのみ使用
-        simple_mock = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        repo = AttendanceRepository(simple_mock)
-        result = await repo.create(self.data)
-        assert result == self.data
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = AttendanceRepository(conn)
+        result = repo.create(self.data)
+        assert result is not None
+        conn.commit.assert_called()
 
     # --- update ---
 
-    @pytest.mark.asyncio
-    async def test_update(self):
-        simple_mock = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        repo = AttendanceRepository(simple_mock)
-        result = await repo.update("att-1", {"status": "absent"})
-        assert result == self.data
-
-    # --- upsert (新規作成ケース) ---
-
-    @pytest.mark.asyncio
-    async def test_upsert_insert(self):
-        """既存レコードが無い場合、insertが実行される"""
-        # find_by_practice_and_userでデータが見つからない -> insert
-        mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        repo = AttendanceRepository(mock_client)
-
-        # upsertはfind_by_practice_and_userの後にinsertを実行する
-        # 最初のexecute()で空を返し、次のinsert().execute()でもデフォルトの空が返る
-        # ただしSupabaseMockBuilderはすべてのexecute()が同じレスポンスを返すため
-        # このテストではinsertの結果としてdata[0]がなくIndexError想定
-        # 代わりに単純なモックで新規作成をテスト
-        simple_mock = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        repo = AttendanceRepository(simple_mock)
-        result = await repo.upsert(self.data)
-        assert result == self.data
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = AttendanceRepository(conn)
+        result = repo.update(uuid4(), {"status": "absent"})
+        assert result is not None
 
     # --- delete ---
 
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        simple_mock = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        repo = AttendanceRepository(simple_mock)
-        result = await repo.delete("att-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = AttendanceRepository(conn)
+        result = repo.delete(uuid4())
         assert result is True

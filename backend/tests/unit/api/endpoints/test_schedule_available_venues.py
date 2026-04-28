@@ -2,7 +2,7 @@
 スケジュール利用可能会場エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetScheduleAvailableVenues:
     """GET /api/v1/schedule-available-venues/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -69,7 +69,7 @@ class TestGetScheduleAvailableVenueById:
     """GET /api/v1/schedule-available-venues/{schedule_venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -90,7 +90,7 @@ class TestGetScheduleAvailableVenuesBySchedule:
     """GET /api/v1/schedule-available-venues/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -111,7 +111,7 @@ class TestGetScheduleAvailableVenuesByVenue:
     """GET /api/v1/schedule-available-venues/venue/{venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -132,7 +132,7 @@ class TestCreateScheduleAvailableVenue:
     """POST /api/v1/schedule-available-venues/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -170,7 +170,7 @@ class TestCreateScheduleAvailableVenuesBulk:
     """POST /api/v1/schedule-available-venues/bulk のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -200,7 +200,7 @@ class TestUpdateScheduleAvailableVenue:
     """PUT /api/v1/schedule-available-venues/{schedule_venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -230,7 +230,7 @@ class TestDeleteScheduleAvailableVenue:
     """DELETE /api/v1/schedule-available-venues/{schedule_venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -265,7 +265,7 @@ class TestDeleteScheduleAvailableVenuesBySchedule:
     """DELETE /api/v1/schedule-available-venues/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -286,7 +286,7 @@ class TestDeleteScheduleAvailableVenuesByVenue:
     """DELETE /api/v1/schedule-available-venues/venue/{venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_available_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

@@ -2,7 +2,7 @@
 ScheduleTimeSlotService のユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 from datetime import time
 
@@ -16,61 +16,56 @@ class TestScheduleTimeSlotService:
     """ScheduleTimeSlotService のテスト"""
 
     def setup_method(self):
-        self.mock_repo = AsyncMock()
+        self.mock_repo = Mock()
         self.service = ScheduleTimeSlotService(
             schedule_time_slot_repository=self.mock_repo,
         )
 
     # ===== get_all_schedule_time_slots =====
 
-    @pytest.mark.asyncio
-    async def test_get_all_schedule_time_slots_no_filter(self):
+    def test_get_all_schedule_time_slots_no_filter(self):
         """時間スロット一覧取得 - フィルタなし"""
         slots = [make_schedule_time_slot()]
         self.mock_repo.find_all.return_value = slots
 
-        result = await self.service.get_all_schedule_time_slots()
+        result = self.service.get_all_schedule_time_slots()
 
         assert len(result) == 1
         self.mock_repo.find_all.assert_called_once()
 
-    @pytest.mark.asyncio
-    async def test_get_all_schedule_time_slots_with_schedule_id(self):
+    def test_get_all_schedule_time_slots_with_schedule_id(self):
         """時間スロット一覧取得 - スケジュールID指定"""
         schedule_id = uuid4()
         slots = [make_schedule_time_slot(schedule_id=str(schedule_id))]
         self.mock_repo.find_by_schedule.return_value = slots
 
-        result = await self.service.get_all_schedule_time_slots(schedule_id=schedule_id)
+        result = self.service.get_all_schedule_time_slots(schedule_id=schedule_id)
 
         assert len(result) == 1
         self.mock_repo.find_by_schedule.assert_called_once_with(schedule_id)
 
     # ===== get_schedule_time_slot =====
 
-    @pytest.mark.asyncio
-    async def test_get_schedule_time_slot_success(self):
+    def test_get_schedule_time_slot_success(self):
         """時間スロット取得 - 正常"""
         slot_id = uuid4()
         slot = make_schedule_time_slot(id=str(slot_id))
         self.mock_repo.find_by_id.return_value = slot
 
-        result = await self.service.get_schedule_time_slot(slot_id)
+        result = self.service.get_schedule_time_slot(slot_id)
 
         assert result["id"] == str(slot_id)
 
-    @pytest.mark.asyncio
-    async def test_get_schedule_time_slot_not_found(self):
+    def test_get_schedule_time_slot_not_found(self):
         """時間スロット取得 - 存在しない"""
         self.mock_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service.get_schedule_time_slot(uuid4())
+            self.service.get_schedule_time_slot(uuid4())
 
     # ===== create_schedule_time_slot =====
 
-    @pytest.mark.asyncio
-    async def test_create_schedule_time_slot_success(self):
+    def test_create_schedule_time_slot_success(self):
         """時間スロット作成 - 正常"""
         schedule_id = uuid4()
         data = {
@@ -84,12 +79,11 @@ class TestScheduleTimeSlotService:
         self.mock_repo.find_schedule_by_id.return_value = {"id": str(schedule_id)}
         self.mock_repo.create.return_value = created
 
-        result = await self.service.create_schedule_time_slot(data)
+        result = self.service.create_schedule_time_slot(data)
 
         assert result is not None
 
-    @pytest.mark.asyncio
-    async def test_create_schedule_time_slot_invalid_time(self):
+    def test_create_schedule_time_slot_invalid_time(self):
         """時間スロット作成 - 開始時刻>=終了時刻"""
         schedule_id = uuid4()
         data = {
@@ -102,14 +96,13 @@ class TestScheduleTimeSlotService:
         self.mock_repo.find_schedule_by_id.return_value = {"id": str(schedule_id)}
 
         with pytest.raises(HTTPException) as exc_info:
-            await self.service.create_schedule_time_slot(data)
+            self.service.create_schedule_time_slot(data)
 
         assert exc_info.value.status_code == 400
 
     # ===== delete_schedule_time_slot =====
 
-    @pytest.mark.asyncio
-    async def test_delete_schedule_time_slot_success(self):
+    def test_delete_schedule_time_slot_success(self):
         """時間スロット削除 - 正常"""
         slot_id = uuid4()
         self.mock_repo.find_by_id.return_value = make_schedule_time_slot(
@@ -117,17 +110,16 @@ class TestScheduleTimeSlotService:
         )
         self.mock_repo.delete.return_value = True
 
-        result = await self.service.delete_schedule_time_slot(slot_id)
+        result = self.service.delete_schedule_time_slot(slot_id)
 
         assert result is True
 
-    @pytest.mark.asyncio
-    async def test_delete_schedule_time_slot_not_found(self):
+    def test_delete_schedule_time_slot_not_found(self):
         """時間スロット削除 - 存在しない"""
         self.mock_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service.delete_schedule_time_slot(uuid4())
+            self.service.delete_schedule_time_slot(uuid4())
 
     # ===== _format_time_slot =====
 
@@ -170,11 +162,10 @@ class TestScheduleTimeSlotService:
 
     # ===== delete_by_schedule =====
 
-    @pytest.mark.asyncio
-    async def test_delete_by_schedule(self):
+    def test_delete_by_schedule(self):
         """スケジュール指定で一括削除"""
         self.mock_repo.delete_by_schedule.return_value = 6
 
-        result = await self.service.delete_schedule_time_slots_by_schedule(uuid4())
+        result = self.service.delete_schedule_time_slots_by_schedule(uuid4())
 
         assert result == 6

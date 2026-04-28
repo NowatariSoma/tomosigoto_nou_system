@@ -1,60 +1,78 @@
-"""VenueRepositoryのユニットテスト"""
+"""VenueRepositoryのユニットテスト（psycopg2ベース）"""
 
 import pytest
+from unittest.mock import Mock
 
 from app.repositories.venue_repository import VenueRepository
 from tests.helpers.factories import make_venue
-from tests.helpers.supabase_mock import SupabaseMockBuilder
+
+
+def _make_conn(rows_one=None, rows_all=None):
+    """psycopg2 connection mock を作成する。"""
+    conn = Mock()
+    cursor = Mock()
+    cursor.fetchone.return_value = rows_one
+    cursor.fetchall.return_value = rows_all if rows_all is not None else []
+    conn.execute.return_value = cursor
+    return conn
 
 
 class TestVenueRepository:
     """VenueRepositoryのユニットテスト"""
 
     def setup_method(self):
-        """各テスト前にモッククライアントとリポジトリを初期化"""
         self.data = make_venue(id="venue-1", name="テスト会場")
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = VenueRepository(self.mock_client)
 
     # --- find_all ---
 
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all()
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = VenueRepository(conn)
+        result = repo.find_all()
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("venues")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = VenueRepository(self.mock_client)
-        result = await self.repo.find_all()
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = VenueRepository(conn)
+        result = repo.find_all()
         assert result == []
 
     # --- find_by_id ---
 
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("venue-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = VenueRepository(conn)
+        result = repo.find_by_id("venue-1")
         assert result == self.data
+
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = VenueRepository(conn)
+        result = repo.find_by_id("nonexistent")
+        assert result is None
 
     # --- create ---
 
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create(self.data)
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = VenueRepository(conn)
+        result = repo.create(self.data)
         assert result == self.data
+        conn.commit.assert_called_once()
 
     # --- update ---
 
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("venue-1", {"name": "更新会場"})
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = VenueRepository(conn)
+        result = repo.update("venue-1", {"name": "更新会場"})
         assert result == self.data
 
     # --- delete ---
 
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("venue-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = VenueRepository(conn)
+        result = repo.delete("venue-1")
         assert result is True
+        conn.commit.assert_called_once()

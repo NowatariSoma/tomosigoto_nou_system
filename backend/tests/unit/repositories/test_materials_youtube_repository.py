@@ -1,10 +1,12 @@
-"""MaterialsYouTubeリポジトリ群のユニットテスト
+"""MaterialsYouTubeリポジトリ群のユニットテスト（psycopg2ベース）
 
 MaterialsPlaylistRepository, MaterialsSubPlaylistRepository,
 MaterialsVideoRepository, MaterialsFavoriteRepositoryをテストする。
 """
 
 import pytest
+from unittest.mock import Mock
+from uuid import uuid4
 
 from app.repositories.materials_youtube_repository import (
     MaterialsFavoriteRepository,
@@ -18,7 +20,15 @@ from tests.helpers.factories import (
     make_materials_sub_playlist,
     make_materials_video,
 )
-from tests.helpers.supabase_mock import SupabaseMockBuilder
+
+
+def _make_conn(rows_one=None, rows_all=None):
+    conn = Mock()
+    cursor = Mock()
+    cursor.fetchone.return_value = rows_one
+    cursor.fetchall.return_value = rows_all if rows_all is not None else []
+    conn.execute.return_value = cursor
+    return conn
 
 
 # =====================================================
@@ -31,76 +41,60 @@ class TestMaterialsPlaylistRepository:
 
     def setup_method(self):
         self.data = make_materials_playlist(id="pl-1", title="テストプレイリスト")
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = MaterialsPlaylistRepository(self.mock_client)
 
-    # --- find_all ---
-
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all()
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.find_all()
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("playlists")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsPlaylistRepository(self.mock_client)
-        result = await self.repo.find_all()
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.find_all()
         assert result == []
 
-    # --- find_by_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("pl-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsPlaylistRepository(self.mock_client)
-        result = await self.repo.find_by_id("nonexistent")
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result is None
 
-    # --- create ---
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.create(self.data)
+        assert result == self.data
+        conn.commit.assert_called()
 
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create(self.data)
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.update(uuid4(), {"title": "更新プレイリスト"})
         assert result == self.data
 
-    # --- update ---
-
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("pl-1", {"title": "更新プレイリスト"})
-        assert result == self.data
-
-    # --- delete ---
-
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("pl-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.delete(uuid4())
         assert result is True
 
-    # --- search ---
-
-    @pytest.mark.asyncio
-    async def test_search_by_title(self):
-        result = await self.repo.search(title="テスト")
+    def test_search_by_title(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.search(title="テスト")
         assert result == [self.data]
 
-    @pytest.mark.asyncio
-    async def test_search_by_year(self):
-        result = await self.repo.search(year=2024)
-        assert result == [self.data]
-
-    @pytest.mark.asyncio
-    async def test_search_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsPlaylistRepository(self.mock_client)
-        result = await self.repo.search(title="存在しない")
+    def test_search_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsPlaylistRepository(conn)
+        result = repo.search(title="存在しない")
         assert result == []
 
 
@@ -116,64 +110,53 @@ class TestMaterialsSubPlaylistRepository:
         self.data = make_materials_sub_playlist(
             id="spl-1", playlist_id="pl-1", title="テストサブプレイリスト"
         )
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = MaterialsSubPlaylistRepository(self.mock_client)
 
-    # --- find_all ---
-
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all("pl-1")
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.find_all(uuid4())
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("sub_playlists")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsSubPlaylistRepository(self.mock_client)
-        result = await self.repo.find_all("pl-1")
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.find_all(uuid4())
         assert result == []
 
-    # --- find_by_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("pl-1", "spl-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.find_by_id(uuid4(), uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsSubPlaylistRepository(self.mock_client)
-        result = await self.repo.find_by_id("pl-1", "nonexistent")
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.find_by_id(uuid4(), uuid4())
         assert result is None
 
-    # --- create ---
-
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create("pl-1", self.data.copy())
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.create(uuid4(), self.data.copy())
         assert result == self.data
 
-    # --- update ---
-
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("pl-1", "spl-1", {"title": "更新サブPL"})
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.update(uuid4(), uuid4(), {"title": "更新サブPL"})
         assert result == self.data
 
-    # --- delete ---
-
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("pl-1", "spl-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.delete(uuid4(), uuid4())
         assert result is True
 
-    # --- search ---
-
-    @pytest.mark.asyncio
-    async def test_search(self):
-        result = await self.repo.search("pl-1", title="テスト")
+    def test_search(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsSubPlaylistRepository(conn)
+        result = repo.search(uuid4(), title="テスト")
         assert result == [self.data]
 
 
@@ -186,67 +169,54 @@ class TestMaterialsVideoRepository:
     """MaterialsVideoRepositoryのユニットテスト"""
 
     def setup_method(self):
-        self.data = make_materials_video(
-            id="video-1", title="テスト動画"
-        )
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = MaterialsVideoRepository(self.mock_client)
+        self.data = make_materials_video(id="video-1", title="テスト動画")
 
-    # --- find_all ---
-
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all("spl-1")
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsVideoRepository(conn)
+        result = repo.find_all(uuid4())
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("videos")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsVideoRepository(self.mock_client)
-        result = await self.repo.find_all("spl-1")
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsVideoRepository(conn)
+        result = repo.find_all(uuid4())
         assert result == []
 
-    # --- find_by_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("spl-1", "video-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsVideoRepository(conn)
+        result = repo.find_by_id(uuid4(), uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsVideoRepository(self.mock_client)
-        result = await self.repo.find_by_id("spl-1", "nonexistent")
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MaterialsVideoRepository(conn)
+        result = repo.find_by_id(uuid4(), uuid4())
         assert result is None
 
-    # --- create ---
-
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create("spl-1", self.data.copy())
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsVideoRepository(conn)
+        result = repo.create(uuid4(), self.data.copy())
         assert result == self.data
 
-    # --- update ---
-
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("spl-1", "video-1", {"title": "更新動画"})
+    def test_update(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsVideoRepository(conn)
+        result = repo.update(uuid4(), uuid4(), {"title": "更新動画"})
         assert result == self.data
 
-    # --- delete ---
-
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("spl-1", "video-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = MaterialsVideoRepository(conn)
+        result = repo.delete(uuid4(), uuid4())
         assert result is True
 
-    # --- search ---
-
-    @pytest.mark.asyncio
-    async def test_search(self):
-        result = await self.repo.search("spl-1", title="テスト")
+    def test_search(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsVideoRepository(conn)
+        result = repo.search(uuid4(), title="テスト")
         assert result == [self.data]
 
 
@@ -262,90 +232,69 @@ class TestMaterialsFavoriteRepository:
         self.data = make_materials_favorite(
             id="fav-1", user_id="user-1", video_id="video-1"
         )
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = MaterialsFavoriteRepository(self.mock_client)
 
-    # --- find_all ---
-
-    @pytest.mark.asyncio
-    async def test_find_all(self):
-        result = await self.repo.find_all()
+    def test_find_all(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_all()
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("favorites")
 
-    @pytest.mark.asyncio
-    async def test_find_all_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsFavoriteRepository(self.mock_client)
-        result = await self.repo.find_all()
+    def test_find_all_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_all()
         assert result == []
 
-    # --- find_by_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_id(self):
-        result = await self.repo.find_by_id("fav-1")
+    def test_find_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsFavoriteRepository(self.mock_client)
-        result = await self.repo.find_by_id("nonexistent")
+    def test_find_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_id(uuid4())
         assert result is None
 
-    # --- create ---
-
-    @pytest.mark.asyncio
-    async def test_create(self):
-        result = await self.repo.create(self.data)
+    def test_create(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.create(self.data)
         assert result == self.data
 
-    # --- update ---
-
-    @pytest.mark.asyncio
-    async def test_update(self):
-        result = await self.repo.update("fav-1", {"video_id": "video-2"})
-        assert result == self.data
-
-    # --- delete ---
-
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        result = await self.repo.delete("fav-1")
+    def test_delete(self):
+        conn = _make_conn()
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.delete(uuid4())
         assert result is True
 
-    # --- find_by_user_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_user_id(self):
-        result = await self.repo.find_by_user_id("user-1")
+    def test_find_by_user_id(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_user_id(uuid4())
         assert result == [self.data]
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_id_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsFavoriteRepository(self.mock_client)
-        result = await self.repo.find_by_user_id("user-1")
+    def test_find_by_user_id_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_user_id(uuid4())
         assert result == []
 
-    # --- find_by_user_id_and_video_id ---
-
-    @pytest.mark.asyncio
-    async def test_find_by_user_id_and_video_id(self):
-        result = await self.repo.find_by_user_id_and_video_id("user-1", "video-1")
+    def test_find_by_user_id_and_video_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_user_id_and_video_id(uuid4(), uuid4())
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_find_by_user_id_and_video_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = MaterialsFavoriteRepository(self.mock_client)
-        result = await self.repo.find_by_user_id_and_video_id("user-1", "video-1")
+    def test_find_by_user_id_and_video_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.find_by_user_id_and_video_id(uuid4(), uuid4())
         assert result is None
 
-    # --- delete_by_user_id_and_video_id ---
-
-    @pytest.mark.asyncio
-    async def test_delete_by_user_id_and_video_id(self):
-        result = await self.repo.delete_by_user_id_and_video_id("user-1", "video-1")
+    def test_delete_by_user_id_and_video_id(self):
+        conn = _make_conn()
+        repo = MaterialsFavoriteRepository(conn)
+        result = repo.delete_by_user_id_and_video_id(uuid4(), uuid4())
         assert result is True

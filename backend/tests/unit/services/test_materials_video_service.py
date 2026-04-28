@@ -2,7 +2,7 @@
 MaterialsVideoService のユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from app.services.materials_youtube_service import MaterialsVideoService
@@ -14,8 +14,8 @@ class TestMaterialsVideoService:
     """MaterialsVideoService のテスト"""
 
     def setup_method(self):
-        self.mock_video_repo = AsyncMock()
-        self.mock_sub_playlist_repo = AsyncMock()
+        self.mock_video_repo = Mock()
+        self.mock_sub_playlist_repo = Mock()
         self.service = MaterialsVideoService(
             materials_video_repository=self.mock_video_repo,
             materials_sub_playlist_repository=self.mock_sub_playlist_repo,
@@ -23,32 +23,29 @@ class TestMaterialsVideoService:
 
     # ===== _validate_sub_playlist_belongs_to_playlist =====
 
-    @pytest.mark.asyncio
-    async def test_validate_sub_playlist_success(self):
+    def test_validate_sub_playlist_success(self):
         """サブプレイリスト所属検証 - 正常"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
 
         # 例外が発生しなければ成功
-        await self.service._validate_sub_playlist_belongs_to_playlist(
+        self.service._validate_sub_playlist_belongs_to_playlist(
             playlist_id, sub_playlist_id
         )
 
-    @pytest.mark.asyncio
-    async def test_validate_sub_playlist_not_found(self):
+    def test_validate_sub_playlist_not_found(self):
         """サブプレイリスト所属検証 - 存在しない"""
         self.mock_sub_playlist_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service._validate_sub_playlist_belongs_to_playlist(
+            self.service._validate_sub_playlist_belongs_to_playlist(
                 uuid4(), uuid4()
             )
 
     # ===== get_all_materials_videos =====
 
-    @pytest.mark.asyncio
-    async def test_get_all_videos(self):
+    def test_get_all_videos(self):
         """ビデオ一覧取得"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -57,7 +54,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.find_all.return_value = videos
 
-        result = await self.service.get_all_materials_videos(
+        result = self.service.get_all_materials_videos(
             playlist_id, sub_playlist_id
         )
 
@@ -65,8 +62,7 @@ class TestMaterialsVideoService:
 
     # ===== get_materials_video_by_id =====
 
-    @pytest.mark.asyncio
-    async def test_get_video_by_id(self):
+    def test_get_video_by_id(self):
         """ID指定でビデオ取得"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -76,7 +72,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.find_by_id.return_value = video
 
-        result = await self.service.get_materials_video_by_id(
+        result = self.service.get_materials_video_by_id(
             playlist_id, sub_playlist_id, video_id
         )
 
@@ -84,8 +80,7 @@ class TestMaterialsVideoService:
 
     # ===== create_materials_video =====
 
-    @pytest.mark.asyncio
-    async def test_create_video(self):
+    def test_create_video(self):
         """ビデオ作成"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -95,7 +90,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.create.return_value = created
 
-        result = await self.service.create_materials_video(
+        result = self.service.create_materials_video(
             playlist_id, sub_playlist_id, data
         )
 
@@ -103,8 +98,7 @@ class TestMaterialsVideoService:
 
     # ===== update_materials_video =====
 
-    @pytest.mark.asyncio
-    async def test_update_video(self):
+    def test_update_video(self):
         """ビデオ更新"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -115,7 +109,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.update.return_value = updated
 
-        result = await self.service.update_materials_video(
+        result = self.service.update_materials_video(
             playlist_id, sub_playlist_id, video_id, data
         )
 
@@ -123,8 +117,7 @@ class TestMaterialsVideoService:
 
     # ===== delete_materials_video =====
 
-    @pytest.mark.asyncio
-    async def test_delete_video(self):
+    def test_delete_video(self):
         """ビデオ削除"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -133,7 +126,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.delete.return_value = True
 
-        result = await self.service.delete_materials_video(
+        result = self.service.delete_materials_video(
             playlist_id, sub_playlist_id, video_id
         )
 
@@ -141,8 +134,7 @@ class TestMaterialsVideoService:
 
     # ===== search_materials_videos =====
 
-    @pytest.mark.asyncio
-    async def test_search_videos(self):
+    def test_search_videos(self):
         """ビデオ検索"""
         playlist_id = uuid4()
         sub_playlist_id = uuid4()
@@ -151,7 +143,7 @@ class TestMaterialsVideoService:
         self.mock_sub_playlist_repo.find_by_id.return_value = make_materials_sub_playlist()
         self.mock_video_repo.search.return_value = videos
 
-        result = await self.service.search_materials_videos(
+        result = self.service.search_materials_videos(
             playlist_id, sub_playlist_id, title="検索"
         )
 

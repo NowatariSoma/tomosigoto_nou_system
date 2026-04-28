@@ -5,12 +5,12 @@ OAuthフローは複雑なため、基本的なルーティングと
 パラメータバリデーションのテストに留める。
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from app.api.deps import get_supabase
+from app.api.deps import get_youtube_oauth_token_repository
 from app.main import app
 
 
@@ -18,12 +18,12 @@ class TestAuthorizeYouTube:
     """GET /api/v1/youtube/oauth/authorize のテスト"""
 
     def setup_method(self):
-        self.mock_supabase = MagicMock()
-        app.dependency_overrides[get_supabase] = lambda: self.mock_supabase
+        self.mock_repo = Mock()
+        app.dependency_overrides[get_youtube_oauth_token_repository] = lambda: self.mock_repo
         self.client = TestClient(app)
 
     def teardown_method(self):
-        app.dependency_overrides.pop(get_supabase, None)
+        app.dependency_overrides.pop(get_youtube_oauth_token_repository, None)
 
     @patch("app.api.endpoints.youtube_oauth.settings")
     @patch("app.api.endpoints.youtube_oauth._save_oauth_state")
@@ -56,12 +56,12 @@ class TestYouTubeOAuthCallback:
     """GET /api/v1/youtube/oauth/callback のテスト"""
 
     def setup_method(self):
-        self.mock_supabase = MagicMock()
-        app.dependency_overrides[get_supabase] = lambda: self.mock_supabase
+        self.mock_repo = Mock()
+        app.dependency_overrides[get_youtube_oauth_token_repository] = lambda: self.mock_repo
         self.client = TestClient(app)
 
     def teardown_method(self):
-        app.dependency_overrides.pop(get_supabase, None)
+        app.dependency_overrides.pop(get_youtube_oauth_token_repository, None)
 
     def test_callback_no_params_returns_400(self):
         """パラメータなしでアクセスした場合は400"""
@@ -88,12 +88,12 @@ class TestYouTubeOAuthStatus:
     """GET /api/v1/youtube/oauth/status のテスト"""
 
     def setup_method(self):
-        self.mock_supabase = MagicMock()
-        app.dependency_overrides[get_supabase] = lambda: self.mock_supabase
+        self.mock_repo = Mock()
+        app.dependency_overrides[get_youtube_oauth_token_repository] = lambda: self.mock_repo
         self.client = TestClient(app)
 
     def teardown_method(self):
-        app.dependency_overrides.pop(get_supabase, None)
+        app.dependency_overrides.pop(get_youtube_oauth_token_repository, None)
 
     @patch("app.api.endpoints.youtube_oauth.settings")
     def test_status_not_authenticated(self, mock_settings):
@@ -102,17 +102,8 @@ class TestYouTubeOAuthStatus:
         mock_settings.YOUTUBE_OAUTH_REDIRECT_URI = "http://localhost/callback"
         mock_settings.API_V1_STR = "/api/v1"
 
-        # テーブルクエリチェーンのモック
-        mock_table = MagicMock()
-        mock_select = MagicMock()
-        mock_eq = MagicMock()
-        mock_execute = MagicMock()
-        mock_execute.data = []
-
-        self.mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_select
-        mock_select.eq.return_value = mock_eq
-        mock_eq.execute.return_value = mock_execute
+        # リポジトリがトークンを返さない場合
+        self.mock_repo.find_system_token.return_value = None
 
         response = self.client.get("/api/v1/youtube/oauth/status")
         assert response.status_code == 200

@@ -2,7 +2,7 @@
 セッション指導者エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetInstructorCandidates:
     """GET /api/v1/session-instructors/candidates のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -50,7 +50,7 @@ class TestGetSessionInstructors:
     """GET /api/v1/session-instructors/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -91,7 +91,7 @@ class TestGetSessionInstructorById:
     """GET /api/v1/session-instructors/{session_instructor_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -112,7 +112,7 @@ class TestGetSessionInstructorsBySchedule:
     """GET /api/v1/session-instructors/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -133,7 +133,7 @@ class TestGetSessionInstructorsByScheduleAndSlot:
     """GET /api/v1/session-instructors/schedule/{schedule_id}/slot/{slot_order} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -154,7 +154,7 @@ class TestGetSessionInstructorsByAttendance:
     """GET /api/v1/session-instructors/attendance/{attendance_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -175,7 +175,7 @@ class TestCreateSessionInstructor:
     """POST /api/v1/session-instructors/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -213,7 +213,7 @@ class TestCreateSessionInstructorsBulk:
     """POST /api/v1/session-instructors/bulk のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -243,7 +243,7 @@ class TestUpdateSessionInstructor:
     """PUT /api/v1/session-instructors/{session_instructor_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -273,7 +273,7 @@ class TestDeleteSessionInstructor:
     """DELETE /api/v1/session-instructors/{session_instructor_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -308,7 +308,7 @@ class TestDeleteSessionInstructorsBySchedule:
     """DELETE /api/v1/session-instructors/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -329,7 +329,7 @@ class TestDeleteSessionInstructorsByScheduleAndSlot:
     """DELETE /api/v1/session-instructors/schedule/{schedule_id}/slot/{slot_order} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -350,7 +350,7 @@ class TestMoveSessionInstructor:
     """PUT /api/v1/session-instructors/{session_instructor_id}/move のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_session_instructor_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

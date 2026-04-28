@@ -2,7 +2,7 @@
 YouTube教材エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -30,7 +30,7 @@ class TestGetMaterialsPlaylists:
     """GET /api/v1/materials-youtube/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_playlist_service] = lambda: self.mock_service
         # materials_youtube endpoints do not require auth for GET playlists
         self.client = TestClient(app)
@@ -62,7 +62,7 @@ class TestGetMaterialsPlaylistById:
     """GET /api/v1/materials-youtube/{playlist_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -87,7 +87,7 @@ class TestCreateMaterialsPlaylist:
     """POST /api/v1/materials-youtube/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -110,7 +110,7 @@ class TestUpdateMaterialsPlaylist:
     """PUT /api/v1/materials-youtube/{playlist_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -130,7 +130,7 @@ class TestDeleteMaterialsPlaylist:
     """DELETE /api/v1/materials-youtube/{playlist_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -154,7 +154,7 @@ class TestGetMaterialsSubPlaylists:
     """GET /api/v1/materials-youtube/{playlist_id}/sub-playlists のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_sub_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -180,7 +180,7 @@ class TestCreateMaterialsSubPlaylist:
     """POST /api/v1/materials-youtube/{playlist_id}/sub-playlists のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_sub_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -205,7 +205,7 @@ class TestDeleteMaterialsSubPlaylist:
     """DELETE /api/v1/materials-youtube/{playlist_id}/sub-playlists/{sub_playlist_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_sub_playlist_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -224,7 +224,7 @@ class TestGetMaterialsVideos:
     """GET /api/v1/materials-youtube/{playlist_id}/sub-playlists/{sub_playlist_id}/videos のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_video_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -246,7 +246,7 @@ class TestCreateMaterialsVideo:
     """POST /api/v1/materials-youtube/{playlist_id}/sub-playlists/{sub_playlist_id}/videos のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_video_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -274,7 +274,7 @@ class TestDeleteMaterialsVideo:
     """DELETE /api/v1/materials-youtube/{playlist_id}/sub-playlists/{sub_playlist_id}/videos/{video_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_video_service] = lambda: self.mock_service
         self.client = TestClient(app)
 
@@ -296,7 +296,7 @@ class TestGetUserFavorites:
     """GET /api/v1/materials-youtube/favorites のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_favorite_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -322,7 +322,7 @@ class TestToggleFavorite:
     """POST /api/v1/materials-youtube/videos/{video_id}/favorites/toggle のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_favorite_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -350,7 +350,7 @@ class TestGetFavoriteStatus:
     """GET /api/v1/materials-youtube/videos/{video_id}/favorites/status のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_favorite_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -371,7 +371,7 @@ class TestDeleteFavorite:
     """DELETE /api/v1/materials-youtube/videos/{video_id}/favorites のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_materials_favorite_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

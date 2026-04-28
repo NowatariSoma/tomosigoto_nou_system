@@ -3,7 +3,7 @@
 TDDに従って、期待される入出力を定義するテスト
 """
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from fastapi import HTTPException
 from app.api.deps import require_admin
 
@@ -14,7 +14,7 @@ class TestRequireAdmin:
     @pytest.fixture
     def mock_user_role_repository(self):
         """モックUserRoleRepository"""
-        return AsyncMock()
+        return Mock()
 
     @pytest.fixture
     def admin_user(self):
@@ -40,8 +40,7 @@ class TestRequireAdmin:
             "email": "general@example.com"
         }
 
-    @pytest.mark.asyncio
-    async def test_admin_can_access(self, admin_user, mock_user_role_repository):
+    def test_admin_can_access(self, admin_user, mock_user_role_repository):
         """
         管理者は管理者専用機能にアクセスできる
 
@@ -56,7 +55,7 @@ class TestRequireAdmin:
             "is_visible_to_general": True
         }
 
-        result = await require_admin(
+        result = require_admin(
             current_user=admin_user,
             user_role_repository=mock_user_role_repository
         )
@@ -64,8 +63,7 @@ class TestRequireAdmin:
         assert result == admin_user
         mock_user_role_repository.get_role_by_user_id.assert_called_once_with(admin_user["id"])
 
-    @pytest.mark.asyncio
-    async def test_senior_user_cannot_access(self, senior_user, mock_user_role_repository):
+    def test_senior_user_cannot_access(self, senior_user, mock_user_role_repository):
         """
         4回生は管理者専用機能にアクセスできない
 
@@ -81,7 +79,7 @@ class TestRequireAdmin:
         }
 
         with pytest.raises(HTTPException) as exc_info:
-            await require_admin(
+            require_admin(
                 current_user=senior_user,
                 user_role_repository=mock_user_role_repository
             )
@@ -89,8 +87,7 @@ class TestRequireAdmin:
         assert exc_info.value.status_code == 403
         assert "管理者権限" in exc_info.value.detail or "permission" in exc_info.value.detail.lower()
 
-    @pytest.mark.asyncio
-    async def test_general_user_cannot_access(self, general_user, mock_user_role_repository):
+    def test_general_user_cannot_access(self, general_user, mock_user_role_repository):
         """
         一般部員は管理者専用機能にアクセスできない
 
@@ -106,7 +103,7 @@ class TestRequireAdmin:
         }
 
         with pytest.raises(HTTPException) as exc_info:
-            await require_admin(
+            require_admin(
                 current_user=general_user,
                 user_role_repository=mock_user_role_repository
             )
@@ -114,8 +111,7 @@ class TestRequireAdmin:
         assert exc_info.value.status_code == 403
         assert "管理者権限" in exc_info.value.detail or "permission" in exc_info.value.detail.lower()
 
-    @pytest.mark.asyncio
-    async def test_user_without_role_cannot_access(self, general_user, mock_user_role_repository):
+    def test_user_without_role_cannot_access(self, general_user, mock_user_role_repository):
         """
         ロールが存在しないユーザーは管理者専用機能にアクセスできない
 
@@ -126,7 +122,7 @@ class TestRequireAdmin:
         mock_user_role_repository.get_role_by_user_id.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            await require_admin(
+            require_admin(
                 current_user=general_user,
                 user_role_repository=mock_user_role_repository
             )

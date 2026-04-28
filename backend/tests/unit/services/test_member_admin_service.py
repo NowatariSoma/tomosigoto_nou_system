@@ -2,7 +2,7 @@
 MemberAdminService のユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from app.services.member_admin_service import MemberAdminService
@@ -14,9 +14,9 @@ class TestMemberAdminService:
     """MemberAdminService のテスト"""
 
     def setup_method(self):
-        self.mock_user_service = AsyncMock()
-        self.mock_role_repo = AsyncMock()
-        self.mock_profile_repo = AsyncMock()
+        self.mock_user_service = Mock()
+        self.mock_role_repo = Mock()
+        self.mock_profile_repo = Mock()
         self.service = MemberAdminService(
             user_service=self.mock_user_service,
             user_role_repository=self.mock_role_repo,
@@ -25,8 +25,7 @@ class TestMemberAdminService:
 
     # ===== list_members =====
 
-    @pytest.mark.asyncio
-    async def test_list_members_success(self):
+    def test_list_members_success(self):
         """メンバー一覧取得 - 正常"""
         user_id = str(uuid4())
         users = [make_user(id=user_id, email="test@example.com")]
@@ -37,7 +36,7 @@ class TestMemberAdminService:
         self.mock_profile_repo.get_profiles_by_user_ids.return_value = profiles
         self.mock_role_repo.get_user_roles_with_instructor.return_value = roles
 
-        result = await self.service.list_members()
+        result = self.service.list_members()
 
         assert len(result) == 1
         assert result[0]["id"] == user_id
@@ -45,17 +44,15 @@ class TestMemberAdminService:
         assert result[0]["is_instructor"] is True
         assert result[0]["name"] == "テスト太郎"
 
-    @pytest.mark.asyncio
-    async def test_list_members_empty(self):
+    def test_list_members_empty(self):
         """メンバー一覧取得 - ユーザーなし"""
         self.mock_user_service.get_all_users.return_value = []
 
-        result = await self.service.list_members()
+        result = self.service.list_members()
 
         assert result == []
 
-    @pytest.mark.asyncio
-    async def test_list_members_no_profile(self):
+    def test_list_members_no_profile(self):
         """メンバー一覧取得 - プロフィールがないユーザー"""
         user_id = str(uuid4())
         users = [make_user(id=user_id, email="noname@example.com")]
@@ -64,7 +61,7 @@ class TestMemberAdminService:
         self.mock_profile_repo.get_profiles_by_user_ids.return_value = []
         self.mock_role_repo.get_user_roles_with_instructor.return_value = []
 
-        result = await self.service.list_members()
+        result = self.service.list_members()
 
         assert len(result) == 1
         # プロフィールがない場合はメールが名前として使われる
@@ -74,8 +71,7 @@ class TestMemberAdminService:
 
     # ===== get_member =====
 
-    @pytest.mark.asyncio
-    async def test_get_member_success(self):
+    def test_get_member_success(self):
         """単一メンバー取得 - 正常"""
         user_id = str(uuid4())
         user = make_user(id=user_id, email="member@example.com")
@@ -90,25 +86,23 @@ class TestMemberAdminService:
         self.mock_role_repo.get_role_by_user_id.return_value = {"role_type": "admin"}
         self.mock_role_repo.get_instructor_flag.return_value = True
 
-        result = await self.service.get_member(user_id)
+        result = self.service.get_member(user_id)
 
         assert result["id"] == user_id
         assert result["name"] == "山田花子"
         assert result["role"] == "admin"
         assert result["is_instructor"] is True
 
-    @pytest.mark.asyncio
-    async def test_get_member_not_found(self):
+    def test_get_member_not_found(self):
         """単一メンバー取得 - 存在しない"""
         self.mock_user_service.get_user_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service.get_member(str(uuid4()))
+            self.service.get_member(str(uuid4()))
 
     # ===== update_member_role =====
 
-    @pytest.mark.asyncio
-    async def test_update_member_role_existing_role(self):
+    def test_update_member_role_existing_role(self):
         """ロール更新 - 既存ロールの更新"""
         user_id = str(uuid4())
         user = make_user(id=user_id)
@@ -122,14 +116,13 @@ class TestMemberAdminService:
         self.mock_profile_repo.get_profile_by_user_id.return_value = None
         self.mock_role_repo.get_instructor_flag.return_value = False
 
-        result = await self.service.update_member_role(user_id, "admin")
+        result = self.service.update_member_role(user_id, "admin")
 
         self.mock_role_repo.update_role.assert_called_once_with(
             user_id, {"role_type": "admin"}
         )
 
-    @pytest.mark.asyncio
-    async def test_update_member_role_create_new_role(self):
+    def test_update_member_role_create_new_role(self):
         """ロール更新 - ロールが未作成の場合は新規作成"""
         user_id = str(uuid4())
         user = make_user(id=user_id)
@@ -143,7 +136,7 @@ class TestMemberAdminService:
         self.mock_profile_repo.get_profile_by_user_id.return_value = None
         self.mock_role_repo.get_instructor_flag.return_value = False
 
-        result = await self.service.update_member_role(user_id, "viewer")
+        result = self.service.update_member_role(user_id, "viewer")
 
         self.mock_role_repo.create_role.assert_called_once_with(
             {"user_id": user_id, "role_type": "viewer"}
@@ -151,8 +144,7 @@ class TestMemberAdminService:
 
     # ===== update_instructor_flag =====
 
-    @pytest.mark.asyncio
-    async def test_update_instructor_flag(self):
+    def test_update_instructor_flag(self):
         """指導者フラグ更新"""
         user_id = str(uuid4())
         user = make_user(id=user_id)
@@ -163,7 +155,7 @@ class TestMemberAdminService:
         self.mock_role_repo.get_role_by_user_id.return_value = {"role_type": "basic"}
         self.mock_role_repo.get_instructor_flag.return_value = True
 
-        result = await self.service.update_instructor_flag(user_id, True)
+        result = self.service.update_instructor_flag(user_id, True)
 
         self.mock_role_repo.update_instructor_flag.assert_called_once_with(
             user_id, True
@@ -172,14 +164,15 @@ class TestMemberAdminService:
 
     # ===== remove_member =====
 
-    @pytest.mark.asyncio
-    async def test_remove_member(self):
+    def test_remove_member(self):
         """メンバー削除"""
         user_id = str(uuid4())
+        current_user_id = str(uuid4())
+        self.mock_role_repo.get_admin_users.return_value = []
         self.mock_role_repo.delete_role.return_value = None
         self.mock_user_service.delete_user.return_value = True
 
-        await self.service.remove_member(user_id)
+        self.service.remove_member(user_id, current_user_id)
 
         self.mock_role_repo.delete_role.assert_called_once_with(user_id)
         self.mock_user_service.delete_user.assert_called_once_with(user_id)

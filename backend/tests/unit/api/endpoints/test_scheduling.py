@@ -2,7 +2,7 @@
 スケジューリング最適化エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -20,7 +20,7 @@ class TestOptimizeSchedule:
     """POST /api/v1/scheduling/optimize のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_scheduling_optimization_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -85,7 +85,7 @@ class TestPreviewOptimization:
     """POST /api/v1/scheduling/preview のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_scheduling_optimization_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

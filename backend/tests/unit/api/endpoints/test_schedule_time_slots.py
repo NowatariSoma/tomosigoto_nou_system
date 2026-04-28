@@ -2,7 +2,7 @@
 スケジュール時間スロットエンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetScheduleTimeSlots:
     """GET /api/v1/schedule-time-slots/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -62,7 +62,7 @@ class TestGetScheduleTimeSlotById:
     """GET /api/v1/schedule-time-slots/{time_slot_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -83,7 +83,7 @@ class TestGetScheduleTimeSlotsBySchedule:
     """GET /api/v1/schedule-time-slots/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -104,7 +104,7 @@ class TestCreateScheduleTimeSlot:
     """POST /api/v1/schedule-time-slots/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -164,7 +164,7 @@ class TestCreateScheduleTimeSlotsBulk:
     """POST /api/v1/schedule-time-slots/bulk のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -194,7 +194,7 @@ class TestUpdateScheduleTimeSlot:
     """PUT /api/v1/schedule-time-slots/{time_slot_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -224,7 +224,7 @@ class TestDeleteScheduleTimeSlot:
     """DELETE /api/v1/schedule-time-slots/{time_slot_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -259,7 +259,7 @@ class TestDeleteScheduleTimeSlotsBySchedule:
     """DELETE /api/v1/schedule-time-slots/schedule/{schedule_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_schedule_time_slot_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

@@ -2,7 +2,7 @@
 会場エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetVenues:
     """GET /api/v1/venues/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -64,7 +64,7 @@ class TestGetVenueById:
     """GET /api/v1/venues/{venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -94,7 +94,7 @@ class TestCreateVenue:
     """POST /api/v1/venues/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -158,7 +158,7 @@ class TestPatchVenue:
     """PATCH /api/v1/venues/{venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -188,7 +188,7 @@ class TestDeleteVenue:
     """DELETE /api/v1/venues/{venue_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_venue_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

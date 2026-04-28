@@ -3,7 +3,7 @@
 """
 import pytest
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import Mock, MagicMock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -43,7 +43,7 @@ class TestCheckProfileExists:
     """GET /api/v1/account-setting/profile/exists のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -76,7 +76,7 @@ class TestGetCurrentUserProfile:
     """GET /api/v1/account-setting/profile のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -102,7 +102,7 @@ class TestGetUserProfile:
     """GET /api/v1/account-setting/profile/{user_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -129,7 +129,7 @@ class TestCreateUserProfile:
     """POST /api/v1/account-setting/profile のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -178,7 +178,7 @@ class TestUpdateUserProfile:
     """PUT /api/v1/account-setting/profile のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -202,7 +202,7 @@ class TestDeleteUserProfile:
     """DELETE /api/v1/account-setting/profile のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -229,7 +229,7 @@ class TestGetDepartments:
     """GET /api/v1/account-setting/departments のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -259,7 +259,7 @@ class TestGetDepartmentByCode:
     """GET /api/v1/account-setting/departments/{department_code} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -292,7 +292,7 @@ class TestGetProfileStatistics:
     """GET /api/v1/account-setting/statistics のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -318,7 +318,7 @@ class TestValidateProfileData:
     """POST /api/v1/account-setting/validate のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -339,7 +339,7 @@ class TestGetProfileByStudentId:
     """GET /api/v1/account-setting/profile/student-id/{student_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_account_setting_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

@@ -2,7 +2,7 @@
 管理者メンバー管理エンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestListMembers:
     """GET /api/v1/admin/members/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_admin_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -80,7 +80,7 @@ class TestUpdateMemberRole:
     """PATCH /api/v1/admin/members/{user_id}/role のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_admin_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -131,7 +131,7 @@ class TestUpdateInstructorFlag:
     """PATCH /api/v1/admin/members/{user_id}/instructor のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_member_admin_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

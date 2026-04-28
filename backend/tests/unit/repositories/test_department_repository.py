@@ -1,134 +1,138 @@
-"""DepartmentRepositoryのユニットテスト"""
+"""DepartmentRepositoryのユニットテスト（psycopg2ベース）"""
 
 import pytest
+from unittest.mock import Mock
 
 from app.repositories.department_repository import DepartmentRepository
 from tests.helpers.factories import make_department
-from tests.helpers.supabase_mock import SupabaseMockBuilder
+
+
+def _make_conn(rows_one=None, rows_all=None):
+    conn = Mock()
+    cursor = Mock()
+    cursor.fetchone.return_value = rows_one
+    cursor.fetchall.return_value = rows_all if rows_all is not None else []
+    conn.execute.return_value = cursor
+    return conn
 
 
 class TestDepartmentRepository:
     """DepartmentRepositoryのユニットテスト"""
 
     def setup_method(self):
-        """各テスト前にモッククライアントとリポジトリを初期化"""
         self.data = make_department(
             id="dept-1", department_code="LIT", department_name="文学部"
         )
-        self.mock_client = SupabaseMockBuilder().with_response(data=[self.data]).build()
-        self.repo = DepartmentRepository(self.mock_client)
 
     # --- get_all_departments ---
 
-    @pytest.mark.asyncio
-    async def test_get_all_departments(self):
-        result = await self.repo.get_all_departments()
+    def test_get_all_departments(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = DepartmentRepository(conn)
+        result = repo.get_all_departments()
         assert result == [self.data]
-        self.mock_client.table.assert_called_with("departments")
 
-    @pytest.mark.asyncio
-    async def test_get_all_departments_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_all_departments()
+    def test_get_all_departments_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = DepartmentRepository(conn)
+        result = repo.get_all_departments()
         assert result == []
 
     # --- get_department_by_code ---
 
-    @pytest.mark.asyncio
-    async def test_get_department_by_code(self):
-        result = await self.repo.get_department_by_code("LIT")
+    def test_get_department_by_code(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_by_code("LIT")
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_get_department_by_code_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_department_by_code("NOTEXIST")
+    def test_get_department_by_code_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_by_code("NOTEXIST")
         assert result is None
 
     # --- get_department_by_id ---
 
-    @pytest.mark.asyncio
-    async def test_get_department_by_id(self):
-        result = await self.repo.get_department_by_id("dept-1")
+    def test_get_department_by_id(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_by_id("dept-1")
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_get_department_by_id_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_department_by_id("nonexistent")
+    def test_get_department_by_id_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_by_id("nonexistent")
         assert result is None
 
     # --- create_department ---
 
-    @pytest.mark.asyncio
-    async def test_create_department(self):
-        result = await self.repo.create_department(self.data)
+    def test_create_department(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = DepartmentRepository(conn)
+        result = repo.create_department(self.data)
         assert result == self.data
+        conn.commit.assert_called_once()
 
-    @pytest.mark.asyncio
-    async def test_create_department_empty_response(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.create_department(self.data)
+    def test_create_department_empty_response(self):
+        conn = _make_conn(rows_one=None)
+        repo = DepartmentRepository(conn)
+        result = repo.create_department(self.data)
         assert result == {}
 
     # --- update_department ---
 
-    @pytest.mark.asyncio
-    async def test_update_department(self):
-        result = await self.repo.update_department("dept-1", {"department_name": "理学部"})
+    def test_update_department(self):
+        conn = _make_conn(rows_one=self.data)
+        repo = DepartmentRepository(conn)
+        result = repo.update_department("dept-1", {"department_name": "理学部"})
         assert result == self.data
 
-    @pytest.mark.asyncio
-    async def test_update_department_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.update_department("nonexistent", {"department_name": "理学部"})
+    def test_update_department_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = DepartmentRepository(conn)
+        result = repo.update_department("nonexistent", {"department_name": "理学部"})
         assert result is None
 
-    # --- delete_department (論理削除) ---
+    # --- delete_department（論理削除） ---
 
-    @pytest.mark.asyncio
-    async def test_delete_department(self):
-        result = await self.repo.delete_department("dept-1")
+    def test_delete_department(self):
+        conn = _make_conn(rows_one={"id": "dept-1"})
+        repo = DepartmentRepository(conn)
+        result = repo.delete_department("dept-1")
         assert result is True
 
-    @pytest.mark.asyncio
-    async def test_delete_department_not_found(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.delete_department("nonexistent")
+    def test_delete_department_not_found(self):
+        conn = _make_conn(rows_one=None)
+        repo = DepartmentRepository(conn)
+        result = repo.delete_department("nonexistent")
         assert result is False
 
     # --- get_departments_by_campus ---
 
-    @pytest.mark.asyncio
-    async def test_get_departments_by_campus(self):
-        result = await self.repo.get_departments_by_campus("メインキャンパス")
+    def test_get_departments_by_campus(self):
+        conn = _make_conn(rows_all=[self.data])
+        repo = DepartmentRepository(conn)
+        result = repo.get_departments_by_campus("メインキャンパス")
         assert result == [self.data]
 
-    @pytest.mark.asyncio
-    async def test_get_departments_by_campus_empty(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[]).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_departments_by_campus("存在しない")
+    def test_get_departments_by_campus_empty(self):
+        conn = _make_conn(rows_all=[])
+        repo = DepartmentRepository(conn)
+        result = repo.get_departments_by_campus("存在しない")
         assert result == []
 
     # --- get_department_count ---
 
-    @pytest.mark.asyncio
-    async def test_get_department_count(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[], count=8).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_department_count()
+    def test_get_department_count(self):
+        conn = _make_conn(rows_one={"cnt": 8})
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_count()
         assert result == 8
 
-    @pytest.mark.asyncio
-    async def test_get_department_count_zero(self):
-        self.mock_client = SupabaseMockBuilder().with_response(data=[], count=None).build()
-        self.repo = DepartmentRepository(self.mock_client)
-        result = await self.repo.get_department_count()
-        assert result is None
+    def test_get_department_count_zero(self):
+        conn = _make_conn(rows_one={"cnt": 0})
+        repo = DepartmentRepository(conn)
+        result = repo.get_department_count()
+        assert result == 0

@@ -2,7 +2,7 @@
 お問い合わせエンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestCreateContact:
     """POST /api/v1/contacts/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_contact_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)

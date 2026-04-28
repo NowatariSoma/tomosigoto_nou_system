@@ -2,7 +2,7 @@
 パートエンドポイントのユニットテスト
 """
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -21,7 +21,7 @@ class TestGetParts:
     """GET /api/v1/parts/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -62,7 +62,7 @@ class TestGetPartById:
     """GET /api/v1/parts/{part_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -84,7 +84,7 @@ class TestCreatePart:
     """POST /api/v1/parts/ のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -122,7 +122,7 @@ class TestUpdatePart:
     """PUT /api/v1/parts/{part_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -162,7 +162,7 @@ class TestDeletePart:
     """DELETE /api/v1/parts/{part_id} のテスト"""
 
     def setup_method(self):
-        self.mock_service = AsyncMock()
+        self.mock_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_service
         override_auth_as_admin()
         self.client = TestClient(app)
@@ -197,8 +197,8 @@ class TestGetPartMembers:
     """GET /api/v1/parts/{part_id}/members のテスト"""
 
     def setup_method(self):
-        self.mock_part_service = AsyncMock()
-        self.mock_assignment_service = AsyncMock()
+        self.mock_part_service = Mock()
+        self.mock_assignment_service = Mock()
         app.dependency_overrides[get_part_service] = lambda: self.mock_part_service
         app.dependency_overrides[get_member_assignment_service] = lambda: self.mock_assignment_service
         override_auth_as_admin()

@@ -5,7 +5,7 @@ NOTE: 最適化ロジック自体は optimization/ パッケージでテスト�
 ここではサービス層のデータ取得とパラメータ変換をテストする。
 """
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from app.services.scheduling_optimization_service import SchedulingOptimizationService
@@ -17,14 +17,14 @@ class TestSchedulingOptimizationService:
     """SchedulingOptimizationService のテスト"""
 
     def setup_method(self):
-        self.mock_schedule_repo = AsyncMock()
-        self.mock_venue_repo = AsyncMock()
-        self.mock_session_repo = AsyncMock()
-        self.mock_part_repo = AsyncMock()
-        self.mock_member_repo = AsyncMock()
-        self.mock_user_repo = AsyncMock()
-        self.mock_attendance_repo = AsyncMock()
-        self.mock_role_repo = AsyncMock()
+        self.mock_schedule_repo = Mock()
+        self.mock_venue_repo = Mock()
+        self.mock_session_repo = Mock()
+        self.mock_part_repo = Mock()
+        self.mock_member_repo = Mock()
+        self.mock_user_repo = Mock()
+        self.mock_attendance_repo = Mock()
+        self.mock_role_repo = Mock()
 
         self.service = SchedulingOptimizationService(
             practice_schedule_repository=self.mock_schedule_repo,
@@ -39,39 +39,35 @@ class TestSchedulingOptimizationService:
 
     # ===== _get_schedule_data =====
 
-    @pytest.mark.asyncio
-    async def test_get_schedule_data_found(self):
+    def test_get_schedule_data_found(self):
         """スケジュールデータ取得 - 正常"""
         schedule_id = uuid4()
         schedule = make_practice_schedule(id=str(schedule_id))
         self.mock_schedule_repo.find_by_id.return_value = schedule
 
-        result = await self.service._get_schedule_data(schedule_id)
+        result = self.service._get_schedule_data(schedule_id)
 
         assert result is not None
         assert result["id"] == str(schedule_id)
 
-    @pytest.mark.asyncio
-    async def test_get_schedule_data_not_found(self):
+    def test_get_schedule_data_not_found(self):
         """スケジュールデータ取得 - なし"""
         self.mock_schedule_repo.find_by_id.return_value = None
 
-        result = await self.service._get_schedule_data(uuid4())
+        result = self.service._get_schedule_data(uuid4())
 
         assert result is None
 
     # ===== optimize_schedule =====
 
-    @pytest.mark.asyncio
-    async def test_optimize_schedule_no_schedule(self):
+    def test_optimize_schedule_no_schedule(self):
         """スケジュール最適化 - スケジュールが存在しない"""
         self.mock_schedule_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service.optimize_schedule(uuid4())
+            self.service.optimize_schedule(uuid4())
 
-    @pytest.mark.asyncio
-    async def test_optimize_schedule_no_stage_id(self):
+    def test_optimize_schedule_no_stage_id(self):
         """スケジュール最適化 - stage_idがない"""
         schedule_id = uuid4()
         schedule = make_practice_schedule(id=str(schedule_id))
@@ -83,22 +79,20 @@ class TestSchedulingOptimizationService:
         ]
 
         with pytest.raises(APIException):
-            await self.service.optimize_schedule(schedule_id)
+            self.service.optimize_schedule(schedule_id)
 
     # ===== preview_optimization =====
 
-    @pytest.mark.asyncio
-    async def test_preview_optimization_no_schedule(self):
+    def test_preview_optimization_no_schedule(self):
         """最適化プレビュー - スケジュールが存在しない"""
         self.mock_schedule_repo.find_by_id.return_value = None
 
         with pytest.raises(APIException):
-            await self.service.preview_optimization(uuid4())
+            self.service.preview_optimization(uuid4())
 
     # ===== パラメータのデフォルト値 =====
 
-    @pytest.mark.asyncio
-    async def test_optimize_schedule_default_params(self):
+    def test_optimize_schedule_default_params(self):
         """最適化パラメータが未指定の場合にデフォルト値が使われる"""
         schedule_id = uuid4()
         stage_id = str(uuid4())
@@ -122,4 +116,4 @@ class TestSchedulingOptimizationService:
             ]
 
             with pytest.raises(APIException):
-                await self.service.optimize_schedule(schedule_id)
+                self.service.optimize_schedule(schedule_id)
