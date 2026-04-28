@@ -11,7 +11,7 @@ import { TrashIcon, CalendarIcon, ClockIcon } from "lucide-react";
 import { useScheduler } from "@/features/schedule/providers/schedular-provider";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import CustomModal from "@/features/schedule/components/custom-modal";
+import CustomModal from "@/features/schedule/components/CustomModal";
 
 // Function to format date
 const formatDate = (date: Date) => {

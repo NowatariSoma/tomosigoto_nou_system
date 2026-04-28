@@ -42,6 +42,8 @@ test.describe('スケジュールカレンダー - 日付の一致テスト', ()
 
     const url = page.url();
     expect(url).toContain('date=');
+    const dateParam = new URL(url).searchParams.get('date');
+    expect(dateParam).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   test('ボトムシートで翌日ボタンをクリックすると、翌日に移動する', async ({ page }) => {

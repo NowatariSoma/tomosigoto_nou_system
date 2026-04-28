@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "authToken",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzgwODA3MjksInN1YiI6ImJiM2FkZDY3LWRlOTUtNGI0YS1iMDc2LTMxZjNmNDM3OTRmZiJ9.zJ8bxGVMlZXV6-Xt8K4xHwwBGeENSL7EnR4-P3xotKw",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzgwODA4ODEsInN1YiI6ImJiM2FkZDY3LWRlOTUtNGI0YS1iMDc2LTMxZjNmNDM3OTRmZiJ9.swWg_MZDjIX_x2F4hvklVTp3E63jxfTdwkEURHCJgyY",
       "domain": "tomosigoto-nginx-dev",
       "path": "/",
-      "expires": 1778080729.961691,
+      "expires": 1778080881.408735,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -17,11 +17,11 @@
       "localStorage": [
         {
           "name": "authToken",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzgwODA3MjksInN1YiI6ImJiM2FkZDY3LWRlOTUtNGI0YS1iMDc2LTMxZjNmNDM3OTRmZiJ9.zJ8bxGVMlZXV6-Xt8K4xHwwBGeENSL7EnR4-P3xotKw"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzgwODA4ODEsInN1YiI6ImJiM2FkZDY3LWRlOTUtNGI0YS1iMDc2LTMxZjNmNDM3OTRmZiJ9.swWg_MZDjIX_x2F4hvklVTp3E63jxfTdwkEURHCJgyY"
         },
         {
           "name": "refreshToken",
-          "value": "n8oo4SSl4EbkktT1Gq29_Fz6C8ULhhQ11nga5bELOpsSBN75of6C0NVExlzt_29h_Vw42blBRoMWF8C7FZe1XQ"
+          "value": "gRYPw8J_rSbrpiQL78_ZCM2vMuB0W0meqnEF9HNHuytX9PNqvAJOFrfrbzXzU9S6Z0dO_gAGnhJBWqC7nApZ0w"
         }
       ]
     }

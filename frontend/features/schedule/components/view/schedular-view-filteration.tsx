@@ -7,7 +7,7 @@ import AddEventModal from "../../modals/add-event-modal";
 import MonthView from "./month/month-view";
 import { useModal } from "@/features/schedule/providers/modal-context";
 import { ClassNames, CustomComponents } from "@/features/schedule/types/index";
-import CustomModal from "@/features/schedule/components/custom-modal";
+import CustomModal from "@/features/schedule/components/CustomModal";
 
 // Animation settings for Framer Motion
 const animationConfig = {

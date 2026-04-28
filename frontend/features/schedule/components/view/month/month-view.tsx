@@ -15,7 +15,7 @@ import AddEventModal from "@/features/schedule/modals/add-event-modal";
 import ShowMoreEventsModal from "@/features/schedule/modals/show-more-events-modal";
 import EventStyled from "../event-component/event-styled";
 import { Event, CustomEventModal } from "@/features/schedule/types";
-import CustomModal from "@/features/schedule/components/custom-modal";
+import CustomModal from "@/features/schedule/components/CustomModal";
 import { usePracticeScheduleEvents } from "@/features/schedule/hooks/use-practice-schedule-calendar";
 import { formatDateToYYYYMMDD } from "@/shared/utils/format";
 

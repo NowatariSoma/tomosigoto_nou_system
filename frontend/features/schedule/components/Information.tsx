@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { AttendanceSummary } from './attendance-summary';
-import { PracticeDescription } from './practice-description';
+import { AttendanceSummary } from './AttendanceSummary';
+import { PracticeDescription } from './PracticeDescription';
 import { PracticeScheduleBundleResponse, PracticeScheduleDisplayResponse } from '../types/practice-schedule-types';
 import { Attendance } from '../types/attendance';
 

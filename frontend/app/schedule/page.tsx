@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import SchedulePage from '@/features/schedule/components/schedulePage';
+import SchedulePage from '@/features/schedule/components/SchedulePage';
 import { SchedulerProvider } from '@/features/schedule/providers/schedular-provider';
 
 export default function Home() {

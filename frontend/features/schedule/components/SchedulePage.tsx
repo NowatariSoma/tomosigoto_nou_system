@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import SchedulerWrapper from "@/features/schedule/components/view/schedular-view-filteration";
-import { BottomSheetSchedule } from "@/features/schedule/components/bottom-sheet-schedule";
+import { BottomSheetSchedule } from "@/features/schedule/components/BottomSheetSchedule";
 
 export default function Home() {
   const searchParams = useSearchParams();
