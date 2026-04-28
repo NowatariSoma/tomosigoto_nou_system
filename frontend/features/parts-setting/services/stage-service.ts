@@ -4,7 +4,7 @@ import { fetchApi } from '../../../lib/api';
 
 export class StageService {
   async getStages(): Promise<StageData[]> {
-    const response = await fetchApi('/stages?status=active&include_parts=true&include_assignments=true');
+    const response = await fetchApi('/stages/?status=active&include_parts=true&include_assignments=true');
     const data = await response.json();
     return (data || []).map(mapStageResponseToStageData);
   }
@@ -19,7 +19,7 @@ export class StageService {
     const stageData = mapCreateStageRequestToStage(data);
 
     // 1. 舞台を作成（パート情報も含めて送信）
-    const response = await fetchApi('/stages', {
+    const response = await fetchApi('/stages/', {
       method: 'POST',
       body: JSON.stringify({
         ...stageData,

@@ -147,6 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       localStorage.setItem('authToken', data.access_token);
       if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
+      // middlewareがcookieでトークンを確認するため同期して設定
+      document.cookie = `authToken=${data.access_token}; path=/; max-age=${data.expires_in || 691200}; SameSite=Lax`;
       setUser(data.user);
       await Promise.all([fetchUserRole(data.access_token), ensureProfileExists(data.access_token)]);
     } finally {
@@ -186,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
+      document.cookie = 'authToken=; path=/; max-age=0';
       setUser(null);
       setUserRole(null);
     }

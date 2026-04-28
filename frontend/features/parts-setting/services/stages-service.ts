@@ -22,7 +22,7 @@ export interface UpdateStageRequest extends Partial<CreateStageRequest> {}
 
 export class StagesService {
   async getStages(): Promise<StageData[]> {
-    const response = await fetchApi('/stages');
+    const response = await fetchApi('/stages/');
     const data = await response.json();
     return (data || []).map(this.mapStageResponseToStageData);
   }
@@ -34,7 +34,7 @@ export class StagesService {
   }
 
   async createStage(data: CreateStageRequest): Promise<StageData> {
-    const response = await fetchApi('/stages', {
+    const response = await fetchApi('/stages/', {
       method: 'POST',
       body: JSON.stringify({
         name: data.name,

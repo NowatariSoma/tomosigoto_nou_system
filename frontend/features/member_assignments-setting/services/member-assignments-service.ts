@@ -7,7 +7,7 @@ import {
 
 export class MemberAssignmentsService {
   async getMemberAssignments(): Promise<MemberAssignmentData[]> {
-    const response = await fetchApi('/member-assignments');
+    const response = await fetchApi('/member-assignments/');
     const data = await response.json();
     return (data || []).map(this.mapMemberAssignmentResponseToMemberAssignmentData);
   }
@@ -19,7 +19,7 @@ export class MemberAssignmentsService {
   }
 
   async createMemberAssignment(data: CreateMemberAssignmentRequest): Promise<MemberAssignmentData> {
-    const response = await fetchApi('/member-assignments', {
+    const response = await fetchApi('/member-assignments/', {
       method: 'POST',
       body: JSON.stringify({
         user_id: data.user_id,

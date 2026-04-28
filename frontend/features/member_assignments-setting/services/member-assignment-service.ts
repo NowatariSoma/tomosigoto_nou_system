@@ -8,7 +8,7 @@ import { fetchApi } from '../../../lib/api';
 
 export class MemberAssignmentService {
   async getMemberAssignments(): Promise<MemberAssignmentWithDetails[]> {
-    const response = await fetchApi('/member-assignments?include_details=true');
+    const response = await fetchApi('/member-assignments/?include_details=true');
     const data = await response.json();
     return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
   }
@@ -20,19 +20,19 @@ export class MemberAssignmentService {
   }
 
   async getMemberAssignmentsByPart(partId: string): Promise<MemberAssignmentWithDetails[]> {
-    const response = await fetchApi(`/member-assignments?part_id=${partId}&include_details=true`);
+    const response = await fetchApi(`/member-assignments/?part_id=${partId}&include_details=true`);
     const data = await response.json();
     return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
   }
 
   async getMemberAssignmentsByUser(userId: string): Promise<MemberAssignmentWithDetails[]> {
-    const response = await fetchApi(`/member-assignments?user_id=${userId}&include_details=true`);
+    const response = await fetchApi(`/member-assignments/?user_id=${userId}&include_details=true`);
     const data = await response.json();
     return (data || []).map(this.mapResponseToMemberAssignmentWithDetails);
   }
 
   async createMemberAssignment(data: CreateMemberAssignmentRequest): Promise<MemberAssignmentWithDetails> {
-    const response = await fetchApi('/member-assignments', {
+    const response = await fetchApi('/member-assignments/', {
       method: 'POST',
       body: JSON.stringify({
         user_id: data.user_id,

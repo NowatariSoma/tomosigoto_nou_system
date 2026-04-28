@@ -21,7 +21,7 @@ export interface UpdatePartRequest extends Partial<CreatePartRequest> {}
 
 export class PartsService {
   async getPartsByStageId(stageId: string): Promise<PartData[]> {
-    const response = await fetchApi(`/parts?stage_id=${stageId}`);
+    const response = await fetchApi(`/parts/?stage_id=${stageId}`);
     const data = await response.json();
     return (data || []).map(this.mapPartResponseToPartData);
   }
@@ -33,7 +33,7 @@ export class PartsService {
   }
 
   async createPart(data: CreatePartRequest): Promise<PartData> {
-    const response = await fetchApi('/parts', {
+    const response = await fetchApi('/parts/', {
       method: 'POST',
       body: JSON.stringify({
         stage_id: data.stageId,
