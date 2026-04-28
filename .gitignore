@@ -4,6 +4,7 @@ venv
 .venv
 .next
 .pytest_cache
+.DS_Store
 # バックアップ
 backups/
 .backup_remotes

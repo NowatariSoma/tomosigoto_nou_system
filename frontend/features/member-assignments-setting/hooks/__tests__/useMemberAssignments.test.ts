@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useMemberAssignments } from '@/features/member_assignments-setting/hooks/useMemberAssignments';
+import { useMemberAssignments } from '@/features/member-assignments-setting/hooks/useMemberAssignments';
 
 // memberAssignmentsService をモック
 const mockGetMemberAssignments = vi.fn();
@@ -8,7 +8,7 @@ const mockCreateMemberAssignment = vi.fn();
 const mockUpdateMemberAssignment = vi.fn();
 const mockDeleteMemberAssignment = vi.fn();
 
-vi.mock('@/features/member_assignments-setting/services/member-assignments-service', () => ({
+vi.mock('@/features/member-assignments-setting/services/member-assignments-service', () => ({
   memberAssignmentsService: {
     getMemberAssignments: (...args: unknown[]) => mockGetMemberAssignments(...args),
     createMemberAssignment: (...args: unknown[]) => mockCreateMemberAssignment(...args),

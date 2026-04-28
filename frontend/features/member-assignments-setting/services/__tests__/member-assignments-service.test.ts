@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/__mocks__/msw/server';
-import { MemberAssignmentsService } from '@/features/member_assignments-setting/services/member-assignments-service';
+import { MemberAssignmentsService } from '@/features/member-assignments-setting/services/member-assignments-service';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 

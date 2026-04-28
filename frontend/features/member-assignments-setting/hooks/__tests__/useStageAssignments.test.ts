@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useStageAssignments } from '@/features/member_assignments-setting/hooks/useStageAssignments';
+import { useStageAssignments } from '@/features/member-assignments-setting/hooks/useStageAssignments';
 
 // partAssignmentsService をモック（useStageAssignments は partAssignmentsService を使用する）
 const mockGetStagesWithPartsAndAssignments = vi.fn();
 const mockGetAssignmentsByStage = vi.fn();
 
-vi.mock('@/features/member_assignments-setting/services/part-assignments-service', () => ({
+vi.mock('@/features/member-assignments-setting/services/part-assignments-service', () => ({
   partAssignmentsService: {
     getStagesWithPartsAndAssignments: (...args: unknown[]) => mockGetStagesWithPartsAndAssignments(...args),
     getAssignmentsByStage: (...args: unknown[]) => mockGetAssignmentsByStage(...args),

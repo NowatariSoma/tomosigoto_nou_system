@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppTemplate } from '@/shared/components/layout/AppTemplate';
-import { MemberAssignmentsSettingsPage } from '@/features/member_assignments-setting/components';
+import { MemberAssignmentsSettingsPage } from '@/features/member-assignments-setting/components';
 import { UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 

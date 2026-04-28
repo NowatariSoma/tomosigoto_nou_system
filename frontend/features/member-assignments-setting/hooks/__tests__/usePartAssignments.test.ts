@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { usePartAssignments } from '@/features/member_assignments-setting/hooks/usePartAssignments';
+import { usePartAssignments } from '@/features/member-assignments-setting/hooks/usePartAssignments';
 
 // partAssignmentsService をモック
 const mockGetPartWithAssignments = vi.fn();
 
-vi.mock('@/features/member_assignments-setting/services/part-assignments-service', () => ({
+vi.mock('@/features/member-assignments-setting/services/part-assignments-service', () => ({
   partAssignmentsService: {
     getPartWithAssignments: (...args: unknown[]) => mockGetPartWithAssignments(...args),
   },
