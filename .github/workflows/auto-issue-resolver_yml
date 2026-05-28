@@ -1,12 +1,6 @@
 name: Auto Issue Resolver
 on:
-  schedule:
-    # JST 23:00-06:00の間、30分ごとに実行
-    # JST = UTC + 9時間
-    # JST 23:00 = UTC 14:00, JST 06:00 = UTC 21:00
-    - cron: '0,30 14-20 * * *'  # UTC 14:00-20:30 (JST 23:00-05:30)
-    - cron: '0 21 * * *'        # UTC 21:00 (JST 06:00)
-  workflow_dispatch: # 手動実行も可能
+  workflow_dispatch: # 手動実行のみ（自動スケジュールは停止）
 jobs:
   process-issue:
     runs-on: ubuntu-latest
