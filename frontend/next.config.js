@@ -89,6 +89,8 @@ if (process.env.PAGES_EXPORT === '1') {
   // ルートの .env に本物の値が入っていても成果物には絶対に含めないよう、
   // 明らかにダミーと分かる値で上書きする（実際の通信はすべて失敗する）。
   nextConfig.env = {
+    // デモ用のオーバーレイ（scripts/pages-export/）から basePath を参照するため
+    NEXT_PUBLIC_PAGES_BASE_PATH: demoBasePath,
     NEXT_PUBLIC_API_URL: 'https://demo.invalid/api/v1',
     NEXT_PUBLIC_AUTH_URL: 'https://demo.invalid/api/v1',
     NEXT_PUBLIC_SUPABASE_URL: 'https://demo.invalid.supabase.co',

@@ -14,8 +14,13 @@
  *   - app/api/                 … Route Handler は export 非対応なので退避
  *   - app/auth/                … cookies() を使う Route Handler なので退避
  *   - app/page.tsx             … サーバー redirect を静的化できないのでデモ索引に差し替え
+ *   - app/layout.tsx           … デモ告知バー + fetch インターセプトを差し込む
+ *   - lib/supabase.ts          … Supabase が存在しないのでインメモリ実装に差し替え
+ *   - lib/demo/                … デモ用の架空データとモック層（丸ごとコピー）
  *   - app/materials/[playlistId]/(**)/layout.tsx
  *                              … 動的セグメント用の generateStaticParams を追加
+ *   - features/{stage-part-assignment,part-member-assignment}/data/mockData.ts
+ *                              … 「公演名 1」等のプレースホルダをデモ用架空データに差し替え
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -29,11 +34,16 @@ const backupRoot = path.join(projectRoot, '.pages-export-backup');
 /** ビルド中だけ退避するパス（プロジェクトルートからの相対） */
 const MOVE_AWAY = ['middleware.ts', 'app/api', 'app/auth'];
 
-/** ビルド中だけ配置するファイル [テンプレート, 配置先] */
+/** ビルド中だけ配置するファイル／ディレクトリ [テンプレート, 配置先] */
 const OVERLAY = [
+  ['scripts/pages-export/demo', 'lib/demo'],
+  ['scripts/pages-export/demo-supabase.ts', 'lib/supabase.ts'],
+  ['scripts/pages-export/root-layout.tsx', 'app/layout.tsx'],
   ['scripts/pages-export/root-page.tsx', 'app/page.tsx'],
   ['scripts/pages-export/playlist-layout.tsx', 'app/materials/[playlistId]/layout.tsx'],
   ['scripts/pages-export/video-layout.tsx', 'app/materials/[playlistId]/[videoId]/layout.tsx'],
+  ['scripts/pages-export/stage-part-mock.ts', 'features/stage-part-assignment/data/mockData.ts'],
+  ['scripts/pages-export/part-member-mock.ts', 'features/part-member-assignment/data/mockData.ts'],
 ];
 
 /** 復元手順のスタック（後入れ先出しで実行する） */
@@ -82,7 +92,11 @@ function overlay(templateRelPath, targetRelPath) {
   }
 
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(template, target);
+  if (fs.statSync(template).isDirectory()) {
+    fs.cpSync(template, target, { recursive: true });
+  } else {
+    fs.copyFileSync(template, target);
+  }
   log(`差し替え: ${targetRelPath}`);
 
   undoStack.push(() => {
@@ -168,8 +182,79 @@ function main() {
   fs.writeFileSync(path.join(outDir, '.nojekyll'), '');
   log('out/.nojekyll を作成しました');
 
+  const rscCount = duplicateRscPayloads(outDir);
+  log(`RSC プリフェッチ用に ${rscCount} 個の .txt を複製しました`);
+
+  const assetFixCount = prefixPublicAssetPaths(outDir);
+  log(`public/ 直参照 ${assetFixCount} ファイルに basePath を付与しました`);
+
   const htmlCount = countHtml(outDir);
   log(`完了: out/ に ${htmlCount} 個の HTML を生成しました`);
+}
+
+/**
+ * trailingSlash: true の静的エクスポートでは RSC ペイロードが `<route>/index.txt` に
+ * 出力されるのに対し、クライアントの Link プリフェッチは `<route>.txt` を要求するため
+ * 404 がコンソールに並ぶ。実害は無い（プリフェッチが失敗するだけ）が、
+ * 兄弟パスにコピーしておけばプリフェッチも成立しコンソールも静かになる。
+ */
+function duplicateRscPayloads(dir, count = 0) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      count = duplicateRscPayloads(full, count);
+      continue;
+    }
+    if (entry.name !== 'index.txt') continue;
+    if (path.resolve(dir) === path.resolve(abs('out'))) continue; // ルートは対象外
+    const sibling = `${dir}.txt`;
+    fs.copyFileSync(full, sibling);
+    count += 1;
+  }
+  return count;
+}
+
+/**
+ * next/image を images.unoptimized で使うと、src="/favicon.png" のような
+ * public/ 直下への絶対パスに basePath が付与されない（Next.js の既知の挙動）。
+ * ソースを触らずに済ませるため、出力後の out/ の中だけ書き換える。
+ */
+function prefixPublicAssetPaths(outDir) {
+  const publicDir = abs('public');
+  if (!fs.existsSync(publicDir)) return 0;
+
+  const basePath = process.env.PAGES_BASE_PATH || '/tomosigoto_nou_system/demo';
+  const assets = fs
+    .readdirSync(publicDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name);
+  if (assets.length === 0) return 0;
+
+  let changed = 0;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.(html|js|txt)$/.test(entry.name)) continue;
+
+      const original = fs.readFileSync(full, 'utf8');
+      let updated = original;
+      for (const asset of assets) {
+        // 引用符で囲まれた "/asset" のみを対象にする（既に basePath 付きのものは一致しない）
+        updated = updated.split(`"/${asset}"`).join(`"${basePath}/${asset}"`);
+        updated = updated.split(`\\"/${asset}\\"`).join(`\\"${basePath}/${asset}\\"`);
+      }
+      if (updated !== original) {
+        fs.writeFileSync(full, updated);
+        changed += 1;
+      }
+    }
+  };
+  walk(outDir);
+  return changed;
 }
 
 function countHtml(dir) {
