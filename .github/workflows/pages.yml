@@ -1,0 +1,73 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "frontend/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Pages は public リポジトリでのみ有効(無料プラン)。private の間はスキップ
+    if: github.event.repository.private == false || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 紹介サイトを配置
+        run: |
+          mkdir -p _site
+          cp -r docs/* _site/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: デモを静的ビルド
+        id: demo
+        continue-on-error: true
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:pages
+
+      - name: デモを配置(ビルド失敗時はプレースホルダー)
+        run: |
+          if [ -d frontend/out ] && [ "${{ steps.demo.outcome }}" = "success" ]; then
+            cp -r frontend/out _site/demo
+          else
+            mkdir -p _site/demo
+            cat > _site/demo/index.html <<'EOF'
+          <!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>デモ準備中</title></head>
+          <body style="font-family:sans-serif;display:grid;place-items:center;min-height:100vh;margin:0">
+          <p>デモは現在準備中です。<a href="../">紹介ページへ戻る</a></p></body></html>
+          EOF
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

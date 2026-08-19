@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>トモシゴト能システム — 能楽サークルのための稽古運営基盤</title>
+<meta name="description" content="能楽サークル・稽古会のためのオープンソース運営システム。稽古スケジュール、配役、会場、資料、出欠をひとつに。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --kinari:#F3ECDC;      /* 檜舞台の生成り */
+    --kinari-deep:#EAE0C9;
+    --aizumi:#1C2433;      /* 藍墨 */
+    --aizumi-soft:#3A4356;
+    --matsuba:#3E6B4F;     /* 松葉 */
+    --kin:#A98F45;         /* 金 */
+    --shu:#A63A22;         /* 朱 — 揚幕とCTAのみ */
+    /* 揚幕の五色 */
+    --maku-murasaki:#5C4470;
+    --maku-shiro:#EFE9DA;
+    --maku-aka:#A63A22;
+    --maku-ki:#C79A3B;
+    --maku-midori:#3E6B4F;
+    --serif:"Shippori Mincho B1",serif;
+    --sans:"Zen Kaku Gothic New",sans-serif;
+    --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--kinari);
+    color:var(--aizumi);
+    font-family:var(--sans);
+    line-height:1.9;
+    font-size:16px;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--matsuba);color:var(--kinari)}
+
+  /* ── 揚幕: ページロードで幕が上がる ── */
+  .agemaku{
+    position:fixed;inset:0;z-index:100;display:flex;pointer-events:none;
+    animation:maku-age 1.1s cubic-bezier(.76,0,.24,1) .25s forwards;
+  }
+  .agemaku span{flex:1}
+  .agemaku span:nth-child(1){background:var(--maku-murasaki)}
+  .agemaku span:nth-child(2){background:var(--maku-shiro)}
+  .agemaku span:nth-child(3){background:var(--maku-aka)}
+  .agemaku span:nth-child(4){background:var(--maku-ki)}
+  .agemaku span:nth-child(5){background:var(--maku-midori)}
+  @keyframes maku-age{to{transform:translateY(-101%)}}
+  /* 上端に残る細い五色 = 幕の裾 */
+  .maku-hem{position:fixed;top:0;left:0;right:0;height:6px;display:flex;z-index:90}
+  .maku-hem span{flex:1}
+  .maku-hem span:nth-child(1){background:var(--maku-murasaki)}
+  .maku-hem span:nth-child(2){background:var(--maku-shiro)}
+  .maku-hem span:nth-child(3){background:var(--maku-aka)}
+  .maku-hem span:nth-child(4){background:var(--maku-ki)}
+  .maku-hem span:nth-child(5){background:var(--maku-midori)}
+  @media (prefers-reduced-motion:reduce){
+    .agemaku{display:none}
+    html{scroll-behavior:auto}
+  }
+
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  /* ── ヒーロー: 謡本の見開き ── */
+  .hero{
+    min-height:92vh;display:flex;align-items:stretch;gap:48px;
+    padding:96px 0 64px;position:relative;
+  }
+  .hero-copy{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:560px}
+  .eyebrow{
+    font-family:var(--sans);font-size:13px;letter-spacing:.35em;
+    color:var(--matsuba);font-weight:700;margin-bottom:28px;
+  }
+  .hero-copy h1{
+    font-family:var(--serif);font-weight:800;font-size:clamp(26px,3.4vw,38px);
+    line-height:1.75;letter-spacing:.06em;margin-bottom:28px;
+  }
+  .hero-copy h1 em{font-style:normal;color:var(--matsuba)}
+  .hero-copy p{color:var(--aizumi-soft);max-width:44em;margin-bottom:40px}
+  .cta-row{display:flex;gap:16px;flex-wrap:wrap}
+  .btn{
+    font-family:var(--sans);font-weight:700;font-size:15px;letter-spacing:.08em;
+    padding:14px 30px;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease;
+    border:1.5px solid var(--aizumi);
+  }
+  .btn:focus-visible{outline:3px solid var(--kin);outline-offset:3px}
+  .btn-shu{background:var(--shu);border-color:var(--shu);color:var(--kinari)}
+  .btn-plain{color:var(--aizumi);background:transparent}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(28,36,51,.18)}
+
+  /* 縦書きの題字 */
+  .hero-title-v{
+    writing-mode:vertical-rl;font-family:var(--serif);font-weight:800;
+    font-size:clamp(44px,7vw,84px);letter-spacing:.18em;line-height:1.28;
+    color:var(--aizumi);border-left:1px solid var(--kin);
+    padding-left:clamp(16px,3vw,40px);margin-left:auto;
+    display:flex;align-items:flex-start;
+  }
+  .hero-title-v small{
+    writing-mode:vertical-rl;font-size:15px;font-weight:500;letter-spacing:.5em;
+    color:var(--kin);margin-top:12px;
+  }
+
+  /* ── 序破急のセクション見出し ── */
+  section{padding:88px 0}
+  .stage-label{display:flex;align-items:baseline;gap:20px;margin-bottom:48px}
+  .stage-label .kanji{
+    font-family:var(--serif);font-size:56px;font-weight:800;color:var(--matsuba);
+    line-height:1;
+  }
+  .stage-label .kanji.kyu{color:var(--shu)}
+  .stage-label h2{
+    font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:.1em;
+  }
+  .stage-label .yaku{font-size:13px;color:var(--aizumi-soft);letter-spacing:.2em}
+
+  .jo p{max-width:40em;color:var(--aizumi-soft);margin-bottom:1.4em}
+  .jo strong{color:var(--aizumi)}
+  .stack{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+  .stack span{
+    font-family:var(--mono);font-size:13px;border:1px solid var(--kin);
+    color:var(--aizumi);padding:5px 14px;letter-spacing:.02em;
+  }
+
+  /* ── 破: 機能 ── */
+  .ha{background:var(--aizumi);color:var(--kinari)}
+  .ha .stage-label h2{color:var(--kinari)}
+  .ha .stage-label .kanji{color:var(--kin)}
+  .ha .stage-label .yaku{color:#9BA4B8}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#39445C;border:1px solid #39445C}
+  .feat{background:var(--aizumi);padding:32px 28px;transition:background .2s ease}
+  .feat:hover{background:#232D42}
+  .feat h3{
+    font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:.08em;
+    margin-bottom:12px;color:var(--kinari);
+  }
+  .feat h3::before{content:"";display:block;width:28px;height:2px;background:var(--kin);margin-bottom:14px}
+  .feat p{font-size:14px;line-height:1.9;color:#B7BFCF}
+
+  /* ── 急: すぐ始める ── */
+  .kyu-cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+  .kyu h3{font-family:var(--serif);font-size:18px;letter-spacing:.08em;margin-bottom:16px}
+  pre{
+    background:var(--aizumi);color:#D8DEEA;font-family:var(--mono);font-size:13.5px;
+    line-height:1.8;padding:22px 24px;overflow-x:auto;margin-bottom:16px;
+  }
+  pre .c{color:#7E8AA3}
+  pre .g{color:#8FBF9F}
+  .kyu p{color:var(--aizumi-soft);font-size:15px;margin-bottom:1.2em}
+  .demo-note{
+    border:1px solid var(--kin);padding:20px 24px;font-size:14px;
+    color:var(--aizumi-soft);background:var(--kinari-deep);
+  }
+  .demo-note strong{color:var(--shu)}
+
+  footer{
+    border-top:1px solid var(--kin);padding:40px 0 56px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+  }
+  footer .mark{font-family:var(--serif);font-weight:700;letter-spacing:.14em}
+  footer nav{display:flex;gap:28px}
+  footer a{color:var(--aizumi-soft);text-decoration:none;font-size:14px;letter-spacing:.06em}
+  footer a:hover{color:var(--matsuba)}
+  footer a:focus-visible{outline:3px solid var(--kin);outline-offset:3px}
+
+  @media (max-width:800px){
+    .hero{flex-direction:column-reverse;gap:24px;min-height:auto;padding-top:72px}
+    .hero-title-v{margin-left:0;font-size:52px;max-height:340px}
+    .feat-grid{grid-template-columns:1fr}
+    .kyu-cols{grid-template-columns:1fr}
+    section{padding:64px 0}
+  }
+</style>
+</head>
+<body>
+
+<div class="agemaku" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+<script>
+  // 幕上げアニメーション完了後に要素を除去(バックグラウンドタブ等でアニメーションが
+  // スロットリングされても内容が隠れないようにする保険)
+  (function(){
+    var maku = document.currentScript.previousElementSibling;
+    var done = function(){ if (maku && maku.parentNode) maku.parentNode.removeChild(maku); };
+    maku.addEventListener('animationend', done);
+    setTimeout(done, 2200);
+  })();
+</script>
+<div class="maku-hem" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+
+<header class="wrap hero">
+  <div class="hero-copy">
+    <p class="eyebrow">オープンソースの稽古運営基盤</p>
+    <h1>舞台の外の仕事を、<br><em>ひとつの座</em>に集める。</h1>
+    <p>
+      能楽サークルの運営には、舞台に上がらない仕事が山ほどあります。
+      稽古日程の調整、シテ・ワキ・地謡の配役、会場の確保、謡本や資料の共有、出欠の把握。
+      トモシゴト能システムは、その裏方仕事をまとめて引き受ける自主ホスト型のウェブアプリケーションです。
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-shu" href="./demo/">デモへ入場する</a>
+      <a class="btn btn-plain" href="https://github.com/NowatariSoma/tomosigoto_nou_system">GitHub で見る</a>
+    </div>
+  </div>
+  <h1 class="hero-title-v" aria-label="トモシゴト能システム">
+    トモシゴト<br>能システム
+    <small>稽古 と 運営 の 道具</small>
+  </h1>
+</header>
+
+<section class="jo">
+  <div class="wrap">
+    <div class="stage-label">
+      <span class="kanji">序</span>
+      <div>
+        <h2>これは何か</h2>
+        <span class="yaku">— 静かに始まる</span>
+      </div>
+    </div>
+    <p>
+      <strong>サークル・稽古会・研究会のための運営システムです。</strong>
+      大学の能楽サークルでの実運用から生まれました。メンバーごとの権限管理、稽古と本番のスケジュール、
+      演目ごとの配役割り当て、会場・稽古場の管理までを、ブラウザひとつで扱えます。
+    </p>
+    <p>
+      Docker で自分たちのサーバーに立てて使います。データは自分たちの Supabase プロジェクトに置かれ、
+      外部サービスに預けるのは自分たちで選んだものだけです。
+    </p>
+    <div class="stack">
+      <span>Next.js</span><span>FastAPI</span><span>Supabase</span><span>PostgreSQL</span><span>Docker</span><span>Playwright</span>
+    </div>
+  </div>
+</section>
+
+<section class="ha">
+  <div class="wrap">
+    <div class="stage-label">
+      <span class="kanji">破</span>
+      <div>
+        <h2>できること</h2>
+        <span class="yaku">— 展開する</span>
+      </div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <h3>稽古スケジュール</h3>
+        <p>稽古・申合せ・本番の予定を一覧と編集画面で管理。時間枠と会場を紐付けて、次に誰がどこで舞うかをすぐ引けます。</p>
+      </div>
+      <div class="feat">
+        <h3>配役の割り当て</h3>
+        <p>演目ごとにシテ方・地謡・囃子の役をメンバーへ割り当て。舞台と役の対応を崩さずに差し替えできます。</p>
+      </div>
+      <div class="feat">
+        <h3>メンバー管理</h3>
+        <p>部員の登録・権限・所属パートをまとめて管理。指導者フラグや管理者権限も画面から切り替えられます。</p>
+      </div>
+      <div class="feat">
+        <h3>会場と稽古場</h3>
+        <p>キャンパス内外の会場を住所つきで登録し、スケジュールから参照。部屋単位の設定にも対応します。</p>
+      </div>
+      <div class="feat">
+        <h3>資料の共有</h3>
+        <p>謡本・録画・連絡資料をメンバーに共有。YouTube 連携で稽古記録の動画も扱えます。</p>
+      </div>
+      <div class="feat">
+        <h3>出欠と連絡</h3>
+        <p>稽古ごとの出欠を記録し、Discord Webhook で通知。連絡の抜けを裏方が追いかけずに済みます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="kyu">
+  <div class="wrap">
+    <div class="stage-label">
+      <span class="kanji kyu">急</span>
+      <div>
+        <h2>すぐ始める</h2>
+        <span class="yaku">— 一気に舞い切る</span>
+      </div>
+    </div>
+    <div class="kyu-cols">
+      <div>
+        <h3>自分たちのサーバーで</h3>
+<pre><code><span class="c"># 1. 取得して環境変数を用意</span>
+git clone https://github.com/NowatariSoma/tomosigoto_nou_system.git
+cd tomosigoto_nou_system
+cp .env.example .env
+<span class="c"># .env に自分の Supabase プロジェクトの値を設定</span>
+
+<span class="c"># 2. 起動</span>
+docker compose up -d
+
+<span class="g"># フロントエンド → http://localhost:3000</span>
+<span class="g"># API ドキュメント → http://localhost:8000/docs</span></code></pre>
+        <p>必要なのは Docker と、無料枠で始められる Supabase プロジェクトだけです。</p>
+      </div>
+      <div>
+        <h3>まず見てみる</h3>
+        <p>
+          サーバーを立てる前に画面の雰囲気を確かめたい方は、静的デモをどうぞ。
+        </p>
+        <p><a class="btn btn-shu" href="./demo/">デモへ入場する</a></p>
+        <div class="demo-note">
+          <strong>デモの制約:</strong> GitHub Pages 上の静的ビルドのため、ログイン・データの保存・API 通信は動きません。
+          画面構成とUIの確認用です。実際の動作は Docker でのセットアップをお試しください。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <span class="mark">トモシゴト能システム</span>
+  <nav>
+    <a href="https://github.com/NowatariSoma/tomosigoto_nou_system">GitHub</a>
+    <a href="https://github.com/NowatariSoma/tomosigoto_nou_system/issues">Issues</a>
+    <a href="./demo/">デモ</a>
+  </nav>
+</footer>
+
+</body>
+</html>

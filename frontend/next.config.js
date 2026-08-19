@@ -64,4 +64,38 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
 };
 
+// ---------------------------------------------------------------------------
+// GitHub Pages 用の静的エクスポート設定
+//
+// PAGES_EXPORT=1 のときだけ有効になる。環境変数が無い通常のビルド／開発サーバー／
+// Docker 運用では、この if ブロックはまるごとスキップされるため既存動作は不変。
+//
+// 使い方: npm run build:pages  (scripts/build-pages.mjs 経由)
+// ---------------------------------------------------------------------------
+if (process.env.PAGES_EXPORT === '1') {
+  // https://nowatarisoma.github.io/tomosigoto_nou_system/demo/ で公開する想定
+  const demoBasePath = process.env.PAGES_BASE_PATH || '/tomosigoto_nou_system/demo';
+
+  nextConfig.output = 'export';
+  nextConfig.basePath = demoBasePath;
+  nextConfig.trailingSlash = true;
+  nextConfig.images = { ...nextConfig.images, unoptimized: true };
+
+  // output: 'export' は rewrites / publicRuntimeConfig / middleware に非対応
+  delete nextConfig.rewrites;
+  delete nextConfig.publicRuntimeConfig;
+
+  // デモにはバックエンドも Supabase も存在しない。
+  // ルートの .env に本物の値が入っていても成果物には絶対に含めないよう、
+  // 明らかにダミーと分かる値で上書きする（実際の通信はすべて失敗する）。
+  nextConfig.env = {
+    NEXT_PUBLIC_API_URL: 'https://demo.invalid/api/v1',
+    NEXT_PUBLIC_AUTH_URL: 'https://demo.invalid/api/v1',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://demo.invalid.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'demo-anon-key',
+    SUPABASE_URL: 'https://demo.invalid.supabase.co',
+    SUPABASE_ANON_KEY: 'demo-anon-key',
+  };
+}
+
 module.exports = nextConfig;

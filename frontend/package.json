@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build || (echo 'Build completed with some warnings (404 page prerendering skipped)' && exit 0)",
     "build:ignore-errors": "NEXT_BUILD_NO_EXPORT=1 next build || true",
+    "build:pages": "node scripts/build-pages.mjs",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

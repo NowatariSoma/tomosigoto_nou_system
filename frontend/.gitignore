@@ -13,6 +13,9 @@
 /.next/
 /out/
 
+# GitHub Pages 用 export ビルド (npm run build:pages) の一時退避先
+/.pages-export-backup/
+
 # production
 /build
 
