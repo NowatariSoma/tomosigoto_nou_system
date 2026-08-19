@@ -33,12 +33,24 @@ npm run dev
 
 ### 3. 認証について
 
-テストは自動的にログインします。認証情報は `e2e/auth.setup.ts` に記載されています：
+テストは自動的にログインします。認証情報は環境変数から読み込まれます（`e2e/auth.setup.ts` を参照）。
 
-- Email: <E2E_USER_EMAIL>
-- Password: ***REMOVED***
+テスト実行前に、以下の環境変数を設定してください：
 
-初回実行時に自動的にログインし、認証状態を `playwright/.auth/user.json` に保存します。
+```bash
+export E2E_USER_EMAIL="<テスト用ユーザーのメールアドレス>"
+export E2E_USER_PASSWORD="<テスト用ユーザーのパスワード>"
+```
+
+`frontend/.env.local` に記載しておくこともできます（このファイルはGit管理対象外です）：
+
+```env
+E2E_USER_EMAIL=<テスト用ユーザーのメールアドレス>
+E2E_USER_PASSWORD=<テスト用ユーザーのパスワード>
+```
+
+初回実行時に自動的にログインし、認証状態を `__tests__/.auth/user.json` に保存します。
+このファイルはセッショントークンを含むため、Git管理対象外（`.gitignore` の `**/.auth/`）です。
 
 ## テストの実行方法
 

@@ -3,7 +3,7 @@
 ## 🎉 設定完了
 
 **日時**: 2025年7月31日  
-**プロジェクト**: your-project-ref  
+**プロジェクト**: <YOUR_PROJECT_REF>  
 **設定者**: AI Assistant  
 
 ## ✅ 適用されたセキュリティ設定
@@ -61,7 +61,7 @@
 
 ### 接続テスト
 - ✅ リモートプロジェクトへの接続: 成功
-- ✅ API URL: https://your-project-ref.supabase.co
+- ✅ API URL: https://<YOUR_PROJECT_REF>.supabase.co
 
 ### セキュリティテスト
 - ✅ 匿名アクセス制限: 正常動作
@@ -120,8 +120,8 @@
 
 ## 📞 サポート情報
 
-- **プロジェクトURL**: https://supabase.com/dashboard/project/your-project-ref
-- **API URL**: https://your-project-ref.supabase.co
+- **プロジェクトURL**: https://supabase.com/dashboard/project/<YOUR_PROJECT_REF>
+- **API URL**: https://<YOUR_PROJECT_REF>.supabase.co
 - **テストスクリプト**: `backend/scripts/test_security_rls.py`
 
 ## ✅ 完了確認

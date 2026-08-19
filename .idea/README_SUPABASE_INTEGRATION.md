@@ -8,7 +8,7 @@ FastAPI（バックエンド）とNext.js（フロントエンド）を使用し
 
 ```bash
 # .envファイルを作成
-cp env.example .env
+cp .env.example .env
 
 # .envファイルを編集してSupabase認証情報を設定
 nano .env
@@ -23,8 +23,8 @@ NODE_ENV=development
 DEVELOPMENT_MOUNT=rw
 
 # Supabase Configuration
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_ANON_KEY=***REMOVED***
+SUPABASE_URL=https://<YOUR_PROJECT_REF>.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
 # Backend Configuration
@@ -33,8 +33,8 @@ API_BASE_URL=http://localhost:8000
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_ANON_KEY=***REMOVED***
+SUPABASE_URL=https://<YOUR_PROJECT_REF>.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### 3. Docker起動
@@ -120,7 +120,7 @@ docker compose exec frontend yarn test
 │   ├── lib/
 │   └── Dockerfile
 ├── docker-compose.yml      # 開発・本番統合設定
-└── env.example            # 環境変数テンプレート
+└── .env.example            # 環境変数テンプレート
 ```
 
 ## 🔧 環境切り替え

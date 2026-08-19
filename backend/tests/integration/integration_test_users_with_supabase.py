@@ -344,8 +344,8 @@ class IntegrationTestRunner:
 def load_config() -> TestConfig:
     """設定読み込み"""
     # 環境変数から設定を読み込み
-    supabase_url = os.getenv("SUPABASE_URL", "https://your-project-ref.supabase.co")
-    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "***REMOVED***")
+    supabase_url = os.environ["SUPABASE_URL"]
+    supabase_anon_key = os.environ["SUPABASE_ANON_KEY"]
     
     return TestConfig(
         supabase_url=supabase_url,

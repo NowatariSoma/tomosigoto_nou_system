@@ -10,11 +10,11 @@ setup('authenticate', async ({ page }) => {
   // ログインページに移動
   await page.goto('/login');
 
-  // メールアドレスを入力
-  await page.fill('input[type="email"]', '<E2E_USER_EMAIL>');
+  // メールアドレスを入力（環境変数 E2E_USER_EMAIL から取得）
+  await page.fill('input[type="email"]', process.env.E2E_USER_EMAIL!);
 
-  // パスワードを入力
-  await page.fill('input[type="password"]', '***REMOVED***');
+  // パスワードを入力（環境変数 E2E_USER_PASSWORD から取得）
+  await page.fill('input[type="password"]', process.env.E2E_USER_PASSWORD!);
 
   // ログインボタンをクリック
   await page.click('button[type="submit"]');

@@ -4,7 +4,7 @@
 
 ### 1. 環境変数の設定
 ```bash
-cp env.example .env
+cp .env.example .env
 # .envファイルを適切に編集してください
 ```
 

@@ -4,3 +4,18 @@ venv
 .venv
 .next
 .pytest_cache
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+service-account*.json
+
+# Playwright saved auth state (session / refresh tokens)
+**/.auth/
+
+# Local-only Claude Code settings
+.claude/settings.local.json

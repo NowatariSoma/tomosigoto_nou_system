@@ -130,7 +130,7 @@ test_delete_user_success PASSED
 ### 環境変数
 ```bash
 # Supabase設定
-SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_URL=https://<YOUR_PROJECT_REF>.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 

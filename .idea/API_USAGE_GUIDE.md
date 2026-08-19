@@ -9,7 +9,7 @@ Tomosigoto APIは、ユーザー管理、スケジュール管理、PDF出力な
 
 ```
 ローカル開発環境: http://localhost:8000
-リモートSupabase直接: https://your-project-ref.supabase.co
+リモートSupabase直接: https://<YOUR_PROJECT_REF>.supabase.co
 本番環境: https://your-production-domain.com
 ```
 
@@ -25,7 +25,7 @@ APIはSupabaseを使用したJWT認証を採用しています。すべてのAPI
 
 ```bash
 # Supabase Auth APIを使用して新規ユーザーを登録
-curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -38,7 +38,7 @@ curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
 
 ```bash
 # 既存ユーザーでログイン
-curl -X POST "https://your-project-ref.supabase.co/auth/v1/token?grant_type=password" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/token?grant_type=password" \
   -H "apikey: YOUR_SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -244,7 +244,7 @@ import json
 
 # 設定
 BASE_URL = "http://localhost:8000"
-SUPABASE_URL = "https://your-project-ref.supabase.co"
+SUPABASE_URL = "https://<YOUR_PROJECT_REF>.supabase.co"
 SUPABASE_ANON_KEY = "your_supabase_anon_key"
 
 # 1. ログインしてトークンを取得
@@ -330,7 +330,7 @@ users = asyncio.run(async_example())
 
 ```javascript
 const BASE_URL = 'http://localhost:8000';
-const SUPABASE_URL = 'https://your-project-ref.supabase.co';
+const SUPABASE_URL = 'https://<YOUR_PROJECT_REF>.supabase.co';
 const SUPABASE_ANON_KEY = 'your_supabase_anon_key';
 
 // ログイン関数
@@ -490,7 +490,7 @@ VS CodeのREST Client拡張機能を使用：
 
 ```http
 ### ログイン
-POST https://your-project-ref.supabase.co/auth/v1/token?grant_type=password
+POST https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/token?grant_type=password
 apikey: your_supabase_anon_key
 Content-Type: application/json
 

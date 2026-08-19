@@ -47,7 +47,7 @@ docker compose exec backend python scripts/setup_user_trigger.py
 
 ```bash
 # 新規ユーザー作成
-curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -56,7 +56,7 @@ curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
   }'
 
 # usersテーブルに自動追加されたか確認
-curl -X GET "https://your-project-ref.supabase.co/rest/v1/users?email=eq.test@example.com" \
+curl -X GET "https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/users?email=eq.test@example.com" \
   -H "apikey: YOUR_SUPABASE_ANON_KEY" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
@@ -186,7 +186,7 @@ GET http://localhost:8000/api/users/
 ### 変更後
 ```bash
 # リモートSupabaseからも直接取得可能
-GET https://your-project-ref.supabase.co/rest/v1/users
+GET https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/users
 
 # ローカルAPIも従来通り使用可能
 GET http://localhost:8000/api/users/

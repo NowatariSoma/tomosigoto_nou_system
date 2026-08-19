@@ -5,14 +5,14 @@
 ### 1. **Critical**: public.usersテーブルのデータが全ユーザーに公開
 ```bash
 # 一般ユーザーが他の全ユーザーのデータを見ることができる
-GET https://your-project-ref.supabase.co/rest/v1/users
+GET https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/users
 → 全ユーザーのメールアドレス等が見える（危険）
 ```
 
 ### 2. **Good**: auth.usersテーブルは適切に保護されている
 ```bash
 # 一般ユーザーはauth.usersにアクセスできない
-GET https://your-project-ref.supabase.co/rest/v1/auth.users
+GET https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/auth.users
 → "relation does not exist" エラー（正常）
 ```
 

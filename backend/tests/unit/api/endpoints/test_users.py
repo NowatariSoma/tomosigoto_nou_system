@@ -568,8 +568,8 @@ class TestUsersRealSupabase:
         self.client = TestClient(app)
         
         # Real Supabase credentials from environment
-        self.supabase_url = os.getenv("SUPABASE_URL", "https://your-project-ref.supabase.co")
-        self.supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "***REMOVED***")
+        self.supabase_url = os.environ["SUPABASE_URL"]
+        self.supabase_anon_key = os.environ["SUPABASE_ANON_KEY"]
         
         # Create Supabase client
         self.supabase: Client = create_client(self.supabase_url, self.supabase_anon_key)

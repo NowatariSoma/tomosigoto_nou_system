@@ -5,9 +5,9 @@
 ## 設定情報
 
 ```bash
-SUPABASE_URL="https://your-project-ref.supabase.co"
-SUPABASE_ANON_KEY="***REMOVED***"
-SUPABASE_SERVICE_ROLE_KEY="***REMOVED***"
+SUPABASE_URL="https://<YOUR_PROJECT_REF>.supabase.co"
+SUPABASE_ANON_KEY="<YOUR_ANON_KEY>"
+SUPABASE_SERVICE_ROLE_KEY="<YOUR_SERVICE_ROLE_KEY>"
 ```
 
 ## 1. 認証テスト
@@ -15,8 +15,8 @@ SUPABASE_SERVICE_ROLE_KEY="***REMOVED***"
 ### ユーザー登録
 
 ```bash
-curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
-  -H "apikey: ***REMOVED***" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/signup" \
+  -H "apikey: <YOUR_ANON_KEY>" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -27,12 +27,12 @@ curl -X POST "https://your-project-ref.supabase.co/auth/v1/signup" \
 ### ログイン
 
 ```bash
-curl -X POST "https://your-project-ref.supabase.co/auth/v1/token?grant_type=password" \
-  -H "apikey: ***REMOVED***" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/token?grant_type=password" \
+  -H "apikey: <YOUR_ANON_KEY>" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "<ADMIN_EMAIL>",
-    "password": "***REMOVED***"
+    "email": "<TEST_USER_EMAIL>",
+    "password": "<TEST_USER_PASSWORD>"
   }'
 ```
 
@@ -42,17 +42,17 @@ curl -X POST "https://your-project-ref.supabase.co/auth/v1/token?grant_type=pass
 
 ```bash
 # Service Role Keyを使用してauth.usersテーブルから直接取得
-curl -X GET "https://your-project-ref.supabase.co/rest/v1/auth.users" \
-  -H "apikey: ***REMOVED***" \
-  -H "Authorization: Bearer ***REMOVED***"
+curl -X GET "https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/auth.users" \
+  -H "apikey: <YOUR_SERVICE_ROLE_KEY>" \
+  -H "Authorization: Bearer <YOUR_SERVICE_ROLE_KEY>"
 ```
 
 ### カスタムテーブルアクセス（もしあれば）
 
 ```bash
 # 例：usersテーブル（カスタムテーブル）
-curl -X GET "https://your-project-ref.supabase.co/rest/v1/users" \
-  -H "apikey: ***REMOVED***" \
+curl -X GET "https://<YOUR_PROJECT_REF>.supabase.co/rest/v1/users" \
+  -H "apikey: <YOUR_ANON_KEY>" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -60,8 +60,8 @@ curl -X GET "https://your-project-ref.supabase.co/rest/v1/users" \
 
 ```bash
 # Edge Functionがデプロイされている場合
-curl -X POST "https://your-project-ref.supabase.co/functions/v1/your-function-name" \
-  -H "apikey: ***REMOVED***" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/your-function-name" \
+  -H "apikey: <YOUR_ANON_KEY>" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
@@ -71,8 +71,8 @@ curl -X POST "https://your-project-ref.supabase.co/functions/v1/your-function-na
 
 ```bash
 # ファイルアップロード
-curl -X POST "https://your-project-ref.supabase.co/storage/v1/object/your-bucket/test.txt" \
-  -H "apikey: ***REMOVED***" \
+curl -X POST "https://<YOUR_PROJECT_REF>.supabase.co/storage/v1/object/your-bucket/test.txt" \
+  -H "apikey: <YOUR_ANON_KEY>" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: text/plain" \
   --data-binary "Hello World"
@@ -86,8 +86,8 @@ WebSocketでリアルタイム機能をテスト：
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  'https://your-project-ref.supabase.co',
-  '***REMOVED***'
+  'https://<YOUR_PROJECT_REF>.supabase.co',
+  '<YOUR_ANON_KEY>'
 )
 
 // テーブルの変更を監視

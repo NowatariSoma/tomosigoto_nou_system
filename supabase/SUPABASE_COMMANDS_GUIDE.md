@@ -113,14 +113,14 @@ supabase unlink
 - **Studio URL**: http://127.0.0.1:54323
 
 ### 認証情報
-- **JWT secret**: super-secret-jwt-token-with-at-least-32-characters-long
-- **anon key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-- **service_role key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+- **JWT secret**: <LOCAL_JWT_SECRET>（`supabase status` で確認）
+- **anon key**: <LOCAL_ANON_KEY>（`supabase status` で確認）
+- **service_role key**: <LOCAL_SERVICE_ROLE_KEY>（`supabase status` で確認）
 
 ### ストレージ情報
 - **S3 Storage URL**: http://127.0.0.1:54321/storage/v1/s3
-- **S3 Access Key**: ***REMOVED***
-- **S3 Secret Key**: ***REMOVED***
+- **S3 Access Key**: <LOCAL_S3_ACCESS_KEY>（`supabase status` で確認）
+- **S3 Secret Key**: <LOCAL_S3_SECRET_KEY>（`supabase status` で確認）
 - **S3 Region**: local
 
 ## 既存のマイグレーション

@@ -2,7 +2,11 @@
 """
 Supabase RLS (Row Level Security) テストスクリプト
 SECURITY_ANALYSIS.md に基づくセキュリティテスト
-リモートプロジェクト your-project-ref 用
+
+実行前に以下の環境変数を設定してください:
+  - SUPABASE_URL
+  - SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
 """
 
 import json
@@ -21,10 +25,10 @@ class SecurityRLSTester:
     """RLSポリシーのテストを行うクラス"""
 
     def __init__(self):
-        # リモートプロジェクトの設定
-        self.supabase_url = "https://your-project-ref.supabase.co"
-        self.anon_key = "***REMOVED***"
-        self.service_role_key = "***REMOVED***"
+        # リモートプロジェクトの設定（環境変数から取得）
+        self.supabase_url = os.environ["SUPABASE_URL"]
+        self.anon_key = os.environ["SUPABASE_ANON_KEY"]
+        self.service_role_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 
         # テスト用ユーザーID
         self.test_user_ids = [
@@ -194,7 +198,6 @@ class SecurityRLSTester:
         """全てのセキュリティテストを実行"""
         print("🚀 Starting Supabase RLS Security Tests")
         print("=" * 50)
-        print(f"Target Project: your-project-ref")
         print(f"API URL: {self.supabase_url}")
         print("=" * 50)
 
